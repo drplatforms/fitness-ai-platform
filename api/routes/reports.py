@@ -5,11 +5,14 @@
 import uuid
 import threading
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from services.report_service import get_latest_health_report, get_health_report_history
 
 from services.coordinator_service import generate_health_report
+
+report_jobs = {}
+active_jobs = {}
 
 # =====================================
 # Router Initialization
@@ -24,19 +27,45 @@ report_jobs = {}
 
 
 def run_report_job(job_id, user_id):
+    print("\n=== BACKGROUND JOB STARTED ===\n")
+
     try:
-        report_jobs[job_id] = {"status": "running", "report": None}
+        report_jobs[job_id]["status"] = "running"
+
+        from datetime import datetime
+
+        report_jobs[job_id]["started_at"] = datetime.now().strftime(
+            "%Y-%m-%d %I:%M:%S %p"
+        )
+
+        report_jobs[job_id]["completed_at"] = datetime.now().strftime(
+            "%Y-%m-%d %I:%M:%S %p"
+        )
+
+        print("\n=== CALLING COORDINATOR SERVICE ===\n")
 
         report = generate_health_report(user_id)
 
-        report_jobs[job_id] = {"status": "completed", "report": report}
+        print("\n=== COORDINATOR SERVICE COMPLETED ===\n")
+
+        report_jobs[job_id]["status"] = "completed"
+
+        report_jobs[job_id]["report"] = report
 
     except Exception as e:
-        print("\nBACKGROUND JOB ERROR:")
+        print("\n=== REPORT JOB FAILED ===\n")
 
         print(e)
 
-        report_jobs[job_id] = {"status": "failed", "report": str(e)}
+        report_jobs[job_id]["status"] = "failed"
+
+        report_jobs[job_id]["report"] = str(e)
+
+    finally:
+        print("\n=== CLEANING UP ACTIVE JOB LOCK ===\n")
+
+        if user_id in active_jobs:
+            del active_jobs[user_id]
 
 
 # =====================================
@@ -66,7 +95,29 @@ def report_status(job_id: str):
 
 @router.post("/reports/generate/{user_id}")
 def generate_report(user_id: int):
+    print("\n=== GENERATE REPORT ENDPOINT HIT === \n")
+    if user_id in active_jobs:
+        existing_job_id = active_jobs[user_id]
+
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "success": False,
+                "message": "Report already generating.",
+                "job_id": existing_job_id,
+            },
+        )
+
     job_id = str(uuid.uuid4())
+
+    active_jobs[user_id] = job_id
+
+    report_jobs[job_id] = {
+        "status": "queued",
+        "report": None,
+        "started_at": None,
+        "completed_at": None,
+    }
 
     thread = threading.Thread(target=run_report_job, args=(job_id, user_id))
 

@@ -163,13 +163,10 @@ if st.session_state.report_job_id:
 # =====================================
 
 if st.session_state.health_report:
-    st.subheader("📋 Latest Health Report")
-
     st.write(st.session_state.health_report)
 
-else:
+elif st.session_state.report_job_id is None:
     st.info("Click the button to generate a new AI health report.")
-
 
 # =====================================
 # Nutrition Section

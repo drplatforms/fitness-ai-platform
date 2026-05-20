@@ -1,13 +1,11 @@
-import sys
-from pathlib import Path
-from time import time
-from datetime import datetime
+# =====================================
+# Imports
+# =====================================
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+from datetime import datetime
+from time import time
 
 from dotenv import load_dotenv
-
-load_dotenv()
 
 from crewai import Agent, Task, Crew, LLM
 
@@ -22,12 +20,17 @@ from services.user_service import get_user_profile
 from services.report_service import save_health_report
 
 # =====================================
+# Environment Initialization
+# =====================================
+
+load_dotenv()
+
+# =====================================
 # Generate Health Report
 # =====================================
 
 
 def generate_health_report(user_id):
-
     # -----------------------------
     # Load Data
     # -----------------------------
@@ -45,7 +48,6 @@ def generate_health_report(user_id):
     # -----------------------------
 
     if not user_profile:
-
         return "No user profile found."
 
     # -----------------------------
@@ -53,7 +55,6 @@ def generate_health_report(user_id):
     # -----------------------------
 
     if not recovery_data:
-
         recovery_data = {
             "avg_sleep": "N/A",
             "avg_energy": "N/A",
@@ -66,7 +67,6 @@ def generate_health_report(user_id):
     # -----------------------------
 
     if not nutrition_data:
-
         nutrition_data = {}
 
     # -----------------------------
@@ -74,7 +74,6 @@ def generate_health_report(user_id):
     # -----------------------------
 
     if not workouts:
-
         workouts = []
 
     # -----------------------------
@@ -84,17 +83,12 @@ def generate_health_report(user_id):
     nutrition_summary = ""
 
     if not nutrition_data:
-
         nutrition_summary = "No nutrition data logged."
 
     else:
-
         for nutrient_name, nutrient_data in nutrition_data.items():
-
             nutrition_summary += (
-                f"{nutrient_name}: "
-                f"{nutrient_data['amount']} "
-                f"{nutrient_data['unit']}\n"
+                f"{nutrient_name}: {nutrient_data['amount']} {nutrient_data['unit']}\n"
             )
 
     # -----------------------------
@@ -104,13 +98,10 @@ def generate_health_report(user_id):
     workout_summary = ""
 
     if not workouts:
-
         workout_summary = "No workout data available."
 
     else:
-
         for workout in workouts:
-
             session = workout["session"]
 
             workout_summary += (
@@ -124,7 +115,6 @@ def generate_health_report(user_id):
             )
 
             for set_data in workout["sets"]:
-
                 workout_summary += (
                     f"- "
                     f"{set_data['name']} | "
@@ -133,8 +123,7 @@ def generate_health_report(user_id):
                 )
 
                 if set_data["rir"] is not None:
-
-                    workout_summary += f" | RIR " f"{set_data['rir']}"
+                    workout_summary += f" | RIR {set_data['rir']}"
 
                 workout_summary += "\n"
 
@@ -142,7 +131,7 @@ def generate_health_report(user_id):
     # LLMs
     # -----------------------------
 
-    fast_llm = LLM(model="ollama/qwen2.5:7b", base_url="http://localhost:11434")
+    fast_llm = LLM(model="ollama/qwen3:8b", base_url="http://localhost:11434")
 
     smart_llm = LLM(model="ollama/qwen3:8b", base_url="http://localhost:11434")
 
@@ -174,16 +163,16 @@ def generate_health_report(user_id):
         Recovery Metrics:
 
         Average sleep:
-        {recovery_data['avg_sleep']}
+        {recovery_data["avg_sleep"]}
 
         Average energy:
-        {recovery_data['avg_energy']}
+        {recovery_data["avg_energy"]}
 
         Average soreness:
-        {recovery_data['avg_soreness']}
+        {recovery_data["avg_soreness"]}
 
         Weight change:
-        {recovery_data['weight_change']}
+        {recovery_data["weight_change"]}
 
         Provide:
         1. Recovery assessment
@@ -348,12 +337,11 @@ def generate_health_report(user_id):
 
     print("\nStarting health coordinator...")
 
-    print(f"Start Time: " f"{start_timestamp.strftime('%Y-%m-%d %I:%M:%S %p')}")
+    print(f"Start Time: {start_timestamp.strftime('%Y-%m-%d %I:%M:%S %p')}")
 
     start_time = time()
 
     try:
-
         result = crew.kickoff()
 
         end_time = time()
@@ -366,9 +354,9 @@ def generate_health_report(user_id):
 
         print("\nWorkflow complete.")
 
-        print(f"End Time: " f"{end_timestamp.strftime('%Y-%m-%d %I:%M:%S %p')}")
+        print(f"End Time: {end_timestamp.strftime('%Y-%m-%d %I:%M:%S %p')}")
 
-        print(f"Runtime: " f"{runtime_seconds} seconds " f"({runtime_minutes} minutes)")
+        print(f"Runtime: {runtime_seconds} seconds ({runtime_minutes} minutes)")
 
         print("\n=== HEALTH REPORT ===\n")
 
@@ -381,7 +369,6 @@ def generate_health_report(user_id):
         return result.raw
 
     except Exception as e:
-
         print("\nCrewAI Error:")
         print(e)
 
@@ -393,7 +380,6 @@ def generate_health_report(user_id):
 # =====================================
 
 if __name__ == "__main__":
-
     user_id = 1
 
     report = generate_health_report(user_id)

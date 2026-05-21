@@ -2,14 +2,15 @@
 # Imports
 # =====================================
 
-import uuid
 import threading
+import uuid
+from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException
 
-from services.report_service import get_latest_health_report, get_health_report_history
-
 from services.coordinator_service import generate_health_report
+from services.report_service import get_health_report_history, get_latest_health_report
+from services.user_state_service import build_user_health_state
 
 report_jobs = {}
 active_jobs = {}
@@ -20,6 +21,20 @@ active_jobs = {}
 
 router = APIRouter()
 report_jobs = {}
+
+# =====================================
+# User Health State Endpoint
+
+
+@router.get("/health-state/{user_id}")
+def user_health_state(user_id: int):
+    health_state = build_user_health_state(user_id)
+
+    return {
+        "success": True,
+        "health_state": asdict(health_state),
+    }
+
 
 # =====================================
 # Background Report Worker

@@ -3,11 +3,11 @@
 # =====================================
 
 from datetime import datetime
-from streamlit_autorefresh import st_autorefresh
 
 import pandas as pd
 import requests
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 # =====================================
 # Session State Initialization
@@ -81,6 +81,57 @@ if st.button(
 # =====================================
 
 st.header("🧠 AI Health Insights")
+
+response = requests.get(f"http://127.0.0.1:8000/health-state/{user_id}")
+
+data = response.json()
+
+if data["success"]:
+    health_state = data["health_state"]
+
+    recovery = health_state["recovery_state"]
+    training = health_state["training_state"]
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Recovery Score",
+        recovery["recovery_score"],
+    )
+
+    col2.metric(
+        "Fatigue Risk",
+        recovery["fatigue_risk"],
+    )
+
+    col3.metric(
+        "Readiness",
+        recovery["readiness_level"],
+    )
+
+    col4, col5, col6 = st.columns(3)
+
+    col4.metric(
+        "Sleep Trend",
+        recovery["sleep_trend"],
+    )
+
+    col5.metric(
+        "Weight Trend",
+        recovery["weight_trend"],
+    )
+
+    col6.metric(
+        "System Stress",
+        health_state["system_stress_level"],
+    )
+
+    st.caption(
+        f"Training adherence: "
+        f"{training['adherence_level']} | "
+        f"Training trend: "
+        f"{training['training_trend']}"
+    )
 
 st.write(
     "Current Job ID:",

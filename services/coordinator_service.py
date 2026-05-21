@@ -148,6 +148,8 @@ def generate_health_report(user_id):
         Workout count: {health_state.training_state.workout_count}
         
         Adherence level: {health_state.training_state.adherence_level}
+        
+        Training trend: {health_state.training_state.training_trend}
 
         Workout Data:
         {workout_summary}
@@ -180,16 +182,19 @@ def generate_health_report(user_id):
     )
 
     coordinator_task = Task(
-        description="""
+        description=f"""
         Combine the recovery, nutrition, and workout analyses
         into a unified health recommendation.
-
+    
+        System Stress Interpretation:
+        System stress level: {health_state.system_stress_level}
+    
         Identify:
         1. Biggest issue
         2. Likely cause
         3. Highest priority action
         4. Best recommendation
-
+    
         Keep response concise and actionable.
         """,
         expected_output="Unified health report.",

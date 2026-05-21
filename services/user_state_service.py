@@ -4,19 +4,15 @@ from models.user_state_models import (
     UserRecoveryState,
     UserTrainingState,
 )
-
 from services.nutrition_service import (
     get_nutrition_analysis,
 )
-
 from services.recovery_service import (
     get_recent_recovery_metrics,
 )
-
 from services.user_service import (
     get_user_profile,
 )
-
 from services.workout_service import (
     get_recent_workouts,
 )
@@ -42,6 +38,7 @@ def build_user_health_state(user_id):
             fatigue_risk="Unknown",
             readiness_level="Unknown",
             sleep_trend="Unknown",
+            weight_trend="Unknown",
         )
 
     else:
@@ -95,6 +92,27 @@ def build_user_health_state(user_id):
             readiness_level = "High"
 
         # ---------------------------------
+        # Weight Trend
+        # ---------------------------------
+
+        weight_change = recovery_data["weight_change"]
+
+        if weight_change >= 3:
+            weight_trend = "Rapid Increase"
+
+        elif weight_change >= 1:
+            weight_trend = "Increasing"
+
+        elif weight_change <= -3:
+            weight_trend = "Rapid Decrease"
+
+        elif weight_change <= -1:
+            weight_trend = "Decreasing"
+
+        else:
+            weight_trend = "Stable"
+
+        # ---------------------------------
         # Sleep Trend
         # ---------------------------------
 
@@ -116,6 +134,7 @@ def build_user_health_state(user_id):
             fatigue_risk=fatigue_risk,
             readiness_level=readiness_level,
             sleep_trend=sleep_trend,
+            weight_trend=weight_trend,
         )
 
         # ---------------------------------
@@ -135,6 +154,22 @@ def build_user_health_state(user_id):
 
         else:
             adherence_level = "Inactive"
+
+        # ---------------------------------
+        # Training Trend
+        # ---------------------------------
+
+        if adherence_level == "High":
+            training_trend = "Progressing"
+
+        elif adherence_level == "Moderate":
+            training_trend = "Stable"
+
+        elif adherence_level == "Low":
+            training_trend = "Inconsistent"
+
+        else:
+            training_trend = "Inactive"
 
         # ---------------------------------
         # Nutrition Summary
@@ -194,7 +229,31 @@ def build_user_health_state(user_id):
             has_workout_data=bool(workouts),
             workout_count=workout_count,
             adherence_level=adherence_level,
+            training_trend=training_trend,
         )
+
+        # ---------------------------------
+        # System Stress Interpretation
+        # ---------------------------------
+
+        if (
+            recovery_state.fatigue_risk == "High"
+            and training_state.adherence_level == "High"
+        ):
+            system_stress_level = "Elevated"
+
+        elif (
+            recovery_state.fatigue_risk == "Moderate"
+            and training_state.adherence_level
+            in [
+                "High",
+                "Moderate",
+            ]
+        ):
+            system_stress_level = "Moderate"
+
+        else:
+            system_stress_level = "Managed"
 
         # ---------------------------------
         # Unified Health State
@@ -207,4 +266,5 @@ def build_user_health_state(user_id):
             recovery_state=recovery_state,
             nutrition_state=nutrition_state,
             training_state=training_state,
+            system_stress_level=system_stress_level,
         )

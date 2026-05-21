@@ -11,6 +11,7 @@ class UserRecoveryState:
     fatigue_risk: str
     readiness_level: str
     sleep_trend: str
+    weight_trend: str
 
 
 @dataclass
@@ -25,6 +26,7 @@ class UserTrainingState:
     has_workout_data: bool
     workout_count: int
     adherence_level: str
+    training_trend: str
 
 
 @dataclass
@@ -35,3 +37,4 @@ class UserHealthState:
     recovery_state: UserRecoveryState
     nutrition_state: UserNutritionState
     training_state: UserTrainingState
+    system_stress_level: str

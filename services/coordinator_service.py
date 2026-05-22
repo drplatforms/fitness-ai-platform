@@ -121,6 +121,13 @@ def generate_health_report(user_id):
         Calorie status: {health_state.nutrition_state.calorie_status}
         Recovery nutrition status: {health_state.nutrition_state.recovery_nutrition_status}
 
+        Guardrails:
+        - Treat missing nutrition fields as unknown, not zero intake.
+        - Do not say the user consumed 0 kcal unless Calories is explicitly logged as 0.
+        - If Calories is Unknown, say calorie intake is unavailable or incomplete.
+        - Do not infer supplementation, over-supplementation, or true excess micronutrient intake from suspicious values without confirmation.
+        - Avoid absolute protein gram targets unless current body weight is available. Use qualitative protein guidance instead.
+
         Provide:
         1. Nutrition assessment
         2. Recovery implications
@@ -161,6 +168,13 @@ def generate_health_report(user_id):
         Training load: {health_state.training_state.training_load}
         Recovery demand: {health_state.training_state.recovery_demand}
 
+        RIR guardrail:
+        - RIR means reps in reserve.
+        - RIR 0-1 means low RIR, high effort, close to failure.
+        - RIR 2-3 means moderate effort.
+        - RIR 4+ means high RIR, lower effort, farther from failure.
+        - Never describe RIR 0-1 as high RIR.
+
         Workout Data:
         {workout_summary}
 
@@ -200,6 +214,14 @@ def generate_health_report(user_id):
         System stress level: {health_state.system_stress_level}
         Nutrition/training alignment: {health_state.nutrition_training_alignment}
         Coordinator focus: {health_state.coordinator_focus}
+
+        Global report guardrails:
+        - Missing nutrition fields are unknown, not zero intake.
+        - Do not say 0 kcal, 0 g protein, 0 g carbs, or 0 g fat unless those values were explicitly logged as 0.
+        - If nutrition data is incomplete, describe it as incomplete rather than as severe restriction.
+        - RIR 0-1 means low RIR / high effort / close to failure, not high RIR.
+        - Treat suspicious micronutrient values cautiously; do not assume supplementation, over-supplementation, or true intake without confirmation.
+        - Avoid absolute protein targets unless current body weight is available.
 
         Identify:
         1. Biggest issue

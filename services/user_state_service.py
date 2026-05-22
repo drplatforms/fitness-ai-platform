@@ -17,15 +17,98 @@ from services.workout_service import (
     get_recent_workouts,
 )
 
+UNKNOWN_NUTRITION_VALUE = "Unknown"
 
-def _get_nutrient_amount(nutrition_data: dict, possible_names: list[str]) -> float:
+
+def _get_nutrient_amount(
+    nutrition_data: dict, possible_names: list[str]
+) -> float | None:
+    """Return a nutrient amount only when the nutrient field is present.
+
+    Missing nutrition fields must remain unknown. They should not be converted
+    to 0, because missing data is different from a logged zero intake.
+    """
     for nutrient_name in possible_names:
         nutrient = nutrition_data.get(nutrient_name)
 
-        if nutrient:
-            return float(nutrient.get("amount", 0) or 0)
+        if nutrient is not None:
+            amount = nutrient.get("amount")
 
-    return 0.0
+            if amount is None:
+                return None
+
+            return float(amount)
+
+    return None
+
+
+def _format_nutrition_value(value: float | None) -> float | str:
+    if value is None:
+        return UNKNOWN_NUTRITION_VALUE
+
+    return round(value, 1)
+
+
+def _classify_logged_nutrient(value: float | None) -> str:
+    if value is None:
+        return "Unknown"
+
+    if value <= 0:
+        return "Logged as Zero"
+
+    return "Logged"
+
+
+def _classify_calorie_status(calories: float | None) -> str:
+    if calories is None:
+        return "Unknown"
+
+    if calories <= 0:
+        return "Logged as Zero"
+
+    if calories >= 2200:
+        return "Logged - Higher Intake"
+
+    if calories >= 1600:
+        return "Logged - Moderate Intake"
+
+    return "Logged - Lower Intake"
+
+
+def _classify_recovery_nutrition_status(
+    protein_grams: float | None,
+    calories: float | None,
+    carbohydrate_grams: float | None,
+) -> str:
+    if protein_grams is None and calories is None and carbohydrate_grams is None:
+        return "Unknown"
+
+    if calories is None:
+        return "Incomplete - Calories Missing"
+
+    if protein_grams is None:
+        return "Incomplete - Protein Missing"
+
+    if carbohydrate_grams is None:
+        return "Incomplete - Carbohydrates Missing"
+
+    if calories <= 0 or protein_grams <= 0:
+        return "Limited"
+
+    return "Logged - Review in Context"
+
+
+def _interpret_rir(rir: float | int) -> str:
+    """RIR means reps in reserve: lower RIR means higher effort."""
+    rir_value = float(rir)
+
+    if rir_value <= 1:
+        return "low RIR / high effort / close to failure"
+
+    if rir_value <= 3:
+        return "moderate RIR / moderate effort"
+
+    return "high RIR / lower effort / farther from failure"
 
 
 def _classify_training_load(
@@ -216,6 +299,12 @@ def build_user_health_state(user_id: int) -> UserHealthState:
                 f"{nutrient_data['amount']} "
                 f"{nutrient_data['unit']}\n"
             )
+
+        nutrition_summary += (
+            "\nData quality note: Missing nutrient fields are unknown, not zero. "
+            "Unusually high micronutrient values may reflect database, unit, "
+            "or logging issues unless confirmed by the user.\n"
+        )
     else:
         nutrition_summary = "No nutrition data logged."
 
@@ -241,34 +330,21 @@ def build_user_health_state(user_id: int) -> UserHealthState:
         calorie_status = "Unknown"
         recovery_nutrition_status = "Unknown"
     else:
-        if protein_grams >= 120:
-            protein_status = "Strong"
-        elif protein_grams >= 80:
-            protein_status = "Moderate"
-        else:
-            protein_status = "Low"
-
-        if calories >= 2200:
-            calorie_status = "Likely Sufficient"
-        elif calories >= 1600:
-            calorie_status = "Possibly Low"
-        else:
-            calorie_status = "Low"
-
-        if protein_status == "Strong" and calorie_status == "Likely Sufficient":
-            recovery_nutrition_status = "Supportive"
-        elif protein_status == "Low" or calorie_status == "Low":
-            recovery_nutrition_status = "Limited"
-        else:
-            recovery_nutrition_status = "Partial"
+        protein_status = _classify_logged_nutrient(protein_grams)
+        calorie_status = _classify_calorie_status(calories)
+        recovery_nutrition_status = _classify_recovery_nutrition_status(
+            protein_grams=protein_grams,
+            calories=calories,
+            carbohydrate_grams=carbohydrate_grams,
+        )
 
     nutrition_state = UserNutritionState(
         nutrition_summary=nutrition_summary,
         has_nutrition_data=bool(nutrition_data),
-        calories=round(calories, 1),
-        protein_grams=round(protein_grams, 1),
-        carbohydrate_grams=round(carbohydrate_grams, 1),
-        fat_grams=round(fat_grams, 1),
+        calories=_format_nutrition_value(calories),
+        protein_grams=_format_nutrition_value(protein_grams),
+        carbohydrate_grams=_format_nutrition_value(carbohydrate_grams),
+        fat_grams=_format_nutrition_value(fat_grams),
         protein_status=protein_status,
         calorie_status=calorie_status,
         recovery_nutrition_status=recovery_nutrition_status,
@@ -310,7 +386,7 @@ def build_user_health_state(user_id: int) -> UserHealthState:
                 )
 
                 if rir is not None:
-                    workout_summary += f" | RIR {rir}"
+                    workout_summary += f" | RIR {rir} ({_interpret_rir(rir)})"
 
                 workout_summary += "\n"
     else:
@@ -366,7 +442,13 @@ def build_user_health_state(user_id: int) -> UserHealthState:
 
     if (
         training_state.training_load == "High"
-        and nutrition_state.recovery_nutrition_status in ["Limited", "Partial"]
+        and nutrition_state.recovery_nutrition_status
+        in [
+            "Limited",
+            "Incomplete - Calories Missing",
+            "Incomplete - Protein Missing",
+            "Incomplete - Carbohydrates Missing",
+        ]
     ):
         nutrition_training_alignment = "Mismatch"
     elif training_state.training_load in [

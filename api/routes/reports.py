@@ -3,8 +3,10 @@
 # =====================================
 
 import threading
+import time
 import uuid
 from dataclasses import asdict
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 
@@ -40,17 +42,32 @@ def user_health_state(user_id: int):
 # =====================================
 
 
+def _current_timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
+
+
+def _calculate_elapsed_seconds(job: dict) -> float | None:
+    started_monotonic = job.get("started_monotonic")
+
+    if started_monotonic is None:
+        return None
+
+    completed_monotonic = job.get("completed_monotonic")
+
+    if completed_monotonic is None:
+        return round(time.perf_counter() - started_monotonic, 2)
+
+    return round(completed_monotonic - started_monotonic, 2)
+
+
 def run_report_job(job_id, user_id):
     print("\n=== BACKGROUND JOB STARTED ===\n")
 
     try:
         report_jobs[job_id]["status"] = "running"
 
-        from datetime import datetime
-
-        report_jobs[job_id]["started_at"] = datetime.now().strftime(
-            "%Y-%m-%d %I:%M:%S %p"
-        )
+        report_jobs[job_id]["started_at"] = _current_timestamp()
+        report_jobs[job_id]["started_monotonic"] = time.perf_counter()
 
         print("\n=== CALLING COORDINATOR SERVICE ===\n")
 
@@ -59,9 +76,12 @@ def run_report_job(job_id, user_id):
         print("\n=== COORDINATOR SERVICE COMPLETED ===\n")
 
         report_jobs[job_id]["status"] = "completed"
-        report_jobs[job_id]["completed_at"] = datetime.now().strftime(
-            "%Y-%m-%d %I:%M:%S %p"
+        report_jobs[job_id]["completed_at"] = _current_timestamp()
+        report_jobs[job_id]["completed_monotonic"] = time.perf_counter()
+        report_jobs[job_id]["elapsed_seconds"] = _calculate_elapsed_seconds(
+            report_jobs[job_id]
         )
+        report_jobs[job_id]["report"] = report
         report_jobs[job_id]["report"] = report
 
     except Exception as e:
@@ -70,6 +90,11 @@ def run_report_job(job_id, user_id):
         print(e)
 
         report_jobs[job_id]["status"] = "failed"
+        report_jobs[job_id]["completed_at"] = _current_timestamp()
+        report_jobs[job_id]["completed_monotonic"] = time.perf_counter()
+        report_jobs[job_id]["elapsed_seconds"] = _calculate_elapsed_seconds(
+            report_jobs[job_id]
+        )
 
         report_jobs[job_id]["report"] = str(e)
 
@@ -92,11 +117,19 @@ def report_status(job_id: str):
     if not job:
         return {"success": False, "message": "Job not found."}
 
+    elapsed_seconds = job.get("elapsed_seconds")
+
+    if elapsed_seconds is None:
+        elapsed_seconds = _calculate_elapsed_seconds(job)
+
     return {
         "success": True,
         "job_id": job_id,
         "status": job["status"],
         "report": job["report"],
+        "started_at": job.get("started_at"),
+        "completed_at": job.get("completed_at"),
+        "elapsed_seconds": elapsed_seconds,
     }
 
 
@@ -131,6 +164,9 @@ def generate_report(user_id: int):
         "report": None,
         "started_at": None,
         "completed_at": None,
+        "elapsed_seconds": None,
+        "started_monotonic": None,
+        "completed_monotonic": None,
     }
 
     thread = threading.Thread(

@@ -18,10 +18,10 @@ class UserRecoveryState:
 class UserNutritionState:
     nutrition_summary: str
     has_nutrition_data: bool
-    calories: float
-    protein_grams: float
-    carbohydrate_grams: float
-    fat_grams: float
+    calories: float | str
+    protein_grams: float | str
+    carbohydrate_grams: float | str
+    fat_grams: float | str
     protein_status: str
     calorie_status: str
     recovery_nutrition_status: str

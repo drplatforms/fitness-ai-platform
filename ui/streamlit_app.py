@@ -9,6 +9,29 @@ import requests
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
+API_BASE_URL = "http://127.0.0.1:8000"
+
+
+def api_get(path: str, params: dict | None = None) -> dict:
+    response = requests.get(
+        f"{API_BASE_URL}{path}",
+        params=params,
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def api_post(path: str, payload: dict | None = None) -> dict:
+    response = requests.post(
+        f"{API_BASE_URL}{path}",
+        json=payload or {},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 # =====================================
 # Session State Initialization
 # =====================================
@@ -27,6 +50,12 @@ if "report_job_status" not in st.session_state:
 
 if "last_completed_job_id" not in st.session_state:
     st.session_state.last_completed_job_id = None
+
+if "current_sets" not in st.session_state:
+    st.session_state.current_sets = []
+
+if "food_search_results" not in st.session_state:
+    st.session_state.food_search_results = []
 
 # =====================================
 # App Configuration
@@ -123,7 +152,7 @@ if data["success"]:
 
     col6.metric(
         "System Stress",
-        health_state["system_stress_level"],
+        health_state.get("system_stress_level", "Unknown"),
     )
 
     st.caption(
@@ -232,6 +261,138 @@ if st.session_state.health_report:
 
 elif st.session_state.report_job_id is None:
     st.info("Click the button to generate a new AI health report.")
+
+# =====================================
+# Recovery Check-In
+# =====================================
+
+st.header("🛌 Recovery Check-In")
+
+with st.form("recovery_checkin_form"):
+    body_weight = st.number_input(
+        "Body Weight",
+        min_value=0.0,
+        value=200.0,
+        step=0.5,
+    )
+
+    sleep_hours = st.number_input(
+        "Sleep Hours",
+        min_value=0.0,
+        max_value=24.0,
+        value=7.0,
+        step=0.5,
+    )
+
+    energy_level = st.slider(
+        "Energy Level",
+        min_value=1,
+        max_value=10,
+        value=6,
+    )
+
+    soreness_level = st.slider(
+        "Soreness Level",
+        min_value=1,
+        max_value=10,
+        value=4,
+    )
+
+    mood = st.text_input("Mood", value="Okay")
+
+    notes = st.text_area("Recovery Notes")
+
+    recovery_submitted = st.form_submit_button("Save Recovery Check-In")
+
+if recovery_submitted:
+    payload = {
+        "user_id": user_id,
+        "body_weight": body_weight,
+        "sleep_hours": sleep_hours,
+        "energy_level": energy_level,
+        "soreness_level": soreness_level,
+        "mood": mood,
+        "notes": notes,
+    }
+
+    try:
+        data = api_post("/recovery/checkins", payload)
+
+        if data.get("success", True):
+            st.success("Recovery check-in saved.")
+        else:
+            st.error(data.get("message", "Recovery check-in failed."))
+
+    except requests.RequestException as exc:
+        st.error(f"Recovery check-in failed: {exc}")
+
+# =====================================
+# Nutrition Logger
+# =====================================
+
+st.header("🍽️ Log Food")
+
+with st.form("food_search_form"):
+    food_query = st.text_input("Search Food", value="")
+    search_food = st.form_submit_button("Search Food")
+
+if search_food:
+    if not food_query.strip():
+        st.warning("Enter a food search term.")
+    else:
+        try:
+            data = api_get(
+                "/foods/search",
+                params={"query": food_query},
+            )
+
+            st.session_state.food_search_results = data.get("foods", [])
+
+            if not st.session_state.food_search_results:
+                st.warning("No foods found.")
+
+        except requests.RequestException as exc:
+            st.error(f"Food search failed: {exc}")
+
+if st.session_state.food_search_results:
+    food_options = {
+        f"{food['id']} - {food['name']}": food
+        for food in st.session_state.food_search_results
+    }
+
+    selected_food_label = st.selectbox(
+        "Select Food",
+        list(food_options.keys()),
+    )
+
+    selected_food = food_options[selected_food_label]
+
+    grams = st.number_input(
+        "Grams Consumed",
+        min_value=1.0,
+        value=100.0,
+        step=5.0,
+    )
+
+    if st.button("Log Food", key="log_food_button"):
+        payload = {
+            "user_id": user_id,
+            "food_id": selected_food["id"],
+            "grams": grams,
+        }
+
+        try:
+            data = api_post("/nutrition/log", payload)
+
+            if data.get("success", True):
+                st.success("Food logged successfully.")
+                st.session_state.food_search_results = []
+                st.rerun()
+            else:
+                st.error(data.get("message", "Food logging failed."))
+
+        except requests.RequestException as exc:
+            st.error(f"Food logging failed: {exc}")
 
 # =====================================
 # Nutrition Section

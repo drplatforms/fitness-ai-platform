@@ -204,7 +204,7 @@ if st.session_state.report_job_id is None:
 
 if st.session_state.report_job_id:
     response = requests.get(
-        f"http://127.0.0.1:8000/reports/status/{st.session_state.report_job_id}"
+        f"{API_BASE_URL}/reports/status/{st.session_state.report_job_id}"
     )
 
     data = response.json()
@@ -226,11 +226,20 @@ if st.session_state.report_job_id:
         # ---------------------------------
 
         elif data["status"] == "completed":
-            st.session_state.health_report = data["report"]
+            latest_response = requests.get(f"{API_BASE_URL}/reports/latest/{user_id}")
+            latest_data = latest_response.json()
 
-            st.session_state.health_report_timestamp = datetime.now().strftime(
-                "%Y-%m-%d %I:%M %p"
-            )
+            if latest_data.get("success"):
+                latest_report = latest_data["report"]
+
+                st.session_state.health_report = latest_report["report_text"]
+                st.session_state.health_report_timestamp = latest_report["created_at"]
+
+            else:
+                st.session_state.health_report = data["report"]
+                st.session_state.health_report_timestamp = datetime.now().strftime(
+                    "%Y-%m-%d %I:%M %p"
+                )
 
             st.session_state.last_completed_job_id = st.session_state.report_job_id
 
@@ -249,6 +258,28 @@ if st.session_state.report_job_id:
 
             st.session_state.report_job_id = None
 
+            st.session_state.report_job_status = None
+
+    else:
+        latest_response = requests.get(f"{API_BASE_URL}/reports/latest/{user_id}")
+        latest_data = latest_response.json()
+
+        if latest_data.get("success"):
+            latest_report = latest_data["report"]
+
+            st.session_state.health_report = latest_report["report_text"]
+            st.session_state.health_report_timestamp = latest_report["created_at"]
+            st.session_state.report_job_id = None
+            st.session_state.report_job_status = None
+
+            st.warning(
+                "The report job status is no longer available, "
+                "so the latest saved report was loaded."
+            )
+
+        else:
+            st.warning(data.get("message", "Report job status unavailable."))
+            st.session_state.report_job_id = None
             st.session_state.report_job_status = None
 
 

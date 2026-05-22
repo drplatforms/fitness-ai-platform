@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from crewai import LLM, Agent, Crew, Task
 from dotenv import load_dotenv
 
 from services.report_service import save_health_report
@@ -12,6 +11,8 @@ load_dotenv()
 
 
 def generate_health_report(user_id):
+    from crewai import LLM, Agent, Crew, Task
+
     health_state = build_user_health_state(user_id)
 
     # -----------------------------

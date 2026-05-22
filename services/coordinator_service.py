@@ -112,6 +112,15 @@ def generate_health_report(user_id):
         Nutrition Data:
         {nutrition_summary}
 
+        Nutrition Interpretation:
+        Calories: {health_state.nutrition_state.calories}
+        Protein: {health_state.nutrition_state.protein_grams} g
+        Carbohydrates: {health_state.nutrition_state.carbohydrate_grams} g
+        Fat: {health_state.nutrition_state.fat_grams} g
+        Protein status: {health_state.nutrition_state.protein_status}
+        Calorie status: {health_state.nutrition_state.calorie_status}
+        Recovery nutrition status: {health_state.nutrition_state.recovery_nutrition_status}
+
         Provide:
         1. Nutrition assessment
         2. Recovery implications
@@ -147,6 +156,10 @@ def generate_health_report(user_id):
         Adherence level: {health_state.training_state.adherence_level}
 
         Training trend: {health_state.training_state.training_trend}
+        Estimated volume load: {health_state.training_state.total_volume_load}
+        Average RIR: {health_state.training_state.avg_rir}
+        Training load: {health_state.training_state.training_load}
+        Recovery demand: {health_state.training_state.recovery_demand}
 
         Workout Data:
         {workout_summary}
@@ -185,6 +198,8 @@ def generate_health_report(user_id):
 
         System Stress Interpretation:
         System stress level: {health_state.system_stress_level}
+        Nutrition/training alignment: {health_state.nutrition_training_alignment}
+        Coordinator focus: {health_state.coordinator_focus}
 
         Identify:
         1. Biggest issue

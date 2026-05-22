@@ -8,6 +8,7 @@ from api.models.workout_models import WorkoutRequest
 from services.workout_service import (
     add_workout_set,
     create_workout_session,
+    get_all_exercises,
     get_recent_workouts,
 )
 
@@ -28,6 +29,21 @@ def recent_workouts(user_id: int):
     workouts = get_recent_workouts(user_id)
 
     return {"success": True, "workouts": workouts}
+
+
+# =====================================
+# Get Exercises Endpoint
+# =====================================
+
+
+@router.get("/exercises")
+def get_exercises():
+    exercises = get_all_exercises()
+
+    return {
+        "success": True,
+        "exercises": exercises,
+    }
 
 
 # =====================================

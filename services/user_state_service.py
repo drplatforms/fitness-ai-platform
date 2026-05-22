@@ -18,6 +18,44 @@ from services.workout_service import (
 )
 
 
+def _get_nutrient_amount(nutrition_data: dict, possible_names: list[str]) -> float:
+    for nutrient_name in possible_names:
+        nutrient = nutrition_data.get(nutrient_name)
+
+        if nutrient:
+            return float(nutrient.get("amount", 0) or 0)
+
+    return 0.0
+
+
+def _classify_training_load(
+    total_volume_load: float, avg_rir: float | str, workout_count: int
+) -> str:
+    if workout_count == 0:
+        return "Inactive"
+
+    if (isinstance(avg_rir, float) and avg_rir <= 1.5) or total_volume_load >= 20000:
+        return "High"
+
+    if total_volume_load >= 8000 or workout_count >= 3:
+        return "Moderate"
+
+    return "Low"
+
+
+def _classify_recovery_demand(training_load: str, fatigue_risk: str) -> str:
+    if training_load == "High" and fatigue_risk in ["High", "Moderate"]:
+        return "Elevated"
+
+    if training_load == "Moderate" and fatigue_risk == "High":
+        return "Elevated"
+
+    if training_load in ["High", "Moderate"]:
+        return "Normal"
+
+    return "Low"
+
+
 def build_user_health_state(user_id: int) -> UserHealthState:
     user_profile = get_user_profile(user_id)
 
@@ -181,14 +219,67 @@ def build_user_health_state(user_id: int) -> UserHealthState:
     else:
         nutrition_summary = "No nutrition data logged."
 
+    calories = _get_nutrient_amount(
+        nutrition_data,
+        ["Energy", "Calories"],
+    )
+    protein_grams = _get_nutrient_amount(
+        nutrition_data,
+        ["Protein"],
+    )
+    carbohydrate_grams = _get_nutrient_amount(
+        nutrition_data,
+        ["Carbohydrate, by difference", "Carbohydrate", "Carbohydrates"],
+    )
+    fat_grams = _get_nutrient_amount(
+        nutrition_data,
+        ["Total lipid (fat)", "Fat", "Total fat"],
+    )
+
+    if not nutrition_data:
+        protein_status = "Unknown"
+        calorie_status = "Unknown"
+        recovery_nutrition_status = "Unknown"
+    else:
+        if protein_grams >= 120:
+            protein_status = "Strong"
+        elif protein_grams >= 80:
+            protein_status = "Moderate"
+        else:
+            protein_status = "Low"
+
+        if calories >= 2200:
+            calorie_status = "Likely Sufficient"
+        elif calories >= 1600:
+            calorie_status = "Possibly Low"
+        else:
+            calorie_status = "Low"
+
+        if protein_status == "Strong" and calorie_status == "Likely Sufficient":
+            recovery_nutrition_status = "Supportive"
+        elif protein_status == "Low" or calorie_status == "Low":
+            recovery_nutrition_status = "Limited"
+        else:
+            recovery_nutrition_status = "Partial"
+
     nutrition_state = UserNutritionState(
         nutrition_summary=nutrition_summary,
         has_nutrition_data=bool(nutrition_data),
+        calories=round(calories, 1),
+        protein_grams=round(protein_grams, 1),
+        carbohydrate_grams=round(carbohydrate_grams, 1),
+        fat_grams=round(fat_grams, 1),
+        protein_status=protein_status,
+        calorie_status=calorie_status,
+        recovery_nutrition_status=recovery_nutrition_status,
     )
 
     # ---------------------------------
     # Workout Summary
     # ---------------------------------
+
+    total_volume_load = 0.0
+    rir_values = []
 
     if workouts:
         workout_summary = ""
@@ -203,18 +294,42 @@ def build_user_health_state(user_id: int) -> UserHealthState:
             )
 
             for set_data in workout["sets"]:
+                reps = float(set_data["reps"] or 0)
+                weight = float(set_data["weight"] or 0)
+                rir = set_data["rir"]
+
+                total_volume_load += reps * weight
+
+                if rir is not None:
+                    rir_values.append(float(rir))
+
                 workout_summary += (
                     f"- {set_data['name']} | "
                     f"{set_data['reps']} reps x "
                     f"{set_data['weight']} lbs"
                 )
 
-                if set_data["rir"] is not None:
-                    workout_summary += f" | RIR {set_data['rir']}"
+                if rir is not None:
+                    workout_summary += f" | RIR {rir}"
 
                 workout_summary += "\n"
     else:
         workout_summary = "No workout data available."
+
+    if rir_values:
+        avg_rir = round(sum(rir_values) / len(rir_values), 1)
+    else:
+        avg_rir = "No data"
+
+    training_load = _classify_training_load(
+        total_volume_load=total_volume_load,
+        avg_rir=avg_rir,
+        workout_count=workout_count,
+    )
+    recovery_demand = _classify_recovery_demand(
+        training_load=training_load,
+        fatigue_risk=recovery_state.fatigue_risk,
+    )
 
     training_state = UserTrainingState(
         workout_summary=workout_summary,
@@ -222,6 +337,10 @@ def build_user_health_state(user_id: int) -> UserHealthState:
         workout_count=workout_count,
         adherence_level=adherence_level,
         training_trend=training_trend,
+        total_volume_load=round(total_volume_load, 1),
+        avg_rir=avg_rir,
+        training_load=training_load,
+        recovery_demand=recovery_demand,
     )
 
     # ---------------------------------
@@ -242,6 +361,32 @@ def build_user_health_state(user_id: int) -> UserHealthState:
         system_stress_level = "Managed"
 
     # ---------------------------------
+    # Cross-Domain Interpretation
+    # ---------------------------------
+
+    if (
+        training_state.training_load == "High"
+        and nutrition_state.recovery_nutrition_status in ["Limited", "Partial"]
+    ):
+        nutrition_training_alignment = "Mismatch"
+    elif training_state.training_load in [
+        "Moderate",
+        "High",
+    ] and recovery_state.fatigue_risk in ["High", "Moderate"]:
+        nutrition_training_alignment = "Needs Support"
+    else:
+        nutrition_training_alignment = "Aligned"
+
+    if system_stress_level == "Elevated":
+        coordinator_focus = "Prioritize recovery before increasing training stress."
+    elif nutrition_training_alignment == "Mismatch":
+        coordinator_focus = "Improve nutrition support for current training demand."
+    elif training_state.adherence_level in ["Inactive", "Low"]:
+        coordinator_focus = "Rebuild training consistency with manageable sessions."
+    else:
+        coordinator_focus = "Maintain current direction and progress gradually."
+
+    # ---------------------------------
     # Unified Health State
     # ---------------------------------
 
@@ -253,4 +398,6 @@ def build_user_health_state(user_id: int) -> UserHealthState:
         nutrition_state=nutrition_state,
         training_state=training_state,
         system_stress_level=system_stress_level,
+        nutrition_training_alignment=nutrition_training_alignment,
+        coordinator_focus=coordinator_focus,
     )

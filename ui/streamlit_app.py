@@ -430,6 +430,129 @@ if nutrition:
 else:
     st.warning("No nutrition data found.")
 
+# =====================================
+# Workout Logger
+# =====================================
+
+st.header("📝 Log Workout")
+
+try:
+    exercise_response = api_get("/exercises")
+    exercise_data = exercise_response.get("exercises", [])
+
+except requests.RequestException as exc:
+    st.error(f"Failed to load exercises: {exc}")
+    exercise_data = []
+
+exercise_options = {
+    f"{exercise['name']} ({exercise['equipment']})": exercise
+    for exercise in exercise_data
+}
+
+if exercise_options:
+    with st.form("workout_logger_form"):
+        workout_name = st.text_input(
+            "Workout Name",
+            value="Test Workout",
+        )
+
+        duration_minutes = st.number_input(
+            "Duration (minutes)",
+            min_value=1,
+            value=30,
+        )
+
+        selected_label = st.selectbox(
+            "Exercise",
+            list(exercise_options.keys()),
+        )
+
+        reps = st.number_input(
+            "Reps",
+            min_value=1,
+            value=10,
+        )
+
+        weight = st.number_input(
+            "Weight",
+            min_value=0.0,
+            value=50.0,
+            step=5.0,
+        )
+
+        rir = st.slider(
+            "RIR",
+            min_value=0,
+            max_value=5,
+            value=2,
+        )
+
+        add_set = st.form_submit_button("Add Set")
+
+    if add_set:
+        selected_exercise = exercise_options[selected_label]
+
+        set_number = len(st.session_state.current_sets) + 1
+
+        st.session_state.current_sets.append(
+            {
+                "exercise_id": selected_exercise["id"],
+                "exercise_name": selected_exercise["name"],
+                "set_number": set_number,
+                "reps": reps,
+                "weight": weight,
+                "rir": rir,
+            }
+        )
+
+        st.success("Set added.")
+
+    if st.session_state.current_sets:
+        st.subheader("Current Workout")
+
+        workout_preview = pd.DataFrame(st.session_state.current_sets)
+
+        st.dataframe(
+            workout_preview,
+            width="stretch",
+        )
+
+        notes = st.text_area("Workout Notes")
+
+        if st.button("Save Workout"):
+            payload = {
+                "user_id": user_id,
+                "workout_name": workout_name,
+                "duration_minutes": duration_minutes,
+                "notes": notes,
+                "sets": [
+                    {
+                        "exercise_id": set_data["exercise_id"],
+                        "set_number": set_data["set_number"],
+                        "reps": set_data["reps"],
+                        "weight": set_data["weight"],
+                        "rir": set_data["rir"],
+                    }
+                    for set_data in st.session_state.current_sets
+                ],
+            }
+
+            try:
+                data = api_post("/workouts/create", payload)
+
+                if data.get("success", True):
+                    st.success("Workout saved successfully.")
+                    st.session_state.current_sets = []
+                    st.rerun()
+                else:
+                    st.error(data.get("message", "Workout save failed."))
+
+            except requests.RequestException as exc:
+                st.error(f"Workout save failed: {exc}")
+
+else:
+    st.warning("No exercises found. Make sure the /exercises endpoint is working.")
+
 
 # =====================================
 # Workout Section

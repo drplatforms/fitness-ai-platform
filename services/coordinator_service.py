@@ -40,13 +40,15 @@ _FORBIDDEN_REPORT_PATTERNS = [
     ),
     (
         re.compile(
-            r"reduce\s+(?:your\s+)?(?:supplements|fortified foods)", re.IGNORECASE
+            r"reduce\s+(?:your\s+)?(?:supplements|fortified foods)",
+            re.IGNORECASE,
         ),
         "Do not recommend reducing supplements or fortified foods unless confirmed.",
     ),
     (
         re.compile(
-            r"\b(?:20\s*[-–]\s*40|40\s*[-–]\s*60)\s*g\s*carbs?\b", re.IGNORECASE
+            r"\b(?:20\s*[-–]\s*40|40\s*[-–]\s*60)\s*g\s*carbs?\b",
+            re.IGNORECASE,
         ),
         "Do not give fixed low carbohydrate targets without context.",
     ),
@@ -154,6 +156,53 @@ def _format_training_effort(avg_rir: float | str) -> str:
     return f"higher-RIR/lower-effort work around RIR {avg_rir:g}"
 
 
+def _format_weight(value: float | int | str | None) -> str | None:
+    if isinstance(value, int | float):
+        return f"{value:g} lb"
+    return None
+
+
+def _format_goal(goal: str | None) -> str:
+    if not goal:
+        return "unspecified goal"
+
+    return goal.replace("_and_", "/").replace("_", " ")
+
+
+def _format_profile_context(health_state) -> str:
+    latest_weight = _format_weight(getattr(health_state, "latest_body_weight", None))
+    starting_weight = _format_weight(getattr(health_state, "starting_weight", None))
+    goal_weight = _format_weight(getattr(health_state, "goal_weight", None))
+    goal = _format_goal(getattr(health_state, "primary_goal", None))
+    activity_level = getattr(health_state, "activity_level", None) or "unspecified"
+
+    weight_phrase = latest_weight or starting_weight
+
+    if not weight_phrase:
+        return (
+            f"With a {goal} goal and {activity_level} activity level, guidance should "
+            "use available profile context while avoiding hard numeric prescriptions "
+            "until target rules are defined."
+        )
+
+    extra_context = []
+    if starting_weight and starting_weight != weight_phrase:
+        extra_context.append(f"starting weight {starting_weight}")
+    if goal_weight:
+        extra_context.append(f"goal weight {goal_weight}")
+
+    extra_phrase = ""
+    if extra_context:
+        extra_phrase = f" ({', '.join(extra_context)})"
+
+    return (
+        f"At roughly {weight_phrase}{extra_phrase}, with a {goal} goal and "
+        f"{activity_level} activity level, nutrition and training guidance should "
+        "use this available context while avoiding hard numeric prescriptions until "
+        "target rules are defined."
+    )
+
+
 def _nutrition_context(health_state) -> str:
     nutrition_state = health_state.nutrition_state
     incomplete_fields = []
@@ -189,6 +238,7 @@ def _micronutrient_context(health_state) -> str:
 def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
     sleep_phrase = _format_sleep(health_state.recovery_state.avg_sleep)
     effort_phrase = _format_training_effort(health_state.training_state.avg_rir)
+    profile_context = _format_profile_context(health_state)
     nutrition_context = _nutrition_context(health_state)
     micronutrient_context = _micronutrient_context(health_state)
 
@@ -208,7 +258,7 @@ def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
         likely_cause=(
             "The current pattern suggests a recovery mismatch: training demand is "
             "outpacing confirmed sleep and nutrition support. "
-            f"{micronutrient_context}"
+            f"{profile_context} {micronutrient_context}"
         ),
         priority_action=(
             "Temporarily reduce low-RIR/high-effort work and move from RIR 0-1 "
@@ -218,8 +268,9 @@ def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
         recommendation=(
             "Prioritize recovery for the next 1-2 weeks: improve sleep opportunity, "
             "verify incomplete nutrition and any unusual micronutrient entries, and "
-            "evaluate carbohydrate and protein intake relative to body weight, training "
-            "load, recovery status, goals, and logged intake completeness."
+            "evaluate carbohydrate and protein intake using the available body weight, "
+            "goal, activity level, training load, recovery status, and logged intake "
+            "completeness."
         ),
     )
 
@@ -287,13 +338,21 @@ def build_final_report_from_coordinator_output(
 def render_unified_health_report(
     report: UnifiedHealthReport,
     timestamp: str | None = None,
+    health_state=None,
 ) -> str:
     generated_line = f"Generated: {timestamp}\n\n" if timestamp else ""
+
+    profile_context = ""
+    if health_state is not None:
+        profile_context = (
+            f"\n\n**Profile Context:** {_format_profile_context(health_state)}"
+        )
 
     return (
         f"{generated_line}"
         "**Unified Health Report**\n\n"
-        f"**Overall Score:** {report.overall_score}/100\n\n"
+        f"**Overall Score:** {report.overall_score}/100"
+        f"{profile_context}\n\n"
         f"**1. Biggest Issue:** {report.biggest_issue}\n\n"
         f"**2. Likely Cause:** {report.likely_cause}\n\n"
         f"**3. Highest Priority Action:** {report.priority_action}\n\n"
@@ -510,6 +569,20 @@ def generate_health_report(user_id):
         Nutrition/training alignment: {health_state.nutrition_training_alignment}
         Coordinator focus: {health_state.coordinator_focus}
 
+        User Profile Context:
+        Age: {getattr(health_state, "age", None)}
+        Height cm: {getattr(health_state, "height_cm", None)}
+        Starting weight: {getattr(health_state, "starting_weight", None)}
+        Latest body weight: {getattr(health_state, "latest_body_weight", "Unknown")}
+        Goal weight: {getattr(health_state, "goal_weight", None)}
+        Primary goal: {health_state.primary_goal}
+        Activity level: {getattr(health_state, "activity_level", None)}
+
+        Use available profile context directly when helpful.
+        Example wording:
+        "At roughly 190 lb with a strength/recomposition goal..."
+        Do not use profile context to invent hard calorie or macro prescriptions.
+
         Critical final report guardrails:
         - Missing nutrition fields are unknown, not zero intake.
         - Do not say 0 kcal, 0 g protein, 0 g carbs, or 0 g fat unless those values were explicitly logged as 0.
@@ -628,6 +701,7 @@ def generate_health_report(user_id):
         final_report = render_unified_health_report(
             report=structured_report,
             timestamp=timestamp,
+            health_state=health_state,
         )
 
         language_violations = validate_report_language(
@@ -645,6 +719,8 @@ def generate_health_report(user_id):
             report_text=final_report,
             model_summary="ollama/qwen3:8b",
         )
+
+        return final_report
 
     except Exception as e:
         print("\n=== CREWAI ERROR ===\n")

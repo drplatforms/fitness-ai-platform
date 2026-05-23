@@ -51,3 +51,9 @@ class UserHealthState:
     system_stress_level: str
     nutrition_training_alignment: str
     coordinator_focus: str
+    age: int | None = None
+    height_cm: float | None = None
+    starting_weight: float | None = None
+    latest_body_weight: float | str = "Unknown"
+    goal_weight: float | None = None
+    activity_level: str | None = None

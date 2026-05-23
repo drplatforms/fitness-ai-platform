@@ -193,8 +193,7 @@ def get_all_exercises():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT
             id,
             name,
@@ -202,8 +201,7 @@ def get_all_exercises():
             equipment
         FROM exercises
         ORDER BY name
-        """
-    )
+        """)
 
     exercises = cursor.fetchall()
 

@@ -3,7 +3,9 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
+from models.coaching_decision_models import CoachingDecision
 from models.coordinator_models import UnifiedHealthReport
+from services.coaching_decision_service import build_coaching_decision
 from services.report_service import save_health_report
 from services.user_state_service import (
     build_user_health_state,
@@ -81,13 +83,93 @@ _FORBIDDEN_REPORT_PATTERNS = [
 ]
 
 
-def validate_report_language(report_text: str, health_state=None) -> list[str]:
+def _validate_report_against_coaching_decision(
+    report_text: str,
+    coaching_decision: CoachingDecision | None,
+) -> list[str]:
+    if coaching_decision is None:
+        return []
+
+    report_lower = report_text.lower()
+    violations = []
+    scenario = coaching_decision.scenario
+
+    if scenario == "aligned_managed":
+        forbidden_terms = [
+            "recovery mismatch",
+            "deload",
+            "reduce intensity",
+            "reduce training stress",
+            "insufficient caloric",
+            "caloric deficit",
+            "inadequate energy availability",
+            "outpacing confirmed recovery support",
+        ]
+        for term in forbidden_terms:
+            if term in report_lower:
+                violations.append(
+                    "Aligned/managed reports should not use unnecessary intervention framing."
+                )
+                break
+
+    elif scenario == "recovery_limited":
+        if "recovery" not in report_lower:
+            violations.append(
+                "Recovery-limited reports must keep recovery as the focus."
+            )
+        if "low_rir_high_effort_training" in coaching_decision.reason_codes and (
+            "rir 2-3" not in report_lower or "rir 0-1" not in report_lower
+        ):
+            violations.append(
+                "Recovery-limited low-RIR reports must include RIR 2-3 guidance."
+            )
+
+    elif scenario == "nutrition_training_mismatch":
+        if "nutrition" not in report_lower or "training" not in report_lower:
+            violations.append(
+                "Nutrition/training mismatch reports must mention nutrition and training demand."
+            )
+        if "0 kcal" in report_lower or "0 g protein" in report_lower:
+            violations.append("Missing nutrition must not be treated as zero intake.")
+
+    elif scenario == "data_quality_limited":
+        required_terms = ["logging", "verify"]
+        if not all(term in report_lower for term in required_terms):
+            violations.append(
+                "Data-quality-limited reports must emphasize logging and verification."
+            )
+        if (
+            "supplementation artifacts" in report_lower
+            or "likely from supplements" in report_lower
+        ):
+            violations.append(
+                "Data-quality-limited reports must not assume supplement causes."
+            )
+
+    elif scenario == "improving_after_deload":
+        if "progress" not in report_lower and "progression" not in report_lower:
+            violations.append(
+                "Improving-after-deload reports should emphasize controlled progression."
+            )
+
+    return violations
+
+
+def validate_report_language(
+    report_text: str,
+    health_state=None,
+    coaching_decision: CoachingDecision | None = None,
+) -> list[str]:
     """Return deterministic language-guardrail violations before saving a report."""
     violations = []
 
     for pattern, message in _FORBIDDEN_REPORT_PATTERNS:
         if pattern.search(report_text):
             violations.append(message)
+
+    violations.extend(
+        _validate_report_against_coaching_decision(report_text, coaching_decision)
+    )
 
     if health_state is None:
         return violations
@@ -203,6 +285,16 @@ def _format_profile_context(health_state) -> str:
     )
 
 
+def _join_items(items: list[str]) -> str:
+    if not items:
+        return ""
+
+    if len(items) == 1:
+        return items[0]
+
+    return f"{', '.join(items[:-1])} and {items[-1]}"
+
+
 def _nutrition_context(health_state) -> str:
     nutrition_state = health_state.nutrition_state
     incomplete_fields = []
@@ -217,10 +309,13 @@ def _nutrition_context(health_state) -> str:
         incomplete_fields.append("fat")
 
     if incomplete_fields:
-        fields = ", ".join(incomplete_fields)
-        return f"nutrition logging is incomplete for {fields}"
+        fields = _join_items(incomplete_fields)
+        return f"Nutrition logging is incomplete for {fields}."
 
-    return "Nutrition support should be evaluated against training demand and recovery status."
+    return (
+        "Nutrition support should be evaluated against training demand and "
+        "recovery status."
+    )
 
 
 def _micronutrient_context(health_state) -> str:
@@ -235,87 +330,66 @@ def _micronutrient_context(health_state) -> str:
     return "No suspicious micronutrient pattern requires action from this report alone."
 
 
-def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
+def _build_fallback_unified_report(
+    health_state,
+    coaching_decision: CoachingDecision,
+) -> UnifiedHealthReport:
     sleep_phrase = _format_sleep(health_state.recovery_state.avg_sleep)
     effort_phrase = _format_training_effort(health_state.training_state.avg_rir)
     profile_context = _format_profile_context(health_state)
     nutrition_context = _nutrition_context(health_state)
+    nutrition_context_lower = nutrition_context.removesuffix(".").lower()
     micronutrient_context = _micronutrient_context(health_state)
 
-    fatigue_risk = health_state.recovery_state.fatigue_risk
-    readiness_level = health_state.recovery_state.readiness_level
-    training_load = health_state.training_state.training_load
-    avg_rir = health_state.training_state.avg_rir
-    system_stress = health_state.system_stress_level
-    nutrition_alignment = health_state.nutrition_training_alignment
-
-    is_low_rir = isinstance(avg_rir, int | float) and avg_rir <= 1.5
-    is_high_training_load = training_load == "High"
-    is_recovery_limited = fatigue_risk == "High" or readiness_level == "Poor"
-    is_aligned_baseline = (
-        system_stress == "Managed" and nutrition_alignment == "Aligned"
-    )
-    is_nutrition_mismatch = nutrition_alignment == "Mismatch"
-
-    score_by_stress = {
-        "High": 55,
-        "Elevated": 55,
-        "Moderate": 70,
-        "Managed": 85,
-        "Low": 85,
+    score_by_scenario = {
+        "aligned_managed": 85,
+        "improving_after_deload": 80,
+        "nutrition_training_mismatch": 70,
+        "recovery_limited": 55,
+        "data_quality_limited": 65,
     }
-    overall_score = score_by_stress.get(system_stress, 70)
+    overall_score = score_by_scenario.get(coaching_decision.scenario, 70)
 
-    if is_aligned_baseline:
+    if coaching_decision.scenario == "aligned_managed":
         return UnifiedHealthReport(
             overall_score=overall_score,
             biggest_issue=(
-                "No major recovery mismatch is apparent; the main priority is maintaining "
-                "consistency while progressing gradually."
+                "Recovery, training, and nutrition appear broadly aligned; the main "
+                "priority is maintaining consistency while progressing gradually."
             ),
             likely_cause=(
                 f"Recovery, training load, and nutrition appear broadly aligned. "
                 f"{profile_context}"
             ),
-            priority_action=(
-                "Maintain the current direction, progress training gradually, and keep "
-                "sleep, nutrition logging, and recovery trends consistent."
-            ),
+            priority_action=coaching_decision.training_action,
             recommendation=(
-                "Continue building gradually while monitoring sleep, energy, soreness, "
-                "body weight trend, training performance, and nutrition consistency. "
-                "Avoid unnecessary deload or restriction language unless recovery markers worsen."
+                f"{coaching_decision.primary_focus} {coaching_decision.sleep_action} "
+                f"{coaching_decision.nutrition_action} "
+                f"{coaching_decision.monitoring_action}"
             ),
         )
 
-    if is_recovery_limited:
-        rir_guidance = ""
-        if is_low_rir or is_high_training_load:
-            rir_guidance = " For 1-2 weeks, keep most working sets around RIR 2-3 instead of RIR 0-1."
-
+    if coaching_decision.scenario == "recovery_limited":
         return UnifiedHealthReport(
             overall_score=overall_score,
             biggest_issue=(
                 f"Recovery appears limited by {sleep_phrase}, "
-                f"{nutrition_context}, and {effort_phrase}."
+                f"{nutrition_context_lower}, and recent training includes {effort_phrase}."
             ),
             likely_cause=(
                 "Training demand may be outpacing confirmed recovery support. "
                 f"{profile_context} {micronutrient_context}"
             ),
             priority_action=(
-                "Prioritize recovery by increasing sleep duration by about 1-2 hours/night "
-                f"if possible and improving nutrition logging completeness.{rir_guidance}"
+                f"{coaching_decision.sleep_action} {coaching_decision.training_action}"
             ),
             recommendation=(
-                "Use the next 1-2 weeks to reduce recovery pressure: improve sleep duration, "
-                "verify incomplete nutrition or unusual micronutrient entries, and evaluate "
-                "carbohydrate and protein intake using available body weight, goal, activity "
-                "level, training load, recovery status, and logged intake completeness."
+                f"{coaching_decision.primary_focus} {coaching_decision.nutrition_action} "
+                f"{coaching_decision.monitoring_action}"
             ),
         )
 
-    if is_nutrition_mismatch:
+    if coaching_decision.scenario == "nutrition_training_mismatch":
         return UnifiedHealthReport(
             overall_score=overall_score,
             biggest_issue=(
@@ -324,40 +398,59 @@ def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
             likely_cause=(
                 f"{nutrition_context} {profile_context} {micronutrient_context}"
             ),
-            priority_action=(
-                "Improve nutrition logging consistency and verify whether intake supports "
-                "the current training load before drawing strong conclusions."
-            ),
+            priority_action=coaching_decision.nutrition_action,
             recommendation=(
-                "Use profile context, training demand, recovery markers, and logged intake "
-                "completeness to evaluate nutrition support. Avoid numeric calorie or macro "
+                f"{coaching_decision.training_action} {coaching_decision.sleep_action} "
+                f"{coaching_decision.monitoring_action} Avoid numeric calorie or macro "
                 "prescriptions until target rules are explicitly defined."
             ),
         )
 
-    rir_guidance = ""
-    if is_low_rir or is_high_training_load:
-        rir_guidance = (
-            " For 1-2 weeks, keep most working sets around RIR 2-3 instead of RIR 0-1."
+    if coaching_decision.scenario == "improving_after_deload":
+        return UnifiedHealthReport(
+            overall_score=overall_score,
+            biggest_issue=(
+                "Recovery markers appear improved; the priority is controlled progression "
+                "instead of reacting strongly to older high-stress data."
+            ),
+            likely_cause=(
+                "Recent recovery and training patterns suggest the deload or reduced-stress "
+                f"period is helping. {profile_context}"
+            ),
+            priority_action=coaching_decision.training_action,
+            recommendation=(
+                f"{coaching_decision.primary_focus} {coaching_decision.sleep_action} "
+                f"{coaching_decision.nutrition_action} "
+                f"{coaching_decision.monitoring_action}"
+            ),
+        )
+
+    if coaching_decision.scenario == "data_quality_limited":
+        return UnifiedHealthReport(
+            overall_score=overall_score,
+            biggest_issue=(
+                "Data quality limits confidence in the current assessment; the priority "
+                "is improving logging completeness before making stronger nutrition or "
+                "training conclusions."
+            ),
+            likely_cause=(
+                f"{nutrition_context} {profile_context} {micronutrient_context}"
+            ),
+            priority_action=coaching_decision.nutrition_action,
+            recommendation=(
+                f"{coaching_decision.training_action} {coaching_decision.sleep_action} "
+                f"{coaching_decision.monitoring_action}"
+            ),
         )
 
     return UnifiedHealthReport(
         overall_score=overall_score,
-        biggest_issue=(
-            "The main priority is balancing training stress with recovery and nutrition support."
-        ),
-        likely_cause=(
-            f"Current health state suggests a manageable but watchable training/recovery pattern. "
-            f"{profile_context} {micronutrient_context}"
-        ),
-        priority_action=(
-            "Monitor sleep, soreness, energy, training effort, and nutrition completeness."
-            f"{rir_guidance}"
-        ),
+        biggest_issue=coaching_decision.primary_focus,
+        likely_cause=f"{profile_context} {micronutrient_context}",
+        priority_action=coaching_decision.training_action,
         recommendation=(
-            "Progress gradually while using body weight context, goal, activity level, training "
-            "load, recovery status, and logged intake completeness to guide decisions without "
-            "adding hard calorie or macro prescriptions."
+            f"{coaching_decision.nutrition_action} {coaching_decision.sleep_action} "
+            f"{coaching_decision.monitoring_action}"
         ),
     )
 
@@ -379,7 +472,10 @@ def _extract_structured_field(raw_text: str, field_name: str) -> str | None:
     return match.group(1).strip()
 
 
-def _parse_unified_report(raw_text: str) -> UnifiedHealthReport | None:
+def _parse_unified_report(
+    raw_text: str,
+    coaching_decision: CoachingDecision | None = None,
+) -> UnifiedHealthReport | None:
     score_text = _extract_structured_field(raw_text, "overall_score")
     biggest_issue = _extract_structured_field(raw_text, "biggest_issue")
     likely_cause = _extract_structured_field(raw_text, "likely_cause")
@@ -404,7 +500,10 @@ def _parse_unified_report(raw_text: str) -> UnifiedHealthReport | None:
     )
 
     rendered_candidate = render_unified_health_report(candidate)
-    if validate_report_language(rendered_candidate):
+    if validate_report_language(
+        rendered_candidate,
+        coaching_decision=coaching_decision,
+    ):
         return None
 
     return candidate
@@ -413,13 +512,20 @@ def _parse_unified_report(raw_text: str) -> UnifiedHealthReport | None:
 def build_final_report_from_coordinator_output(
     raw_text: str,
     health_state,
+    coaching_decision: CoachingDecision | None = None,
 ) -> UnifiedHealthReport:
     """Use valid structured coordinator output, otherwise fall back deterministically."""
-    parsed_report = _parse_unified_report(raw_text)
+    if coaching_decision is None:
+        coaching_decision = build_coaching_decision(health_state)
+
+    parsed_report = _parse_unified_report(
+        raw_text,
+        coaching_decision=coaching_decision,
+    )
     if parsed_report is not None:
         return parsed_report
 
-    return _build_fallback_unified_report(health_state)
+    return _build_fallback_unified_report(health_state, coaching_decision)
 
 
 def render_unified_health_report(
@@ -451,6 +557,7 @@ def generate_health_report(user_id):
     from crewai import LLM, Agent, Crew, Task
 
     health_state = build_user_health_state(user_id)
+    coaching_decision = build_coaching_decision(health_state)
 
     # -----------------------------
     # Nutrition Summary
@@ -656,6 +763,19 @@ def generate_health_report(user_id):
         Nutrition/training alignment: {health_state.nutrition_training_alignment}
         Coordinator focus: {health_state.coordinator_focus}
 
+        Approved Coaching Decision Contract:
+        Scenario: {coaching_decision.scenario}
+        Primary focus: {coaching_decision.primary_focus}
+        Training action: {coaching_decision.training_action}
+        Nutrition action: {coaching_decision.nutrition_action}
+        Sleep action: {coaching_decision.sleep_action}
+        Monitoring action: {coaching_decision.monitoring_action}
+        Confidence: {coaching_decision.confidence}
+        Reason codes: {', '.join(coaching_decision.reason_codes)}
+
+        Follow the Approved Coaching Decision Contract. Do not change the scenario,
+        primary focus, or safety posture. Explain it naturally and concisely.
+
         User Profile Context:
         Age: {getattr(health_state, "age", None)}
         Height cm: {getattr(health_state, "height_cm", None)}
@@ -721,9 +841,9 @@ def generate_health_report(user_id):
 
         Required replacement language:
         - Say "low-RIR/high-effort work at RIR 0-1."
-        - Say "move from RIR 0-1 toward RIR 2-3 temporarily to reduce effort and leave more reps in reserve."
+        - Say "for 1-2 weeks, keep most working sets around RIR 2-3 instead of RIR 0-1."
         - Say "approximately 5.3 hours/night," not "5.3/10."
-        - Say "some micronutrient values appear unusually high and may reflect logging, database, unit, or supplementation artifacts; verify before acting."
+        - Say "some micronutrient values appear unusually high and may reflect logging, database, or unit artifacts; verify before acting."
         - For carbohydrates, say "carbohydrate intake should be evaluated relative to training load, recovery, body weight, and goals" instead of giving fixed low gram targets.
 
         Output exactly these structured fields and no extra sections:
@@ -784,6 +904,7 @@ def generate_health_report(user_id):
         structured_report = build_final_report_from_coordinator_output(
             raw_text=result.raw,
             health_state=health_state,
+            coaching_decision=coaching_decision,
         )
         final_report = render_unified_health_report(
             report=structured_report,
@@ -794,6 +915,7 @@ def generate_health_report(user_id):
         language_violations = validate_report_language(
             final_report,
             health_state=health_state,
+            coaching_decision=coaching_decision,
         )
         if language_violations:
             raise ValueError(

@@ -182,3 +182,31 @@ def get_recent_workouts(user_id, limit=5):
     conn.close()
 
     return workouts
+
+
+# =====================================
+# Get Exercises
+# =====================================
+
+
+def get_all_exercises():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            name,
+            muscle_group,
+            equipment
+        FROM exercises
+        ORDER BY name
+        """
+    )
+
+    exercises = cursor.fetchall()
+
+    conn.close()
+
+    return [dict(row) for row in exercises]

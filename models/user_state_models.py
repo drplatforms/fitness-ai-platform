@@ -18,6 +18,13 @@ class UserRecoveryState:
 class UserNutritionState:
     nutrition_summary: str
     has_nutrition_data: bool
+    calories: float | str
+    protein_grams: float | str
+    carbohydrate_grams: float | str
+    fat_grams: float | str
+    protein_status: str
+    calorie_status: str
+    recovery_nutrition_status: str
 
 
 @dataclass
@@ -27,6 +34,10 @@ class UserTrainingState:
     workout_count: int
     adherence_level: str
     training_trend: str
+    total_volume_load: float
+    avg_rir: float | str
+    training_load: str
+    recovery_demand: str
 
 
 @dataclass
@@ -38,3 +49,5 @@ class UserHealthState:
     nutrition_state: UserNutritionState
     training_state: UserTrainingState
     system_stress_level: str
+    nutrition_training_alignment: str
+    coordinator_focus: str

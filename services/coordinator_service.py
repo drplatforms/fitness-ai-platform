@@ -220,7 +220,7 @@ def _nutrition_context(health_state) -> str:
         fields = ", ".join(incomplete_fields)
         return f"nutrition logging is incomplete for {fields}"
 
-    return "nutrition logging is available and should be interpreted in context"
+    return "Nutrition support should be evaluated against training demand and recovery status."
 
 
 def _micronutrient_context(health_state) -> str:
@@ -229,7 +229,7 @@ def _micronutrient_context(health_state) -> str:
     if "Unusually high micronutrient values" in nutrition_summary:
         return (
             "Some micronutrient values appear unusually high and may reflect "
-            "logging, database, unit, or supplementation artifacts; verify before acting."
+            "logging, database, or unit artifacts; verify before acting."
         )
 
     return "No suspicious micronutrient pattern requires action from this report alone."
@@ -242,35 +242,122 @@ def _build_fallback_unified_report(health_state) -> UnifiedHealthReport:
     nutrition_context = _nutrition_context(health_state)
     micronutrient_context = _micronutrient_context(health_state)
 
+    fatigue_risk = health_state.recovery_state.fatigue_risk
+    readiness_level = health_state.recovery_state.readiness_level
+    training_load = health_state.training_state.training_load
+    avg_rir = health_state.training_state.avg_rir
+    system_stress = health_state.system_stress_level
+    nutrition_alignment = health_state.nutrition_training_alignment
+
+    is_low_rir = isinstance(avg_rir, int | float) and avg_rir <= 1.5
+    is_high_training_load = training_load == "High"
+    is_recovery_limited = fatigue_risk == "High" or readiness_level == "Poor"
+    is_aligned_baseline = (
+        system_stress == "Managed" and nutrition_alignment == "Aligned"
+    )
+    is_nutrition_mismatch = nutrition_alignment == "Mismatch"
+
     score_by_stress = {
         "High": 55,
+        "Elevated": 55,
         "Moderate": 70,
+        "Managed": 85,
         "Low": 85,
     }
-    overall_score = score_by_stress.get(health_state.system_stress_level, 65)
+    overall_score = score_by_stress.get(system_stress, 70)
+
+    if is_aligned_baseline:
+        return UnifiedHealthReport(
+            overall_score=overall_score,
+            biggest_issue=(
+                "No major recovery mismatch is apparent; the main priority is maintaining "
+                "consistency while progressing gradually."
+            ),
+            likely_cause=(
+                f"Recovery, training load, and nutrition appear broadly aligned. "
+                f"{profile_context}"
+            ),
+            priority_action=(
+                "Maintain the current direction, progress training gradually, and keep "
+                "sleep, nutrition logging, and recovery trends consistent."
+            ),
+            recommendation=(
+                "Continue building gradually while monitoring sleep, energy, soreness, "
+                "body weight trend, training performance, and nutrition consistency. "
+                "Avoid unnecessary deload or restriction language unless recovery markers worsen."
+            ),
+        )
+
+    if is_recovery_limited:
+        rir_guidance = ""
+        if is_low_rir or is_high_training_load:
+            rir_guidance = " For 1-2 weeks, keep most working sets around RIR 2-3 instead of RIR 0-1."
+
+        return UnifiedHealthReport(
+            overall_score=overall_score,
+            biggest_issue=(
+                f"Recovery appears limited by {sleep_phrase}, "
+                f"{nutrition_context}, and {effort_phrase}."
+            ),
+            likely_cause=(
+                "Training demand may be outpacing confirmed recovery support. "
+                f"{profile_context} {micronutrient_context}"
+            ),
+            priority_action=(
+                "Prioritize recovery by increasing sleep duration by about 1-2 hours/night "
+                f"if possible and improving nutrition logging completeness.{rir_guidance}"
+            ),
+            recommendation=(
+                "Use the next 1-2 weeks to reduce recovery pressure: improve sleep duration, "
+                "verify incomplete nutrition or unusual micronutrient entries, and evaluate "
+                "carbohydrate and protein intake using available body weight, goal, activity "
+                "level, training load, recovery status, and logged intake completeness."
+            ),
+        )
+
+    if is_nutrition_mismatch:
+        return UnifiedHealthReport(
+            overall_score=overall_score,
+            biggest_issue=(
+                "Nutrition support may not be well matched to current training demand."
+            ),
+            likely_cause=(
+                f"{nutrition_context} {profile_context} {micronutrient_context}"
+            ),
+            priority_action=(
+                "Improve nutrition logging consistency and verify whether intake supports "
+                "the current training load before drawing strong conclusions."
+            ),
+            recommendation=(
+                "Use profile context, training demand, recovery markers, and logged intake "
+                "completeness to evaluate nutrition support. Avoid numeric calorie or macro "
+                "prescriptions until target rules are explicitly defined."
+            ),
+        )
+
+    rir_guidance = ""
+    if is_low_rir or is_high_training_load:
+        rir_guidance = (
+            " For 1-2 weeks, keep most working sets around RIR 2-3 instead of RIR 0-1."
+        )
 
     return UnifiedHealthReport(
         overall_score=overall_score,
         biggest_issue=(
-            f"Recovery capacity appears limited by {sleep_phrase}, "
-            f"{nutrition_context}, and {effort_phrase}."
+            "The main priority is balancing training stress with recovery and nutrition support."
         ),
         likely_cause=(
-            "The current pattern suggests a recovery mismatch: training demand is "
-            "outpacing confirmed sleep and nutrition support. "
+            f"Current health state suggests a manageable but watchable training/recovery pattern. "
             f"{profile_context} {micronutrient_context}"
         ),
         priority_action=(
-            "Temporarily reduce low-RIR/high-effort work and move from RIR 0-1 "
-            "toward RIR 2-3 to reduce effort and leave more reps in reserve while "
-            "improving sleep consistency and nutrition logging completeness."
+            "Monitor sleep, soreness, energy, training effort, and nutrition completeness."
+            f"{rir_guidance}"
         ),
         recommendation=(
-            "Prioritize recovery for the next 1-2 weeks: improve sleep opportunity, "
-            "verify incomplete nutrition and any unusual micronutrient entries, and "
-            "evaluate carbohydrate and protein intake using the available body weight, "
-            "goal, activity level, training load, recovery status, and logged intake "
-            "completeness."
+            "Progress gradually while using body weight context, goal, activity level, training "
+            "load, recovery status, and logged intake completeness to guide decisions without "
+            "adding hard calorie or macro prescriptions."
         ),
     )
 

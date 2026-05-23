@@ -73,12 +73,40 @@ st.title("🏋️ Fitness AI Platform")
 # User Selection
 # =====================================
 
-user_id = st.selectbox(
+USER_OPTIONS = {
+    "User 1": 1,
+    "User 2": 2,
+    "QA 101 — Under-recovered lifter": 101,
+    "QA 102 — Well-recovered baseline": 102,
+    "QA 103 — Nutrition/training mismatch": 103,
+    "QA 104 — Improving after deload": 104,
+    "QA 105 — Messy/incomplete logging": 105,
+}
+
+selected_user_label = st.selectbox(
     "Select User",
-    options=[1, 2],
+    options=list(USER_OPTIONS.keys()),
     index=0,
 )
 
+user_id = USER_OPTIONS[selected_user_label]
+
+if "selected_user_id" not in st.session_state:
+    st.session_state.selected_user_id = user_id
+
+if st.session_state.selected_user_id != user_id:
+    st.session_state.selected_user_id = user_id
+
+    st.session_state.health_report = None
+    st.session_state.health_report_timestamp = None
+    st.session_state.report_job_id = None
+    st.session_state.report_job_status = None
+    st.session_state.last_completed_job_id = None
+
+    st.session_state.current_sets = []
+    st.session_state.food_search_results = []
+
+    st.rerun()
 
 # =====================================
 # Load Cached Report

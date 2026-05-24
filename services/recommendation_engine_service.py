@@ -1,18 +1,25 @@
 import json
+import logging
 import os
 import re
+import time
 from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
 from models.recommendation_models import (
     ApprovedActionPlan,
+    ApprovedActionPlanResult,
     CandidateActionPlan,
     RecommendationContext,
+    RecommendationRuntimeMetadata,
 )
 from models.user_state_models import UserHealthState
 from services.coaching_decision_service import build_coaching_decision
-from services.nutrition_target_service import build_nutrition_targets
+from services.nutrition_target_service import (
+    build_nutrition_targets,
+    nutrition_targets_to_user_dict,
+)
 from services.training_constraint_service import build_training_constraints
 
 CANDIDATE_ACTION_PLAN_REQUIRED_FIELDS = {
@@ -28,6 +35,46 @@ CandidateActionPlanProvider = Callable[[RecommendationContext], str]
 RECOMMENDATION_CANDIDATE_PROVIDER_ENV = "RECOMMENDATION_CANDIDATE_PROVIDER"
 RECOMMENDATION_PROVIDER_DETERMINISTIC = "deterministic"
 RECOMMENDATION_PROVIDER_CREWAI = "crewai"
+
+logger = logging.getLogger(__name__)
+
+FALLBACK_REASON_DETERMINISTIC_SELECTED = "deterministic_selected"
+FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider"
+FALLBACK_REASON_PROVIDER_EXCEPTION = "provider_exception"
+FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT = "provider_non_string_output"
+FALLBACK_REASON_MALFORMED_JSON = "malformed_json"
+FALLBACK_REASON_SCHEMA_MISMATCH = "schema_mismatch"
+FALLBACK_REASON_INVALID_CONFIDENCE = "invalid_confidence"
+FALLBACK_REASON_VALIDATION_FAILURE = "validation_failure"
+
+_CONFIDENCE_RANK = {"Low": 1, "Moderate": 2, "High": 3}
+
+_INTERNAL_DEBUG_TERMS = [
+    "guardrail",
+    "guardrails",
+    "validation",
+    "validator",
+    "fallback",
+    "deterministic",
+    "backend",
+    "schema",
+    "source of truth",
+    "reason code",
+    "reason codes",
+    "debug",
+    "internal",
+    "candidateactionplan",
+    "approvedactionplan",
+    "recommendationcontext",
+    "nutritiontargets",
+    "trainingconstraints",
+    "coachingdecision",
+    "data_quality_limited",
+    "aligned_managed",
+    "recovery_limited",
+    "nutrition_training_mismatch",
+    "improving_after_deload",
+]
 
 _FORBIDDEN_RECOMMENDATION_PHRASES = [
     "high-rir (0-1)",
@@ -110,26 +157,58 @@ def recommendation_context_to_json(context: RecommendationContext) -> str:
     return json.dumps(asdict(context), indent=2)
 
 
+def recommendation_context_to_llm_json(context: RecommendationContext) -> str:
+    """Serialize only LLM-safe RecommendationContext fields for CrewAI prompts.
+
+    This intentionally uses the user-facing NutritionTargets display contract so
+    disallowed target values are not exposed to the model. For example, a
+    Limited-confidence user can see the nutrition_display_message and approved
+    protein range, but not hidden calorie/carbohydrate/fat ranges.
+    """
+
+    safe_payload = {
+        "user_id": context.user_id,
+        "scenario": context.scenario,
+        "primary_goal": context.primary_goal,
+        "body_weight_lb": context.body_weight_lb,
+        "confidence": context.confidence,
+        "nutrition_targets": nutrition_targets_to_user_dict(context.nutrition_targets),
+        "training_constraints": asdict(context.training_constraints),
+        "approved_strategy": {
+            "primary_focus": context.coaching_decision.primary_focus,
+            "training_action": context.coaching_decision.training_action,
+            "nutrition_action": context.coaching_decision.nutrition_action,
+            "sleep_action": context.coaching_decision.sleep_action,
+            "monitoring_action": context.coaching_decision.monitoring_action,
+            "confidence": context.coaching_decision.confidence,
+        },
+        "allowed_actions": context.allowed_actions,
+        "forbidden_claims": context.forbidden_claims,
+    }
+    return json.dumps(safe_payload, indent=2)
+
+
 def build_crewai_candidate_action_plan_prompt(context: RecommendationContext) -> str:
     """Return the CrewAI task prompt for CandidateActionPlan JSON generation."""
     contract = candidate_action_plan_json_contract()
     return f"""
-You are generating a candidate coaching recommendation for AI Health Coach.
+You are a coach-copy JSON generator for AI Health Coach.
 
-Return raw JSON only. Do not return markdown, headings, bullet lists, code fences,
-commentary, explanations outside JSON, or extra fields.
+The backend has already selected the strategy, constraints, nutrition display
+approvals, and safety boundaries. Your job is to write concise user-facing copy
+inside the exact CandidateActionPlan JSON contract. Do not decide a new strategy.
 
-The backend will reject malformed JSON, unsupported fields, unsafe claims, and any
-recommendation that contradicts the approved context. ApprovedActionPlan remains
-the only renderable recommendation contract.
+Return raw JSON only. The first character of your response must be {{ and the
+last character must be }}. Do not return markdown, code fences, headings, bullet
+lists, commentary, explanations outside JSON, or extra fields.
 
 RecommendationContext JSON:
-{recommendation_context_to_json(context)}
+{recommendation_context_to_llm_json(context)}
 
 CandidateActionPlan JSON contract:
 {json.dumps(contract, indent=2)}
 
-Required output:
+Required output, with exactly these fields and no others:
 {{
   "daily_coaching_recommendation": "one user-facing sentence",
   "workout_recommendation": "one user-facing sentence",
@@ -142,12 +221,19 @@ Rules:
 - Use only the RecommendationContext JSON as source context.
 - Do not change or contradict the scenario.
 - Do not invent calorie, protein, carbohydrate, fat, mineral, or vitamin targets.
-- Do not contradict NutritionTargets approval flags or display confidence.
+- Do not mention calorie, carbohydrate, or fat ranges unless the corresponding
+  allow_* flag is true in nutrition_targets.
+- Do not mention protein ranges unless allow_protein_targets is true.
+- If nutrition_targets.confidence is Limited, use the nutrition_display_message
+  idea instead of hard macro or calorie targets.
 - Do not contradict TrainingConstraints RIR/progression/recovery guidance.
 - Treat missing nutrition fields as unknown, never zero intake.
 - Do not infer supplement use or over-supplementation from unusual nutrients.
 - Do not make unsupported causal claims.
-- Do not include internal validation, guardrail, fallback, or debug language.
+- Do not include internal validation, guardrail, fallback, schema, backend,
+  source-of-truth, reason-code, debug, model, scenario label, or dataclass names
+  in user-facing fields.
+- Candidate confidence must not exceed the RecommendationContext confidence.
 """.strip()
 
 
@@ -534,6 +620,18 @@ def validate_candidate_action_plan(
         if phrase in text:
             violations.append(f"Forbidden recommendation phrase: {phrase}")
 
+    for term in _INTERNAL_DEBUG_TERMS:
+        if term in text:
+            violations.append(
+                "CandidateActionPlan user-facing fields must not include internal "
+                f"or debug language: {term}"
+            )
+
+    if _CONFIDENCE_RANK[candidate.confidence] > _CONFIDENCE_RANK[context.confidence]:
+        violations.append(
+            "CandidateActionPlan confidence must not exceed RecommendationContext confidence."
+        )
+
     if _ZERO_NUTRITION_RE.search(text):
         violations.append("Missing nutrition must not be framed as zero intake.")
 
@@ -631,57 +729,213 @@ def build_deterministic_approved_action_plan(
     return approve_candidate_action_plan(candidate, context)
 
 
+def _fallback_reason_for_parse_error(error: ValueError) -> str:
+    message = str(error).lower()
+    if "valid json" in message:
+        return FALLBACK_REASON_MALFORMED_JSON
+    if "confidence" in message:
+        return FALLBACK_REASON_INVALID_CONFIDENCE
+    return FALLBACK_REASON_SCHEMA_MISMATCH
+
+
+def _deterministic_result(
+    context: RecommendationContext,
+    metadata: RecommendationRuntimeMetadata,
+) -> ApprovedActionPlanResult:
+    return ApprovedActionPlanResult(
+        approved_action_plan=build_deterministic_approved_action_plan(context),
+        runtime_metadata=metadata,
+    )
+
+
+def _log_recommendation_runtime(
+    context: RecommendationContext,
+    metadata: RecommendationRuntimeMetadata,
+    elapsed_ms: int,
+) -> None:
+    logger.info(
+        "recommendation_candidate_provider_result",
+        extra={
+            "user_id": context.user_id,
+            "scenario": context.scenario,
+            "configured_provider": metadata.configured_provider,
+            "selected_provider": metadata.selected_provider,
+            "model": os.getenv("CREWAI_RECOMMENDATION_MODEL", "ollama/qwen3:8b"),
+            "context_confidence": context.confidence,
+            "nutrition_confidence": context.nutrition_targets.confidence,
+            "crewai_attempted": metadata.crewai_attempted,
+            "parse_status": "valid" if metadata.candidate_valid else "invalid",
+            "validation_status": "valid" if metadata.candidate_valid else "invalid",
+            "fallback_used": metadata.fallback_used,
+            "fallback_reason": metadata.fallback_reason,
+            "validation_violations": metadata.validation_errors,
+            "elapsed_ms": elapsed_ms,
+        },
+    )
+
+
+def approve_candidate_json_or_fallback_with_metadata(
+    raw_json: str,
+    context: RecommendationContext,
+    *,
+    configured_provider: str = RECOMMENDATION_PROVIDER_DETERMINISTIC,
+    selected_provider: str = RECOMMENDATION_PROVIDER_DETERMINISTIC,
+    crewai_attempted: bool = False,
+) -> ApprovedActionPlanResult:
+    """Approve a CandidateActionPlan JSON payload or use deterministic fallback.
+
+    The metadata wrapper is internal/runtime-only. The returned ApprovedActionPlan
+    remains the renderable user-facing recommendation contract.
+    """
+    start_time = time.perf_counter()
+    try:
+        candidate = parse_candidate_action_plan(raw_json)
+        violations = validate_candidate_action_plan(candidate, context)
+        if violations:
+            metadata = RecommendationRuntimeMetadata(
+                configured_provider=configured_provider,
+                selected_provider=selected_provider,
+                crewai_attempted=crewai_attempted,
+                fallback_used=True,
+                fallback_reason=FALLBACK_REASON_VALIDATION_FAILURE,
+                candidate_valid=False,
+                validation_errors=violations,
+            )
+            result = _deterministic_result(context, metadata)
+        else:
+            metadata = RecommendationRuntimeMetadata(
+                configured_provider=configured_provider,
+                selected_provider=selected_provider,
+                crewai_attempted=crewai_attempted,
+                fallback_used=False,
+                fallback_reason=None,
+                candidate_valid=True,
+                validation_errors=[],
+            )
+            result = ApprovedActionPlanResult(
+                approved_action_plan=approve_candidate_action_plan(candidate, context),
+                runtime_metadata=metadata,
+            )
+    except ValueError as exc:
+        metadata = RecommendationRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=crewai_attempted,
+            fallback_used=True,
+            fallback_reason=_fallback_reason_for_parse_error(exc),
+            candidate_valid=False,
+            validation_errors=[str(exc)],
+        )
+        result = _deterministic_result(context, metadata)
+
+    _log_recommendation_runtime(
+        context,
+        result.runtime_metadata,
+        elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+    )
+    return result
+
+
 def approve_candidate_json_or_fallback(
     raw_json: str,
     context: RecommendationContext,
 ) -> ApprovedActionPlan:
-    """Approve a CandidateActionPlan JSON payload or use deterministic fallback.
+    """Approve a CandidateActionPlan JSON payload or use deterministic fallback."""
+    return approve_candidate_json_or_fallback_with_metadata(
+        raw_json,
+        context,
+    ).approved_action_plan
 
-    This is the backend safety boundary for CrewAI output: malformed JSON,
-    markdown-wrapped JSON, schema mismatch, or validation failure never becomes
-    user-facing approved recommendation content.
-    """
+
+def approve_candidate_provider_or_fallback_with_metadata(
+    candidate_provider: CandidateActionPlanProvider,
+    context: RecommendationContext,
+    *,
+    configured_provider: str = RECOMMENDATION_PROVIDER_CREWAI,
+    selected_provider: str = RECOMMENDATION_PROVIDER_CREWAI,
+) -> ApprovedActionPlanResult:
+    """Run a CandidateActionPlan provider behind the backend safety boundary."""
+    start_time = time.perf_counter()
     try:
-        candidate = parse_candidate_action_plan(raw_json)
-        return approve_candidate_action_plan(candidate, context)
-    except ValueError:
-        return build_deterministic_approved_action_plan(context)
+        raw_json = candidate_provider(context)
+    except Exception as exc:
+        metadata = RecommendationRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=True,
+            fallback_used=True,
+            fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
+            candidate_valid=False,
+            validation_errors=[type(exc).__name__],
+        )
+        result = _deterministic_result(context, metadata)
+        _log_recommendation_runtime(
+            context,
+            result.runtime_metadata,
+            elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+        )
+        return result
+
+    if not isinstance(raw_json, str):
+        metadata = RecommendationRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=True,
+            fallback_used=True,
+            fallback_reason=FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT,
+            candidate_valid=False,
+            validation_errors=[
+                "CandidateActionPlan provider returned non-string output."
+            ],
+        )
+        result = _deterministic_result(context, metadata)
+        _log_recommendation_runtime(
+            context,
+            result.runtime_metadata,
+            elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+        )
+        return result
+
+    return approve_candidate_json_or_fallback_with_metadata(
+        raw_json,
+        context,
+        configured_provider=configured_provider,
+        selected_provider=selected_provider,
+        crewai_attempted=True,
+    )
 
 
 def approve_candidate_provider_or_fallback(
     candidate_provider: CandidateActionPlanProvider,
     context: RecommendationContext,
 ) -> ApprovedActionPlan:
-    """Run a CandidateActionPlan provider behind the backend safety boundary.
+    """Run a CandidateActionPlan provider and return only the approved plan."""
+    return approve_candidate_provider_or_fallback_with_metadata(
+        candidate_provider,
+        context,
+    ).approved_action_plan
 
-    The provider may be CrewAI or a fake provider in tests. Provider exceptions,
-    non-string output, malformed JSON, schema mismatch, and validation failures
-    all fall back to deterministic approved recommendations.
-    """
-    try:
-        raw_json = candidate_provider(context)
-    except Exception:
-        return build_deterministic_approved_action_plan(context)
 
-    if not isinstance(raw_json, str):
-        return build_deterministic_approved_action_plan(context)
-
-    return approve_candidate_json_or_fallback(raw_json, context)
+def build_crewai_approved_action_plan_with_metadata(
+    health_state: UserHealthState,
+) -> ApprovedActionPlanResult:
+    """Build an ApprovedActionPlan through the CrewAI CandidateActionPlan path."""
+    context = build_recommendation_context(health_state)
+    return approve_candidate_provider_or_fallback_with_metadata(
+        generate_crewai_candidate_action_plan_json,
+        context,
+        configured_provider=RECOMMENDATION_PROVIDER_CREWAI,
+        selected_provider=RECOMMENDATION_PROVIDER_CREWAI,
+    )
 
 
 def build_crewai_approved_action_plan(
     health_state: UserHealthState,
 ) -> ApprovedActionPlan:
-    """Build an ApprovedActionPlan through the CrewAI CandidateActionPlan path.
-
-    CrewAI output is never trusted directly. It must pass the same parse, schema,
-    scenario, target, and safety validation as any other candidate JSON.
-    """
-    context = build_recommendation_context(health_state)
-    return approve_candidate_provider_or_fallback(
-        generate_crewai_candidate_action_plan_json,
-        context,
-    )
+    """Build an ApprovedActionPlan through the CrewAI CandidateActionPlan path."""
+    return build_crewai_approved_action_plan_with_metadata(
+        health_state
+    ).approved_action_plan
 
 
 def _configured_candidate_provider() -> str:
@@ -695,6 +949,49 @@ def _configured_candidate_provider() -> str:
     )
 
 
+def build_configured_approved_action_plan_with_metadata(
+    health_state: UserHealthState,
+) -> ApprovedActionPlanResult:
+    """Build an ApprovedActionPlan and runtime metadata for observability."""
+    context = build_recommendation_context(health_state)
+    provider = _configured_candidate_provider()
+
+    if provider == RECOMMENDATION_PROVIDER_DETERMINISTIC:
+        metadata = RecommendationRuntimeMetadata(
+            configured_provider=provider,
+            selected_provider=RECOMMENDATION_PROVIDER_DETERMINISTIC,
+            crewai_attempted=False,
+            fallback_used=False,
+            fallback_reason=FALLBACK_REASON_DETERMINISTIC_SELECTED,
+            candidate_valid=True,
+            validation_errors=[],
+        )
+        result = _deterministic_result(context, metadata)
+        _log_recommendation_runtime(context, result.runtime_metadata, elapsed_ms=0)
+        return result
+
+    if provider == RECOMMENDATION_PROVIDER_CREWAI:
+        return approve_candidate_provider_or_fallback_with_metadata(
+            generate_crewai_candidate_action_plan_json,
+            context,
+            configured_provider=provider,
+            selected_provider=RECOMMENDATION_PROVIDER_CREWAI,
+        )
+
+    metadata = RecommendationRuntimeMetadata(
+        configured_provider=provider,
+        selected_provider=RECOMMENDATION_PROVIDER_DETERMINISTIC,
+        crewai_attempted=False,
+        fallback_used=True,
+        fallback_reason=FALLBACK_REASON_INVALID_PROVIDER,
+        candidate_valid=True,
+        validation_errors=[f"Unsupported provider: {provider}"],
+    )
+    result = _deterministic_result(context, metadata)
+    _log_recommendation_runtime(context, result.runtime_metadata, elapsed_ms=0)
+    return result
+
+
 def build_configured_approved_action_plan(
     health_state: UserHealthState,
 ) -> ApprovedActionPlan:
@@ -704,12 +1001,9 @@ def build_configured_approved_action_plan(
     fall back to deterministic behavior so local runtime, tests, and staging stay
     safe unless CrewAI is explicitly enabled.
     """
-    provider = _configured_candidate_provider()
-
-    if provider == RECOMMENDATION_PROVIDER_CREWAI:
-        return build_crewai_approved_action_plan(health_state)
-
-    return build_approved_action_plan(health_state)
+    return build_configured_approved_action_plan_with_metadata(
+        health_state
+    ).approved_action_plan
 
 
 def build_approved_action_plan(

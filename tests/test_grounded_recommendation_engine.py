@@ -884,3 +884,259 @@ def test_daily_endpoint_response_shape_stable_with_configured_provider(
     assert payload["success"] is True
     assert payload["user_id"] == 105
     assert payload["scenario"] == "data_quality_limited"
+
+
+def test_llm_context_serializer_hides_unapproved_targets_for_user_105(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[105])
+    llm_json = recommendation_engine_service.recommendation_context_to_llm_json(context)
+    payload = recommendation_engine_service.json.loads(llm_json)
+    targets = payload["nutrition_targets"]
+
+    assert targets["confidence"] == "Limited"
+    assert targets["allow_calorie_targets"] is False
+    assert targets["allow_carbohydrate_targets"] is False
+    assert targets["allow_fat_targets"] is False
+    assert targets["calorie_target_min"] is None
+    assert targets["calorie_target_max"] is None
+    assert targets["carbohydrate_grams_min"] is None
+    assert targets["carbohydrate_grams_max"] is None
+    assert targets["fat_grams_min"] is None
+    assert targets["fat_grams_max"] is None
+    assert targets["allow_protein_targets"] is True
+    assert targets["protein_grams_min"] is not None
+    assert (
+        "limited until logging is more complete" in targets["nutrition_display_message"]
+    )
+
+
+def test_crewai_prompt_frames_model_as_json_copy_generator(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[102])
+
+    prompt = build_crewai_candidate_action_plan_prompt(context)
+
+    assert "coach-copy JSON generator" in prompt
+    assert "first character of your response must be {" in prompt
+    assert "last character must be }" in prompt
+    assert "Do not decide a new strategy" in prompt
+    assert "Do not return markdown" in prompt
+    assert "exactly these fields and no others" in prompt
+
+
+def test_candidate_validator_rejects_confidence_above_context(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[105])
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Improve logging completeness before stronger changes.",
+      "workout_recommendation": "Maintain manageable training while logging improves.",
+      "nutrition_action": "Verify food entries and unusual nutrient values.",
+      "rationale": "Logging quality should improve before stronger conclusions.",
+      "confidence": "High"
+    }
+    """
+
+    candidate = parse_candidate_action_plan(raw_json)
+    violations = validate_candidate_action_plan(candidate, context)
+
+    assert any("confidence must not exceed" in violation for violation in violations)
+
+
+def test_candidate_validator_rejects_internal_debug_language(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[102])
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "The backend validation fallback selected the safe option.",
+      "workout_recommendation": "Continue manageable training progression.",
+      "nutrition_action": "Keep nutrition logging consistent.",
+      "rationale": "The schema and reason codes support this output.",
+      "confidence": "High"
+    }
+    """
+
+    candidate = parse_candidate_action_plan(raw_json)
+    violations = validate_candidate_action_plan(candidate, context)
+
+    assert any("internal or debug language" in violation for violation in violations)
+
+
+def test_runtime_metadata_deterministic_mode(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "deterministic")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.scenario == "aligned_managed"
+    assert result.runtime_metadata.configured_provider == "deterministic"
+    assert result.runtime_metadata.selected_provider == "deterministic"
+    assert result.runtime_metadata.crewai_attempted is False
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.fallback_reason == "deterministic_selected"
+    assert result.runtime_metadata.candidate_valid is True
+    assert result.runtime_metadata.validation_errors == []
+
+
+def test_runtime_metadata_invalid_provider_falls_back(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "not-real")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.scenario == "aligned_managed"
+    assert result.runtime_metadata.configured_provider == "not-real"
+    assert result.runtime_metadata.selected_provider == "deterministic"
+    assert result.runtime_metadata.crewai_attempted is False
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "invalid_provider"
+
+
+def test_runtime_metadata_crewai_success(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Maintain the current direction and progress gradually.",
+      "workout_recommendation": "Continue manageable training progression.",
+      "nutrition_action": "Keep nutrition logging consistent and review protein support.",
+      "rationale": "Recovery and training are aligned enough to favor consistency.",
+      "confidence": "High"
+    }
+    """
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        lambda context: raw_json,
+    )
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.daily_coaching_recommendation.startswith(
+        "Maintain"
+    )
+    assert result.runtime_metadata.selected_provider == "crewai"
+    assert result.runtime_metadata.crewai_attempted is True
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.fallback_reason is None
+    assert result.runtime_metadata.candidate_valid is True
+
+
+def test_runtime_metadata_provider_exception_falls_back(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    def failing_provider(context):
+        raise RuntimeError("CrewAI unavailable")
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        failing_provider,
+    )
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.scenario == "aligned_managed"
+    assert result.runtime_metadata.crewai_attempted is True
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "provider_exception"
+
+
+def test_runtime_metadata_malformed_json_falls_back(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        lambda context: "not json",
+    )
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.scenario == "aligned_managed"
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "malformed_json"
+
+
+def test_runtime_metadata_validation_failure_falls_back(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Deload this week despite stable recovery.",
+      "workout_recommendation": "Reduce intensity across all work sets.",
+      "nutrition_action": "Keep nutrition consistent.",
+      "rationale": "Intervention is needed.",
+      "confidence": "High"
+    }
+    """
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        lambda context: raw_json,
+    )
+
+    result = recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+        health_states[102]
+    )
+
+    assert result.approved_action_plan.scenario == "aligned_managed"
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "validation_failure"
+    assert result.runtime_metadata.validation_errors
+
+
+def test_build_configured_approved_action_plan_return_type_remains_plan(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "deterministic")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    approved = build_configured_approved_action_plan(health_states[102])
+
+    assert not hasattr(approved, "runtime_metadata")
+    assert approved.scenario == "aligned_managed"
+
+
+def test_runtime_metadata_logging_is_structured(tmp_path, monkeypatch, caplog):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        lambda context: "not json",
+    )
+
+    with caplog.at_level("INFO", logger="services.recommendation_engine_service"):
+        recommendation_engine_service.build_configured_approved_action_plan_with_metadata(
+            health_states[105]
+        )
+
+    records = [
+        record
+        for record in caplog.records
+        if record.message == "recommendation_candidate_provider_result"
+    ]
+    assert records
+    record = records[-1]
+    assert record.user_id == 105
+    assert record.scenario == "data_quality_limited"
+    assert record.configured_provider == "crewai"
+    assert record.selected_provider == "crewai"
+    assert record.fallback_used is True
+    assert record.fallback_reason == "malformed_json"
+    assert record.nutrition_confidence == "Limited"
+    assert isinstance(record.elapsed_ms, int)

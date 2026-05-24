@@ -38,3 +38,20 @@ class ApprovedActionPlan:
     confidence: str
     scenario: str
     reason_codes: list[str] = field(default_factory=list)
+
+
+@dataclass
+class RecommendationRuntimeMetadata:
+    configured_provider: str
+    selected_provider: str
+    crewai_attempted: bool
+    fallback_used: bool
+    fallback_reason: str | None
+    candidate_valid: bool
+    validation_errors: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ApprovedActionPlanResult:
+    approved_action_plan: ApprovedActionPlan
+    runtime_metadata: RecommendationRuntimeMetadata

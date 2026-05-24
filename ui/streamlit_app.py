@@ -32,6 +32,129 @@ def api_post(path: str, payload: dict | None = None) -> dict:
     return response.json()
 
 
+def humanize_label(value: str | None) -> str:
+    if not value:
+        return "Unknown"
+
+    return value.replace("_", " ").title()
+
+
+def scenario_display_name(scenario: str | None) -> str:
+    labels = {
+        "recovery_limited": "Recovery Priority",
+        "aligned_managed": "Stable / Managed",
+        "nutrition_training_mismatch": "Nutrition + Training Mismatch",
+        "improving_after_deload": "Improving After Deload",
+        "data_quality_limited": "Data Quality Limited",
+    }
+
+    return labels.get(scenario or "", humanize_label(scenario))
+
+
+def format_range(
+    minimum: int | float | None,
+    maximum: int | float | None,
+    unit: str,
+) -> str | None:
+    if minimum is None or maximum is None:
+        return None
+
+    return f"{minimum}-{maximum} {unit}"
+
+
+def display_nutrition_targets(nutrition_targets: dict) -> None:
+    target_rows = []
+
+    calorie_range = format_range(
+        nutrition_targets.get("calorie_target_min"),
+        nutrition_targets.get("calorie_target_max"),
+        "calories/day",
+    )
+
+    protein_range = format_range(
+        nutrition_targets.get("protein_grams_min"),
+        nutrition_targets.get("protein_grams_max"),
+        "g/day",
+    )
+
+    carbohydrate_range = format_range(
+        nutrition_targets.get("carbohydrate_grams_min"),
+        nutrition_targets.get("carbohydrate_grams_max"),
+        "g/day",
+    )
+
+    fat_range = format_range(
+        nutrition_targets.get("fat_grams_min"),
+        nutrition_targets.get("fat_grams_max"),
+        "g/day",
+    )
+
+    if calorie_range:
+        target_rows.append(
+            {
+                "Target": "Calories",
+                "Range": calorie_range,
+            }
+        )
+
+    if protein_range:
+        target_rows.append(
+            {
+                "Target": "Protein",
+                "Range": protein_range,
+            }
+        )
+
+    if carbohydrate_range:
+        target_rows.append(
+            {
+                "Target": "Carbohydrates",
+                "Range": carbohydrate_range,
+            }
+        )
+
+    if fat_range:
+        target_rows.append(
+            {
+                "Target": "Fat",
+                "Range": fat_range,
+            }
+        )
+
+    if target_rows:
+        st.subheader("Nutrition Targets")
+        st.dataframe(
+            pd.DataFrame(target_rows),
+            width="stretch",
+            hide_index=True,
+        )
+    else:
+        st.info("Nutrition targets are limited until logging confidence improves.")
+
+
+def display_training_constraints(training_constraints: dict) -> None:
+    recommended_rir_min = training_constraints.get("recommended_rir_min")
+    recommended_rir_max = training_constraints.get("recommended_rir_max")
+
+    if recommended_rir_min is not None and recommended_rir_max is not None:
+        st.caption(
+            f"Recommended effort today: RIR {recommended_rir_min}-{recommended_rir_max}"
+        )
+
+    low_rir_guidance = training_constraints.get("low_rir_guidance")
+    progression_guidance = training_constraints.get("progression_guidance")
+    recovery_constraint = training_constraints.get("recovery_constraint")
+
+    if low_rir_guidance:
+        st.write(f"**Effort guidance:** {low_rir_guidance}")
+
+    if progression_guidance:
+        st.write(f"**Progression guidance:** {progression_guidance}")
+
+    if recovery_constraint:
+        st.write(f"**Recovery constraint:** {recovery_constraint}")
+
+
 # =====================================
 # Session State Initialization
 # =====================================
@@ -202,6 +325,78 @@ st.write(
 
 if st.session_state.health_report_timestamp:
     st.caption(f"Last Generated: {st.session_state.health_report_timestamp}")
+
+# =====================================
+# Daily Grounded Recommendation
+# =====================================
+
+st.header("✅ Daily Grounded Recommendation")
+
+try:
+    recommendation_data = api_get(f"/recommendations/daily/{user_id}")
+
+    if recommendation_data.get("success"):
+        scenario = recommendation_data.get("scenario")
+        confidence = recommendation_data.get("confidence", "Unknown")
+        approved_plan = recommendation_data.get("approved_action_plan", {})
+        nutrition_targets = recommendation_data.get("nutrition_targets", {})
+        training_constraints = recommendation_data.get("training_constraints", {})
+
+        col1, col2 = st.columns(2)
+
+        col1.metric(
+            "Status",
+            scenario_display_name(scenario),
+        )
+
+        col2.metric(
+            "Confidence",
+            confidence,
+        )
+
+        st.subheader("Daily Coaching Recommendation")
+        st.write(
+            approved_plan.get(
+                "daily_coaching_recommendation",
+                "No daily coaching recommendation available.",
+            )
+        )
+
+        st.subheader("Workout Recommendation")
+        st.write(
+            approved_plan.get(
+                "workout_recommendation",
+                "No workout recommendation available.",
+            )
+        )
+
+        st.subheader("Nutrition Action")
+        st.write(
+            approved_plan.get(
+                "nutrition_action",
+                "No nutrition action available.",
+            )
+        )
+
+        st.subheader("Why")
+        st.write(
+            approved_plan.get(
+                "rationale",
+                "No rationale available.",
+            )
+        )
+
+        display_nutrition_targets(nutrition_targets)
+        display_training_constraints(training_constraints)
+
+        with st.expander("Developer details"):
+            st.json(recommendation_data)
+
+    else:
+        st.warning("No daily recommendation is available for this user yet.")
+
+except requests.RequestException as exc:
+    st.error(f"Failed to load daily recommendation: {exc}")
 
 
 # =====================================

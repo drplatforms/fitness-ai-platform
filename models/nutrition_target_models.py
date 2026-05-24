@@ -13,4 +13,6 @@ class NutritionTargets:
     fat_grams_min: int | None
     fat_grams_max: int | None
     confidence: str
+    allow_calorie_targets: bool = False
+    allow_protein_targets: bool = False
     reason_codes: list[str] = field(default_factory=list)

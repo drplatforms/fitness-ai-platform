@@ -1,5 +1,12 @@
+from dataclasses import asdict
+
 from models.nutrition_target_models import NutritionTargets
 from models.user_state_models import UserHealthState
+
+UNKNOWN = "Unknown"
+LIMITED_CONFIDENCE = "Limited"
+MODERATE_CONFIDENCE = "Moderate"
+HIGH_CONFIDENCE = "High"
 
 
 def _as_float(value) -> float | None:
@@ -46,26 +53,56 @@ def _carb_factors(training_load: str) -> tuple[float, float, str]:
     return 0.5, 1.0, "inactive_or_unknown_training_carb_range"
 
 
+def _is_unknown(value) -> bool:
+    return value == UNKNOWN or value is None
+
+
+def _has_incomplete_nutrition_fields(health_state: UserHealthState) -> bool:
+    nutrition_state = health_state.nutrition_state
+    return (
+        _is_unknown(nutrition_state.calories)
+        or nutrition_state.calorie_status == UNKNOWN
+        or nutrition_state.protein_status == UNKNOWN
+        or _is_unknown(nutrition_state.protein_grams)
+        or _is_unknown(nutrition_state.carbohydrate_grams)
+        or _is_unknown(nutrition_state.fat_grams)
+        or "Incomplete" in nutrition_state.recovery_nutrition_status
+    )
+
+
+def _target_confidence(
+    health_state: UserHealthState, body_weight: float
+) -> tuple[str, list[str]]:
+    nutrition_state = health_state.nutrition_state
+    reason_codes: list[str] = []
+
+    if _has_incomplete_nutrition_fields(health_state):
+        reason_codes.append("nutrition_logging_incomplete")
+        return LIMITED_CONFIDENCE, reason_codes
+
+    if not nutrition_state.has_nutrition_data:
+        reason_codes.append("nutrition_logging_missing")
+        return LIMITED_CONFIDENCE, reason_codes
+
+    if health_state.activity_level and health_state.primary_goal and body_weight:
+        return HIGH_CONFIDENCE, reason_codes
+
+    reason_codes.append("profile_context_partial")
+    return MODERATE_CONFIDENCE, reason_codes
+
+
 def build_nutrition_targets(health_state: UserHealthState) -> NutritionTargets:
     """Calculate transparent v1 nutrition target ranges from factual health state.
 
-    These are planning ranges, not medical prescriptions. If body weight is missing,
-    target grams/calories stay unavailable rather than being invented.
+    Missing nutrition fields remain unknown, never zero. Protein ranges can be
+    calculated when body weight is available. Calorie targets are calculated for
+    internal planning, but should only be exposed to users when confidence is
+    Moderate or High.
     """
     body_weight = _as_float(health_state.latest_body_weight) or _as_float(
         health_state.starting_weight
     )
     reason_codes: list[str] = []
-
-    nutrition_state = health_state.nutrition_state
-    incomplete_nutrition = (
-        nutrition_state.calories == "Unknown"
-        or nutrition_state.calorie_status == "Unknown"
-        or nutrition_state.protein_status == "Unknown"
-        or nutrition_state.carbohydrate_grams == "Unknown"
-        or nutrition_state.fat_grams == "Unknown"
-        or "Incomplete" in nutrition_state.recovery_nutrition_status
-    )
 
     if body_weight is None:
         return NutritionTargets(
@@ -78,7 +115,9 @@ def build_nutrition_targets(health_state: UserHealthState) -> NutritionTargets:
             carbohydrate_grams_max=None,
             fat_grams_min=None,
             fat_grams_max=None,
-            confidence="Low",
+            confidence=LIMITED_CONFIDENCE,
+            allow_calorie_targets=False,
+            allow_protein_targets=False,
             reason_codes=["missing_body_weight"],
         )
 
@@ -98,20 +137,18 @@ def build_nutrition_targets(health_state: UserHealthState) -> NutritionTargets:
     fat_min = _round_to_nearest_10(body_weight * 0.3)
     fat_max = _round_to_nearest_10(body_weight * 0.45)
 
+    confidence, confidence_reasons = _target_confidence(health_state, body_weight)
+    allow_calorie_targets = confidence in {MODERATE_CONFIDENCE, HIGH_CONFIDENCE}
+
     reason_codes.extend(
         [
             "body_weight_available",
             goal_reason,
             carb_reason,
             f"activity_level_{health_state.activity_level or 'unknown'}",
+            *confidence_reasons,
         ]
     )
-
-    confidence = "Moderate"
-    if not incomplete_nutrition and nutrition_state.has_nutrition_data:
-        confidence = "High"
-    else:
-        reason_codes.append("nutrition_logging_incomplete")
 
     return NutritionTargets(
         body_weight_lb=round(body_weight, 1),
@@ -124,5 +161,22 @@ def build_nutrition_targets(health_state: UserHealthState) -> NutritionTargets:
         fat_grams_min=fat_min,
         fat_grams_max=fat_max,
         confidence=confidence,
+        allow_calorie_targets=allow_calorie_targets,
+        allow_protein_targets=True,
         reason_codes=reason_codes,
     )
+
+
+def nutrition_targets_to_user_dict(targets: NutritionTargets) -> dict:
+    """Return user-facing target data with confidence gates applied."""
+    payload = asdict(targets)
+
+    if not targets.allow_calorie_targets:
+        payload["calorie_target_min"] = None
+        payload["calorie_target_max"] = None
+
+    if not targets.allow_protein_targets:
+        payload["protein_grams_min"] = None
+        payload["protein_grams_max"] = None
+
+    return payload

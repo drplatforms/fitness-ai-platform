@@ -144,3 +144,115 @@ def test_candidate_validator_rejects_known_bad_recommendations(tmp_path, monkeyp
     assert len(violations) >= 3
     with pytest.raises(ValueError):
         approve_candidate_action_plan(candidate, context)
+
+
+def test_daily_approved_recommendation_endpoint_smoke(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+
+    client = TestClient(app)
+    response = client.get("/recommendations/daily/102")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["user_id"] == 102
+    assert payload["scenario"] == "aligned_managed"
+    assert payload["approved_action_plan"]["daily_coaching_recommendation"]
+    assert payload["rendered_recommendation"]
+
+
+def test_limited_confidence_nutrition_does_not_expose_hard_calorie_targets(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[105])
+    approved = build_approved_action_plan(health_states[105])
+    rendered = render_approved_action_plan(approved).lower()
+
+    assert context.nutrition_targets.confidence == "Limited"
+    assert context.nutrition_targets.allow_calorie_targets is False
+    assert "calories/day" not in rendered
+    assert "kcal" not in rendered
+
+
+def test_daily_endpoint_hides_limited_confidence_calorie_targets(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+
+    client = TestClient(app)
+    response = client.get("/recommendations/daily/105")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["scenario"] == "data_quality_limited"
+    assert payload["nutrition_targets"]["confidence"] == "Limited"
+    assert payload["nutrition_targets"]["allow_calorie_targets"] is False
+    assert payload["nutrition_targets"]["calorie_target_min"] is None
+    assert payload["nutrition_targets"]["calorie_target_max"] is None
+
+
+def test_candidate_validator_rejects_disallowed_numeric_calorie_recommendations(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[105])
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Improve logging quality first.",
+      "workout_recommendation": "Maintain manageable training.",
+      "nutrition_action": "Eat 1800-2000 calories/day while logging improves.",
+      "rationale": "Logging is incomplete, so verify entries.",
+      "confidence": "Low"
+    }
+    """
+
+    candidate = parse_candidate_action_plan(raw_json)
+    violations = validate_candidate_action_plan(candidate, context)
+
+    assert any(
+        "Numeric calorie recommendations are not allowed" in v for v in violations
+    )
+
+
+def test_candidate_validator_rejects_numeric_protein_outside_targets(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[102])
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Maintain current direction.",
+      "workout_recommendation": "Progress gradually while recovery markers remain stable.",
+      "nutrition_action": "Use protein 20-40 g/day as the target.",
+      "rationale": "Recovery, training, and nutrition appear aligned.",
+      "confidence": "High"
+    }
+    """
+
+    candidate = parse_candidate_action_plan(raw_json)
+    violations = validate_candidate_action_plan(candidate, context)
+
+    assert any("protein recommendation is outside" in v for v in violations)
+
+
+def test_missing_nutrition_fields_remain_unknown_not_zero(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    health_state = health_states[105]
+    context = build_recommendation_context(health_state)
+    approved = build_approved_action_plan(health_state)
+    rendered = render_approved_action_plan(approved).lower()
+
+    assert health_state.nutrition_state.calories == "Unknown"
+    assert context.nutrition_targets.confidence == "Limited"
+    assert "0 kcal" not in rendered
+    assert "0 calories" not in rendered
+    assert "0 g protein" not in rendered

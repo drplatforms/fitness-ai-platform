@@ -12,7 +12,7 @@ from services.nutrition_target_service import (
 )
 from services.recommendation_engine_service import (
     build_approved_action_plan,
-    build_crewai_approved_action_plan,
+    build_configured_approved_action_plan,
     render_approved_action_plan,
 )
 from services.report_service import save_health_report
@@ -729,7 +729,7 @@ def generate_health_report(user_id):
 
     health_state = build_user_health_state(user_id)
     coaching_decision = build_coaching_decision(health_state)
-    approved_action_plan = build_crewai_approved_action_plan(health_state)
+    approved_action_plan = build_configured_approved_action_plan(health_state)
 
     # -----------------------------
     # Nutrition Summary

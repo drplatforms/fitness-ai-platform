@@ -10,6 +10,7 @@ from services.recommendation_engine_service import (
     approve_candidate_json_or_fallback,
     approve_candidate_provider_or_fallback,
     build_approved_action_plan,
+    build_configured_approved_action_plan,
     build_crewai_approved_action_plan,
     build_crewai_candidate_action_plan_prompt,
     build_recommendation_context,
@@ -205,6 +206,7 @@ def test_daily_approved_recommendation_endpoint_smoke(tmp_path, monkeypatch):
 def test_daily_endpoint_uses_crewai_candidate_provider_when_valid(
     tmp_path, monkeypatch
 ):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
     seed_qa_scenarios()
 
@@ -746,3 +748,139 @@ def test_candidate_provider_non_string_output_falls_back(tmp_path, monkeypatch):
 
     assert approved.scenario == "aligned_managed"
     assert "Maintain the current direction" in approved.daily_coaching_recommendation
+
+
+def test_configured_provider_defaults_to_deterministic(tmp_path, monkeypatch):
+    monkeypatch.delenv("RECOMMENDATION_CANDIDATE_PROVIDER", raising=False)
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    def fail_if_called(health_state):
+        raise AssertionError("CrewAI provider should not be called by default")
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "build_crewai_approved_action_plan",
+        fail_if_called,
+    )
+
+    approved = build_configured_approved_action_plan(health_states[102])
+
+    assert approved.scenario == "aligned_managed"
+    assert "Maintain the current direction" in approved.daily_coaching_recommendation
+
+
+def test_configured_deterministic_provider_does_not_call_crewai(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "deterministic")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    def fail_if_called(health_state):
+        raise AssertionError("CrewAI provider should not be called for deterministic")
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "build_crewai_approved_action_plan",
+        fail_if_called,
+    )
+
+    approved = build_configured_approved_action_plan(health_states[105])
+
+    assert approved.scenario == "data_quality_limited"
+    assert "Verify" in approved.nutrition_action
+
+
+def test_configured_crewai_provider_uses_fake_crewai_provider(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    raw_json = """
+    {
+      "daily_coaching_recommendation": "Use the configured CrewAI candidate while maintaining steady progress.",
+      "workout_recommendation": "Continue manageable training progression.",
+      "nutrition_action": "Keep nutrition logging consistent and review protein support.",
+      "rationale": "The configured fake CrewAI provider returned valid bounded JSON.",
+      "confidence": "High"
+    }
+    """
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        lambda context: raw_json,
+    )
+
+    approved = build_configured_approved_action_plan(health_states[102])
+
+    assert approved.scenario == "aligned_managed"
+    assert approved.daily_coaching_recommendation.startswith(
+        "Use the configured CrewAI candidate"
+    )
+
+
+def test_configured_provider_exception_falls_back_deterministically(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "crewai")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    def failing_provider(context):
+        raise RuntimeError("CrewAI unavailable")
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "generate_crewai_candidate_action_plan_json",
+        failing_provider,
+    )
+
+    approved = build_configured_approved_action_plan(health_states[102])
+
+    assert approved.scenario == "aligned_managed"
+    assert "Maintain the current direction" in approved.daily_coaching_recommendation
+
+
+def test_invalid_configured_provider_falls_back_to_deterministic(tmp_path, monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "invalid-provider")
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    def fail_if_called(health_state):
+        raise AssertionError("Invalid provider should not call CrewAI")
+
+    monkeypatch.setattr(
+        recommendation_engine_service,
+        "build_crewai_approved_action_plan",
+        fail_if_called,
+    )
+
+    approved = build_configured_approved_action_plan(health_states[102])
+
+    assert approved.scenario == "aligned_managed"
+    assert "Maintain the current direction" in approved.daily_coaching_recommendation
+
+
+def test_daily_endpoint_response_shape_stable_with_configured_provider(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "deterministic")
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+
+    client = TestClient(app)
+    response = client.get("/recommendations/daily/105")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert set(payload) == {
+        "success",
+        "user_id",
+        "scenario",
+        "confidence",
+        "nutrition_targets",
+        "training_constraints",
+        "approved_action_plan",
+        "rendered_recommendation",
+    }
+    assert payload["success"] is True
+    assert payload["user_id"] == 105
+    assert payload["scenario"] == "data_quality_limited"

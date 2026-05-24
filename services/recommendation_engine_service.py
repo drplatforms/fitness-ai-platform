@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from collections.abc import Callable
 from dataclasses import asdict
@@ -24,6 +25,9 @@ CANDIDATE_ACTION_PLAN_REQUIRED_FIELDS = {
 CANDIDATE_ACTION_PLAN_ALLOWED_FIELDS = CANDIDATE_ACTION_PLAN_REQUIRED_FIELDS
 CANDIDATE_ACTION_PLAN_CONFIDENCE_VALUES = {"Low", "Moderate", "High"}
 CandidateActionPlanProvider = Callable[[RecommendationContext], str]
+RECOMMENDATION_CANDIDATE_PROVIDER_ENV = "RECOMMENDATION_CANDIDATE_PROVIDER"
+RECOMMENDATION_PROVIDER_DETERMINISTIC = "deterministic"
+RECOMMENDATION_PROVIDER_CREWAI = "crewai"
 
 _FORBIDDEN_RECOMMENDATION_PHRASES = [
     "high-rir (0-1)",
@@ -164,8 +168,8 @@ def generate_crewai_candidate_action_plan_json(context: RecommendationContext) -
     from crewai import LLM, Agent, Crew, Task
 
     llm = LLM(
-        model="ollama/qwen3:8b",
-        base_url="http://localhost:11434",
+        model=os.getenv("CREWAI_RECOMMENDATION_MODEL", "ollama/qwen3:8b"),
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     )
 
     recommendation_agent = Agent(
@@ -678,6 +682,34 @@ def build_crewai_approved_action_plan(
         generate_crewai_candidate_action_plan_json,
         context,
     )
+
+
+def _configured_candidate_provider() -> str:
+    return (
+        os.getenv(
+            RECOMMENDATION_CANDIDATE_PROVIDER_ENV,
+            RECOMMENDATION_PROVIDER_DETERMINISTIC,
+        )
+        .strip()
+        .lower()
+    )
+
+
+def build_configured_approved_action_plan(
+    health_state: UserHealthState,
+) -> ApprovedActionPlan:
+    """Build an ApprovedActionPlan using the configured runtime provider.
+
+    Defaults to deterministic candidate generation. Invalid provider settings also
+    fall back to deterministic behavior so local runtime, tests, and staging stay
+    safe unless CrewAI is explicitly enabled.
+    """
+    provider = _configured_candidate_provider()
+
+    if provider == RECOMMENDATION_PROVIDER_CREWAI:
+        return build_crewai_approved_action_plan(health_state)
+
+    return build_approved_action_plan(health_state)
 
 
 def build_approved_action_plan(

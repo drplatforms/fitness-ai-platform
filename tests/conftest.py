@@ -32,12 +32,18 @@ def fake_crewai_recommendation_provider(monkeypatch):
         fake_build_crewai_approved_action_plan,
     )
 
+    def fake_build_configured_approved_action_plan(health_state):
+        return recommendation_engine_service.build_configured_approved_action_plan(
+            health_state
+        )
+
     import api.routes.recommendations as recommendation_routes
 
     monkeypatch.setattr(
         recommendation_routes,
-        "build_crewai_approved_action_plan",
-        fake_build_crewai_approved_action_plan,
+        "build_configured_approved_action_plan",
+        fake_build_configured_approved_action_plan,
+        raising=False,
     )
 
     try:
@@ -45,6 +51,12 @@ def fake_crewai_recommendation_provider(monkeypatch):
     except ImportError:
         return
 
+    monkeypatch.setattr(
+        coordinator_service,
+        "build_configured_approved_action_plan",
+        fake_build_configured_approved_action_plan,
+        raising=False,
+    )
     monkeypatch.setattr(
         coordinator_service,
         "build_crewai_approved_action_plan",

@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from services.nutrition_target_service import nutrition_targets_to_user_dict
 from services.recommendation_engine_service import (
-    build_crewai_approved_action_plan,
+    build_configured_approved_action_plan,
     build_recommendation_context,
     render_approved_action_plan,
 )
@@ -17,7 +17,7 @@ router = APIRouter()
 def daily_recommendation(user_id: int):
     health_state = build_user_health_state(user_id)
     context = build_recommendation_context(health_state)
-    approved_plan = build_crewai_approved_action_plan(health_state)
+    approved_plan = build_configured_approved_action_plan(health_state)
 
     return {
         "success": True,

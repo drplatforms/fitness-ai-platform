@@ -16,7 +16,7 @@ def api_get(path: str, params: dict | None = None) -> dict:
     response = requests.get(
         f"{API_BASE_URL}{path}",
         params=params,
-        timeout=30,
+        timeout=120,
     )
     response.raise_for_status()
     return response.json()

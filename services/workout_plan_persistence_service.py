@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
+from datetime import datetime
 from typing import Any
 
 from database import get_connection
@@ -23,6 +24,18 @@ WORKOUT_PLAN_STATUSES = {
     "abandoned",
     "cancelled",
 }
+
+
+class WorkoutPlanPersistenceError(Exception):
+    """Base error for workout plan persistence workflows."""
+
+
+class WorkoutPlanNotFoundError(WorkoutPlanPersistenceError):
+    """Raised when a workout plan instance cannot be found."""
+
+
+class WorkoutPlanInvalidStatusError(WorkoutPlanPersistenceError):
+    """Raised when a workout plan instance cannot transition as requested."""
 
 
 def _encode_json(value: Any) -> str:
@@ -396,4 +409,163 @@ def select_current_workout_plan(user_id: int) -> dict:
         "planned_exercises": planned_exercises,
         "execution_session": execution_session,
         "approved_workout_plan": approved_plan,
+    }
+
+
+def start_selected_workout_plan(workout_plan_instance_id: int) -> dict:
+    """Transition a selected workout plan into a started execution session.
+
+    This is the first execution transition only. It creates a draft
+    workout_sessions row so future actual-set logging can attach to the
+    existing workout logging path, but it does not create actual workout sets
+    or complete the workout.
+    """
+
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_plan_instances
+        WHERE id = ?
+        """,
+        (workout_plan_instance_id,),
+    )
+    instance_row = cursor.fetchone()
+
+    if instance_row is None:
+        conn.close()
+        raise WorkoutPlanNotFoundError(
+            f"Workout plan instance {workout_plan_instance_id} was not found."
+        )
+
+    if instance_row["status"] != "selected":
+        status = instance_row["status"]
+        conn.close()
+        raise WorkoutPlanInvalidStatusError(
+            "Only selected workout plans can be started. "
+            f"Plan {workout_plan_instance_id} is currently {status}."
+        )
+
+    approved_plan = _approved_workout_plan_from_dict(
+        _decode_json(instance_row["approved_workout_plan_json"], {})
+    )
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_execution_sessions
+        WHERE workout_plan_instance_id = ?
+        """,
+        (workout_plan_instance_id,),
+    )
+    execution_row = cursor.fetchone()
+
+    if execution_row is None:
+        conn.close()
+        raise WorkoutPlanInvalidStatusError(
+            "Selected workout plan is missing its execution session."
+        )
+
+    if execution_row["status"] != "selected":
+        status = execution_row["status"]
+        conn.close()
+        raise WorkoutPlanInvalidStatusError(
+            "Only selected execution sessions can be started. "
+            f"Execution session {execution_row['id']} is currently {status}."
+        )
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    workout_date = datetime.now().strftime("%Y-%m-%d")
+
+    cursor.execute(
+        """
+        INSERT INTO workout_sessions (
+            user_id,
+            workout_date,
+            workout_name,
+            duration_minutes,
+            notes
+        )
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            instance_row["user_id"],
+            workout_date,
+            approved_plan.title,
+            approved_plan.duration_minutes,
+            (
+                "Draft session created from selected workout plan "
+                f"instance {workout_plan_instance_id}. Actual set logging "
+                "against planned exercises is not implemented yet."
+            ),
+        ),
+    )
+    workout_session_id = cursor.lastrowid
+
+    cursor.execute(
+        """
+        UPDATE workout_plan_instances
+        SET status = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        ("started", now, workout_plan_instance_id),
+    )
+
+    cursor.execute(
+        """
+        UPDATE workout_execution_sessions
+        SET
+            status = ?,
+            workout_session_id = ?,
+            started_at = ?,
+            updated_at = ?
+        WHERE workout_plan_instance_id = ?
+        """,
+        (
+            "started",
+            workout_session_id,
+            now,
+            now,
+            workout_plan_instance_id,
+        ),
+    )
+
+    conn.commit()
+
+    cursor.execute(
+        "SELECT * FROM workout_plan_instances WHERE id = ?",
+        (workout_plan_instance_id,),
+    )
+    instance = _row_to_workout_plan_instance(cursor.fetchone())
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM planned_workout_exercises
+        WHERE workout_plan_instance_id = ?
+        ORDER BY exercise_order
+        """,
+        (workout_plan_instance_id,),
+    )
+    planned_exercises = [_row_to_planned_exercise(row) for row in cursor.fetchall()]
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_execution_sessions
+        WHERE workout_plan_instance_id = ?
+        """,
+        (workout_plan_instance_id,),
+    )
+    execution_session = _row_to_execution_session(cursor.fetchone())
+    conn.close()
+
+    return {
+        "workout_plan_instance": instance,
+        "planned_exercises": planned_exercises,
+        "execution_session": execution_session,
+        "approved_workout_plan": instance.approved_workout_plan,
     }

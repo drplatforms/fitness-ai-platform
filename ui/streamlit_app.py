@@ -42,6 +42,16 @@ def api_put(path: str, payload: dict | None = None) -> dict:
     return response.json()
 
 
+def api_patch(path: str, payload: dict | None = None) -> dict:
+    response = requests.patch(
+        f"{API_BASE_URL}{path}",
+        json=payload or {},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def humanize_label(value: str | None) -> str:
     if not value:
         return "Unknown"
@@ -712,6 +722,327 @@ def display_actual_set_logging(plan_instance_id: int) -> None:
         st.json(execution_response)
 
 
+def actual_set_option_label(actual_set: dict) -> str:
+    actual_set_id = actual_set.get("id", "Unknown")
+    exercise_name = actual_set.get("exercise_name") or "Unknown Exercise"
+    set_number = actual_set.get("set_number", "Unknown")
+    completed = actual_set.get("completed", False)
+    skipped = actual_set.get("skipped", False)
+
+    if skipped:
+        status = "Skipped"
+    elif completed:
+        status = "Completed"
+    else:
+        status = "Not Completed"
+
+    return f"Actual Set {actual_set_id} — {exercise_name} — Set {set_number} — {status}"
+
+
+def planned_exercise_by_id(
+    planned_exercises: list[dict],
+) -> dict[int, dict]:
+    return {
+        int(exercise["id"]): exercise
+        for exercise in planned_exercises
+        if exercise.get("id") is not None
+    }
+
+
+def get_planned_exercise_index(
+    planned_exercise_ids: list[int],
+    selected_id: int | None,
+) -> int:
+    if selected_id in planned_exercise_ids:
+        return planned_exercise_ids.index(selected_id)
+
+    return 0
+
+
+def display_actual_set_editing(
+    plan_instance_id: int,
+    context_key: str,
+) -> None:
+    st.subheader("Actual Set Corrections")
+
+    try:
+        execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
+    except requests.RequestException as exc:
+        st.error(
+            f"Failed to load actual set corrections: {extract_api_error_message(exc)}"
+        )
+        return
+
+    workout_plan_instance = execution_response.get("workout_plan_instance", {})
+    execution_session = execution_response.get("execution_session", {})
+    planned_exercises = execution_response.get("planned_exercises", [])
+    actual_sets = execution_response.get("actual_sets", [])
+
+    plan_status = workout_plan_instance.get("status")
+    execution_status = execution_session.get("status")
+
+    editable_statuses = {"in_progress", "completed"}
+
+    if (
+        plan_status not in editable_statuses
+        and execution_status not in editable_statuses
+    ):
+        st.info(
+            "Actual set corrections are available after actual sets are logged or "
+            "after the workout is completed. "
+            f"Current plan status: {humanize_label(plan_status)}. "
+            f"Execution status: {humanize_label(execution_status)}."
+        )
+        return
+
+    if not actual_sets:
+        st.info("No actual sets are available to correct yet.")
+        return
+
+    if plan_status == "completed" or execution_status == "completed":
+        st.warning(
+            "You are correcting a completed workout. The completed status and "
+            "timestamp will remain unchanged, but the planned-vs-actual summary "
+            "will update."
+        )
+
+    if st.session_state.actual_set_editing_message:
+        st.success(st.session_state.actual_set_editing_message)
+        st.session_state.actual_set_editing_message = None
+
+    if st.session_state.actual_set_editing_error:
+        st.error(st.session_state.actual_set_editing_error)
+        st.session_state.actual_set_editing_error = None
+
+    actual_set_options = {
+        actual_set_option_label(actual_set): actual_set for actual_set in actual_sets
+    }
+
+    planned_options = {
+        planned_exercise_option_label(exercise): exercise
+        for exercise in planned_exercises
+    }
+
+    planned_by_id = planned_exercise_by_id(planned_exercises)
+    planned_labels = list(planned_options.keys())
+    planned_ids = [
+        int(exercise["id"])
+        for exercise in planned_exercises
+        if exercise.get("id") is not None
+    ]
+
+    if not planned_labels:
+        st.warning("No planned exercises are available for correction context.")
+        return
+
+    selected_actual_label = st.selectbox(
+        "Actual Set to Correct",
+        options=list(actual_set_options.keys()),
+        key=f"actual_set_edit_select_{context_key}_{plan_instance_id}",
+    )
+    selected_actual_set = actual_set_options[selected_actual_label]
+
+    actual_set_id = selected_actual_set.get("id")
+    current_planned_id = selected_actual_set.get("planned_workout_exercise_id")
+    current_substitution_for_id = selected_actual_set.get(
+        "substitution_for_planned_exercise_id"
+    )
+
+    current_reference_id = current_planned_id or current_substitution_for_id
+    if current_reference_id is not None:
+        current_reference_id = int(current_reference_id)
+
+    is_current_substitution = current_substitution_for_id is not None
+
+    planned_reference_index = get_planned_exercise_index(
+        planned_ids,
+        current_reference_id,
+    )
+
+    current_skipped = bool(selected_actual_set.get("skipped", False))
+
+    status_options = ["Completed", "Skipped"]
+    status_index = 1 if current_skipped else 0
+
+    form_key = f"actual_set_edit_form_{context_key}_{plan_instance_id}_{actual_set_id}"
+
+    with st.form(form_key):
+        status_choice = st.radio(
+            "Correction Status",
+            options=status_options,
+            index=status_index,
+            horizontal=True,
+        )
+
+        is_substitution = st.checkbox(
+            "This actual set is a substitution",
+            value=is_current_substitution,
+        )
+
+        selected_planned_label = st.selectbox(
+            (
+                "Substitution For Planned Exercise"
+                if is_substitution
+                else "Planned Exercise"
+            ),
+            options=planned_labels,
+            index=planned_reference_index,
+        )
+        selected_planned_exercise = planned_options[selected_planned_label]
+
+        actual_exercise_name = None
+        if is_substitution:
+            actual_exercise_name = st.text_input(
+                "Actual Exercise Name",
+                value=selected_actual_set.get("exercise_name") or "",
+                help=(
+                    "Use the exercise actually performed. The planned exercise above "
+                    "will be preserved as the substitution target."
+                ),
+            )
+
+        set_number = st.number_input(
+            "Set Number",
+            min_value=1,
+            value=int(selected_actual_set.get("set_number") or 1),
+            step=1,
+        )
+
+        notes = st.text_area(
+            "Notes",
+            value=selected_actual_set.get("notes") or "",
+        )
+
+        actual_reps = None
+        actual_weight = None
+        actual_rir = None
+
+        if status_choice == "Completed":
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                actual_reps = st.number_input(
+                    "Actual Reps",
+                    min_value=0,
+                    value=int(selected_actual_set.get("actual_reps") or 0),
+                    step=1,
+                )
+
+            with col2:
+                actual_weight = st.number_input(
+                    "Actual Weight",
+                    min_value=0.0,
+                    value=float(selected_actual_set.get("actual_weight") or 0.0),
+                    step=5.0,
+                )
+
+            with col3:
+                actual_rir = st.slider(
+                    "Actual RIR",
+                    min_value=0,
+                    max_value=10,
+                    value=int(selected_actual_set.get("actual_rir") or 0),
+                )
+        else:
+            st.info(
+                "Skipped rows are saved without reps, weight, or RIR. "
+                "Use notes to explain the skip."
+            )
+
+        submit_correction = st.form_submit_button("Save Actual Set Correction")
+
+    if submit_correction:
+        completed = status_choice == "Completed"
+        skipped = status_choice == "Skipped"
+
+        if completed and skipped:
+            st.session_state.actual_set_editing_error = (
+                "An actual set cannot be both completed and skipped."
+            )
+            st.rerun()
+
+        selected_planned_id = int(selected_planned_exercise["id"])
+
+        payload = {
+            "set_number": int(set_number),
+            "completed": completed,
+            "skipped": skipped,
+            "notes": notes or None,
+        }
+
+        if is_substitution:
+            if not actual_exercise_name or not actual_exercise_name.strip():
+                st.session_state.actual_set_editing_error = (
+                    "Actual Exercise Name is required for substitution corrections."
+                )
+                st.rerun()
+
+            payload.update(
+                {
+                    "planned_workout_exercise_id": None,
+                    "substitution_for_planned_exercise_id": selected_planned_id,
+                    "exercise_name": actual_exercise_name.strip(),
+                }
+            )
+        else:
+            planned_name = planned_by_id.get(selected_planned_id, {}).get("name")
+            payload.update(
+                {
+                    "planned_workout_exercise_id": selected_planned_id,
+                    "substitution_for_planned_exercise_id": None,
+                    "exercise_name": planned_name,
+                }
+            )
+
+        if completed:
+            payload.update(
+                {
+                    "actual_reps": int(actual_reps),
+                    "actual_weight": float(actual_weight),
+                    "actual_rir": int(actual_rir),
+                }
+            )
+        else:
+            payload.update(
+                {
+                    "actual_reps": None,
+                    "actual_weight": None,
+                    "actual_rir": None,
+                }
+            )
+
+        try:
+            edit_response = api_patch(
+                f"/workout-plans/{plan_instance_id}/actual-sets/{actual_set_id}",
+                payload,
+            )
+
+            if edit_response.get("success"):
+                st.session_state.actual_set_edit_response = edit_response
+                st.session_state.actual_set_editing_message = (
+                    f"Actual set {actual_set_id} corrected successfully."
+                )
+                st.session_state.actual_set_editing_error = None
+                st.rerun()
+
+            st.session_state.actual_set_editing_error = "Actual set correction failed."
+            st.rerun()
+
+        except requests.RequestException as exc:
+            st.session_state.actual_set_editing_error = (
+                f"Actual set correction failed: {extract_api_error_message(exc)}"
+            )
+            st.rerun()
+
+    with st.expander("Developer details: actual set correction"):
+        st.subheader("Raw Execution Response Used By Correction Form")
+        st.json(execution_response)
+
+        if st.session_state.actual_set_edit_response:
+            st.subheader("Latest Raw PATCH Response")
+            st.json(st.session_state.actual_set_edit_response)
+
+
 def display_complete_workout_control(plan_instance_id: int) -> None:
     st.subheader("Complete Workout")
 
@@ -871,6 +1202,10 @@ def display_workout_execution_review(plan_instance_id: int) -> None:
     st.write("**Planned Exercises**")
     display_planned_exercises(planned_exercises)
     display_actual_sets(actual_sets)
+    display_actual_set_editing(
+        plan_instance_id,
+        context_key="execution_review",
+    )
 
     planned_vs_actual_response = None
     planned_vs_actual_error = None
@@ -984,6 +1319,15 @@ def display_workout_execution_history_item(history_item: dict) -> None:
         st.info(
             "Planned-vs-actual summary is not available until the workout is "
             "in progress or completed."
+        )
+
+    if plan_instance_id != "Unknown" and (
+        plan_status in {"in_progress", "completed"}
+        or execution_status in {"in_progress", "completed"}
+    ):
+        display_actual_set_editing(
+            int(plan_instance_id),
+            context_key=f"history_{plan_instance_id}",
         )
 
 
@@ -1104,6 +1448,15 @@ if "workout_completion_message" not in st.session_state:
 if "workout_completion_error" not in st.session_state:
     st.session_state.workout_completion_error = None
 
+if "actual_set_editing_message" not in st.session_state:
+    st.session_state.actual_set_editing_message = None
+
+if "actual_set_editing_error" not in st.session_state:
+    st.session_state.actual_set_editing_error = None
+
+if "actual_set_edit_response" not in st.session_state:
+    st.session_state.actual_set_edit_response = None
+
 # =====================================
 # App Configuration
 # =====================================
@@ -1160,6 +1513,9 @@ if st.session_state.selected_user_id != user_id:
     st.session_state.completed_workout_plan_response = None
     st.session_state.workout_completion_message = None
     st.session_state.workout_completion_error = None
+    st.session_state.actual_set_editing_message = None
+    st.session_state.actual_set_editing_error = None
+    st.session_state.actual_set_edit_response = None
 
     st.rerun()
 

@@ -712,6 +712,120 @@ def display_actual_set_logging(plan_instance_id: int) -> None:
         st.json(execution_response)
 
 
+def display_complete_workout_control(plan_instance_id: int) -> None:
+    st.subheader("Complete Workout")
+
+    if st.session_state.workout_completion_message:
+        st.success(st.session_state.workout_completion_message)
+        st.session_state.workout_completion_message = None
+
+    if st.session_state.workout_completion_error:
+        st.error(st.session_state.workout_completion_error)
+        st.session_state.workout_completion_error = None
+
+    try:
+        execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
+    except requests.RequestException as exc:
+        st.error(f"Failed to load completion state: {extract_api_error_message(exc)}")
+        return
+
+    workout_plan_instance = execution_response.get("workout_plan_instance", {})
+    execution_session = execution_response.get("execution_session", {})
+    planned_exercises = execution_response.get("planned_exercises", [])
+
+    plan_status = workout_plan_instance.get("status")
+    execution_status = execution_session.get("status")
+
+    if plan_status == "completed" or execution_status == "completed":
+        completed_at = execution_session.get(
+            "completed_at"
+        ) or workout_plan_instance.get("completed_at")
+        st.info("This planned workout has already been completed.")
+
+        if completed_at:
+            st.caption(f"Completed at: {completed_at}")
+
+    elif plan_status == "in_progress" or execution_status == "in_progress":
+        st.write(
+            "Complete this planned workout after you finish logging the actual sets "
+            "you want included in the planned-vs-actual summary."
+        )
+
+        if st.button(
+            "Complete Workout",
+            key=f"complete_workout_plan_button_{plan_instance_id}",
+        ):
+            try:
+                complete_response = api_post(
+                    f"/workout-plans/{plan_instance_id}/complete"
+                )
+
+                if complete_response.get("success"):
+                    st.session_state.completed_workout_plan_response = complete_response
+                    st.session_state.started_workout_plan_response = {
+                        **complete_response,
+                        "planned_exercises": planned_exercises,
+                    }
+                    st.session_state.workout_completion_message = (
+                        "Workout completed successfully."
+                    )
+                    st.session_state.workout_completion_error = None
+                    st.rerun()
+                else:
+                    st.session_state.workout_completion_error = (
+                        "Workout completion failed."
+                    )
+
+            except requests.RequestException as exc:
+                st.session_state.workout_completion_error = (
+                    f"Workout completion failed: {extract_api_error_message(exc)}"
+                )
+                st.rerun()
+
+    else:
+        st.info(
+            "Complete Workout will be available after actual set logging changes "
+            "this planned workout to in progress. "
+            f"Current plan status: {humanize_label(plan_status)}. "
+            f"Execution status: {humanize_label(execution_status)}."
+        )
+
+    completion_response = st.session_state.completed_workout_plan_response
+
+    if completion_response:
+        workout_plan_result = completion_response.get("workout_plan_instance", {})
+        execution_result = completion_response.get("execution_session", {})
+        summary = completion_response.get("planned_vs_actual_summary", {})
+
+        st.write("**Latest Completion Result**")
+
+        col1, col2, col3 = st.columns(3)
+        col1.metric(
+            "Plan Status",
+            humanize_label(workout_plan_result.get("status")),
+        )
+        col2.metric(
+            "Execution Status",
+            humanize_label(execution_result.get("status")),
+        )
+        col3.metric(
+            "Completed At",
+            execution_result.get("completed_at")
+            or workout_plan_result.get("completed_at")
+            or "Unknown",
+        )
+
+        display_planned_vs_actual_summary(summary)
+
+    with st.expander("Developer details: workout completion"):
+        st.subheader("Raw Execution Response Used By Completion Control")
+        st.json(execution_response)
+
+        if completion_response:
+            st.subheader("Raw Complete Response")
+            st.json(completion_response)
+
+
 def display_workout_execution_review(plan_instance_id: int) -> None:
     st.subheader("Workout Execution Review")
 
@@ -849,6 +963,15 @@ if "workout_plan_action_error" not in st.session_state:
 if "actual_set_logging_message" not in st.session_state:
     st.session_state.actual_set_logging_message = None
 
+if "completed_workout_plan_response" not in st.session_state:
+    st.session_state.completed_workout_plan_response = None
+
+if "workout_completion_message" not in st.session_state:
+    st.session_state.workout_completion_message = None
+
+if "workout_completion_error" not in st.session_state:
+    st.session_state.workout_completion_error = None
+
 # =====================================
 # App Configuration
 # =====================================
@@ -902,6 +1025,9 @@ if st.session_state.selected_user_id != user_id:
     st.session_state.started_workout_plan_response = None
     st.session_state.workout_plan_action_error = None
     st.session_state.actual_set_logging_message = None
+    st.session_state.completed_workout_plan_response = None
+    st.session_state.workout_completion_message = None
+    st.session_state.workout_completion_error = None
 
     st.rerun()
 
@@ -1174,6 +1300,9 @@ try:
                 st.session_state.started_workout_plan_response = None
                 st.session_state.workout_plan_action_error = None
                 st.session_state.actual_set_logging_message = None
+                st.session_state.completed_workout_plan_response = None
+                st.session_state.workout_completion_message = None
+                st.session_state.workout_completion_error = None
                 st.rerun()
             else:
                 st.error("Equipment profile save failed.")
@@ -1227,6 +1356,9 @@ try:
                     st.session_state.started_workout_plan_response = None
                     st.session_state.workout_plan_action_error = None
                     st.session_state.actual_set_logging_message = None
+                    st.session_state.completed_workout_plan_response = None
+                    st.session_state.workout_completion_message = None
+                    st.session_state.workout_completion_error = None
                     st.success("Workout plan selected.")
                     st.rerun()
                 else:
@@ -1275,6 +1407,9 @@ try:
                             )
                             st.session_state.workout_plan_action_error = None
                             st.session_state.actual_set_logging_message = None
+                            st.session_state.completed_workout_plan_response = None
+                            st.session_state.workout_completion_message = None
+                            st.session_state.workout_completion_error = None
                             st.success("Workout plan started.")
                             st.rerun()
                         else:
@@ -1289,6 +1424,7 @@ try:
                         )
 
                 display_actual_set_logging(plan_instance_id)
+                display_complete_workout_control(plan_instance_id)
                 display_workout_execution_review(plan_instance_id)
 
         if st.session_state.workout_plan_action_error:

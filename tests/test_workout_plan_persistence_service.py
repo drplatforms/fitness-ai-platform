@@ -823,3 +823,171 @@ def test_planned_vs_actual_summary_keeps_manual_logging_independent(
     assert manual_session_id
     assert summary.actual_set_count == 0
     assert "empty_completion" in summary.deviation_flags
+
+
+def _in_progress_plan(tmp_path, monkeypatch, user_id=105):
+    instance_id, started = _started_plan(tmp_path, monkeypatch, user_id=user_id)
+    planned_exercise = started["planned_exercises"][0]
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "set_number": 1,
+            "actual_reps": planned_exercise.reps_min,
+            "actual_weight": 35.0,
+            "actual_rir": planned_exercise.rir_max,
+        },
+    )
+    return instance_id, started
+
+
+def test_in_progress_plan_can_complete(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+
+    result = complete_workout_plan(instance_id)
+
+    assert result["workout_plan_instance"].status == "completed"
+    assert result["execution_session"].status == "completed"
+    assert result["workout_plan_instance"].completed_at is not None
+    assert result["execution_session"].completed_at is not None
+    assert result["planned_vs_actual_summary"].completed_set_count == 1
+
+
+def test_complete_endpoint_returns_summary(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    response = client.post(f"/workout-plans/{instance_id}/complete")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["workout_plan_instance"]["status"] == "completed"
+    assert payload["execution_session"]["status"] == "completed"
+    assert payload["workout_plan_instance"]["completed_at"] is not None
+    assert payload["execution_session"]["completed_at"] is not None
+    assert payload["planned_vs_actual_summary"]["completed_set_count"] == 1
+
+
+def test_selected_plan_cannot_complete(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    _seed_test_db(tmp_path, monkeypatch)
+    selected = select_current_workout_plan(105)
+    instance_id = selected["workout_plan_instance"].id
+
+    try:
+        complete_workout_plan(instance_id)
+    except WorkoutPlanInvalidStatusError as exc:
+        assert "Only in-progress workout plans can be completed" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanInvalidStatusError")
+
+
+def test_started_plan_with_no_actual_sets_cannot_complete(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _started_plan(tmp_path, monkeypatch)
+
+    try:
+        complete_workout_plan(instance_id)
+    except WorkoutPlanInvalidStatusError as exc:
+        assert "Only in-progress workout plans can be completed" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanInvalidStatusError")
+
+
+def test_completed_plan_cannot_complete_again(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+
+    first_result = complete_workout_plan(instance_id)
+    assert first_result["workout_plan_instance"].status == "completed"
+
+    try:
+        complete_workout_plan(instance_id)
+    except WorkoutPlanInvalidStatusError as exc:
+        assert "Only in-progress workout plans can be completed" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanInvalidStatusError")
+
+
+def test_completion_preserves_actual_set_rows(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    before_actual_sets = get_actual_sets(plan_instance_id=instance_id)
+
+    complete_workout_plan(instance_id)
+    after_actual_sets = get_actual_sets(plan_instance_id=instance_id)
+
+    assert len(before_actual_sets) == 1
+    assert len(after_actual_sets) == 1
+    assert after_actual_sets[0].id == before_actual_sets[0].id
+    assert after_actual_sets[0].actual_reps == before_actual_sets[0].actual_reps
+
+
+def test_skipped_and_unlogged_planned_exercises_do_not_block_completion(
+    tmp_path, monkeypatch
+):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    first_planned_exercise = started["planned_exercises"][0]
+    second_planned_exercise = started["planned_exercises"][1]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": first_planned_exercise.id,
+            "actual_reps": first_planned_exercise.reps_min,
+            "actual_rir": first_planned_exercise.rir_max,
+        },
+    )
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": second_planned_exercise.id,
+            "completed": False,
+            "skipped": True,
+            "notes": "Skipped due to time.",
+        },
+    )
+
+    result = complete_workout_plan(instance_id)
+    summary = result["planned_vs_actual_summary"]
+
+    assert result["workout_plan_instance"].status == "completed"
+    assert summary.skipped_set_count == 1
+    assert "skipped_exercises_present" in summary.deviation_flags
+    assert "incomplete_logging" in summary.deviation_flags
+
+
+def test_complete_missing_plan_endpoint_returns_404(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    response = client.post("/workout-plans/999999/complete")
+
+    assert response.status_code == 404
+
+
+def test_completion_keeps_manual_workout_logging_independent(tmp_path, monkeypatch):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    manual_session_id = create_workout_session(
+        user_id=105,
+        workout_name="Manual Session During Plan Completion",
+        duration_minutes=20,
+        notes="Manual logging remains independent after completion.",
+    )
+
+    result = complete_workout_plan(instance_id)
+
+    assert manual_session_id
+    assert result["execution_session"].workout_session_id != manual_session_id
+    assert result["workout_plan_instance"].status == "completed"

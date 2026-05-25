@@ -72,6 +72,8 @@ def ensure_workout_plan_persistence_tables() -> None:
         title TEXT NOT NULL,
         approved_workout_plan_json TEXT NOT NULL,
         selected_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT,
+        abandoned_at TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
 
@@ -119,6 +121,17 @@ def ensure_workout_plan_persistence_tables() -> None:
             REFERENCES workout_sessions(id)
     )
     """)
+
+    cursor.execute("PRAGMA table_info(workout_plan_instances)")
+    workout_plan_columns = {row["name"] for row in cursor.fetchall()}
+    if "completed_at" not in workout_plan_columns:
+        cursor.execute(
+            "ALTER TABLE workout_plan_instances ADD COLUMN completed_at TEXT"
+        )
+    if "abandoned_at" not in workout_plan_columns:
+        cursor.execute(
+            "ALTER TABLE workout_plan_instances ADD COLUMN abandoned_at TEXT"
+        )
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS workout_execution_set_actuals (
@@ -192,6 +205,15 @@ def _approved_workout_plan_from_dict(raw_plan: dict) -> ApprovedWorkoutPlan:
     )
 
 
+def _row_value(row, key: str, default=None):
+    try:
+        if key in row.keys():
+            return row[key]
+    except AttributeError:
+        pass
+    return default
+
+
 def _row_to_workout_plan_instance(row) -> WorkoutPlanInstance:
     approved_workout_plan = _approved_workout_plan_from_dict(
         _decode_json(row["approved_workout_plan_json"], {})
@@ -206,6 +228,8 @@ def _row_to_workout_plan_instance(row) -> WorkoutPlanInstance:
         title=row["title"],
         approved_workout_plan=approved_workout_plan,
         selected_at=row["selected_at"],
+        completed_at=_row_value(row, "completed_at"),
+        abandoned_at=_row_value(row, "abandoned_at"),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -974,6 +998,100 @@ def start_selected_workout_plan(workout_plan_instance_id: int) -> dict:
         "planned_exercises": planned_exercises,
         "execution_session": execution_session,
         "approved_workout_plan": instance.approved_workout_plan,
+    }
+
+
+def complete_workout_plan(plan_instance_id: int) -> dict:
+    """Complete an in-progress planned workout execution.
+
+    Completion is intentionally narrow in v1. Only in-progress plan and
+    execution-session rows can complete. Started sessions with no actual rows,
+    selected sessions, completed sessions, and abandoned/cancelled sessions are
+    rejected. Actual execution rows are preserved and summarized after the
+    status transition.
+    """
+
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT *
+            FROM workout_plan_instances
+            WHERE id = ?
+            """,
+            (plan_instance_id,),
+        )
+        instance_row = cursor.fetchone()
+
+        if instance_row is None:
+            raise WorkoutPlanNotFoundError(
+                f"Workout plan instance {plan_instance_id} was not found."
+            )
+
+        if instance_row["status"] != "in_progress":
+            raise WorkoutPlanInvalidStatusError(
+                "Only in-progress workout plans can be completed. "
+                f"Plan {plan_instance_id} is currently {instance_row['status']}."
+            )
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM workout_execution_sessions
+            WHERE workout_plan_instance_id = ?
+            """,
+            (plan_instance_id,),
+        )
+        execution_row = cursor.fetchone()
+
+        if execution_row is None:
+            raise WorkoutPlanInvalidStatusError(
+                f"Workout plan instance {plan_instance_id} has no execution session."
+            )
+
+        if execution_row["status"] != "in_progress":
+            raise WorkoutPlanInvalidStatusError(
+                "Only in-progress execution sessions can be completed. "
+                f"Execution session {execution_row['id']} is currently "
+                f"{execution_row['status']}."
+            )
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        cursor.execute(
+            """
+            UPDATE workout_plan_instances
+            SET status = ?, completed_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            ("completed", now, now, plan_instance_id),
+        )
+        cursor.execute(
+            """
+            UPDATE workout_execution_sessions
+            SET status = ?, completed_at = ?, updated_at = ?
+            WHERE workout_plan_instance_id = ?
+            """,
+            ("completed", now, now, plan_instance_id),
+        )
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    execution_state = get_execution_state(plan_instance_id)
+    summary = build_planned_vs_actual_summary(plan_instance_id)
+
+    return {
+        "workout_plan_instance": execution_state["workout_plan_instance"],
+        "execution_session": execution_state["execution_session"],
+        "planned_vs_actual_summary": summary,
     }
 
 

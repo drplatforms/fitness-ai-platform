@@ -8,6 +8,7 @@ from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
     WorkoutPlanNotFoundError,
     WorkoutPlanValidationError,
+    complete_workout_plan,
     get_execution_state,
     log_actual_set,
     select_current_workout_plan,
@@ -158,4 +159,22 @@ def create_workout_plan_actual_set(
         "actual_sets": [
             asdict(actual_set) for actual_set in execution_state["actual_sets"]
         ],
+    }
+
+
+@router.post("/workout-plans/{plan_instance_id}/complete")
+def complete_workout_plan_execution(plan_instance_id: int):
+    try:
+        result = complete_workout_plan(plan_instance_id)
+    except WorkoutPlanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except WorkoutPlanInvalidStatusError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "workout_plan_instance_id": plan_instance_id,
+        "workout_plan_instance": asdict(result["workout_plan_instance"]),
+        "execution_session": asdict(result["execution_session"]),
+        "planned_vs_actual_summary": asdict(result["planned_vs_actual_summary"]),
     }

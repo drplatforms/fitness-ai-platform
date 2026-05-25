@@ -96,6 +96,8 @@ class WorkoutPlanInstance:
     title: str
     approved_workout_plan: ApprovedWorkoutPlan
     selected_at: str | None = None
+    completed_at: str | None = None
+    abandoned_at: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
 

@@ -249,6 +249,110 @@ def display_workout_plan_preview(workout_plan: dict) -> None:
         st.write(f"**Why:** {rationale}")
 
 
+def extract_api_error_message(exc: requests.RequestException) -> str:
+    response = getattr(exc, "response", None)
+
+    if response is None:
+        return str(exc)
+
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        detail = response.text
+
+    if detail:
+        return str(detail)
+
+    return str(exc)
+
+
+def display_planned_exercises(planned_exercises: list[dict]) -> None:
+    if not planned_exercises:
+        st.warning("No planned exercises were returned.")
+        return
+
+    planned_rows = []
+
+    for exercise in planned_exercises:
+        reps_min = exercise.get("reps_min")
+        reps_max = exercise.get("reps_max")
+        rir_min = exercise.get("rir_min")
+        rir_max = exercise.get("rir_max")
+        equipment_required = exercise.get("equipment_required") or []
+
+        planned_rows.append(
+            {
+                "Order": exercise.get("exercise_order", "Unknown"),
+                "Exercise": exercise.get("name", "Unknown"),
+                "Sets": exercise.get("sets", "Unknown"),
+                "Reps": (
+                    f"{reps_min}-{reps_max}"
+                    if reps_min is not None and reps_max is not None
+                    else "Unknown"
+                ),
+                "RIR": (
+                    f"{rir_min}-{rir_max}"
+                    if rir_min is not None and rir_max is not None
+                    else "Unknown"
+                ),
+                "Equipment": (
+                    ", ".join(equipment_required) if equipment_required else "None"
+                ),
+                "Notes": exercise.get("notes", ""),
+            }
+        )
+
+    st.dataframe(
+        pd.DataFrame(planned_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def display_selected_workout_plan_state(plan_response: dict) -> None:
+    workout_plan_instance = plan_response.get("workout_plan_instance", {})
+    execution_session = plan_response.get("execution_session", {})
+    planned_exercises = plan_response.get("planned_exercises", [])
+
+    st.subheader("Selected Workout Plan Status")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Plan Instance ID",
+        workout_plan_instance.get("id", "Unknown"),
+    )
+
+    col2.metric(
+        "Plan Status",
+        humanize_label(workout_plan_instance.get("status")),
+    )
+
+    col3.metric(
+        "Execution Status",
+        humanize_label(execution_session.get("status")),
+    )
+
+    started_at = execution_session.get("started_at")
+    workout_session_id = execution_session.get("workout_session_id")
+
+    if started_at or workout_session_id:
+        col4, col5 = st.columns(2)
+
+        col4.metric(
+            "Started At",
+            started_at or "Not started",
+        )
+
+        col5.metric(
+            "Workout Session ID",
+            workout_session_id or "Not created",
+        )
+
+    st.write("**Planned Exercises**")
+    display_planned_exercises(planned_exercises)
+
+
 TRAINING_ENVIRONMENT_OPTIONS = {
     "commercial_gym": "Commercial Gym",
     "home_gym": "Home Gym",
@@ -299,6 +403,15 @@ if "food_search_results" not in st.session_state:
 if "equipment_profile_saved" not in st.session_state:
     st.session_state.equipment_profile_saved = False
 
+if "selected_workout_plan_response" not in st.session_state:
+    st.session_state.selected_workout_plan_response = None
+
+if "started_workout_plan_response" not in st.session_state:
+    st.session_state.started_workout_plan_response = None
+
+if "workout_plan_action_error" not in st.session_state:
+    st.session_state.workout_plan_action_error = None
+
 # =====================================
 # App Configuration
 # =====================================
@@ -348,6 +461,9 @@ if st.session_state.selected_user_id != user_id:
     st.session_state.current_sets = []
     st.session_state.food_search_results = []
     st.session_state.equipment_profile_saved = False
+    st.session_state.selected_workout_plan_response = None
+    st.session_state.started_workout_plan_response = None
+    st.session_state.workout_plan_action_error = None
 
     st.rerun()
 
@@ -616,6 +732,9 @@ try:
 
             if save_response.get("success"):
                 st.session_state.equipment_profile_saved = True
+                st.session_state.selected_workout_plan_response = None
+                st.session_state.started_workout_plan_response = None
+                st.session_state.workout_plan_action_error = None
                 st.rerun()
             else:
                 st.error("Equipment profile save failed.")
@@ -660,13 +779,92 @@ try:
 
         display_workout_plan_preview(approved_workout_plan)
 
-        with st.expander("Developer details"):
+        if st.button("Select This Plan", key="select_workout_plan_button"):
+            try:
+                select_response = api_post(f"/workout-plans/{user_id}/select")
+
+                if select_response.get("success"):
+                    st.session_state.selected_workout_plan_response = select_response
+                    st.session_state.started_workout_plan_response = None
+                    st.session_state.workout_plan_action_error = None
+                    st.success("Workout plan selected.")
+                    st.rerun()
+                else:
+                    st.session_state.workout_plan_action_error = (
+                        "Workout plan selection failed."
+                    )
+
+            except requests.RequestException as exc:
+                st.session_state.workout_plan_action_error = (
+                    f"Workout plan selection failed: {extract_api_error_message(exc)}"
+                )
+
+        active_plan_response = (
+            st.session_state.started_workout_plan_response
+            or st.session_state.selected_workout_plan_response
+        )
+
+        if active_plan_response:
+            display_selected_workout_plan_state(active_plan_response)
+
+            workout_plan_instance = active_plan_response.get(
+                "workout_plan_instance",
+                {},
+            )
+            plan_instance_id = workout_plan_instance.get("id")
+
+            if plan_instance_id is not None:
+                start_button_label = (
+                    "Start Selected Plan"
+                    if workout_plan_instance.get("status") == "selected"
+                    else "Start Again"
+                )
+
+                if st.button(
+                    start_button_label,
+                    key=f"start_workout_plan_button_{plan_instance_id}",
+                ):
+                    try:
+                        start_response = api_post(
+                            f"/workout-plans/{plan_instance_id}/start"
+                        )
+
+                        if start_response.get("success"):
+                            st.session_state.started_workout_plan_response = (
+                                start_response
+                            )
+                            st.session_state.workout_plan_action_error = None
+                            st.success("Workout plan started.")
+                            st.rerun()
+                        else:
+                            st.session_state.workout_plan_action_error = (
+                                "Workout plan start failed."
+                            )
+
+                    except requests.RequestException as exc:
+                        st.session_state.workout_plan_action_error = (
+                            "Workout plan start failed: "
+                            f"{extract_api_error_message(exc)}"
+                        )
+
+        if st.session_state.workout_plan_action_error:
+            st.error(st.session_state.workout_plan_action_error)
+
+        with st.expander("Developer details: workout plan preview/select/start"):
             st.subheader("Training Constraints")
             st.json(training_constraints)
             st.subheader("Workout Constraints")
             st.json(workout_constraints)
-            st.subheader("Raw Workout Plan Response")
+            st.subheader("Raw Workout Plan Preview Response")
             st.json(workout_plan_data)
+
+            if st.session_state.selected_workout_plan_response:
+                st.subheader("Raw Select Response")
+                st.json(st.session_state.selected_workout_plan_response)
+
+            if st.session_state.started_workout_plan_response:
+                st.subheader("Raw Start Response")
+                st.json(st.session_state.started_workout_plan_response)
 
     else:
         st.warning("No workout plan preview is available for this user yet.")

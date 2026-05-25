@@ -32,6 +32,16 @@ def api_post(path: str, payload: dict | None = None) -> dict:
     return response.json()
 
 
+def api_put(path: str, payload: dict | None = None) -> dict:
+    response = requests.put(
+        f"{API_BASE_URL}{path}",
+        json=payload or {},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def humanize_label(value: str | None) -> str:
     if not value:
         return "Unknown"
@@ -239,6 +249,28 @@ def display_workout_plan_preview(workout_plan: dict) -> None:
         st.write(f"**Why:** {rationale}")
 
 
+TRAINING_ENVIRONMENT_OPTIONS = {
+    "commercial_gym": "Commercial Gym",
+    "home_gym": "Home Gym",
+    "bodyweight_only": "Bodyweight Only",
+    "limited_equipment": "Limited Equipment",
+    "unknown": "Unknown",
+}
+
+KNOWN_EQUIPMENT_OPTIONS = [
+    "barbell",
+    "bodyweight",
+    "cable",
+    "dumbbell",
+    "kettlebell",
+    "machine",
+]
+
+
+def equipment_display_name(value: str) -> str:
+    return value.replace("_", " ").title()
+
+
 # =====================================
 # Session State Initialization
 # =====================================
@@ -263,6 +295,9 @@ if "current_sets" not in st.session_state:
 
 if "food_search_results" not in st.session_state:
     st.session_state.food_search_results = []
+
+if "equipment_profile_saved" not in st.session_state:
+    st.session_state.equipment_profile_saved = False
 
 # =====================================
 # App Configuration
@@ -312,6 +347,7 @@ if st.session_state.selected_user_id != user_id:
 
     st.session_state.current_sets = []
     st.session_state.food_search_results = []
+    st.session_state.equipment_profile_saved = False
 
     st.rerun()
 
@@ -481,6 +517,117 @@ try:
 
 except requests.RequestException as exc:
     st.error(f"Failed to load daily recommendation: {exc}")
+
+
+# =====================================
+# Equipment Profile Editor
+# =====================================
+
+st.header("🏋️ Equipment Profile")
+
+if st.session_state.equipment_profile_saved:
+    st.success(
+        "Equipment profile saved. Workout Plan Preview will use the updated profile."
+    )
+    st.session_state.equipment_profile_saved = False
+
+try:
+    equipment_profile_response = api_get(f"/users/{user_id}/equipment-profile")
+
+    equipment_profile = equipment_profile_response.get("equipment_profile", {})
+    equipment_profile_source = equipment_profile_response.get("source", "unknown")
+
+    source_label = (
+        "Explicit profile"
+        if equipment_profile_source == "explicit"
+        else "Default profile"
+    )
+
+    st.caption(f"Profile source: {source_label}")
+
+    current_training_environment = equipment_profile.get(
+        "training_environment",
+        "unknown",
+    )
+
+    current_available_equipment = equipment_profile.get(
+        "available_equipment",
+        [],
+    )
+
+    current_unavailable_equipment = equipment_profile.get(
+        "unavailable_equipment",
+        [],
+    )
+
+    training_environment_keys = list(TRAINING_ENVIRONMENT_OPTIONS.keys())
+
+    if current_training_environment in training_environment_keys:
+        training_environment_index = training_environment_keys.index(
+            current_training_environment
+        )
+    else:
+        training_environment_index = training_environment_keys.index("unknown")
+
+    with st.form("equipment_profile_form"):
+        selected_training_environment = st.selectbox(
+            "Training Environment",
+            options=training_environment_keys,
+            format_func=lambda value: TRAINING_ENVIRONMENT_OPTIONS[value],
+            index=training_environment_index,
+        )
+
+        selected_available_equipment = st.multiselect(
+            "Available Equipment",
+            options=KNOWN_EQUIPMENT_OPTIONS,
+            default=[
+                equipment
+                for equipment in current_available_equipment
+                if equipment in KNOWN_EQUIPMENT_OPTIONS
+            ],
+            format_func=equipment_display_name,
+        )
+
+        selected_unavailable_equipment = st.multiselect(
+            "Unavailable Equipment",
+            options=KNOWN_EQUIPMENT_OPTIONS,
+            default=[
+                equipment
+                for equipment in current_unavailable_equipment
+                if equipment in KNOWN_EQUIPMENT_OPTIONS
+            ],
+            format_func=equipment_display_name,
+        )
+
+        save_equipment_profile = st.form_submit_button("Save Equipment Profile")
+
+    if save_equipment_profile:
+        payload = {
+            "training_environment": selected_training_environment,
+            "available_equipment": selected_available_equipment,
+            "unavailable_equipment": selected_unavailable_equipment,
+        }
+
+        try:
+            save_response = api_put(
+                f"/users/{user_id}/equipment-profile",
+                payload,
+            )
+
+            if save_response.get("success"):
+                st.session_state.equipment_profile_saved = True
+                st.rerun()
+            else:
+                st.error("Equipment profile save failed.")
+
+        except requests.RequestException as exc:
+            st.error(f"Equipment profile save failed: {exc}")
+
+    with st.expander("Developer details: equipment profile"):
+        st.json(equipment_profile_response)
+
+except requests.RequestException as exc:
+    st.error(f"Failed to load equipment profile: {exc}")
 
 
 # =====================================

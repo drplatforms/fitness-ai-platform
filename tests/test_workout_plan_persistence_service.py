@@ -991,3 +991,157 @@ def test_completion_keeps_manual_workout_logging_independent(tmp_path, monkeypat
     assert manual_session_id
     assert result["execution_session"].workout_session_id != manual_session_id
     assert result["workout_plan_instance"].status == "completed"
+
+
+def test_planned_vs_actual_endpoint_returns_summary_for_in_progress_plan(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["workout_plan_instance"]["status"] == "in_progress"
+    assert payload["execution_session"]["status"] == "in_progress"
+    assert payload["planned_vs_actual_summary"]["completed_set_count"] == 1
+    assert payload["planned_exercises"]
+    assert payload["actual_sets"]
+
+
+def test_planned_vs_actual_endpoint_returns_summary_for_completed_plan(
+    tmp_path, monkeypatch
+):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    complete_workout_plan(instance_id)
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["workout_plan_instance"]["status"] == "completed"
+    assert payload["execution_session"]["status"] == "completed"
+    assert payload["planned_vs_actual_summary"]["completed_set_count"] == 1
+
+
+def test_planned_vs_actual_missing_plan_returns_404(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    response = client.get("/workout-plans/999999/planned-vs-actual")
+
+    assert response.status_code == 404
+
+
+def test_planned_vs_actual_plan_without_execution_session_returns_clear_error(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    selected = select_current_workout_plan(105)
+    instance_id = selected["workout_plan_instance"].id
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM workout_execution_sessions WHERE workout_plan_instance_id = ?",
+        (instance_id,),
+    )
+    conn.commit()
+    conn.close()
+
+    client = TestClient(app)
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 400
+    assert "has no execution session" in response.json()["detail"]
+
+
+def test_planned_vs_actual_selected_plan_is_rejected(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    selected = select_current_workout_plan(105)
+    instance_id = selected["workout_plan_instance"].id
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 400
+    assert "started, in-progress, or completed" in response.json()["detail"]
+
+
+def test_planned_vs_actual_started_plan_returns_empty_summary_flags(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _started_plan(tmp_path, monkeypatch)
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 200
+    payload = response.json()
+    summary = payload["planned_vs_actual_summary"]
+    assert payload["workout_plan_instance"]["status"] == "started"
+    assert summary["actual_set_count"] == 0
+    assert "empty_completion" in summary["deviation_flags"]
+    assert "incomplete_logging" in summary["deviation_flags"]
+
+
+def test_planned_vs_actual_endpoint_summary_matches_service(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    expected_summary = build_planned_vs_actual_summary(instance_id)
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 200
+    payload = response.json()
+    summary = payload["planned_vs_actual_summary"]
+    assert summary["completion_percentage"] == expected_summary.completion_percentage
+    assert summary["completed_set_count"] == expected_summary.completed_set_count
+    assert summary["planned_set_count"] == expected_summary.planned_set_count
+    assert summary["deviation_flags"] == expected_summary.deviation_flags
+
+
+def test_planned_vs_actual_endpoint_does_not_mutate_planned_or_actual_rows(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    planned_before = get_planned_workout_exercises(instance_id)
+    actual_before = get_actual_sets(plan_instance_id=instance_id)
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    planned_after = get_planned_workout_exercises(instance_id)
+    actual_after = get_actual_sets(plan_instance_id=instance_id)
+    assert response.status_code == 200
+    assert [exercise.id for exercise in planned_after] == [
+        exercise.id for exercise in planned_before
+    ]
+    assert [actual_set.id for actual_set in actual_after] == [
+        actual_set.id for actual_set in actual_before
+    ]
+
+
+def test_planned_vs_actual_endpoint_keeps_manual_logging_independent(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    manual_session_id = create_workout_session(
+        user_id=105,
+        workout_name="Manual Session Near Planned Summary",
+        duration_minutes=20,
+        notes="Manual logging remains independent from planned-vs-actual.",
+    )
+    client = TestClient(app)
+
+    response = client.get(f"/workout-plans/{instance_id}/planned-vs-actual")
+
+    assert response.status_code == 200
+    assert manual_session_id
+    assert response.json()["planned_vs_actual_summary"]["actual_set_count"] == 1

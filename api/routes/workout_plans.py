@@ -8,6 +8,7 @@ from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
     WorkoutPlanNotFoundError,
     WorkoutPlanValidationError,
+    build_planned_vs_actual_summary,
     complete_workout_plan,
     get_execution_state,
     log_actual_set,
@@ -156,6 +157,39 @@ def create_workout_plan_actual_set(
         "actual_set": asdict(result["actual_set"]),
         "workout_plan_instance": asdict(execution_state["workout_plan_instance"]),
         "execution_session": asdict(execution_state["execution_session"]),
+        "actual_sets": [
+            asdict(actual_set) for actual_set in execution_state["actual_sets"]
+        ],
+    }
+
+
+@router.get("/workout-plans/{plan_instance_id}/planned-vs-actual")
+def workout_plan_planned_vs_actual(plan_instance_id: int):
+    try:
+        execution_state = get_execution_state(plan_instance_id)
+        workout_plan_instance = execution_state["workout_plan_instance"]
+        if workout_plan_instance.status not in {"started", "in_progress", "completed"}:
+            raise WorkoutPlanInvalidStatusError(
+                "Planned-vs-actual summary is available for started, "
+                "in-progress, or completed workout plans. "
+                f"Plan {plan_instance_id} is currently "
+                f"{workout_plan_instance.status}."
+            )
+        summary = build_planned_vs_actual_summary(plan_instance_id)
+    except WorkoutPlanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except WorkoutPlanInvalidStatusError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "workout_plan_instance_id": plan_instance_id,
+        "workout_plan_instance": asdict(workout_plan_instance),
+        "execution_session": asdict(execution_state["execution_session"]),
+        "planned_vs_actual_summary": asdict(summary),
+        "planned_exercises": [
+            asdict(exercise) for exercise in execution_state["planned_exercises"]
+        ],
         "actual_sets": [
             asdict(actual_set) for actual_set in execution_state["actual_sets"]
         ],

@@ -136,3 +136,27 @@ class WorkoutExecutionSetActual:
     notes: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+
+
+@dataclass
+class WorkoutPlannedVsActualSummary:
+    workout_plan_instance_id: int
+    workout_execution_session_id: int | None
+    planned_exercise_count: int
+    completed_exercise_count: int
+    skipped_exercise_count: int
+    substituted_exercise_count: int
+    planned_set_count: int
+    actual_set_count: int
+    completed_set_count: int
+    skipped_set_count: int
+    completion_percentage: float
+    average_planned_rir: float | None
+    average_actual_rir: float | None
+    rir_deviation: float | None
+    rep_deviation: dict[str, int]
+    sets_below_planned_reps: int
+    sets_inside_planned_reps: int
+    sets_above_planned_reps: int
+    notes: list[str] = field(default_factory=list)
+    deviation_flags: list[str] = field(default_factory=list)

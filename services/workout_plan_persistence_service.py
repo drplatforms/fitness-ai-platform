@@ -13,6 +13,7 @@ from models.workout_plan_models import (
     WorkoutExecutionSession,
     WorkoutExecutionSetActual,
     WorkoutPlanInstance,
+    WorkoutPlannedVsActualSummary,
 )
 from services.user_state_service import build_user_health_state
 from services.workout_plan_service import build_approved_workout_plan
@@ -974,3 +975,191 @@ def start_selected_workout_plan(workout_plan_instance_id: int) -> dict:
         "execution_session": execution_session,
         "approved_workout_plan": instance.approved_workout_plan,
     }
+
+
+def _average_planned_rir(
+    planned_exercises: list[PlannedWorkoutExercise],
+) -> float | None:
+    rir_total = 0.0
+    set_count = 0
+
+    for exercise in planned_exercises:
+        rir_midpoint = (exercise.rir_min + exercise.rir_max) / 2
+        rir_total += rir_midpoint * exercise.sets
+        set_count += exercise.sets
+
+    if set_count == 0:
+        return None
+
+    return round(rir_total / set_count, 2)
+
+
+def _average_actual_rir(actual_sets: list[WorkoutExecutionSetActual]) -> float | None:
+    actual_rirs = [
+        actual_set.actual_rir
+        for actual_set in actual_sets
+        if actual_set.completed
+        and not actual_set.skipped
+        and actual_set.actual_rir is not None
+    ]
+
+    if not actual_rirs:
+        return None
+
+    return round(sum(actual_rirs) / len(actual_rirs), 2)
+
+
+def build_planned_vs_actual_summary(
+    plan_instance_id: int,
+) -> WorkoutPlannedVsActualSummary:
+    """Build the descriptive planned-vs-actual summary for a plan instance.
+
+    This function is intentionally read-only. It does not complete workouts,
+    mutate execution state, mirror rows into manual workout_sets, or feed the
+    recommendation engine. It summarizes the current execution bridge rows.
+    """
+
+    execution_state = get_execution_state(plan_instance_id)
+    execution_session = execution_state["execution_session"]
+    planned_exercises = execution_state["planned_exercises"]
+    actual_sets = execution_state["actual_sets"]
+
+    planned_exercise_count = len(planned_exercises)
+    planned_set_count = sum(exercise.sets for exercise in planned_exercises)
+
+    completed_actual_sets = [
+        actual_set
+        for actual_set in actual_sets
+        if actual_set.completed and not actual_set.skipped
+    ]
+    non_skipped_actual_sets = [
+        actual_set for actual_set in actual_sets if not actual_set.skipped
+    ]
+    skipped_actual_sets = [
+        actual_set for actual_set in actual_sets if actual_set.skipped
+    ]
+
+    completed_exercise_ids = {
+        actual_set.planned_workout_exercise_id
+        for actual_set in completed_actual_sets
+        if actual_set.planned_workout_exercise_id is not None
+    }
+    skipped_exercise_ids = {
+        actual_set.planned_workout_exercise_id
+        for actual_set in skipped_actual_sets
+        if actual_set.planned_workout_exercise_id is not None
+    }
+    substituted_exercise_ids = {
+        actual_set.substitution_for_planned_exercise_id
+        for actual_set in actual_sets
+        if actual_set.substitution_for_planned_exercise_id is not None
+    }
+
+    sets_below_planned_reps = 0
+    sets_inside_planned_reps = 0
+    sets_above_planned_reps = 0
+
+    missing_actual_rir = False
+    missing_actual_reps = False
+
+    for actual_set in non_skipped_actual_sets:
+        if actual_set.actual_rir is None:
+            missing_actual_rir = True
+        if actual_set.actual_reps is None:
+            missing_actual_reps = True
+
+        if (
+            actual_set.actual_reps is None
+            or actual_set.planned_reps_min is None
+            or actual_set.planned_reps_max is None
+        ):
+            continue
+
+        if actual_set.actual_reps < actual_set.planned_reps_min:
+            sets_below_planned_reps += 1
+        elif actual_set.actual_reps > actual_set.planned_reps_max:
+            sets_above_planned_reps += 1
+        else:
+            sets_inside_planned_reps += 1
+
+    average_planned_rir = _average_planned_rir(planned_exercises)
+    average_actual_rir = _average_actual_rir(actual_sets)
+    rir_deviation = None
+    if average_planned_rir is not None and average_actual_rir is not None:
+        rir_deviation = round(average_actual_rir - average_planned_rir, 2)
+
+    completed_set_count = len(completed_actual_sets)
+    actual_set_count = len(non_skipped_actual_sets)
+    skipped_set_count = len(skipped_actual_sets)
+
+    if planned_set_count > 0:
+        completion_percentage = round(
+            (completed_set_count / planned_set_count) * 100, 2
+        )
+    else:
+        completion_percentage = 0.0
+
+    deviation_flags: list[str] = []
+    notes: list[str] = []
+
+    if not actual_sets:
+        deviation_flags.append("empty_completion")
+        notes.append("No actual workout execution rows have been logged yet.")
+
+    if completed_set_count < planned_set_count:
+        deviation_flags.append("incomplete_logging")
+        notes.append("Completed actual sets are fewer than planned sets.")
+
+    if skipped_set_count > 0:
+        deviation_flags.append("skipped_exercises_present")
+        notes.append("One or more planned sets or exercises were skipped.")
+
+    if substituted_exercise_ids:
+        deviation_flags.append("substitutions_present")
+        notes.append("One or more planned exercises had substitutions logged.")
+
+    if rir_deviation is not None:
+        if rir_deviation < 0:
+            deviation_flags.append("actual_effort_harder_than_planned")
+        elif rir_deviation > 0:
+            deviation_flags.append("actual_effort_easier_than_planned")
+
+    if sets_below_planned_reps > 0:
+        deviation_flags.append("reps_below_plan")
+    if sets_above_planned_reps > 0:
+        deviation_flags.append("reps_above_plan")
+    if missing_actual_rir:
+        deviation_flags.append("missing_actual_rir")
+    if missing_actual_reps:
+        deviation_flags.append("missing_actual_reps")
+
+    rep_deviation = {
+        "sets_below_planned_reps": sets_below_planned_reps,
+        "sets_inside_planned_reps": sets_inside_planned_reps,
+        "sets_above_planned_reps": sets_above_planned_reps,
+    }
+
+    return WorkoutPlannedVsActualSummary(
+        workout_plan_instance_id=plan_instance_id,
+        workout_execution_session_id=(
+            execution_session.id if execution_session else None
+        ),
+        planned_exercise_count=planned_exercise_count,
+        completed_exercise_count=len(completed_exercise_ids),
+        skipped_exercise_count=len(skipped_exercise_ids),
+        substituted_exercise_count=len(substituted_exercise_ids),
+        planned_set_count=planned_set_count,
+        actual_set_count=actual_set_count,
+        completed_set_count=completed_set_count,
+        skipped_set_count=skipped_set_count,
+        completion_percentage=completion_percentage,
+        average_planned_rir=average_planned_rir,
+        average_actual_rir=average_actual_rir,
+        rir_deviation=rir_deviation,
+        rep_deviation=rep_deviation,
+        sets_below_planned_reps=sets_below_planned_reps,
+        sets_inside_planned_reps=sets_inside_planned_reps,
+        sets_above_planned_reps=sets_above_planned_reps,
+        notes=notes,
+        deviation_flags=deviation_flags,
+    )

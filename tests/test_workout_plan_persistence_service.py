@@ -7,6 +7,7 @@ from services.equipment_profile_service import save_equipment_profile
 from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
     WorkoutPlanValidationError,
+    build_planned_vs_actual_summary,
     count_workout_plan_instances,
     get_actual_sets,
     get_execution_state,
@@ -578,3 +579,247 @@ def test_actual_sets_can_be_read_by_execution_session_id(tmp_path, monkeypatch):
 
     assert len(actual_sets) == 1
     assert actual_sets[0].planned_workout_exercise_id == planned_exercise.id
+
+
+def test_planned_vs_actual_summary_counts_planned_exercises_and_sets(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercises = started["planned_exercises"]
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.planned_exercise_count == len(planned_exercises)
+    assert summary.planned_set_count == sum(
+        exercise.sets for exercise in planned_exercises
+    )
+    assert summary.actual_set_count == 0
+    assert summary.completed_set_count == 0
+    assert summary.completion_percentage == 0.0
+    assert "empty_completion" in summary.deviation_flags
+    assert "incomplete_logging" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_counts_completed_actual_sets(tmp_path, monkeypatch):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "set_number": 1,
+            "actual_reps": planned_exercise.reps_min,
+            "actual_weight": 35.0,
+            "actual_rir": planned_exercise.rir_max,
+        },
+    )
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "set_number": 2,
+            "actual_reps": planned_exercise.reps_max,
+            "actual_weight": 35.0,
+            "actual_rir": planned_exercise.rir_max,
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.completed_exercise_count == 1
+    assert summary.actual_set_count == 2
+    assert summary.completed_set_count == 2
+    assert summary.skipped_set_count == 0
+    assert summary.completion_percentage == round(
+        (2 / summary.planned_set_count) * 100, 2
+    )
+    assert summary.sets_inside_planned_reps == 2
+
+
+def test_planned_vs_actual_summary_excludes_skipped_from_actual_set_count(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "completed": False,
+            "skipped": True,
+            "notes": "Skipped due to time.",
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.actual_set_count == 0
+    assert summary.completed_set_count == 0
+    assert summary.skipped_set_count == 1
+    assert summary.skipped_exercise_count == 1
+    assert "skipped_exercises_present" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_counts_substitutions(tmp_path, monkeypatch):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "substitution_for_planned_exercise_id": planned_exercise.id,
+            "exercise_name": "Bodyweight Squat",
+            "actual_reps": planned_exercise.reps_min,
+            "actual_rir": planned_exercise.rir_max,
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.substituted_exercise_count == 1
+    assert summary.actual_set_count == 1
+    assert summary.completed_set_count == 1
+    assert "substitutions_present" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_average_planned_rir_weighted_by_sets(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercises = started["planned_exercises"]
+    expected = round(
+        sum(
+            ((exercise.rir_min + exercise.rir_max) / 2) * exercise.sets
+            for exercise in planned_exercises
+        )
+        / sum(exercise.sets for exercise in planned_exercises),
+        2,
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.average_planned_rir == expected
+
+
+def test_planned_vs_actual_summary_average_actual_rir_and_harder_flag(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "actual_reps": planned_exercise.reps_min,
+            "actual_rir": max(planned_exercise.rir_min - 1, 0),
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.average_actual_rir == max(planned_exercise.rir_min - 1, 0)
+    assert summary.rir_deviation is not None
+    assert summary.rir_deviation < 0
+    assert "actual_effort_harder_than_planned" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_easier_effort_flag(tmp_path, monkeypatch):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "actual_reps": planned_exercise.reps_min,
+            "actual_rir": min(planned_exercise.rir_max + 3, 10),
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.rir_deviation is not None
+    assert summary.rir_deviation > 0
+    assert "actual_effort_easier_than_planned" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_rep_deviation_counts_below_inside_above(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    for set_number, reps in enumerate(
+        [
+            planned_exercise.reps_min - 1,
+            planned_exercise.reps_min,
+            planned_exercise.reps_max + 1,
+        ],
+        start=1,
+    ):
+        log_actual_set(
+            instance_id,
+            {
+                "planned_workout_exercise_id": planned_exercise.id,
+                "set_number": set_number,
+                "actual_reps": reps,
+                "actual_rir": planned_exercise.rir_max,
+            },
+        )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert summary.sets_below_planned_reps == 1
+    assert summary.sets_inside_planned_reps == 1
+    assert summary.sets_above_planned_reps == 1
+    assert summary.rep_deviation == {
+        "sets_below_planned_reps": 1,
+        "sets_inside_planned_reps": 1,
+        "sets_above_planned_reps": 1,
+    }
+    assert "reps_below_plan" in summary.deviation_flags
+    assert "reps_above_plan" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_flags_missing_actual_rir_and_reps(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+
+    log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "completed": False,
+            "skipped": False,
+            "notes": "Started logging but details are incomplete.",
+        },
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert "missing_actual_rir" in summary.deviation_flags
+    assert "missing_actual_reps" in summary.deviation_flags
+    assert "incomplete_logging" in summary.deviation_flags
+
+
+def test_planned_vs_actual_summary_keeps_manual_logging_independent(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _started_plan(tmp_path, monkeypatch)
+    manual_session_id = create_workout_session(
+        user_id=105,
+        workout_name="Manual Session Not Part Of Plan Summary",
+        duration_minutes=20,
+        notes="Manual logging remains independent.",
+    )
+
+    summary = build_planned_vs_actual_summary(instance_id)
+
+    assert manual_session_id
+    assert summary.actual_set_count == 0
+    assert "empty_completion" in summary.deviation_flags

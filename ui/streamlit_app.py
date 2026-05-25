@@ -353,6 +353,226 @@ def display_selected_workout_plan_state(plan_response: dict) -> None:
     display_planned_exercises(planned_exercises)
 
 
+def display_actual_sets(actual_sets: list[dict]) -> None:
+    st.subheader("Actual Logged Sets")
+
+    if not actual_sets:
+        st.info("No actual sets have been logged for this workout plan yet.")
+        return
+
+    actual_rows = []
+
+    for actual_set in actual_sets:
+        actual_rows.append(
+            {
+                "ID": actual_set.get("id", "Unknown"),
+                "Planned Exercise ID": actual_set.get(
+                    "planned_workout_exercise_id",
+                    "None",
+                ),
+                "Exercise": actual_set.get("exercise_name", "Unknown"),
+                "Set": actual_set.get("set_number", "Unknown"),
+                "Actual Reps": actual_set.get("actual_reps", "Unknown"),
+                "Actual Weight": actual_set.get("actual_weight", "Unknown"),
+                "Actual RIR": actual_set.get("actual_rir", "Unknown"),
+                "Completed": actual_set.get("completed", False),
+                "Skipped": actual_set.get("skipped", False),
+                "Substitution For": actual_set.get(
+                    "substitution_for_planned_exercise_id",
+                    "",
+                )
+                or "",
+                "Notes": actual_set.get("notes") or "",
+            }
+        )
+
+    st.dataframe(
+        pd.DataFrame(actual_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def display_planned_vs_actual_summary(summary: dict) -> None:
+    st.subheader("Planned vs Actual Summary")
+
+    if not summary:
+        st.info("Planned-vs-actual summary is not available yet.")
+        return
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric(
+        "Completion",
+        f"{summary.get('completion_percentage', 0)}%",
+    )
+    col2.metric(
+        "Planned Exercises",
+        summary.get("planned_exercise_count", "Unknown"),
+    )
+    col3.metric(
+        "Completed Exercises",
+        summary.get("completed_exercise_count", "Unknown"),
+    )
+    col4.metric(
+        "Skipped Exercises",
+        summary.get("skipped_exercise_count", "Unknown"),
+    )
+
+    col5, col6, col7, col8 = st.columns(4)
+
+    col5.metric(
+        "Planned Sets",
+        summary.get("planned_set_count", "Unknown"),
+    )
+    col6.metric(
+        "Actual Sets",
+        summary.get("actual_set_count", "Unknown"),
+    )
+    col7.metric(
+        "Completed Sets",
+        summary.get("completed_set_count", "Unknown"),
+    )
+    col8.metric(
+        "Skipped Sets",
+        summary.get("skipped_set_count", "Unknown"),
+    )
+
+    col9, col10, col11 = st.columns(3)
+
+    col9.metric(
+        "Avg Planned RIR",
+        summary.get("average_planned_rir", "Unknown"),
+    )
+    col10.metric(
+        "Avg Actual RIR",
+        summary.get("average_actual_rir", "Unknown"),
+    )
+    col11.metric(
+        "RIR Deviation",
+        summary.get("rir_deviation", "Unknown"),
+    )
+
+    rep_deviation = summary.get("rep_deviation") or {}
+
+    rep_rows = [
+        {
+            "Metric": "Sets Below Planned Reps",
+            "Value": summary.get("sets_below_planned_reps", "Unknown"),
+        },
+        {
+            "Metric": "Sets Inside Planned Reps",
+            "Value": summary.get("sets_inside_planned_reps", "Unknown"),
+        },
+        {
+            "Metric": "Sets Above Planned Reps",
+            "Value": summary.get("sets_above_planned_reps", "Unknown"),
+        },
+    ]
+
+    for key, value in rep_deviation.items():
+        rep_rows.append(
+            {
+                "Metric": humanize_label(key),
+                "Value": value,
+            }
+        )
+
+    st.dataframe(
+        pd.DataFrame(rep_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+    deviation_flags = summary.get("deviation_flags") or []
+    notes = summary.get("notes") or []
+
+    if deviation_flags:
+        st.write("**Deviation Flags**")
+        for flag in deviation_flags:
+            st.warning(humanize_label(flag))
+
+    if notes:
+        st.write("**Summary Notes**")
+        for note in notes:
+            st.info(note)
+
+
+def display_workout_execution_review(plan_instance_id: int) -> None:
+    st.subheader("Workout Execution Review")
+
+    try:
+        execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
+    except requests.RequestException as exc:
+        st.error(
+            f"Failed to load workout execution review: {extract_api_error_message(exc)}"
+        )
+        return
+
+    workout_plan_instance = execution_response.get("workout_plan_instance", {})
+    execution_session = execution_response.get("execution_session", {})
+    planned_exercises = execution_response.get("planned_exercises", [])
+    actual_sets = execution_response.get("actual_sets", [])
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Plan Status",
+        humanize_label(workout_plan_instance.get("status")),
+    )
+    col2.metric(
+        "Execution Status",
+        humanize_label(execution_session.get("status")),
+    )
+    col3.metric(
+        "Workout Session ID",
+        execution_session.get("workout_session_id") or "Not created",
+    )
+
+    col4, col5 = st.columns(2)
+
+    col4.metric(
+        "Started At",
+        execution_session.get("started_at") or "Not started",
+    )
+    col5.metric(
+        "Completed At",
+        execution_session.get("completed_at") or "Not completed",
+    )
+
+    st.write("**Planned Exercises**")
+    display_planned_exercises(planned_exercises)
+    display_actual_sets(actual_sets)
+
+    planned_vs_actual_response = None
+    planned_vs_actual_error = None
+
+    try:
+        planned_vs_actual_response = api_get(
+            f"/workout-plans/{plan_instance_id}/planned-vs-actual"
+        )
+        display_planned_vs_actual_summary(
+            planned_vs_actual_response.get("planned_vs_actual_summary", {})
+        )
+    except requests.RequestException as exc:
+        planned_vs_actual_error = extract_api_error_message(exc)
+        st.info(
+            f"Planned-vs-actual summary is not available yet: {planned_vs_actual_error}"
+        )
+
+    with st.expander("Developer details: workout execution review"):
+        st.subheader("Raw Execution Response")
+        st.json(execution_response)
+
+        if planned_vs_actual_response:
+            st.subheader("Raw Planned-vs-Actual Response")
+            st.json(planned_vs_actual_response)
+
+        if planned_vs_actual_error:
+            st.subheader("Planned-vs-Actual Error")
+            st.write(planned_vs_actual_error)
+
+
 TRAINING_ENVIRONMENT_OPTIONS = {
     "commercial_gym": "Commercial Gym",
     "home_gym": "Home Gym",
@@ -846,6 +1066,8 @@ try:
                             "Workout plan start failed: "
                             f"{extract_api_error_message(exc)}"
                         )
+
+                display_workout_execution_review(plan_instance_id)
 
         if st.session_state.workout_plan_action_error:
             st.error(st.session_state.workout_plan_action_error)

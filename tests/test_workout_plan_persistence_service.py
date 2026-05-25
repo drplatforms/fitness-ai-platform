@@ -17,6 +17,7 @@ from services.workout_plan_persistence_service import (
     get_workout_plan_instance,
     log_actual_set,
     select_current_workout_plan,
+    update_actual_set,
 )
 from services.workout_service import create_workout_session
 
@@ -1146,6 +1147,316 @@ def test_planned_vs_actual_endpoint_keeps_manual_logging_independent(
     assert response.status_code == 200
     assert manual_session_id
     assert response.json()["planned_vs_actual_summary"]["actual_set_count"] == 1
+
+
+def test_in_progress_actual_set_can_be_edited(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+
+    result = update_actual_set(
+        instance_id,
+        actual_set.id,
+        {
+            "actual_reps": 12,
+            "actual_weight": 42.5,
+            "actual_rir": 2,
+            "notes": "Corrected after review.",
+        },
+    )
+
+    updated = result["actual_set"]
+    assert updated.id == actual_set.id
+    assert updated.actual_reps == 12
+    assert updated.actual_weight == 42.5
+    assert updated.actual_rir == 2
+    assert updated.notes == "Corrected after review."
+    assert result["workout_plan_instance"].status == "in_progress"
+
+
+def test_completed_actual_set_can_be_corrected_and_preserves_completion(
+    tmp_path, monkeypatch
+):
+    from services.workout_plan_persistence_service import complete_workout_plan
+
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    complete_result = complete_workout_plan(instance_id)
+    completed_at = complete_result["workout_plan_instance"].completed_at
+    execution_completed_at = complete_result["execution_session"].completed_at
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+
+    result = update_actual_set(
+        instance_id,
+        actual_set.id,
+        {
+            "actual_reps": 11,
+            "actual_weight": 40.0,
+            "actual_rir": 3,
+        },
+    )
+
+    assert result["actual_set"].actual_reps == 11
+    assert result["workout_plan_instance"].status == "completed"
+    assert result["execution_session"].status == "completed"
+    assert result["workout_plan_instance"].completed_at == completed_at
+    assert result["execution_session"].completed_at == execution_completed_at
+
+
+def test_actual_set_edit_endpoint_returns_updated_summary(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+    client = TestClient(app)
+
+    response = client.patch(
+        f"/workout-plans/{instance_id}/actual-sets/{actual_set.id}",
+        json={"actual_reps": 1, "actual_rir": 1},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["actual_set"]["actual_reps"] == 1
+    assert payload["planned_vs_actual_summary"]["sets_below_planned_reps"] == 1
+    assert "reps_below_plan" in payload["planned_vs_actual_summary"]["deviation_flags"]
+
+
+def test_selected_plan_actual_set_edit_is_rejected(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    selected = select_current_workout_plan(105)
+
+    try:
+        update_actual_set(
+            selected["workout_plan_instance"].id,
+            1,
+            {"actual_reps": 10},
+        )
+    except WorkoutPlanInvalidStatusError as exc:
+        assert "in-progress or completed workout plans" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanInvalidStatusError")
+
+
+def test_started_plan_actual_set_edit_is_rejected(tmp_path, monkeypatch):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    actual_set_result = log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": started["planned_exercises"][0].id,
+            "actual_reps": started["planned_exercises"][0].reps_min,
+            "actual_rir": started["planned_exercises"][0].rir_max,
+        },
+    )
+    actual_set = actual_set_result["actual_set"]
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE workout_plan_instances SET status = ? WHERE id = ?",
+        ("started", instance_id),
+    )
+    cursor.execute(
+        """
+        UPDATE workout_execution_sessions
+        SET status = ?
+        WHERE workout_plan_instance_id = ?
+        """,
+        ("started", instance_id),
+    )
+    conn.commit()
+    conn.close()
+
+    try:
+        update_actual_set(instance_id, actual_set.id, {"actual_reps": 10})
+    except WorkoutPlanInvalidStatusError as exc:
+        assert "in-progress or completed workout plans" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanInvalidStatusError")
+
+
+def test_actual_set_from_another_plan_edit_is_rejected(tmp_path, monkeypatch):
+    first_instance_id, _first_started = _in_progress_plan(tmp_path, monkeypatch)
+    second_selected = select_current_workout_plan(105)
+    from services.workout_plan_persistence_service import start_selected_workout_plan
+
+    second_started = start_selected_workout_plan(
+        second_selected["workout_plan_instance"].id
+    )
+    second_exercise = second_started["planned_exercises"][0]
+    second_result = log_actual_set(
+        second_selected["workout_plan_instance"].id,
+        {
+            "planned_workout_exercise_id": second_exercise.id,
+            "actual_reps": second_exercise.reps_min,
+            "actual_rir": second_exercise.rir_max,
+        },
+    )
+
+    try:
+        update_actual_set(
+            first_instance_id,
+            second_result["actual_set"].id,
+            {"actual_reps": 10},
+        )
+    except WorkoutPlanValidationError as exc:
+        assert "actual_set_id must belong" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanValidationError")
+
+
+def test_planned_exercise_from_another_plan_edit_is_rejected(tmp_path, monkeypatch):
+    first_instance_id, _first_started = _in_progress_plan(tmp_path, monkeypatch)
+    second_selected = select_current_workout_plan(105)
+    second_planned_exercise = get_planned_workout_exercises(
+        second_selected["workout_plan_instance"].id
+    )[0]
+    actual_set = get_actual_sets(plan_instance_id=first_instance_id)[0]
+
+    try:
+        update_actual_set(
+            first_instance_id,
+            actual_set.id,
+            {"planned_workout_exercise_id": second_planned_exercise.id},
+        )
+    except WorkoutPlanValidationError as exc:
+        assert "planned_workout_exercise_id must belong" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanValidationError")
+
+
+def test_substitution_pointer_from_another_plan_edit_is_rejected(tmp_path, monkeypatch):
+    first_instance_id, _first_started = _in_progress_plan(tmp_path, monkeypatch)
+    second_selected = select_current_workout_plan(105)
+    second_planned_exercise = get_planned_workout_exercises(
+        second_selected["workout_plan_instance"].id
+    )[0]
+    actual_set = get_actual_sets(plan_instance_id=first_instance_id)[0]
+
+    try:
+        update_actual_set(
+            first_instance_id,
+            actual_set.id,
+            {"substitution_for_planned_exercise_id": second_planned_exercise.id},
+        )
+    except WorkoutPlanValidationError as exc:
+        assert "substitution_for_planned_exercise_id must belong" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanValidationError")
+
+
+def test_completed_row_can_become_skipped(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+
+    result = update_actual_set(
+        instance_id,
+        actual_set.id,
+        {
+            "completed": False,
+            "skipped": True,
+            "actual_reps": None,
+            "actual_weight": None,
+            "actual_rir": None,
+            "notes": "Corrected as skipped.",
+        },
+    )
+
+    updated = result["actual_set"]
+    assert updated.completed is False
+    assert updated.skipped is True
+    assert updated.actual_reps is None
+    assert updated.actual_rir is None
+    assert result["planned_vs_actual_summary"].skipped_set_count == 1
+
+
+def test_skipped_row_can_become_completed_with_required_actual_data(
+    tmp_path, monkeypatch
+):
+    instance_id, started = _started_plan(tmp_path, monkeypatch)
+    planned_exercise = started["planned_exercises"][0]
+    skipped_result = log_actual_set(
+        instance_id,
+        {
+            "planned_workout_exercise_id": planned_exercise.id,
+            "completed": False,
+            "skipped": True,
+            "notes": "Initially skipped.",
+        },
+    )
+
+    result = update_actual_set(
+        instance_id,
+        skipped_result["actual_set"].id,
+        {
+            "completed": True,
+            "skipped": False,
+            "actual_reps": planned_exercise.reps_min,
+            "actual_weight": 35.0,
+            "actual_rir": planned_exercise.rir_max,
+        },
+    )
+
+    updated = result["actual_set"]
+    assert updated.completed is True
+    assert updated.skipped is False
+    assert updated.actual_reps == planned_exercise.reps_min
+    assert result["planned_vs_actual_summary"].completed_set_count == 1
+
+
+def test_completed_and_skipped_together_edit_is_rejected(tmp_path, monkeypatch):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+
+    try:
+        update_actual_set(
+            instance_id,
+            actual_set.id,
+            {"completed": True, "skipped": True},
+        )
+    except WorkoutPlanValidationError as exc:
+        assert "completed and skipped cannot both be true" in str(exc)
+    else:
+        raise AssertionError("Expected WorkoutPlanValidationError")
+
+
+def test_invalid_actual_rir_reps_weight_and_set_number_edits_are_rejected(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+
+    invalid_payloads = [
+        {"actual_rir": 11},
+        {"actual_reps": -1},
+        {"actual_weight": -5.0},
+        {"set_number": 0},
+    ]
+
+    for payload in invalid_payloads:
+        try:
+            update_actual_set(instance_id, actual_set.id, payload)
+        except WorkoutPlanValidationError:
+            pass
+        else:
+            raise AssertionError(f"Expected rejection for {payload}")
+
+
+def test_planned_vs_actual_summary_updates_after_actual_set_correction(
+    tmp_path, monkeypatch
+):
+    instance_id, _started = _in_progress_plan(tmp_path, monkeypatch)
+    actual_set = get_actual_sets(plan_instance_id=instance_id)[0]
+    before_summary = build_planned_vs_actual_summary(instance_id)
+
+    result = update_actual_set(
+        instance_id,
+        actual_set.id,
+        {"actual_reps": 1, "actual_rir": 1},
+    )
+    after_summary = result["planned_vs_actual_summary"]
+
+    assert before_summary.sets_below_planned_reps == 0
+    assert after_summary.sets_below_planned_reps == 1
+    assert "reps_below_plan" in after_summary.deviation_flags
+    assert "actual_effort_harder_than_planned" in after_summary.deviation_flags
 
 
 def test_workout_plan_history_endpoint_returns_empty_list_for_user_with_no_plans(

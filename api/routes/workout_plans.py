@@ -15,6 +15,7 @@ from services.workout_plan_persistence_service import (
     log_actual_set,
     select_current_workout_plan,
     start_selected_workout_plan,
+    update_actual_set,
 )
 from services.workout_plan_service import (
     build_approved_workout_plan,
@@ -34,6 +35,19 @@ class ActualSetPayload(BaseModel):
     actual_rir: int | None = None
     completed: bool = True
     skipped: bool = False
+    substitution_for_planned_exercise_id: int | None = None
+    notes: str | None = None
+
+
+class ActualSetUpdatePayload(BaseModel):
+    planned_workout_exercise_id: int | None = None
+    exercise_name: str | None = None
+    set_number: int | None = None
+    actual_reps: int | None = None
+    actual_weight: float | None = None
+    actual_rir: int | None = None
+    completed: bool | None = None
+    skipped: bool | None = None
     substitution_for_planned_exercise_id: int | None = None
     notes: str | None = None
 
@@ -191,6 +205,33 @@ def create_workout_plan_actual_set(
         "actual_sets": [
             asdict(actual_set) for actual_set in execution_state["actual_sets"]
         ],
+    }
+
+
+@router.patch("/workout-plans/{plan_instance_id}/actual-sets/{actual_set_id}")
+def update_workout_plan_actual_set(
+    plan_instance_id: int,
+    actual_set_id: int,
+    payload: ActualSetUpdatePayload,
+):
+    try:
+        result = update_actual_set(
+            plan_instance_id,
+            actual_set_id,
+            payload.model_dump(exclude_unset=True),
+        )
+    except WorkoutPlanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (WorkoutPlanInvalidStatusError, WorkoutPlanValidationError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "workout_plan_instance_id": plan_instance_id,
+        "actual_set": asdict(result["actual_set"]),
+        "workout_plan_instance": asdict(result["workout_plan_instance"]),
+        "execution_session": asdict(result["execution_session"]),
+        "planned_vs_actual_summary": asdict(result["planned_vs_actual_summary"]),
     }
 
 

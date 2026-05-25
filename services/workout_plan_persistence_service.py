@@ -778,6 +778,227 @@ def log_actual_set(plan_instance_id: int, payload: dict) -> dict:
     }
 
 
+def _get_required_editable_actual_set_rows(
+    cursor,
+    plan_instance_id: int,
+    actual_set_id: int,
+):
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_plan_instances
+        WHERE id = ?
+        """,
+        (plan_instance_id,),
+    )
+    instance_row = cursor.fetchone()
+
+    if instance_row is None:
+        raise WorkoutPlanNotFoundError(
+            f"Workout plan instance {plan_instance_id} was not found."
+        )
+
+    if instance_row["status"] not in {"in_progress", "completed"}:
+        raise WorkoutPlanInvalidStatusError(
+            "Actual sets can only be edited for in-progress or completed "
+            f"workout plans. Plan {plan_instance_id} is currently "
+            f"{instance_row['status']}."
+        )
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_execution_sessions
+        WHERE workout_plan_instance_id = ?
+        """,
+        (plan_instance_id,),
+    )
+    execution_row = cursor.fetchone()
+
+    if execution_row is None:
+        raise WorkoutPlanInvalidStatusError(
+            f"Workout plan instance {plan_instance_id} has no execution session."
+        )
+
+    if execution_row["status"] not in {"in_progress", "completed"}:
+        raise WorkoutPlanInvalidStatusError(
+            "Actual sets can only be edited for in-progress or completed "
+            f"execution sessions. Execution session {execution_row['id']} "
+            f"is currently {execution_row['status']}."
+        )
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_execution_set_actuals
+        WHERE id = ?
+          AND workout_execution_session_id = ?
+        """,
+        (actual_set_id, execution_row["id"]),
+    )
+    actual_set_row = cursor.fetchone()
+
+    if actual_set_row is None:
+        raise WorkoutPlanValidationError(
+            "actual_set_id must belong to the workout plan instance."
+        )
+
+    return instance_row, execution_row, actual_set_row
+
+
+def update_actual_set(
+    plan_instance_id: int,
+    actual_set_id: int,
+    payload: dict,
+) -> dict:
+    """Correct a logged actual set without changing execution completion state."""
+
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        _instance_row, execution_row, actual_set_row = (
+            _get_required_editable_actual_set_rows(
+                cursor,
+                plan_instance_id,
+                actual_set_id,
+            )
+        )
+        planned_exercises = _get_planned_exercises_for_validation(
+            cursor, plan_instance_id
+        )
+
+        candidate = {
+            "planned_workout_exercise_id": actual_set_row[
+                "planned_workout_exercise_id"
+            ],
+            "exercise_name": actual_set_row["exercise_name"],
+            "set_number": actual_set_row["set_number"],
+            "actual_reps": actual_set_row["actual_reps"],
+            "actual_weight": actual_set_row["actual_weight"],
+            "actual_rir": actual_set_row["actual_rir"],
+            "completed": bool(actual_set_row["completed"]),
+            "skipped": bool(actual_set_row["skipped"]),
+            "substitution_for_planned_exercise_id": actual_set_row[
+                "substitution_for_planned_exercise_id"
+            ],
+            "notes": actual_set_row["notes"],
+        }
+
+        for key, value in payload.items():
+            if key in candidate:
+                candidate[key] = value
+
+        planned_exercise = _validate_actual_set_payload(
+            candidate,
+            planned_exercises,
+        )
+
+        set_number = int(candidate["set_number"])
+        if set_number <= 0:
+            raise WorkoutPlanValidationError("set_number must be positive.")
+
+        planned_exercise_id = candidate.get("planned_workout_exercise_id")
+        substitution_for_id = candidate.get("substitution_for_planned_exercise_id")
+
+        if planned_exercise_id is not None:
+            planned_exercise_id = int(planned_exercise_id)
+        if substitution_for_id is not None:
+            substitution_for_id = int(substitution_for_id)
+
+        exercise_name = candidate.get("exercise_name")
+        if (not exercise_name) and planned_exercise is not None:
+            exercise_name = planned_exercise.name
+
+        if not exercise_name:
+            raise WorkoutPlanValidationError(
+                "exercise_name is required when no planned exercise is referenced."
+            )
+
+        actual_reps = candidate.get("actual_reps")
+        actual_weight = candidate.get("actual_weight")
+        actual_rir = candidate.get("actual_rir")
+        if actual_reps is not None:
+            actual_reps = int(actual_reps)
+        if actual_weight is not None:
+            actual_weight = float(actual_weight)
+        if actual_rir is not None:
+            actual_rir = int(actual_rir)
+
+        completed = bool(candidate.get("completed", False))
+        skipped = bool(candidate.get("skipped", False))
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        cursor.execute(
+            """
+            UPDATE workout_execution_set_actuals
+            SET
+                planned_workout_exercise_id = ?,
+                exercise_name = ?,
+                set_number = ?,
+                planned_reps_min = ?,
+                planned_reps_max = ?,
+                planned_rir_min = ?,
+                planned_rir_max = ?,
+                actual_reps = ?,
+                actual_weight = ?,
+                actual_rir = ?,
+                completed = ?,
+                skipped = ?,
+                substitution_for_planned_exercise_id = ?,
+                notes = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND workout_execution_session_id = ?
+            """,
+            (
+                planned_exercise_id,
+                str(exercise_name),
+                set_number,
+                planned_exercise.reps_min if planned_exercise else None,
+                planned_exercise.reps_max if planned_exercise else None,
+                planned_exercise.rir_min if planned_exercise else None,
+                planned_exercise.rir_max if planned_exercise else None,
+                actual_reps,
+                actual_weight,
+                actual_rir,
+                1 if completed else 0,
+                1 if skipped else 0,
+                substitution_for_id,
+                candidate.get("notes"),
+                now,
+                actual_set_id,
+                execution_row["id"],
+            ),
+        )
+
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM workout_execution_set_actuals
+            WHERE id = ?
+            """,
+            (actual_set_id,),
+        )
+        actual_set = _row_to_actual_set(cursor.fetchone())
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    execution_state = get_execution_state(plan_instance_id)
+    return {
+        "actual_set": actual_set,
+        "workout_plan_instance": execution_state["workout_plan_instance"],
+        "execution_session": execution_state["execution_session"],
+        "planned_vs_actual_summary": build_planned_vs_actual_summary(plan_instance_id),
+    }
+
+
 def select_current_workout_plan(user_id: int) -> dict:
     """Persist the current server-built ApprovedWorkoutPlan as selected.
 

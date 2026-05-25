@@ -186,6 +186,17 @@ def _clear_existing_qa_data(cursor) -> None:
 
     cursor.execute(
         f"""
+        DELETE FROM workout_execution_set_actuals
+        WHERE workout_execution_session_id IN (
+            SELECT id
+            FROM workout_execution_sessions
+            WHERE user_id IN ({placeholders})
+        )
+        """,
+        QA_USER_IDS,
+    )
+    cursor.execute(
+        f"""
         DELETE FROM planned_workout_exercises
         WHERE workout_plan_instance_id IN (
             SELECT id FROM workout_plan_instances WHERE user_id IN ({placeholders})

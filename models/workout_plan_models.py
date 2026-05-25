@@ -112,3 +112,27 @@ class WorkoutExecutionSession:
     abandoned_at: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+
+
+@dataclass
+class WorkoutExecutionSetActual:
+    id: int
+    workout_execution_session_id: int
+    planned_workout_exercise_id: int | None
+    workout_session_id: int | None
+    workout_set_id: int | None
+    exercise_name: str
+    set_number: int
+    planned_reps_min: int | None = None
+    planned_reps_max: int | None = None
+    planned_rir_min: int | None = None
+    planned_rir_max: int | None = None
+    actual_reps: int | None = None
+    actual_weight: float | None = None
+    actual_rir: int | None = None
+    completed: bool = False
+    skipped: bool = False
+    substitution_for_planned_exercise_id: int | None = None
+    notes: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None

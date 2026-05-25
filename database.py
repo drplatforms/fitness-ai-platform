@@ -406,6 +406,56 @@ def initialize_database():
     """)
 
     # -----------------------------
+    # Workout Execution Set Actuals
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_execution_set_actuals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        workout_execution_session_id INTEGER NOT NULL,
+        planned_workout_exercise_id INTEGER,
+        workout_session_id INTEGER,
+        workout_set_id INTEGER,
+
+        exercise_name TEXT NOT NULL,
+        set_number INTEGER NOT NULL,
+
+        planned_reps_min INTEGER,
+        planned_reps_max INTEGER,
+        planned_rir_min INTEGER,
+        planned_rir_max INTEGER,
+
+        actual_reps INTEGER,
+        actual_weight REAL,
+        actual_rir INTEGER,
+
+        completed INTEGER NOT NULL DEFAULT 0,
+        skipped INTEGER NOT NULL DEFAULT 0,
+        substitution_for_planned_exercise_id INTEGER,
+        notes TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (workout_execution_session_id)
+            REFERENCES workout_execution_sessions(id),
+
+        FOREIGN KEY (planned_workout_exercise_id)
+            REFERENCES planned_workout_exercises(id),
+
+        FOREIGN KEY (workout_session_id)
+            REFERENCES workout_sessions(id),
+
+        FOREIGN KEY (workout_set_id)
+            REFERENCES workout_sets(id),
+
+        FOREIGN KEY (substitution_for_planned_exercise_id)
+            REFERENCES planned_workout_exercises(id)
+    )
+    """)
+
+    # -----------------------------
     # Seed Exercises
     # -----------------------------
 

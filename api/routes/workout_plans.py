@@ -24,6 +24,7 @@ def workout_plan_preview(user_id: int):
         "scenario": approved_plan.scenario,
         "confidence": approved_plan.confidence,
         "training_constraints": asdict(context.training_constraints),
+        "workout_constraints": asdict(context.workout_constraints),
         "approved_workout_plan": asdict(approved_plan),
         "rendered_workout_plan": render_approved_workout_plan(approved_plan),
     }

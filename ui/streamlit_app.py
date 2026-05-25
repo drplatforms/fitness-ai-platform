@@ -497,6 +497,7 @@ try:
         confidence = workout_plan_data.get("confidence", "Unknown")
         approved_workout_plan = workout_plan_data.get("approved_workout_plan", {})
         training_constraints = workout_plan_data.get("training_constraints", {})
+        workout_constraints = workout_plan_data.get("workout_constraints", {})
 
         col1, col2 = st.columns(2)
 
@@ -515,6 +516,8 @@ try:
         with st.expander("Developer details"):
             st.subheader("Training Constraints")
             st.json(training_constraints)
+            st.subheader("Workout Constraints")
+            st.json(workout_constraints)
             st.subheader("Raw Workout Plan Response")
             st.json(workout_plan_data)
 

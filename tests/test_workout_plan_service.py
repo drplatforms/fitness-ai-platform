@@ -1,7 +1,10 @@
+from dataclasses import replace
+
 from fastapi.testclient import TestClient
 
 import database
 from api.main import app
+from models.workout_constraint_models import WorkoutConstraints
 from scripts.seed_qa_scenarios import QA_USER_IDS, seed_qa_scenarios
 from services.user_state_service import build_user_health_state
 from services.workout_plan_service import (
@@ -126,6 +129,60 @@ def test_workout_validator_rejects_invalid_and_unsafe_candidate(tmp_path, monkey
     )
 
 
+def test_workout_context_includes_workout_constraints(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_workout_context(health_states[105])
+
+    assert context.workout_constraints.available_equipment
+    assert context.workout_constraints.recent_exercises
+    assert "safe_default_equipment_assumptions" in context.reason_codes
+
+
+def test_workout_generator_respects_unavailable_equipment(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_workout_context(health_states[102])
+    restricted_context = replace(
+        context,
+        workout_constraints=WorkoutConstraints(
+            available_equipment=["dumbbell", "bodyweight"],
+            unavailable_equipment=["barbell", "machine", "cable"],
+            confidence="Low",
+            reason_codes=["test_equipment_restricted"],
+        ),
+    )
+
+    candidate = generate_candidate_workout_plan(restricted_context)
+    violations = validate_candidate_workout_plan(candidate, restricted_context)
+    exercise_names = " ".join(exercise.name for exercise in candidate.exercises).lower()
+
+    assert violations == []
+    assert "barbell" not in exercise_names
+    assert all(
+        "barbell" not in exercise.equipment_required for exercise in candidate.exercises
+    )
+
+
+def test_workout_validator_rejects_unavailable_equipment(tmp_path, monkeypatch):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_workout_context(health_states[102])
+    restricted_context = replace(
+        context,
+        workout_constraints=WorkoutConstraints(
+            available_equipment=["dumbbell", "bodyweight"],
+            unavailable_equipment=["barbell"],
+            confidence="Low",
+            reason_codes=["test_equipment_restricted"],
+        ),
+    )
+    candidate = generate_candidate_workout_plan(restricted_context)
+    candidate.exercises[0].name = "Barbell Squat"
+    candidate.exercises[0].equipment_required = ["barbell"]
+
+    violations = validate_candidate_workout_plan(candidate, restricted_context)
+
+    assert any("equipment" in violation.lower() for violation in violations)
+
+
 def test_workout_plan_preview_endpoint_smoke(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
     seed_qa_scenarios()
@@ -140,5 +197,7 @@ def test_workout_plan_preview_endpoint_smoke(tmp_path, monkeypatch):
     assert payload["scenario"] == "data_quality_limited"
     assert payload["confidence"] == "Low"
     assert payload["training_constraints"]["recommended_rir_min"] == 2
+    assert "workout_constraints" in payload
+    assert payload["workout_constraints"]["available_equipment"]
     assert payload["approved_workout_plan"]["exercises"]
     assert "Workout Plan Preview" in payload["rendered_workout_plan"]

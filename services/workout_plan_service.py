@@ -1,6 +1,7 @@
 from dataclasses import asdict
 
 from models.user_state_models import UserHealthState
+from models.workout_constraint_models import WorkoutConstraints
 from models.workout_plan_models import (
     ApprovedWorkoutExercise,
     ApprovedWorkoutPlan,
@@ -10,6 +11,7 @@ from models.workout_plan_models import (
 )
 from services.coaching_decision_service import build_coaching_decision
 from services.training_constraint_service import build_training_constraints
+from services.workout_constraint_service import build_workout_constraints
 
 _INTERNAL_DEBUG_TERMS = [
     "guardrail",
@@ -29,6 +31,7 @@ _INTERNAL_DEBUG_TERMS = [
     "approvedworkoutplan",
     "workoutcontext",
     "trainingconstraints",
+    "workoutconstraints",
     "coachingdecision",
     "data_quality_limited",
     "aligned_managed",
@@ -63,6 +66,10 @@ _DATA_QUALITY_FORBIDDEN_TERMS = [
 ]
 
 
+def _normalize_equipment(equipment: str) -> str:
+    return equipment.strip().lower().replace(" ", "_")
+
+
 def _text_blob(plan: CandidateWorkoutPlan) -> str:
     exercise_text = " ".join(
         f"{exercise.name} {exercise.notes}" for exercise in plan.exercises
@@ -83,6 +90,7 @@ def _text_blob(plan: CandidateWorkoutPlan) -> str:
 def build_workout_context(health_state: UserHealthState) -> WorkoutContext:
     coaching_decision = build_coaching_decision(health_state)
     training_constraints = build_training_constraints(health_state, coaching_decision)
+    workout_constraints = build_workout_constraints(health_state)
 
     return WorkoutContext(
         user_id=health_state.user_id,
@@ -93,13 +101,51 @@ def build_workout_context(health_state: UserHealthState) -> WorkoutContext:
         avg_rir=health_state.training_state.avg_rir,
         workout_count=health_state.training_state.workout_count,
         training_constraints=training_constraints,
+        workout_constraints=workout_constraints,
         confidence=coaching_decision.confidence,
         reason_codes=list(
             dict.fromkeys(
-                coaching_decision.reason_codes + training_constraints.reason_codes
+                coaching_decision.reason_codes
+                + training_constraints.reason_codes
+                + workout_constraints.reason_codes
             )
         ),
     )
+
+
+def _equipment_allowed(
+    equipment_required: list[str], workout_constraints: WorkoutConstraints
+) -> bool:
+    if not equipment_required:
+        return True
+
+    required = {_normalize_equipment(item) for item in equipment_required}
+    available = {
+        _normalize_equipment(item) for item in workout_constraints.available_equipment
+    }
+    unavailable = {
+        _normalize_equipment(item) for item in workout_constraints.unavailable_equipment
+    }
+
+    if required & unavailable:
+        return False
+
+    if available and not required.issubset(available):
+        return False
+
+    return True
+
+
+def _select_exercise(
+    workout_constraints: WorkoutConstraints,
+    options: list[tuple[str, list[str]]],
+) -> tuple[str, list[str]]:
+    for name, equipment_required in options:
+        if _equipment_allowed(equipment_required, workout_constraints):
+            return name, [_normalize_equipment(item) for item in equipment_required]
+
+    name, equipment_required = options[-1]
+    return name, [_normalize_equipment(item) for item in equipment_required]
 
 
 def _exercise(
@@ -110,6 +156,7 @@ def _exercise(
     rir_min: int,
     rir_max: int,
     notes: str,
+    equipment_required: list[str],
 ) -> CandidateWorkoutExercise:
     return CandidateWorkoutExercise(
         name=name,
@@ -119,6 +166,30 @@ def _exercise(
         rir_min=rir_min,
         rir_max=rir_max,
         notes=notes,
+        equipment_required=[_normalize_equipment(item) for item in equipment_required],
+    )
+
+
+def _exercise_from_options(
+    context: WorkoutContext,
+    options: list[tuple[str, list[str]]],
+    sets: int,
+    reps_min: int,
+    reps_max: int,
+    rir_min: int,
+    rir_max: int,
+    notes: str,
+) -> CandidateWorkoutExercise:
+    name, equipment_required = _select_exercise(context.workout_constraints, options)
+    return _exercise(
+        name,
+        sets,
+        reps_min,
+        reps_max,
+        rir_min,
+        rir_max,
+        notes,
+        equipment_required,
     )
 
 
@@ -133,8 +204,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             session_focus="Maintain movement quality while reducing recovery cost.",
             duration_minutes=40,
             exercises=[
-                _exercise(
-                    "Goblet Squat",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Goblet Squat", ["dumbbell"]),
+                        ("Leg Press", ["machine"]),
+                        ("Bodyweight Squat", ["bodyweight"]),
+                    ],
                     3,
                     8,
                     10,
@@ -142,8 +218,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Use a controlled tempo and stop with reps in reserve.",
                 ),
-                _exercise(
-                    "Dumbbell Bench Press",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Dumbbell Bench Press", ["dumbbell"]),
+                        ("Push-Up", ["bodyweight"]),
+                        ("Machine Chest Press", ["machine"]),
+                    ],
                     3,
                     8,
                     10,
@@ -151,8 +232,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Keep effort moderate and avoid grinding reps.",
                 ),
-                _exercise(
-                    "Chest-Supported Row",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Chest-Supported Row", ["dumbbell"]),
+                        ("Cable Row", ["cable"]),
+                        ("Machine Row", ["machine"]),
+                    ],
                     3,
                     10,
                     12,
@@ -177,8 +263,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             session_focus="Train productively while nutrition support is reviewed.",
             duration_minutes=45,
             exercises=[
-                _exercise(
-                    "Leg Press",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Leg Press", ["machine"]),
+                        ("Goblet Squat", ["dumbbell"]),
+                        ("Bodyweight Squat", ["bodyweight"]),
+                    ],
                     3,
                     8,
                     12,
@@ -186,8 +277,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Keep the final reps controlled and repeatable.",
                 ),
-                _exercise(
-                    "Incline Dumbbell Press",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Incline Dumbbell Press", ["dumbbell"]),
+                        ("Push-Up", ["bodyweight"]),
+                        ("Machine Chest Press", ["machine"]),
+                    ],
                     3,
                     8,
                     12,
@@ -195,8 +291,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Use a load that allows consistent technique.",
                 ),
-                _exercise(
-                    "Lat Pulldown",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Lat Pulldown", ["cable"]),
+                        ("Cable Row", ["cable"]),
+                        ("Dumbbell Row", ["dumbbell"]),
+                    ],
                     3,
                     10,
                     12,
@@ -221,8 +322,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             session_focus="Build on the improving trend without ramping too quickly.",
             duration_minutes=50,
             exercises=[
-                _exercise(
-                    "Barbell Squat",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Barbell Squat", ["barbell"]),
+                        ("Goblet Squat", ["dumbbell"]),
+                        ("Leg Press", ["machine"]),
+                    ],
                     3,
                     5,
                     8,
@@ -230,17 +336,27 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Use a conservative load and leave room to progress next session.",
                 ),
-                _exercise(
-                    "Barbell Bench Press",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Barbell Bench Press", ["barbell"]),
+                        ("Dumbbell Bench Press", ["dumbbell"]),
+                        ("Push-Up", ["bodyweight"]),
+                    ],
                     3,
                     6,
                     8,
                     rir_min,
                     rir_max,
-                    "Keep bar speed consistent across sets.",
+                    "Keep speed consistent across sets.",
                 ),
-                _exercise(
-                    "Barbell Row",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Barbell Row", ["barbell"]),
+                        ("Dumbbell Row", ["dumbbell"]),
+                        ("Cable Row", ["cable"]),
+                    ],
                     3,
                     8,
                     10,
@@ -265,8 +381,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             session_focus="Keep training simple while logging quality improves.",
             duration_minutes=35,
             exercises=[
-                _exercise(
-                    "Goblet Squat",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Goblet Squat", ["dumbbell"]),
+                        ("Leg Press", ["machine"]),
+                        ("Bodyweight Squat", ["bodyweight"]),
+                    ],
                     2,
                     8,
                     10,
@@ -274,8 +395,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Choose a comfortable load and focus on repeatable movement.",
                 ),
-                _exercise(
-                    "Push-Up or Dumbbell Press",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Push-Up", ["bodyweight"]),
+                        ("Dumbbell Press", ["dumbbell"]),
+                        ("Machine Chest Press", ["machine"]),
+                    ],
                     2,
                     8,
                     12,
@@ -283,8 +409,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     rir_max,
                     "Use a variation that feels controlled today.",
                 ),
-                _exercise(
-                    "Cable Row or Dumbbell Row",
+                _exercise_from_options(
+                    context,
+                    [
+                        ("Cable Row", ["cable"]),
+                        ("Dumbbell Row", ["dumbbell"]),
+                        ("Machine Row", ["machine"]),
+                    ],
                     2,
                     10,
                     12,
@@ -308,8 +439,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
         session_focus="Maintain consistency and progress gradually.",
         duration_minutes=50,
         exercises=[
-            _exercise(
-                "Barbell Squat",
+            _exercise_from_options(
+                context,
+                [
+                    ("Barbell Squat", ["barbell"]),
+                    ("Goblet Squat", ["dumbbell"]),
+                    ("Leg Press", ["machine"]),
+                ],
                 3,
                 5,
                 8,
@@ -317,8 +453,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                 rir_max,
                 "Add load only if the previous session felt stable.",
             ),
-            _exercise(
-                "Barbell Bench Press",
+            _exercise_from_options(
+                context,
+                [
+                    ("Barbell Bench Press", ["barbell"]),
+                    ("Dumbbell Bench Press", ["dumbbell"]),
+                    ("Push-Up", ["bodyweight"]),
+                ],
                 3,
                 6,
                 8,
@@ -326,8 +467,13 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                 rir_max,
                 "Keep one or more clean reps in reserve on working sets.",
             ),
-            _exercise(
-                "Barbell Row",
+            _exercise_from_options(
+                context,
+                [
+                    ("Barbell Row", ["barbell"]),
+                    ("Dumbbell Row", ["dumbbell"]),
+                    ("Cable Row", ["cable"]),
+                ],
                 3,
                 8,
                 10,
@@ -356,7 +502,8 @@ def validate_candidate_workout_plan(
     if not candidate.exercises:
         violations.append("Workout plan must include at least one exercise.")
 
-    constraints = context.training_constraints
+    training_constraints = context.training_constraints
+    workout_constraints = context.workout_constraints
     for exercise in candidate.exercises:
         if exercise.sets < 1 or exercise.sets > 6:
             violations.append(f"Invalid set count for {exercise.name}.")
@@ -371,17 +518,22 @@ def validate_candidate_workout_plan(
         ):
             violations.append(f"Invalid RIR range for {exercise.name}.")
 
-        if constraints.recommended_rir_min is not None:
-            if exercise.rir_min < constraints.recommended_rir_min:
+        if training_constraints.recommended_rir_min is not None:
+            if exercise.rir_min < training_constraints.recommended_rir_min:
                 violations.append(
                     f"{exercise.name} uses lower RIR than current constraints allow."
                 )
 
-        if constraints.recommended_rir_max is not None:
-            if exercise.rir_max > constraints.recommended_rir_max:
+        if training_constraints.recommended_rir_max is not None:
+            if exercise.rir_max > training_constraints.recommended_rir_max:
                 violations.append(
                     f"{exercise.name} uses higher RIR than current constraints allow."
                 )
+
+        if not _equipment_allowed(exercise.equipment_required, workout_constraints):
+            violations.append(
+                f"{exercise.name} requires equipment outside current workout constraints."
+            )
 
     text = _text_blob(candidate)
 
@@ -441,6 +593,7 @@ def approve_candidate_workout_plan(
                 rir_min=exercise.rir_min,
                 rir_max=exercise.rir_max,
                 notes=exercise.notes,
+                equipment_required=exercise.equipment_required,
             )
             for exercise in candidate.exercises
         ],

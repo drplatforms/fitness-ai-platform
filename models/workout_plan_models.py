@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from models.training_constraint_models import TrainingConstraints
+from models.workout_constraint_models import WorkoutConstraints
 
 
 @dataclass
@@ -13,6 +14,7 @@ class WorkoutContext:
     avg_rir: float | str
     workout_count: int
     training_constraints: TrainingConstraints
+    workout_constraints: WorkoutConstraints
     confidence: str
     reason_codes: list[str] = field(default_factory=list)
 
@@ -26,6 +28,7 @@ class CandidateWorkoutExercise:
     rir_min: int
     rir_max: int
     notes: str
+    equipment_required: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -50,6 +53,7 @@ class ApprovedWorkoutExercise:
     rir_min: int
     rir_max: int
     notes: str
+    equipment_required: list[str] = field(default_factory=list)
 
 
 @dataclass

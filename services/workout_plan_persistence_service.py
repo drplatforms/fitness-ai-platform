@@ -843,12 +843,18 @@ def get_execution_state(plan_instance_id: int) -> dict:
 
     planned_exercises = get_planned_workout_exercises(plan_instance_id)
     actual_sets = get_actual_sets(execution_session_id=execution_session.id)
+    active_substitutions = [
+        substitution
+        for substitution in get_substitutions_for_plan(plan_instance_id)
+        if substitution.status == "active"
+    ]
 
     return {
         "workout_plan_instance": instance,
         "execution_session": execution_session,
         "planned_exercises": planned_exercises,
         "actual_sets": actual_sets,
+        "active_substitutions": active_substitutions,
         "approved_workout_plan": instance.approved_workout_plan,
     }
 

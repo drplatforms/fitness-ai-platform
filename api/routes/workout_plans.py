@@ -245,6 +245,10 @@ def workout_plan_execution_state(plan_instance_id: int):
         "actual_sets": [
             asdict(actual_set) for actual_set in execution_state["actual_sets"]
         ],
+        "active_substitutions": [
+            asdict(substitution)
+            for substitution in execution_state.get("active_substitutions", [])
+        ],
         "approved_workout_plan": asdict(approved_plan),
     }
 

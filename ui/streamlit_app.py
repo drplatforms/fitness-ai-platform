@@ -193,6 +193,53 @@ def display_training_constraints(training_constraints: dict) -> None:
         st.write(f"**Recovery constraint:** {recovery_constraint}")
 
 
+def workout_exercise_role_label(index: int, exercise: dict) -> str:
+    if index == 0:
+        return "Main Lower / Primary Movement"
+
+    if index == 1:
+        return "Main Push"
+
+    if index == 2:
+        return "Main Pull"
+
+    if index == 3:
+        return "Accessory / Core / Conditioning"
+
+    return f"Additional Movement {index + 1}"
+
+
+def format_workout_range(
+    minimum: int | float | None,
+    maximum: int | float | None,
+    suffix: str = "",
+) -> str:
+    if minimum is None and maximum is None:
+        return "Unknown"
+
+    if minimum is None:
+        return f"Up to {maximum}{suffix}"
+
+    if maximum is None:
+        return f"{minimum}+{suffix}"
+
+    if minimum == maximum:
+        return f"{minimum}{suffix}"
+
+    return f"{minimum}-{maximum}{suffix}"
+
+
+def format_equipment_required(exercise: dict) -> str:
+    equipment_required = exercise.get("equipment_required") or []
+
+    if not equipment_required:
+        return "Bodyweight / none"
+
+    return ", ".join(
+        equipment_display_name(equipment) for equipment in equipment_required
+    )
+
+
 def display_workout_plan_preview(workout_plan: dict) -> None:
     title = workout_plan.get("title", "Workout Plan Preview")
     session_focus = workout_plan.get("session_focus", "No focus available.")
@@ -204,50 +251,93 @@ def display_workout_plan_preview(workout_plan: dict) -> None:
     confidence = workout_plan.get("confidence", "Unknown")
     exercises = workout_plan.get("exercises") or []
 
-    st.subheader(title)
+    st.subheader("Plan Summary")
 
-    col1, col2 = st.columns(2)
+    st.markdown(f"### {title}")
+
+    col1, col2, col3 = st.columns(3)
+
     col1.metric("Duration", f"{duration_minutes} min")
     col2.metric("Confidence", confidence)
+    col3.metric("Exercises", len(exercises))
 
-    st.write(f"**Focus:** {session_focus}")
+    st.write(f"**Session focus:** {session_focus}")
 
-    if warmup:
-        st.write(f"**Warmup:** {warmup}")
+    st.subheader("Workout Exercises")
 
-    exercise_rows = []
-    for exercise in exercises:
-        rir_min = exercise.get("rir_min")
-        rir_max = exercise.get("rir_max")
-        reps_min = exercise.get("reps_min")
-        reps_max = exercise.get("reps_max")
+    if not exercises:
+        st.warning("No exercises are available for this workout preview.")
+    else:
+        exercise_rows = []
 
-        exercise_rows.append(
-            {
-                "Exercise": exercise.get("name", "Unknown"),
-                "Sets": exercise.get("sets", "Unknown"),
-                "Reps": (
-                    f"{reps_min}-{reps_max}"
-                    if reps_min is not None and reps_max is not None
-                    else "Unknown"
-                ),
-                "RIR": (
-                    f"{rir_min}-{rir_max}"
-                    if rir_min is not None and rir_max is not None
-                    else "Unknown"
-                ),
-                "Notes": exercise.get("notes", ""),
-            }
-        )
+        for index, exercise in enumerate(exercises):
+            role = workout_exercise_role_label(index, exercise)
+            reps = format_workout_range(
+                exercise.get("reps_min"),
+                exercise.get("reps_max"),
+            )
+            rir = format_workout_range(
+                exercise.get("rir_min"),
+                exercise.get("rir_max"),
+            )
 
-    if exercise_rows:
+            exercise_rows.append(
+                {
+                    "Slot": role,
+                    "Exercise": exercise.get("name", "Unknown"),
+                    "Sets": exercise.get("sets", "Unknown"),
+                    "Reps": reps,
+                    "RIR Range": rir,
+                    "Equipment": format_equipment_required(exercise),
+                    "Notes": exercise.get("notes", ""),
+                }
+            )
+
         st.dataframe(
             pd.DataFrame(exercise_rows),
             width="stretch",
             hide_index=True,
         )
+
+        for index, exercise in enumerate(exercises):
+            role = workout_exercise_role_label(index, exercise)
+            exercise_name = exercise.get("name", "Unknown")
+
+            with st.expander(f"{role}: {exercise_name}", expanded=index < 3):
+                col1, col2, col3, col4 = st.columns(4)
+
+                col1.metric("Sets", exercise.get("sets", "Unknown"))
+                col2.metric(
+                    "Reps",
+                    format_workout_range(
+                        exercise.get("reps_min"),
+                        exercise.get("reps_max"),
+                    ),
+                )
+                col3.metric(
+                    "RIR",
+                    format_workout_range(
+                        exercise.get("rir_min"),
+                        exercise.get("rir_max"),
+                    ),
+                )
+                col4.metric("Equipment", format_equipment_required(exercise))
+
+                notes = exercise.get("notes")
+                if notes:
+                    st.write(f"**Notes:** {notes}")
+
+    st.subheader("Why This Plan")
+
+    if rationale:
+        st.write(rationale)
     else:
-        st.warning("No exercises are available for this workout preview.")
+        st.info("No rationale was returned for this workout preview.")
+
+    st.subheader("Guidance")
+
+    if warmup:
+        st.write(f"**Warmup:** {warmup}")
 
     if progression_guidance:
         st.write(f"**Progression guidance:** {progression_guidance}")
@@ -255,8 +345,8 @@ def display_workout_plan_preview(workout_plan: dict) -> None:
     if cooldown:
         st.write(f"**Cooldown:** {cooldown}")
 
-    if rationale:
-        st.write(f"**Why:** {rationale}")
+    if not any([warmup, progression_guidance, cooldown]):
+        st.info("No additional guidance was returned for this workout preview.")
 
 
 def extract_api_error_message(exc: requests.RequestException) -> str:

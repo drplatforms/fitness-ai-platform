@@ -326,3 +326,161 @@ def test_limited_equipment_without_bench_uses_non_bench_alternatives(
         set(exercise.equipment_required).issubset({"bodyweight", "dumbbell"})
         for exercise in approved.exercises
     )
+
+
+def test_home_gym_preview_adds_accessory_slot_when_equipment_allows(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    health_state = build_user_health_state(102)
+    approved = build_approved_workout_plan(health_state)
+    accessory = approved.exercises[3]
+    accessory_entry = find_catalog_entry_by_name(accessory.name)
+
+    assert len(approved.exercises) == 4
+    assert accessory_entry is not None
+    assert accessory_entry.movement_pattern in {
+        "arms_biceps",
+        "arms_triceps",
+        "carry",
+        "conditioning",
+        "core_anti_extension",
+        "core_anti_rotation",
+        "horizontal_pull",
+        "vertical_push",
+    }
+    assert set(accessory.equipment_required).issubset(set(USER_HOME_GYM_EQUIPMENT))
+
+
+def test_bodyweight_only_fourth_slot_remains_bodyweight_compatible(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=105,
+        training_environment="bodyweight_only",
+        available_equipment=["bodyweight"],
+        unavailable_equipment=[
+            "adjustable_bench",
+            "barbell",
+            "bike",
+            "cable",
+            "dumbbell",
+            "ez_bar",
+            "machine",
+            "plates",
+            "pull_up_bar",
+            "rack",
+            "resistance_band",
+            "treadmill",
+        ],
+    )
+
+    health_state = build_user_health_state(105)
+    approved = build_approved_workout_plan(health_state)
+
+    assert len(approved.exercises) == 4
+    assert all(
+        set(exercise.equipment_required).issubset({"bodyweight"})
+        for exercise in approved.exercises
+    )
+
+
+def test_limited_equipment_accessory_avoids_unavailable_equipment(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    unavailable = [
+        "adjustable_bench",
+        "barbell",
+        "bike",
+        "cable",
+        "ez_bar",
+        "machine",
+        "plates",
+        "pull_up_bar",
+        "rack",
+        "resistance_band",
+        "treadmill",
+    ]
+    save_equipment_profile(
+        user_id=102,
+        training_environment="limited_equipment",
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=unavailable,
+    )
+
+    health_state = build_user_health_state(102)
+    approved = build_approved_workout_plan(health_state)
+
+    assert len(approved.exercises) == 4
+    for exercise in approved.exercises:
+        assert set(exercise.equipment_required).isdisjoint(set(unavailable))
+        assert set(exercise.equipment_required).issubset({"bodyweight", "dumbbell"})
+
+
+def test_recovery_limited_accessory_slot_avoids_aggressive_finisher_language(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=101,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    health_state = build_user_health_state(101)
+    approved = build_approved_workout_plan(health_state)
+    rendered = " ".join(
+        [approved.progression_guidance]
+        + [exercise.notes for exercise in approved.exercises]
+    ).lower()
+
+    assert len(approved.exercises) == 4
+    assert all(exercise.rir_min >= 2 for exercise in approved.exercises)
+    assert "max effort" not in rendered
+    assert "to failure" not in rendered
+    assert "hard finisher" not in rendered
+
+
+def test_data_quality_limited_fourth_slot_stays_simple_and_manageable(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=105,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    health_state = build_user_health_state(105)
+    approved = build_approved_workout_plan(health_state)
+    fourth_exercise = approved.exercises[3]
+    rendered = " ".join(
+        [approved.session_focus, approved.rationale, fourth_exercise.notes]
+    ).lower()
+
+    assert len(approved.exercises) == 4
+    assert fourth_exercise.name in {
+        "Dead Bug",
+        "Treadmill Walk",
+        "Bike Steady State",
+        "Band Pull-Apart",
+    }
+    assert "manageable" in rendered or "simple" in rendered
+    assert "overtraining" not in rendered
+    assert "stalled progress" not in rendered

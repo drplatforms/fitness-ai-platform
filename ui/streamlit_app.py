@@ -2927,98 +2927,164 @@ def render_equipment_profile_editor(user_id: int) -> None:
     )
 
 
-def render_today_section(user_id: int) -> None:
-    st.header("Today")
+def render_readiness_snapshot(user_id: int) -> None:
+    st.subheader("Readiness")
+
+    try:
+        data = api_get(f"/health-state/{user_id}")
+    except requests.RequestException as exc:
+        st.error(f"Failed to load health state: {extract_api_error_message(exc)}")
+        return
+
+    if not data.get("success"):
+        st.info("Health state is not available yet.")
+        return
+
+    health_state = data["health_state"]
+    recovery = health_state.get("recovery_state", {})
+    training = health_state.get("training_state", {})
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Recovery", recovery.get("recovery_score", "Unknown"))
+    col2.metric("Readiness", recovery.get("readiness_level", "Unknown"))
+    col3.metric("Fatigue Risk", recovery.get("fatigue_risk", "Unknown"))
+    col4.metric("Stress", health_state.get("system_stress_level", "Unknown"))
+
     st.caption(
-        "Start here: check readiness, see the daily recommendation, and preview today's workout."
+        "Training: "
+        f"{training.get('adherence_level', 'Unknown')} adherence | "
+        f"{training.get('training_trend', 'Unknown')} trend"
+    )
+    developer_details("Developer details: health state", data)
+
+
+def render_daily_recommendation_snapshot(user_id: int) -> None:
+    st.subheader("Daily Coaching")
+
+    try:
+        recommendation_data = api_get(f"/recommendations/daily/{user_id}")
+    except requests.RequestException as exc:
+        st.error(
+            f"Failed to load daily recommendation: {extract_api_error_message(exc)}"
+        )
+        return
+
+    if not recommendation_data.get("success"):
+        st.info("No daily recommendation is available for this user yet.")
+        return
+
+    scenario = recommendation_data.get("scenario")
+    confidence = recommendation_data.get("confidence", "Unknown")
+    approved_plan = recommendation_data.get("approved_action_plan", {})
+    training_constraints = recommendation_data.get("training_constraints", {})
+
+    col1, col2 = st.columns(2)
+    col1.metric("Status", scenario_display_name(scenario))
+    col2.metric("Confidence", confidence)
+
+    st.write(
+        approved_plan.get(
+            "daily_coaching_recommendation",
+            "No daily coaching recommendation available.",
+        )
     )
 
-    health_col, action_col = st.columns([1.05, 1.25])
-
-    with health_col:
-        st.subheader("Readiness")
-        try:
-            data = api_get(f"/health-state/{user_id}")
-        except requests.RequestException as exc:
-            st.error(f"Failed to load health state: {extract_api_error_message(exc)}")
-            data = {}
-
-        if data.get("success"):
-            health_state = data["health_state"]
-            recovery = health_state.get("recovery_state", {})
-            training = health_state.get("training_state", {})
-
-            col1, col2 = st.columns(2)
-            col1.metric("Recovery", recovery.get("recovery_score", "Unknown"))
-            col2.metric("Readiness", recovery.get("readiness_level", "Unknown"))
-
-            col3, col4 = st.columns(2)
-            col3.metric("Fatigue Risk", recovery.get("fatigue_risk", "Unknown"))
-            col4.metric(
-                "System Stress", health_state.get("system_stress_level", "Unknown")
+    with st.expander("Why this recommendation", expanded=False):
+        st.write("**Workout:**")
+        st.write(
+            approved_plan.get(
+                "workout_recommendation",
+                "No workout recommendation available.",
             )
-
-            st.caption(
-                "Training: "
-                f"{training.get('adherence_level', 'Unknown')} adherence | "
-                f"{training.get('training_trend', 'Unknown')} trend"
+        )
+        st.write("**Nutrition:**")
+        st.write(
+            approved_plan.get(
+                "nutrition_action",
+                "No nutrition action available.",
             )
-            developer_details("Developer details: health state", data)
+        )
+        st.write("**Why:**")
+        st.write(approved_plan.get("rationale", "No rationale available."))
+        display_training_constraints(training_constraints)
 
-    with action_col:
-        st.subheader("Daily Grounded Recommendation")
-        try:
-            recommendation_data = api_get(f"/recommendations/daily/{user_id}")
-        except requests.RequestException as exc:
-            st.error(
-                f"Failed to load daily recommendation: {extract_api_error_message(exc)}"
+    developer_details("Developer details: daily recommendation", recommendation_data)
+
+
+def render_today_workout_panel(user_id: int) -> None:
+    st.subheader("Workout Today")
+    st.caption(
+        "Main path: select the plan, start it, log sets, complete the workout, "
+        "then review what happened."
+    )
+
+    active_plan_response = get_active_plan_response(user_id)
+
+    if active_plan_response:
+        plan_instance_id = get_plan_instance_id_from_response(active_plan_response)
+
+        render_active_plan_summary(active_plan_response)
+
+        if plan_instance_id is None:
+            st.warning("The active workout is missing a plan instance ID.")
+            return
+
+        plan_status, execution_status = get_plan_statuses(active_plan_response)
+
+        if plan_status == "selected" or execution_status == "selected":
+            st.info(
+                "Workout selected. Use the Workout Plan tab for substitutions, "
+                "or start when ready."
             )
-            recommendation_data = {}
+            start_active_workout(active_plan_response)
 
-        if recommendation_data.get("success"):
-            scenario = recommendation_data.get("scenario")
-            confidence = recommendation_data.get("confidence", "Unknown")
-            approved_plan = recommendation_data.get("approved_action_plan", {})
-            training_constraints = recommendation_data.get("training_constraints", {})
+        refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
+        if refreshed_plan_response:
+            active_plan_response = refreshed_plan_response
 
-            col1, col2 = st.columns(2)
-            col1.metric("Status", scenario_display_name(scenario))
-            col2.metric("Confidence", confidence)
+        if is_started_or_in_progress(active_plan_response):
+            st.divider()
+            st.markdown("### Log Sets")
+            display_actual_set_logging(plan_instance_id)
 
-            st.write(
-                approved_plan.get(
-                    "daily_coaching_recommendation",
-                    "No daily coaching recommendation available.",
+        refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
+        if refreshed_plan_response:
+            active_plan_response = refreshed_plan_response
+
+        if is_in_progress(active_plan_response):
+            st.divider()
+            st.markdown("### Complete Workout")
+            display_complete_workout_control(plan_instance_id)
+
+        completed_response = st.session_state.get("completed_workout_plan_response")
+        if completed_response:
+            st.divider()
+            st.markdown("### Result")
+            display_planned_vs_actual_summary(
+                completed_response.get("planned_vs_actual_summary", {})
+            )
+        elif get_plan_statuses(active_plan_response)[0] == "completed":
+            st.divider()
+            st.markdown("### Result")
+            try:
+                summary_response = api_get(
+                    f"/workout-plans/{plan_instance_id}/planned-vs-actual"
                 )
-            )
-
-            with st.expander("Workout and nutrition details", expanded=False):
-                st.write("**Workout:**")
-                st.write(
-                    approved_plan.get(
-                        "workout_recommendation",
-                        "No workout recommendation available.",
-                    )
+            except requests.RequestException as exc:
+                st.info(
+                    "Workout is completed, but the summary could not be loaded: "
+                    f"{extract_api_error_message(exc)}"
                 )
-                st.write("**Nutrition:**")
-                st.write(
-                    approved_plan.get(
-                        "nutrition_action",
-                        "No nutrition action available.",
-                    )
+            else:
+                display_planned_vs_actual_summary(
+                    summary_response.get("planned_vs_actual_summary", {})
                 )
-                st.write("**Why:**")
-                st.write(approved_plan.get("rationale", "No rationale available."))
-                display_training_constraints(training_constraints)
+                developer_details(
+                    "Developer details: completed planned-vs-actual summary",
+                    summary_response,
+                )
 
-            developer_details(
-                "Developer details: daily recommendation", recommendation_data
-            )
-        else:
-            st.warning("No daily recommendation is available for this user yet.")
-
-    st.divider()
-    st.subheader("Today's Workout At A Glance")
+        return
 
     try:
         workout_plan_data = api_get(f"/workout-plans/preview/{user_id}")
@@ -3027,7 +3093,7 @@ def render_today_section(user_id: int) -> None:
         return
 
     if not workout_plan_data.get("success"):
-        st.warning("No workout plan preview is available for this user yet.")
+        st.info("No workout plan preview is available for this user yet.")
         return
 
     approved_workout_plan = workout_plan_data.get("approved_workout_plan", {})
@@ -3042,14 +3108,41 @@ def render_today_section(user_id: int) -> None:
     st.write(f"**Focus:** {approved_workout_plan.get('session_focus', 'Unknown')}")
     render_preview_exercise_snapshot(approved_workout_plan)
 
-    active_plan_response = get_active_plan_response(user_id)
-    if active_plan_response:
-        st.success("You already have an active selected workout plan.")
-        render_active_plan_summary(active_plan_response)
-    else:
-        select_today_workout(user_id, "select_today_workout_button")
+    select_today_workout(user_id, "select_today_workout_button")
+
+    with st.expander("Plan rationale and guidance", expanded=False):
+        if approved_workout_plan.get("rationale"):
+            st.write(f"**Why:** {approved_workout_plan.get('rationale')}")
+        if approved_workout_plan.get("progression_guidance"):
+            st.write(
+                f"**Progression:** {approved_workout_plan.get('progression_guidance')}"
+            )
+        if approved_workout_plan.get("warmup"):
+            st.write(f"**Warmup:** {approved_workout_plan.get('warmup')}")
+        if approved_workout_plan.get("cooldown"):
+            st.write(f"**Cooldown:** {approved_workout_plan.get('cooldown')}")
 
     developer_details("Developer details: workout preview", workout_plan_data)
+
+
+def render_today_section(user_id: int) -> None:
+    st.header("Today / Workout")
+    st.caption(
+        "Open here first. Review today's workout, start it, log actual sets, "
+        "complete it, and review the result."
+    )
+
+    render_today_workout_panel(user_id)
+
+    st.divider()
+
+    readiness_col, coaching_col = st.columns([1, 1.2])
+
+    with readiness_col:
+        render_readiness_snapshot(user_id)
+
+    with coaching_col:
+        render_daily_recommendation_snapshot(user_id)
 
 
 def render_workout_plan_section(user_id: int) -> None:
@@ -3691,7 +3784,7 @@ def render_developer_section(user_id: int) -> None:
     developer_tab,
 ) = st.tabs(
     [
-        "Today",
+        "Today / Workout",
         "Workout Plan",
         "Log Workout",
         "History",

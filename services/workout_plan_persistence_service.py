@@ -12,6 +12,7 @@ from models.workout_plan_models import (
     PlannedWorkoutExercise,
     WorkoutExecutionSession,
     WorkoutExecutionSetActual,
+    WorkoutPlanExerciseSubstitution,
     WorkoutPlanInstance,
     WorkoutPlannedVsActualSummary,
 )
@@ -25,6 +26,18 @@ WORKOUT_PLAN_STATUSES = {
     "completed",
     "abandoned",
     "cancelled",
+}
+
+WORKOUT_PLAN_SUBSTITUTION_STATUSES = {
+    "active",
+    "replaced",
+    "cancelled",
+}
+
+WORKOUT_PLAN_SUBSTITUTION_ALLOWED_PLAN_STATUSES = {
+    "selected",
+    "started",
+    "in_progress",
 }
 
 
@@ -169,6 +182,33 @@ def ensure_workout_plan_persistence_tables() -> None:
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_plan_exercise_substitutions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workout_plan_instance_id INTEGER NOT NULL,
+        workout_execution_session_id INTEGER,
+        planned_workout_exercise_id INTEGER NOT NULL,
+        original_exercise_name TEXT NOT NULL,
+        replacement_exercise_name TEXT NOT NULL,
+        replacement_catalog_exercise_id INTEGER NOT NULL,
+        original_movement_pattern TEXT NOT NULL,
+        replacement_movement_pattern TEXT NOT NULL,
+        substitution_reason TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (workout_plan_instance_id)
+            REFERENCES workout_plan_instances(id),
+        FOREIGN KEY (workout_execution_session_id)
+            REFERENCES workout_execution_sessions(id),
+        FOREIGN KEY (planned_workout_exercise_id)
+            REFERENCES planned_workout_exercises(id),
+        FOREIGN KEY (replacement_catalog_exercise_id)
+            REFERENCES exercise_catalog_exercises(id)
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -291,6 +331,24 @@ def _row_to_actual_set(row) -> WorkoutExecutionSetActual:
             "substitution_for_planned_exercise_id"
         ],
         notes=row["notes"],
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _row_to_substitution(row) -> WorkoutPlanExerciseSubstitution:
+    return WorkoutPlanExerciseSubstitution(
+        id=row["id"],
+        workout_plan_instance_id=row["workout_plan_instance_id"],
+        workout_execution_session_id=row["workout_execution_session_id"],
+        planned_workout_exercise_id=row["planned_workout_exercise_id"],
+        original_exercise_name=row["original_exercise_name"],
+        replacement_exercise_name=row["replacement_exercise_name"],
+        replacement_catalog_exercise_id=row["replacement_catalog_exercise_id"],
+        original_movement_pattern=row["original_movement_pattern"],
+        replacement_movement_pattern=row["replacement_movement_pattern"],
+        substitution_reason=row["substitution_reason"],
+        status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -502,6 +560,272 @@ def get_actual_sets(
     conn.close()
 
     return [_row_to_actual_set(row) for row in rows]
+
+
+def _catalog_entry_by_id(catalog_exercise_id: int):
+    from services.exercise_catalog_service import get_exercise_catalog
+
+    for entry in get_exercise_catalog():
+        if entry.id == catalog_exercise_id:
+            return entry
+
+    raise WorkoutPlanValidationError(
+        "replacement_catalog_exercise_id must reference an exercise catalog entry."
+    )
+
+
+def _catalog_entry_by_name(exercise_name: str):
+    from services.exercise_catalog_service import find_catalog_entry_by_name
+
+    return find_catalog_entry_by_name(exercise_name)
+
+
+def _get_plan_row_or_raise(cursor, plan_instance_id: int):
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_plan_instances
+        WHERE id = ?
+        """,
+        (plan_instance_id,),
+    )
+    instance_row = cursor.fetchone()
+
+    if instance_row is None:
+        raise WorkoutPlanNotFoundError(
+            f"Workout plan instance {plan_instance_id} was not found."
+        )
+
+    return instance_row
+
+
+def _get_planned_exercise_row_or_raise(
+    cursor,
+    plan_instance_id: int,
+    planned_exercise_id: int,
+):
+    cursor.execute(
+        """
+        SELECT *
+        FROM planned_workout_exercises
+        WHERE id = ?
+            AND workout_plan_instance_id = ?
+        """,
+        (planned_exercise_id, plan_instance_id),
+    )
+    planned_exercise_row = cursor.fetchone()
+
+    if planned_exercise_row is None:
+        raise WorkoutPlanValidationError(
+            "planned_workout_exercise_id must belong to the plan instance."
+        )
+
+    return planned_exercise_row
+
+
+def _get_execution_row_for_substitution(cursor, plan_instance_id: int):
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_execution_sessions
+        WHERE workout_plan_instance_id = ?
+        """,
+        (plan_instance_id,),
+    )
+    execution_row = cursor.fetchone()
+
+    if execution_row is None:
+        raise WorkoutPlanInvalidStatusError(
+            f"Workout plan instance {plan_instance_id} has no execution session."
+        )
+
+    return execution_row
+
+
+def create_substitution_record(
+    plan_instance_id: int,
+    planned_exercise_id: int,
+    replacement_catalog_exercise_id: int,
+    substitution_reason: str = "user_selected",
+    status: str = "active",
+) -> WorkoutPlanExerciseSubstitution:
+    """Create a durable substitution record without mutating the plan.
+
+    This helper is the schema foundation for future apply-substitution behavior.
+    It records a candidate replacement beside the immutable approved workout
+    snapshot and original planned exercise row. It does not change planned
+    exercises, approved workout JSON, actual-set rows, planned-vs-actual
+    summaries, recommendations, or reports.
+    """
+
+    if status not in WORKOUT_PLAN_SUBSTITUTION_STATUSES:
+        raise WorkoutPlanValidationError(
+            "status must be one of: "
+            f"{', '.join(sorted(WORKOUT_PLAN_SUBSTITUTION_STATUSES))}."
+        )
+
+    replacement_entry = _catalog_entry_by_id(int(replacement_catalog_exercise_id))
+
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        instance_row = _get_plan_row_or_raise(cursor, plan_instance_id)
+        if (
+            instance_row["status"]
+            not in WORKOUT_PLAN_SUBSTITUTION_ALLOWED_PLAN_STATUSES
+        ):
+            raise WorkoutPlanInvalidStatusError(
+                "Substitution records can only be created for selected, started, "
+                "or in-progress workout plans. "
+                f"Plan {plan_instance_id} is currently {instance_row['status']}."
+            )
+
+        planned_exercise_row = _get_planned_exercise_row_or_raise(
+            cursor,
+            plan_instance_id,
+            planned_exercise_id,
+        )
+        execution_row = _get_execution_row_for_substitution(cursor, plan_instance_id)
+
+        original_entry = _catalog_entry_by_name(planned_exercise_row["name"])
+        original_movement_pattern = (
+            original_entry.movement_pattern if original_entry is not None else "unknown"
+        )
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if status == "active":
+            cursor.execute(
+                """
+                UPDATE workout_plan_exercise_substitutions
+                SET status = ?, updated_at = ?
+                WHERE workout_plan_instance_id = ?
+                    AND planned_workout_exercise_id = ?
+                    AND status = ?
+                """,
+                (
+                    "replaced",
+                    now,
+                    plan_instance_id,
+                    planned_exercise_id,
+                    "active",
+                ),
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO workout_plan_exercise_substitutions (
+                workout_plan_instance_id,
+                workout_execution_session_id,
+                planned_workout_exercise_id,
+                original_exercise_name,
+                replacement_exercise_name,
+                replacement_catalog_exercise_id,
+                original_movement_pattern,
+                replacement_movement_pattern,
+                substitution_reason,
+                status,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                plan_instance_id,
+                execution_row["id"],
+                planned_exercise_id,
+                planned_exercise_row["name"],
+                replacement_entry.name,
+                replacement_entry.id,
+                original_movement_pattern,
+                replacement_entry.movement_pattern,
+                substitution_reason,
+                status,
+                now,
+            ),
+        )
+        substitution_id = cursor.lastrowid
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM workout_plan_exercise_substitutions
+            WHERE id = ?
+            """,
+            (substitution_id,),
+        )
+        row = cursor.fetchone()
+
+        return _row_to_substitution(row)
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_substitutions_for_plan(
+    plan_instance_id: int,
+) -> list[WorkoutPlanExerciseSubstitution]:
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    _get_plan_row_or_raise(cursor, plan_instance_id)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM workout_plan_exercise_substitutions
+        WHERE workout_plan_instance_id = ?
+        ORDER BY created_at, id
+        """,
+        (plan_instance_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [_row_to_substitution(row) for row in rows]
+
+
+def get_active_substitution_for_planned_exercise(
+    plan_instance_id: int,
+    planned_exercise_id: int,
+) -> WorkoutPlanExerciseSubstitution | None:
+    ensure_workout_plan_persistence_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        _get_plan_row_or_raise(cursor, plan_instance_id)
+        _get_planned_exercise_row_or_raise(
+            cursor,
+            plan_instance_id,
+            planned_exercise_id,
+        )
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM workout_plan_exercise_substitutions
+            WHERE workout_plan_instance_id = ?
+                AND planned_workout_exercise_id = ?
+                AND status = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (plan_instance_id, planned_exercise_id, "active"),
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    return _row_to_substitution(row)
 
 
 def get_execution_state(plan_instance_id: int) -> dict:

@@ -141,6 +141,23 @@ class WorkoutExecutionSetActual:
 
 
 @dataclass
+class WorkoutPlanExerciseSubstitution:
+    id: int
+    workout_plan_instance_id: int
+    workout_execution_session_id: int | None
+    planned_workout_exercise_id: int
+    original_exercise_name: str
+    replacement_exercise_name: str
+    replacement_catalog_exercise_id: int
+    original_movement_pattern: str
+    replacement_movement_pattern: str
+    substitution_reason: str
+    status: str
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+@dataclass
 class WorkoutPlannedVsActualSummary:
     workout_plan_instance_id: int
     workout_execution_session_id: int | None

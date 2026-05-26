@@ -21,6 +21,7 @@ from services.nutrition_target_service import (
     nutrition_targets_to_user_dict,
 )
 from services.training_constraint_service import build_training_constraints
+from services.training_execution_summary_service import build_training_execution_summary
 
 CANDIDATE_ACTION_PLAN_REQUIRED_FIELDS = {
     "daily_coaching_recommendation",
@@ -126,6 +127,7 @@ def build_recommendation_context(
     coaching_decision = build_coaching_decision(health_state)
     nutrition_targets = build_nutrition_targets(health_state)
     training_constraints = build_training_constraints(health_state, coaching_decision)
+    training_execution_summary = build_training_execution_summary(health_state.user_id)
 
     allowed_actions = [
         coaching_decision.training_action,
@@ -151,6 +153,7 @@ def build_recommendation_context(
         nutrition_targets=nutrition_targets,
         training_constraints=training_constraints,
         coaching_decision=coaching_decision,
+        training_execution_summary=training_execution_summary,
         allowed_actions=allowed_actions,
         forbidden_claims=forbidden_claims,
         confidence=coaching_decision.confidence,
@@ -175,6 +178,10 @@ def recommendation_context_to_llm_json(context: RecommendationContext) -> str:
     disallowed target values are not exposed to the model. For example, a
     Limited-confidence user can see the nutrition_display_message and approved
     protein range, but not hidden calorie/carbohydrate/fat ranges.
+
+    TrainingExecutionSummary is intentionally not included in this LLM payload
+    in the passive integration milestone. That keeps execution history available
+    to backend/debug context without changing CrewAI recommendation behavior.
     """
 
     safe_payload = {

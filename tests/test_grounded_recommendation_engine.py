@@ -78,6 +78,42 @@ def test_grounded_recommendation_engine_seeded_users_pass_validation(
         assert "Nutrition Action" in rendered
 
 
+def test_recommendation_context_includes_passive_training_execution_summary(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+
+    context = build_recommendation_context(health_states[102])
+
+    assert context.training_execution_summary is not None
+    assert context.training_execution_summary.user_id == 102
+    assert context.training_execution_summary.completed_execution_count == 0
+    assert (
+        context.training_execution_summary.execution_quality
+        == "no_planned_execution_data"
+    )
+    assert context.training_execution_summary.confidence == "Limited"
+    assert "no_completed_planned_executions" in (
+        context.training_execution_summary.reason_codes
+    )
+
+
+def test_training_execution_summary_is_not_in_llm_context_payload(
+    tmp_path, monkeypatch
+):
+    health_states = _seeded_health_states(tmp_path, monkeypatch)
+    context = build_recommendation_context(health_states[102])
+
+    payload = recommendation_engine_service.json.loads(
+        recommendation_engine_service.recommendation_context_to_llm_json(context)
+    )
+
+    assert context.training_execution_summary is not None
+    assert "training_execution_summary" not in payload
+    assert "actual_sets" not in payload
+    assert "notes" not in payload
+
+
 def test_aligned_managed_recommendation_avoids_unnecessary_intervention_language(
     tmp_path, monkeypatch
 ):
@@ -1178,7 +1214,14 @@ def test_debug_endpoint_returns_runtime_metadata_deterministic(tmp_path, monkeyp
         "approved_action_plan",
         "rendered_recommendation",
         "runtime_metadata",
+        "training_execution_summary",
     }
+    training_summary = payload["training_execution_summary"]
+    assert training_summary["user_id"] == 105
+    assert training_summary["completed_execution_count"] == 0
+    assert training_summary["execution_quality"] == "no_planned_execution_data"
+    assert "actual_sets" not in training_summary
+    assert "notes" not in training_summary
     metadata = payload["runtime_metadata"]
     assert metadata["configured_provider"] == "deterministic"
     assert metadata["selected_provider"] == "deterministic"
@@ -1293,6 +1336,32 @@ def test_debug_endpoint_invalid_provider_metadata(tmp_path, monkeypatch):
     assert metadata["candidate_parse_status"] == "not_attempted"
     assert metadata["candidate_validation_status"] == "not_attempted"
     assert metadata["final_plan_source"] == "deterministic_fallback"
+
+
+def test_debug_endpoint_exposes_training_execution_summary_only_in_debug(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RECOMMENDATION_CANDIDATE_PROVIDER", "deterministic")
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+
+    client = TestClient(app)
+    daily_payload = client.get("/recommendations/daily/102").json()
+    debug_payload = client.get("/recommendations/daily/102/debug").json()
+
+    assert "training_execution_summary" not in daily_payload
+    assert "training_execution_summary" in debug_payload
+
+    training_summary = debug_payload["training_execution_summary"]
+    assert training_summary["user_id"] == 102
+    assert training_summary["completed_execution_count"] == 0
+    assert "actual_sets" not in training_summary
+    assert "workout_execution_set_actuals" not in training_summary
+    assert "notes" not in training_summary
 
 
 def test_runtime_metadata_validation_failure_has_split_statuses(tmp_path, monkeypatch):

@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from models.coaching_decision_models import CoachingDecision
 from models.nutrition_target_models import NutritionTargets
 from models.training_constraint_models import TrainingConstraints
+from models.training_execution_summary_models import TrainingExecutionSummary
 
 
 @dataclass
@@ -14,6 +15,7 @@ class RecommendationContext:
     nutrition_targets: NutritionTargets
     training_constraints: TrainingConstraints
     coaching_decision: CoachingDecision
+    training_execution_summary: TrainingExecutionSummary | None = None
     allowed_actions: list[str] = field(default_factory=list)
     forbidden_claims: list[str] = field(default_factory=list)
     confidence: str = "Moderate"

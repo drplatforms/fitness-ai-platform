@@ -66,6 +66,7 @@ def _empty_summary(user_id: int) -> TrainingExecutionSummary:
 
 
 def _get_recent_completed_plan_instance_ids(user_id: int, limit: int) -> list[int]:
+    _ensure_workout_plan_execution_schema()
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -75,7 +76,7 @@ def _get_recent_completed_plan_instance_ids(user_id: int, limit: int) -> list[in
         FROM workout_plan_instances
         WHERE user_id = ?
           AND status = 'completed'
-        ORDER BY COALESCE(completed_at, started_at, selected_at, created_at) DESC,
+        ORDER BY COALESCE(completed_at, selected_at, created_at) DESC,
                  id DESC
         LIMIT ?
         """,
@@ -85,6 +86,25 @@ def _get_recent_completed_plan_instance_ids(user_id: int, limit: int) -> list[in
     conn.close()
 
     return [int(row["id"]) for row in rows]
+
+
+def _ensure_workout_plan_execution_schema() -> None:
+    """Ensure workout execution tables/columns exist before read-only queries.
+
+    RecommendationContext construction can happen after only the base database
+    initializer has run. That initializer may create an older workout plan table
+    shape, so the passive summary reader must not fail before workout execution
+    workflows have touched the persistence service.
+    """
+
+    try:
+        from services.workout_plan_persistence_service import (
+            ensure_workout_plan_persistence_tables,
+        )
+    except ImportError:
+        return
+
+    ensure_workout_plan_persistence_tables()
 
 
 def _load_planned_vs_actual_summary(plan_instance_id: int) -> Any:

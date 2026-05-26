@@ -35,8 +35,13 @@ def daily_recommendation(user_id: int):
 @router.get("/recommendations/daily/{user_id}/debug")
 def daily_recommendation_debug(user_id: int):
     health_state = build_user_health_state(user_id)
+    context = build_recommendation_context(health_state)
     result = build_configured_approved_action_plan_with_metadata(health_state)
     approved_plan = result.approved_action_plan
+
+    training_execution_summary = None
+    if context.training_execution_summary is not None:
+        training_execution_summary = asdict(context.training_execution_summary)
 
     return {
         "success": True,
@@ -46,4 +51,5 @@ def daily_recommendation_debug(user_id: int):
         "approved_action_plan": asdict(approved_plan),
         "rendered_recommendation": render_approved_action_plan(approved_plan),
         "runtime_metadata": asdict(result.runtime_metadata),
+        "training_execution_summary": training_execution_summary,
     }

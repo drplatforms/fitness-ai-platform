@@ -756,6 +756,143 @@ def planned_exercise_option_label(exercise: dict) -> str:
     )
 
 
+def substitution_reason_label(reason_code: str) -> str:
+    labels = {
+        "same_movement_pattern": "Same movement pattern",
+        "compatible_movement_family": "Compatible movement family",
+        "equipment_profile_compatible": "Compatible with current equipment profile",
+        "same_primary_muscle_group": "Similar primary muscle group",
+        "same_exercise_type": "Same exercise type",
+        "difficulty_match": "Similar difficulty",
+        "bodyweight_compatible": "Bodyweight-compatible",
+        "limited_equipment_compatible": "Limited-equipment-compatible",
+        "home_gym_compatible": "Home-gym-compatible",
+    }
+
+    return labels.get(reason_code, humanize_label(reason_code))
+
+
+def format_substitution_list(values: list[str] | None) -> str:
+    if not values:
+        return "Unknown"
+
+    return ", ".join(equipment_display_name(value) for value in values)
+
+
+def display_substitution_candidate_table(candidates: list[dict]) -> None:
+    if not candidates:
+        st.info("No compatible substitutions were returned for this planned exercise.")
+        return
+
+    candidate_rows = []
+
+    for candidate in candidates:
+        reason_codes = candidate.get("compatibility_reason_codes") or []
+
+        candidate_rows.append(
+            {
+                "Exercise": candidate.get("name", "Unknown"),
+                "Movement Pattern": humanize_label(
+                    candidate.get("movement_pattern"),
+                ),
+                "Required Equipment": format_substitution_list(
+                    candidate.get("required_equipment"),
+                ),
+                "Primary Muscle Groups": format_substitution_list(
+                    candidate.get("primary_muscle_groups"),
+                ),
+                "Type": humanize_label(candidate.get("exercise_type")),
+                "Difficulty": humanize_label(candidate.get("difficulty")),
+                "Why Compatible": ", ".join(
+                    substitution_reason_label(reason_code)
+                    for reason_code in reason_codes
+                )
+                or "Compatible with current constraints",
+            }
+        )
+
+    st.dataframe(
+        pd.DataFrame(candidate_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def display_substitution_candidates(
+    plan_instance_id: int,
+    planned_exercises: list[dict],
+    context_key: str,
+) -> None:
+    st.subheader("Compatible Substitutions")
+
+    if not planned_exercises:
+        st.info("No planned exercises are available for substitution lookup.")
+        return
+
+    st.caption(
+        "Read-only substitution ideas use the selected plan, movement pattern, "
+        "and current equipment profile. Nothing is applied or changed from here."
+    )
+
+    for planned_exercise in planned_exercises:
+        planned_exercise_id = planned_exercise.get("id")
+        planned_exercise_name = planned_exercise.get("name", "Unknown")
+
+        if planned_exercise_id is None:
+            st.info(
+                f"Substitution lookup is unavailable for {planned_exercise_name} "
+                "because no planned exercise ID was returned."
+            )
+            continue
+
+        visibility_key = f"{context_key}_{plan_instance_id}_{planned_exercise_id}"
+
+        is_visible = visibility_key in st.session_state.visible_substitution_candidates
+        button_label = (
+            f"Hide compatible substitutions for {planned_exercise_name}"
+            if is_visible
+            else f"Show compatible substitutions for {planned_exercise_name}"
+        )
+
+        if st.button(
+            button_label,
+            key=f"substitution_candidates_button_{visibility_key}",
+        ):
+            if is_visible:
+                st.session_state.visible_substitution_candidates.remove(visibility_key)
+            else:
+                st.session_state.visible_substitution_candidates.append(visibility_key)
+
+            st.rerun()
+
+        if visibility_key not in st.session_state.visible_substitution_candidates:
+            continue
+
+        try:
+            candidate_response = api_get(
+                "/workout-plans/"
+                f"{plan_instance_id}/planned-exercises/"
+                f"{planned_exercise_id}/substitution-candidates"
+            )
+        except requests.RequestException as exc:
+            st.error(
+                "Failed to load substitution candidates for "
+                f"{planned_exercise_name}: {extract_api_error_message(exc)}"
+            )
+            continue
+
+        st.write(f"**Planned exercise:** {planned_exercise_name}")
+
+        display_substitution_candidate_table(
+            candidate_response.get("substitution_candidates", []),
+        )
+
+        with st.expander(
+            f"Developer details: substitution candidates for {planned_exercise_name}"
+        ):
+            st.json(candidate_response)
+
+
 def display_actual_set_logging(plan_instance_id: int) -> None:
     try:
         execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
@@ -1423,6 +1560,11 @@ def display_workout_execution_review(plan_instance_id: int) -> None:
 
     st.write("**Planned Exercises**")
     display_planned_exercises(planned_exercises)
+    display_substitution_candidates(
+        plan_instance_id,
+        planned_exercises,
+        context_key="execution_review",
+    )
     display_actual_sets(actual_sets)
     display_actual_set_editing(
         plan_instance_id,
@@ -1984,6 +2126,9 @@ if "actual_set_editing_error" not in st.session_state:
 if "actual_set_edit_response" not in st.session_state:
     st.session_state.actual_set_edit_response = None
 
+if "visible_substitution_candidates" not in st.session_state:
+    st.session_state.visible_substitution_candidates = []
+
 # =====================================
 # App Configuration
 # =====================================
@@ -2043,6 +2188,7 @@ if st.session_state.selected_user_id != user_id:
     st.session_state.actual_set_editing_message = None
     st.session_state.actual_set_editing_error = None
     st.session_state.actual_set_edit_response = None
+    st.session_state.visible_substitution_candidates = []
 
     st.rerun()
 

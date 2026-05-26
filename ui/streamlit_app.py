@@ -1629,6 +1629,303 @@ def equipment_display_name(value: str) -> str:
     return value.replace("_", " ").title()
 
 
+def normalize_catalog_list(value: object) -> list[str]:
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return [str(item) for item in value if item is not None]
+
+    if isinstance(value, str):
+        return [
+            item.strip() for item in value.replace("|", ",").split(",") if item.strip()
+        ]
+
+    return [str(value)]
+
+
+def catalog_value_label(value: object) -> str:
+    if value is None or value == "":
+        return "Unknown"
+
+    return equipment_display_name(str(value))
+
+
+def exercise_catalog_equipment(exercise: dict) -> list[str]:
+    return normalize_catalog_list(
+        exercise.get("equipment_required") or exercise.get("equipment")
+    )
+
+
+def exercise_catalog_muscle_groups(exercise: dict) -> list[str]:
+    return normalize_catalog_list(
+        exercise.get("primary_muscle_groups") or exercise.get("muscle_group")
+    )
+
+
+def exercise_catalog_movement_pattern(exercise: dict) -> str:
+    return (
+        exercise.get("movement_pattern") or exercise.get("movement_type") or "unknown"
+    )
+
+
+def exercise_catalog_type(exercise: dict) -> str:
+    return (
+        exercise.get("exercise_type")
+        or exercise.get("category")
+        or exercise.get("type")
+        or "unknown"
+    )
+
+
+def exercise_matches_equipment_profile(
+    exercise: dict,
+    available_equipment: list[str],
+    unavailable_equipment: list[str],
+) -> bool:
+    required_equipment = set(exercise_catalog_equipment(exercise))
+    available = set(available_equipment)
+    unavailable = set(unavailable_equipment)
+
+    if required_equipment & unavailable:
+        return False
+
+    if available and not required_equipment.issubset(available):
+        return False
+
+    return True
+
+
+def display_exercise_catalog(user_id: int) -> None:
+    st.header("📚 Exercise Catalog")
+
+    try:
+        catalog_response = api_get("/exercise-catalog")
+    except requests.RequestException:
+        try:
+            catalog_response = api_get("/exercises")
+        except requests.RequestException as exc:
+            st.error(
+                f"Failed to load exercise catalog: {extract_api_error_message(exc)}"
+            )
+            return
+
+    exercises = catalog_response.get("exercises", [])
+
+    if not exercises:
+        st.info("No catalog exercises found.")
+        with st.expander("Developer details: exercise catalog"):
+            st.json(catalog_response)
+        return
+
+    try:
+        equipment_profile_response = api_get(f"/users/{user_id}/equipment-profile")
+        equipment_profile = equipment_profile_response.get("equipment_profile", {})
+    except requests.RequestException:
+        equipment_profile_response = {}
+        equipment_profile = {}
+
+    available_equipment = normalize_catalog_list(
+        equipment_profile.get("available_equipment")
+    )
+    unavailable_equipment = normalize_catalog_list(
+        equipment_profile.get("unavailable_equipment")
+    )
+
+    st.caption(
+        "Browse the seeded exercise catalog used by equipment-aware workout previews."
+    )
+
+    search_query = (
+        st.text_input(
+            "Search by exercise name",
+            value="",
+            key="exercise_catalog_search_query",
+        )
+        .strip()
+        .lower()
+    )
+
+    equipment_options = sorted(
+        {
+            equipment
+            for exercise in exercises
+            for equipment in exercise_catalog_equipment(exercise)
+        }
+    )
+
+    movement_pattern_options = sorted(
+        {
+            exercise_catalog_movement_pattern(exercise)
+            for exercise in exercises
+            if exercise_catalog_movement_pattern(exercise) != "unknown"
+        }
+    )
+
+    muscle_group_options = sorted(
+        {
+            muscle_group
+            for exercise in exercises
+            for muscle_group in exercise_catalog_muscle_groups(exercise)
+        }
+    )
+
+    exercise_type_options = sorted(
+        {
+            exercise_catalog_type(exercise)
+            for exercise in exercises
+            if exercise_catalog_type(exercise) != "unknown"
+        }
+    )
+
+    difficulty_options = sorted(
+        {
+            str(exercise.get("difficulty"))
+            for exercise in exercises
+            if exercise.get("difficulty")
+        }
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        selected_equipment = st.multiselect(
+            "Required Equipment",
+            options=equipment_options,
+            format_func=equipment_display_name,
+            key="exercise_catalog_equipment_filter",
+        )
+
+        selected_movement_patterns = st.multiselect(
+            "Movement Pattern",
+            options=movement_pattern_options,
+            format_func=catalog_value_label,
+            key="exercise_catalog_movement_pattern_filter",
+        )
+
+    with col2:
+        selected_muscle_groups = st.multiselect(
+            "Primary Muscle Group",
+            options=muscle_group_options,
+            format_func=catalog_value_label,
+            key="exercise_catalog_muscle_group_filter",
+        )
+
+        selected_exercise_types = st.multiselect(
+            "Exercise Type / Category",
+            options=exercise_type_options,
+            format_func=catalog_value_label,
+            key="exercise_catalog_type_filter",
+        )
+
+    selected_difficulties = st.multiselect(
+        "Difficulty",
+        options=difficulty_options,
+        format_func=catalog_value_label,
+        key="exercise_catalog_difficulty_filter",
+    )
+
+    compatible_only = st.checkbox(
+        "Show only exercises compatible with my current equipment profile",
+        value=False,
+        key="exercise_catalog_compatible_only",
+    )
+
+    filtered_exercises = []
+
+    for exercise in exercises:
+        exercise_name = str(exercise.get("name", ""))
+
+        if search_query and search_query not in exercise_name.lower():
+            continue
+
+        exercise_equipment = set(exercise_catalog_equipment(exercise))
+        exercise_movement_pattern = exercise_catalog_movement_pattern(exercise)
+        exercise_muscle_groups = set(exercise_catalog_muscle_groups(exercise))
+        exercise_type = exercise_catalog_type(exercise)
+        exercise_difficulty = str(exercise.get("difficulty", ""))
+
+        if selected_equipment and not exercise_equipment.intersection(
+            selected_equipment
+        ):
+            continue
+
+        if (
+            selected_movement_patterns
+            and exercise_movement_pattern not in selected_movement_patterns
+        ):
+            continue
+
+        if selected_muscle_groups and not exercise_muscle_groups.intersection(
+            selected_muscle_groups
+        ):
+            continue
+
+        if selected_exercise_types and exercise_type not in selected_exercise_types:
+            continue
+
+        if selected_difficulties and exercise_difficulty not in selected_difficulties:
+            continue
+
+        if compatible_only and not exercise_matches_equipment_profile(
+            exercise,
+            available_equipment,
+            unavailable_equipment,
+        ):
+            continue
+
+        filtered_exercises.append(exercise)
+
+    st.caption(f"Showing {len(filtered_exercises)} of {len(exercises)} exercises.")
+
+    if compatible_only and not available_equipment and not unavailable_equipment:
+        st.info(
+            "No explicit equipment profile is loaded for this user, so compatibility "
+            "uses the backend/default profile assumptions."
+        )
+
+    if not filtered_exercises:
+        st.warning("No exercises match the selected filters.")
+    else:
+        catalog_rows = []
+
+        for exercise in filtered_exercises:
+            catalog_rows.append(
+                {
+                    "Exercise": exercise.get("name", "Unknown"),
+                    "Type": catalog_value_label(exercise_catalog_type(exercise)),
+                    "Movement Pattern": catalog_value_label(
+                        exercise_catalog_movement_pattern(exercise)
+                    ),
+                    "Primary Muscle Groups": ", ".join(
+                        catalog_value_label(group)
+                        for group in exercise_catalog_muscle_groups(exercise)
+                    )
+                    or "Unknown",
+                    "Required Equipment": ", ".join(
+                        equipment_display_name(equipment)
+                        for equipment in exercise_catalog_equipment(exercise)
+                    )
+                    or "Bodyweight / none",
+                    "Difficulty": catalog_value_label(exercise.get("difficulty")),
+                }
+            )
+
+        st.dataframe(
+            pd.DataFrame(catalog_rows),
+            width="stretch",
+            hide_index=True,
+        )
+
+    with st.expander("Developer details: exercise catalog"):
+        st.subheader("Catalog Response")
+        st.json(catalog_response)
+
+        if equipment_profile_response:
+            st.subheader("Equipment Profile Response")
+            st.json(equipment_profile_response)
+
+
 # =====================================
 # Session State Initialization
 # =====================================
@@ -2033,6 +2330,13 @@ try:
 
 except requests.RequestException as exc:
     st.error(f"Failed to load equipment profile: {exc}")
+
+
+# =====================================
+# Exercise Catalog
+# =====================================
+
+display_exercise_catalog(user_id)
 
 
 # =====================================

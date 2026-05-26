@@ -2075,6 +2075,7 @@ KNOWN_EQUIPMENT_OPTIONS = [
     "bodyweight",
     "cable",
     "dumbbell",
+    "exercise_ball",
     "ez_bar",
     "kettlebell",
     "machine",
@@ -2082,6 +2083,7 @@ KNOWN_EQUIPMENT_OPTIONS = [
     "pull_up_bar",
     "rack",
     "resistance_band",
+    "rope_cable_attachment",
     "treadmill",
 ]
 

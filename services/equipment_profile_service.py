@@ -21,6 +21,7 @@ ALL_KNOWN_EQUIPMENT = [
     "bodyweight",
     "cable",
     "dumbbell",
+    "exercise_ball",
     "ez_bar",
     "kettlebell",
     "machine",
@@ -28,6 +29,7 @@ ALL_KNOWN_EQUIPMENT = [
     "pull_up_bar",
     "rack",
     "resistance_band",
+    "rope_cable_attachment",
     "treadmill",
 ]
 
@@ -49,11 +51,13 @@ HOME_GYM_AVAILABLE_EQUIPMENT = [
     "bodyweight",
     "cable",
     "dumbbell",
+    "exercise_ball",
     "ez_bar",
     "plates",
     "pull_up_bar",
     "rack",
     "resistance_band",
+    "rope_cable_attachment",
     "treadmill",
 ]
 

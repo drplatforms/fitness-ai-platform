@@ -20,11 +20,13 @@ USER_HOME_GYM_EQUIPMENT = [
     "bodyweight",
     "cable",
     "dumbbell",
+    "exercise_ball",
     "ez_bar",
     "plates",
     "pull_up_bar",
     "rack",
     "resistance_band",
+    "rope_cable_attachment",
     "treadmill",
 ]
 
@@ -51,7 +53,7 @@ def test_exercise_catalog_seeds_curated_entries_with_requirements(
 
     entries = get_exercise_catalog()
 
-    assert 40 <= len(entries) <= 75
+    assert 150 <= len(entries) <= 200
     assert all(entry.name for entry in entries)
     assert all(entry.movement_pattern for entry in entries)
     assert all(entry.exercise_type for entry in entries)
@@ -64,6 +66,10 @@ def test_exercise_catalog_seeds_curated_entries_with_requirements(
     assert "Pull-Up" in names
     assert "Cable Row" in names
     assert "Treadmill Incline Walk" in names
+    assert "Rope Triceps Pressdown" in names
+    assert "Stability Ball Rollout" in names
+    assert "Dumbbell Bulgarian Split Squat" in names
+    assert "Barbell Rollout" in names
 
 
 def test_filtering_by_bodyweight_only_returns_bodyweight_compatible_exercises(
@@ -484,3 +490,84 @@ def test_data_quality_limited_fourth_slot_stays_simple_and_manageable(
     assert "manageable" in rendered or "simple" in rendered
     assert "overtraining" not in rendered
     assert "stalled progress" not in rendered
+
+
+def test_expanded_home_gym_catalog_contains_user_specific_equipment(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = get_exercise_catalog()
+    names = {entry.name for entry in entries}
+    equipment = {item for entry in entries for item in entry.equipment_required}
+
+    assert "exercise_ball" in equipment
+    assert "rope_cable_attachment" in equipment
+    assert "Stability Ball Hamstring Curl" in names
+    assert "Rope Face Pull" in names
+    assert "Cable Pull-Through" in names
+    assert "Dumbbell Single-Leg RDL" in names
+    assert "Band Pallof Press" in names
+
+
+def test_home_gym_filter_includes_exercise_ball_and_rope_attachment_options(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = filter_exercises_for_equipment(
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+    names = {entry.name for entry in entries}
+
+    assert "Rope Triceps Pressdown" in names
+    assert "Rope Face Pull" in names
+    assert "Cable Crunch" in names
+    assert "Stability Ball Rollout" in names
+    assert "Stability Ball Wall Squat" in names
+    assert all("machine" not in entry.equipment_required for entry in entries)
+
+
+def test_limited_equipment_without_new_home_tools_excludes_rope_and_ball(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = filter_exercises_for_equipment(
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=[
+            "adjustable_bench",
+            "barbell",
+            "bike",
+            "cable",
+            "exercise_ball",
+            "ez_bar",
+            "machine",
+            "plates",
+            "pull_up_bar",
+            "rack",
+            "resistance_band",
+            "rope_cable_attachment",
+            "treadmill",
+        ],
+    )
+
+    assert entries
+    assert all(
+        "exercise_ball" not in entry.equipment_required
+        and "rope_cable_attachment" not in entry.equipment_required
+        for entry in entries
+    )
+
+
+def test_expanded_catalog_keeps_machine_exercises_excludable(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = filter_exercises_for_equipment(
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    assert len(entries) >= 100
+    assert all("machine" not in entry.equipment_required for entry in entries)

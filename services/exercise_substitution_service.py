@@ -14,8 +14,11 @@ from services.exercise_catalog_service import (
     get_exercise_catalog,
 )
 from services.workout_plan_persistence_service import (
+    WorkoutPlanInvalidStatusError,
     WorkoutPlanNotFoundError,
     WorkoutPlanValidationError,
+    create_substitution_record,
+    get_active_substitution_for_planned_exercise,
     get_planned_workout_exercises,
     get_workout_plan_instance,
 )
@@ -178,6 +181,74 @@ def get_substitution_candidates(
             family_matches.append(candidate)
 
     return exact_matches + family_matches
+
+
+def apply_substitution(
+    plan_instance_id: int,
+    planned_exercise_id: int,
+    replacement_catalog_exercise_id: int,
+    substitution_reason: str | None = "user_selected",
+) -> dict:
+    """Apply a catalog-approved substitution to an active workout plan.
+
+    The apply step uses overlay semantics. It creates an active substitution
+    record beside the immutable approved workout snapshot and original planned
+    exercise row. It does not mutate planned exercises, approved workout JSON,
+    actual-set rows, planned-vs-actual summaries, recommendations, or reports.
+    """
+
+    plan_instance = get_workout_plan_instance(plan_instance_id)
+    if plan_instance is None:
+        raise WorkoutPlanNotFoundError(
+            f"Workout plan instance {plan_instance_id} was not found."
+        )
+
+    if plan_instance.status not in {"selected", "started", "in_progress"}:
+        raise WorkoutPlanInvalidStatusError(
+            "Substitutions can only be applied to selected, started, or "
+            f"in-progress workout plans. Plan {plan_instance_id} is currently "
+            f"{plan_instance.status}."
+        )
+
+    planned_exercises = get_planned_workout_exercises(plan_instance_id)
+    planned_exercise = _find_planned_exercise(planned_exercises, planned_exercise_id)
+
+    candidates = get_substitution_candidates(plan_instance_id, planned_exercise_id)
+    selected_candidate = next(
+        (
+            candidate
+            for candidate in candidates
+            if candidate.catalog_exercise_id == int(replacement_catalog_exercise_id)
+        ),
+        None,
+    )
+    if selected_candidate is None:
+        raise WorkoutPlanValidationError(
+            "replacement_catalog_exercise_id must be one of the approved "
+            "substitution candidates for this planned exercise."
+        )
+
+    previous_active_substitution = get_active_substitution_for_planned_exercise(
+        plan_instance_id,
+        planned_exercise_id,
+    )
+
+    active_substitution = create_substitution_record(
+        plan_instance_id=plan_instance_id,
+        planned_exercise_id=planned_exercise_id,
+        replacement_catalog_exercise_id=selected_candidate.catalog_exercise_id,
+        substitution_reason=substitution_reason or "user_selected",
+        status="active",
+    )
+
+    return {
+        "workout_plan_instance": get_workout_plan_instance(plan_instance_id),
+        "planned_workout_exercise": planned_exercise,
+        "active_substitution": active_substitution,
+        "previous_active_substitution_replaced": previous_active_substitution
+        is not None,
+        "selected_candidate": selected_candidate,
+    }
 
 
 def get_substitution_candidate_dicts(

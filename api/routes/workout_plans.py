@@ -3,7 +3,10 @@ from dataclasses import asdict
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.exercise_substitution_service import get_substitution_candidate_dicts
+from services.exercise_substitution_service import (
+    apply_substitution,
+    get_substitution_candidate_dicts,
+)
 from services.user_state_service import build_user_health_state
 from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
@@ -51,6 +54,11 @@ class ActualSetUpdatePayload(BaseModel):
     skipped: bool | None = None
     substitution_for_planned_exercise_id: int | None = None
     notes: str | None = None
+
+
+class ExerciseSubstitutionPayload(BaseModel):
+    replacement_catalog_exercise_id: int
+    substitution_reason: str | None = "user_selected"
 
 
 @router.get("/workout-plans/history/{user_id}")
@@ -173,6 +181,41 @@ def workout_plan_substitution_candidates(
         "workout_plan_instance_id": plan_instance_id,
         "planned_workout_exercise_id": planned_exercise_id,
         "substitution_candidates": candidates,
+    }
+
+
+@router.post(
+    "/workout-plans/{plan_instance_id}/planned-exercises/"
+    "{planned_exercise_id}/substitute"
+)
+def substitute_workout_plan_exercise(
+    plan_instance_id: int,
+    planned_exercise_id: int,
+    payload: ExerciseSubstitutionPayload,
+):
+    try:
+        result = apply_substitution(
+            plan_instance_id=plan_instance_id,
+            planned_exercise_id=planned_exercise_id,
+            replacement_catalog_exercise_id=payload.replacement_catalog_exercise_id,
+            substitution_reason=payload.substitution_reason,
+        )
+    except WorkoutPlanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (WorkoutPlanInvalidStatusError, WorkoutPlanValidationError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "workout_plan_instance_id": plan_instance_id,
+        "planned_workout_exercise_id": planned_exercise_id,
+        "planned_workout_exercise": asdict(result["planned_workout_exercise"]),
+        "active_substitution": asdict(result["active_substitution"]),
+        "previous_active_substitution_replaced": result[
+            "previous_active_substitution_replaced"
+        ],
+        "selected_candidate": asdict(result["selected_candidate"]),
+        "workout_plan_instance": asdict(result["workout_plan_instance"]),
     }
 
 

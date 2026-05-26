@@ -1217,7 +1217,9 @@ def display_substitution_candidates(
                         st.json(apply_response)
 
 
-def display_actual_set_logging(plan_instance_id: int) -> None:
+def display_actual_set_logging(
+    plan_instance_id: int, context_key: str = "workout"
+) -> None:
     try:
         execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
     except requests.RequestException as exc:
@@ -1261,7 +1263,7 @@ def display_actual_set_logging(plan_instance_id: int) -> None:
         for exercise in planned_exercises
     }
 
-    with st.form(f"actual_set_logging_form_{plan_instance_id}"):
+    with st.form(f"actual_set_logging_form_{context_key}_{plan_instance_id}"):
         logging_mode = st.radio(
             "Log Type",
             options=[
@@ -1763,7 +1765,9 @@ def display_actual_set_editing(
             st.json(st.session_state.actual_set_edit_response)
 
 
-def display_complete_workout_control(plan_instance_id: int) -> None:
+def display_complete_workout_control(
+    plan_instance_id: int, context_key: str = "workout"
+) -> None:
     st.subheader("Complete Workout")
 
     if st.session_state.workout_completion_message:
@@ -1804,7 +1808,7 @@ def display_complete_workout_control(plan_instance_id: int) -> None:
 
         if st.button(
             "Complete Workout",
-            key=f"complete_workout_plan_button_{plan_instance_id}",
+            key=f"complete_workout_plan_button_{context_key}_{plan_instance_id}",
         ):
             try:
                 complete_response = api_post(
@@ -2801,7 +2805,9 @@ def select_today_workout(user_id: int, button_key: str) -> None:
         st.rerun()
 
 
-def start_active_workout(plan_response: dict | None) -> None:
+def start_active_workout(
+    plan_response: dict | None, context_key: str = "workout"
+) -> None:
     plan_instance_id = get_plan_instance_id_from_response(plan_response)
 
     if plan_instance_id is None:
@@ -2813,7 +2819,9 @@ def start_active_workout(plan_response: dict | None) -> None:
 
     if plan_status == "selected":
         if st.button(
-            "Start Workout", key=f"start_workout_{plan_instance_id}", type="primary"
+            "Start Workout",
+            key=f"start_workout_{context_key}_{plan_instance_id}",
+            type="primary",
         ):
             try:
                 start_response = api_post(f"/workout-plans/{plan_instance_id}/start")
@@ -3058,7 +3066,7 @@ def render_today_workout_panel(user_id: int) -> None:
                 "Workout selected. Use the Workout tab for substitutions, "
                 "or start when ready."
             )
-            start_active_workout(active_plan_response)
+            start_active_workout(active_plan_response, context_key="today")
 
         refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
         if refreshed_plan_response:
@@ -3067,7 +3075,7 @@ def render_today_workout_panel(user_id: int) -> None:
         if is_started_or_in_progress(active_plan_response):
             st.divider()
             st.markdown("### Log Sets")
-            display_actual_set_logging(plan_instance_id)
+            display_actual_set_logging(plan_instance_id, context_key="today")
 
         refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
         if refreshed_plan_response:
@@ -3076,7 +3084,7 @@ def render_today_workout_panel(user_id: int) -> None:
         if is_in_progress(active_plan_response):
             st.divider()
             st.markdown("### Complete Workout")
-            display_complete_workout_control(plan_instance_id)
+            display_complete_workout_control(plan_instance_id, context_key="today")
 
         completed_response = st.session_state.get("completed_workout_plan_response")
         if completed_response:
@@ -3432,7 +3440,7 @@ def render_workout_plan_section(user_id: int) -> None:
             if plan_instance_id is None:
                 st.warning("The active plan is missing a plan instance ID.")
             else:
-                start_active_workout(active_plan_response)
+                start_active_workout(active_plan_response, context_key="workout")
 
                 refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
                 if refreshed_plan_response:
@@ -3440,11 +3448,13 @@ def render_workout_plan_section(user_id: int) -> None:
 
                 if is_started_or_in_progress(active_plan_response):
                     st.divider()
-                    display_actual_set_logging(plan_instance_id)
+                    display_actual_set_logging(plan_instance_id, context_key="workout")
 
                 if is_in_progress(active_plan_response):
                     st.divider()
-                    display_complete_workout_control(plan_instance_id)
+                    display_complete_workout_control(
+                        plan_instance_id, context_key="workout"
+                    )
         else:
             st.info("Select a workout plan before starting the workout.")
 

@@ -288,6 +288,7 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                 _exercise_from_options(
                     context,
                     [
+                        ("Dumbbell RDL", ["dumbbell"]),
                         ("Goblet Squat", ["dumbbell"]),
                         ("Leg Press", ["machine"]),
                         ("Bodyweight Squat", ["bodyweight"]),
@@ -363,8 +364,9 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                 _exercise_from_options(
                     context,
                     [
-                        ("Barbell Bench Press", ["barbell"]),
+                        ("Overhead Press", ["barbell"]),
                         ("Dumbbell Bench Press", ["dumbbell"]),
+                        ("Barbell Bench Press", ["barbell"]),
                         ("Push-Up", ["bodyweight"]),
                     ],
                     3,
@@ -377,9 +379,10 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                 _exercise_from_options(
                     context,
                     [
+                        ("Pull-Up", ["pull_up_bar"]),
+                        ("Cable Row", ["cable"]),
                         ("Barbell Row", ["barbell"]),
                         ("Dumbbell Row", ["dumbbell"]),
-                        ("Cable Row", ["cable"]),
                         ("Inverted Row", ["bodyweight"]),
                     ],
                     3,
@@ -424,7 +427,7 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
                     context,
                     [
                         ("Push-Up", ["bodyweight"]),
-                        ("Dumbbell Press", ["dumbbell"]),
+                        ("Dumbbell Shoulder Press", ["dumbbell"]),
                         ("Machine Chest Press", ["machine"]),
                     ],
                     2,
@@ -468,6 +471,7 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             _exercise_from_options(
                 context,
                 [
+                    ("Romanian Deadlift", ["barbell"]),
                     ("Barbell Squat", ["barbell"]),
                     ("Goblet Squat", ["dumbbell"]),
                     ("Leg Press", ["machine"]),
@@ -483,6 +487,7 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             _exercise_from_options(
                 context,
                 [
+                    ("Overhead Press", ["barbell"]),
                     ("Barbell Bench Press", ["barbell"]),
                     ("Dumbbell Bench Press", ["dumbbell"]),
                     ("Push-Up", ["bodyweight"]),
@@ -497,9 +502,10 @@ def generate_candidate_workout_plan(context: WorkoutContext) -> CandidateWorkout
             _exercise_from_options(
                 context,
                 [
+                    ("Pull-Up", ["pull_up_bar"]),
+                    ("Cable Row", ["cable"]),
                     ("Barbell Row", ["barbell"]),
                     ("Dumbbell Row", ["dumbbell"]),
-                    ("Cable Row", ["cable"]),
                     ("Inverted Row", ["bodyweight"]),
                 ],
                 3,

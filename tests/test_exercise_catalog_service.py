@@ -29,6 +29,15 @@ USER_HOME_GYM_EQUIPMENT = [
 ]
 
 
+def _plan_movement_patterns(approved):
+    patterns = set()
+    for exercise in approved.exercises:
+        entry = find_catalog_entry_by_name(exercise.name)
+        if entry is not None:
+            patterns.add(entry.movement_pattern)
+    return patterns
+
+
 def _seed_test_db(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
     seed_qa_scenarios()
@@ -242,3 +251,78 @@ def test_limited_equipment_without_bench_does_not_select_chest_supported_row(
     allowed = {"bodyweight", "dumbbell"}
     for exercise in approved.exercises:
         assert set(exercise.equipment_required).issubset(allowed)
+
+
+def test_home_gym_preview_uses_varied_movement_patterns(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    health_state = build_user_health_state(102)
+    approved = build_approved_workout_plan(health_state)
+    patterns = _plan_movement_patterns(approved)
+
+    assert len(patterns) >= 3
+    assert "hinge" in patterns or "squat" in patterns
+    assert "vertical_pull" in patterns or "horizontal_pull" in patterns
+    assert "machine" not in {
+        equipment
+        for exercise in approved.exercises
+        for equipment in exercise.equipment_required
+    }
+
+
+def test_home_gym_preview_can_include_hinge_or_vertical_pull(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    health_state = build_user_health_state(102)
+    approved = build_approved_workout_plan(health_state)
+    patterns = _plan_movement_patterns(approved)
+
+    assert "hinge" in patterns or "vertical_pull" in patterns
+
+
+def test_limited_equipment_without_bench_uses_non_bench_alternatives(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    save_equipment_profile(
+        user_id=102,
+        training_environment="limited_equipment",
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=[
+            "adjustable_bench",
+            "barbell",
+            "cable",
+            "machine",
+            "plates",
+            "pull_up_bar",
+            "rack",
+        ],
+    )
+
+    health_state = build_user_health_state(102)
+    approved = build_approved_workout_plan(health_state)
+
+    assert approved.exercises
+    assert all(
+        "adjustable_bench" not in exercise.equipment_required
+        for exercise in approved.exercises
+    )
+    assert all(
+        set(exercise.equipment_required).issubset({"bodyweight", "dumbbell"})
+        for exercise in approved.exercises
+    )

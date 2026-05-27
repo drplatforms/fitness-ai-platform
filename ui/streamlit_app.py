@@ -2884,6 +2884,10 @@ SESSION_DEFAULTS = {
     "workout_flow_step_selector": "1. Plan",
     "workout_flow_step_override": None,
     "developer_mode": False,
+    "current_user_id": None,
+    "last_user_id": None,
+    "daily_recommendation_by_user": {},
+    "daily_recommendation_error_by_user": {},
 }
 
 for key, default_value in SESSION_DEFAULTS.items():
@@ -2937,6 +2941,34 @@ def reset_user_scoped_state() -> None:
     st.session_state.workout_flow_step_override = None
 
 
+def handle_user_switch(selected_user_id: int) -> None:
+    """Clear transient UI state when the selected Streamlit user changes.
+
+    Most data entry and workout widgets are user-scoped. If those values survive
+    a user switch, the UI can show stale cards or fail to refresh user-specific
+    panels. Keep per-user caches keyed by user_id, but clear active/transient
+    workflow state whenever the selected user changes.
+    """
+    st.session_state.current_user_id = selected_user_id
+
+    last_user_id = st.session_state.get("last_user_id")
+
+    if last_user_id is None:
+        st.session_state.last_user_id = selected_user_id
+        st.session_state.selected_user_id = selected_user_id
+        return
+
+    if last_user_id == selected_user_id:
+        st.session_state.selected_user_id = selected_user_id
+        return
+
+    reset_user_scoped_state()
+    st.session_state.current_user_id = selected_user_id
+    st.session_state.selected_user_id = selected_user_id
+    st.session_state.last_user_id = selected_user_id
+    st.rerun()
+
+
 USER_OPTIONS = {
     "User 1": 1,
     "User 2": 2,
@@ -2972,13 +3004,7 @@ with st.sidebar:
     st.caption("Primary flow")
     st.write("Today → Workout → Nutrition → History → Reports")
 
-if "selected_user_id" not in st.session_state:
-    st.session_state.selected_user_id = user_id
-
-if st.session_state.selected_user_id != user_id:
-    st.session_state.selected_user_id = user_id
-    reset_user_scoped_state()
-    st.rerun()
+handle_user_switch(user_id)
 
 
 # =====================================
@@ -3381,18 +3407,45 @@ def render_readiness_snapshot(user_id: int) -> None:
     developer_details("Developer details: health state", data)
 
 
-def render_daily_recommendation_snapshot(user_id: int) -> None:
-    st.subheader("Daily Coaching")
+def get_daily_recommendation_for_user(user_id: int) -> dict | None:
+    """Fetch daily recommendation data and cache it by user_id.
+
+    The cache is intentionally keyed by user_id so switching 101 → 102 → 103
+    can never reuse a recommendation from the previous user. A successful fetch
+    always replaces that user's cached value; if a transient backend error occurs,
+    the UI may show that same user's cached value instead of going blank.
+    """
+    cache = st.session_state.daily_recommendation_by_user
+    errors = st.session_state.daily_recommendation_error_by_user
 
     try:
         recommendation_data = api_get(f"/recommendations/daily/{user_id}")
+        cache[user_id] = recommendation_data
+        errors.pop(user_id, None)
+        return recommendation_data
     except requests.RequestException as exc:
-        st.error(
-            f"Failed to load daily recommendation: {extract_api_error_message(exc)}"
+        errors[user_id] = extract_api_error_message(exc)
+        return cache.get(user_id)
+
+
+def render_daily_recommendation_snapshot(user_id: int) -> None:
+    st.subheader("Daily Coaching")
+
+    recommendation_data = get_daily_recommendation_for_user(user_id)
+    recommendation_error = st.session_state.daily_recommendation_error_by_user.get(
+        user_id
+    )
+
+    if recommendation_error and recommendation_data:
+        st.warning(
+            "Could not refresh today’s recommendation. Showing the last loaded "
+            "recommendation for this user."
         )
+    elif recommendation_error:
+        st.error(f"Failed to load daily recommendation: {recommendation_error}")
         return
 
-    if not recommendation_data.get("success"):
+    if not recommendation_data or not recommendation_data.get("success"):
         st.info("No daily recommendation is available for this user yet.")
         return
 

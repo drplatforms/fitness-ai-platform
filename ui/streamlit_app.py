@@ -1265,9 +1265,8 @@ def display_substitution_candidates(
     active_substitutions = active_substitutions or {}
 
     st.caption(
-        "Compatible substitutions use the selected plan, movement pattern, and "
-        "current equipment profile. Applying a substitution records an overlay only; "
-        "the original planned exercise and ApprovedWorkoutPlan remain unchanged."
+        "Optional compatible replacements based on the selected plan and equipment. "
+        "Applying one keeps the original plan preserved and updates the active workout."
     )
 
     if not allow_apply:
@@ -1855,7 +1854,24 @@ def display_actual_set_editing(
     plan_instance_id: int,
     context_key: str,
 ) -> None:
-    st.subheader("Actual Set Corrections")
+    show_corrections = st.toggle(
+        "Make Corrections to Workout / Sets",
+        value=False,
+        key=f"show_actual_set_corrections_{context_key}_{plan_instance_id}",
+        help=(
+            "Open this only when you need to fix reps, weight, RIR, skipped/completed "
+            "state, notes, or substitution details."
+        ),
+    )
+
+    if not show_corrections:
+        st.caption(
+            "Need to fix a logged set? Corrections are hidden by default to keep "
+            "the normal workout flow focused on logging sets."
+        )
+        return
+
+    st.markdown("#### Actual Set Corrections")
 
     try:
         execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
@@ -2126,13 +2142,14 @@ def display_actual_set_editing(
             )
             st.rerun()
 
-    with st.expander("Developer details: actual set correction"):
-        st.subheader("Raw Execution Response Used By Correction Form")
-        st.json(execution_response)
+    if st.session_state.get("developer_mode", False):
+        with st.expander("Developer details: actual set correction"):
+            st.subheader("Raw Execution Response Used By Correction Form")
+            st.json(execution_response)
 
-        if st.session_state.actual_set_edit_response:
-            st.subheader("Latest Raw PATCH Response")
-            st.json(st.session_state.actual_set_edit_response)
+            if st.session_state.actual_set_edit_response:
+                st.subheader("Latest Raw PATCH Response")
+                st.json(st.session_state.actual_set_edit_response)
 
 
 def display_complete_workout_control(
@@ -3747,22 +3764,25 @@ def render_workout_plan_section(user_id: int) -> None:
                     )
 
                     st.divider()
-                    st.subheader("Substitute Before You Start")
-                    st.caption(
-                        "Apply substitutions here while planning. After you apply one, "
-                        "the active workout plan updates automatically and the Do Workout "
-                        "step uses the substituted exercise for logging."
-                    )
-                    display_substitution_candidates(
-                        plan_instance_id,
-                        planned_exercises,
-                        context_key="plan_step",
-                        plan_status=workout_plan_instance.get("status"),
-                        execution_status=execution_session.get("status"),
-                        active_substitutions=active_substitutions,
-                        always_visible=True,
-                        title="Available Substitutions",
-                    )
+                    with st.expander(
+                        "Need a substitution?",
+                        expanded=bool(active_substitutions),
+                    ):
+                        st.caption(
+                            "Optional: choose a compatible replacement before you start. "
+                            "After you apply one, the active workout plan updates automatically "
+                            "and the Do Workout step uses the substituted exercise for logging."
+                        )
+                        display_substitution_candidates(
+                            plan_instance_id,
+                            planned_exercises,
+                            context_key="plan_step",
+                            plan_status=workout_plan_instance.get("status"),
+                            execution_status=execution_session.get("status"),
+                            active_substitutions=active_substitutions,
+                            always_visible=False,
+                            title="Compatible Substitutions",
+                        )
 
                     refreshed_plan_response = refresh_active_plan_response(
                         plan_instance_id

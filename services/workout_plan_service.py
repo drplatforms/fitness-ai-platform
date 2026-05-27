@@ -30,6 +30,12 @@ WorkoutCandidateProvider = Callable[[WorkoutContext], str]
 WORKOUT_CANDIDATE_PROVIDER_ENV = "WORKOUT_CANDIDATE_PROVIDER"
 WORKOUT_PROVIDER_DETERMINISTIC = "deterministic"
 WORKOUT_PROVIDER_CREWAI = "crewai"
+CREWAI_WORKOUT_MODEL_ENV = "CREWAI_WORKOUT_MODEL"
+OLLAMA_BASE_URL_ENV = "OLLAMA_BASE_URL"
+CREWAI_WORKOUT_DISABLE_THINKING_ENV = "CREWAI_WORKOUT_DISABLE_THINKING"
+CREWAI_WORKOUT_JSON_RESPONSE_FORMAT_ENV = "CREWAI_WORKOUT_JSON_RESPONSE_FORMAT"
+CREWAI_WORKOUT_DEFAULT_MODEL = "ollama/qwen3:8b"
+CREWAI_WORKOUT_DEFAULT_BASE_URL = "http://localhost:11434"
 
 logger = logging.getLogger(__name__)
 
@@ -1451,12 +1457,65 @@ def _crew_result_to_raw_json(result: Any) -> str:
     return str(result)
 
 
+def _env_flag_enabled(env_var: str, *, default: bool) -> bool:
+    raw_value = os.getenv(env_var)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _crewai_workout_llm_kwargs() -> dict[str, Any]:
+    """Build CrewAI/LiteLLM kwargs for the workout candidate LLM.
+
+    Qwen3 thinking models served by Ollama can emit reasoning before the final
+    answer unless the native Ollama `think` flag is disabled.  Keep the parser
+    strict and ask the runtime to disable thinking instead of trying to recover
+    JSON from reasoning text.  Several fields are included intentionally because
+    the exact pass-through path can differ between CrewAI/LiteLLM/Ollama
+    adapters.
+    """
+
+    llm_kwargs: dict[str, Any] = {
+        "model": os.getenv(CREWAI_WORKOUT_MODEL_ENV, CREWAI_WORKOUT_DEFAULT_MODEL),
+        "base_url": os.getenv(OLLAMA_BASE_URL_ENV, CREWAI_WORKOUT_DEFAULT_BASE_URL),
+        "temperature": 0,
+    }
+
+    if _env_flag_enabled(CREWAI_WORKOUT_JSON_RESPONSE_FORMAT_ENV, default=True):
+        llm_kwargs["response_format"] = {"type": "json"}
+
+    if _env_flag_enabled(CREWAI_WORKOUT_DISABLE_THINKING_ENV, default=True):
+        no_think_payload = {"think": False}
+        llm_kwargs["think"] = False
+        llm_kwargs["options"] = dict(no_think_payload)
+        llm_kwargs["extra_body"] = {
+            "think": False,
+            "options": dict(no_think_payload),
+        }
+        llm_kwargs["additional_params"] = {
+            "think": False,
+            "options": dict(no_think_payload),
+        }
+
+    return llm_kwargs
+
+
+def _fallback_crewai_workout_llm_kwargs(llm_kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Return conservative kwargs if a CrewAI version rejects pass-through keys."""
+
+    allowed_fallback_keys = {"model", "base_url", "temperature", "response_format"}
+    return {
+        key: value for key, value in llm_kwargs.items() if key in allowed_fallback_keys
+    }
+
+
 def build_crewai_candidate_workout_plan_prompt(context: WorkoutContext) -> str:
     safe_context = workout_context_to_llm_json(context)
     return f"""
+/no_think
 You are a workout-plan JSON generator. You receive approved context only.
-Return one raw JSON object only. Do not return markdown, code fences, commentary,
-extra keys, explanations, or final report prose.
+Return one raw JSON object only. Do not think aloud. Do not return reasoning,
+markdown, code fences, commentary, extra keys, explanations, or final report prose.
 
 Required JSON object:
 {{
@@ -1486,6 +1545,7 @@ Required JSON object:
 }}
 
 Rules:
+- Use no-think mode. Never emit <think>, reasoning text, or hidden-chain commentary.
 - Use only allowed_exercises from the approved context.
 - Do not invent exercises, equipment, movement patterns, or progression rules.
 - Exercise name, catalog_exercise_id, movement_pattern, and required_equipment must match the allowed catalog item.
@@ -1509,10 +1569,18 @@ def generate_crewai_candidate_workout_plan_json(context: WorkoutContext) -> str:
     """
     from crewai import LLM, Agent, Crew, Task
 
-    llm = LLM(
-        model=os.getenv("CREWAI_WORKOUT_MODEL", "ollama/qwen3:8b"),
-        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-    )
+    llm_kwargs = _crewai_workout_llm_kwargs()
+    try:
+        llm = LLM(**llm_kwargs)
+    except TypeError:
+        logger.warning(
+            "crewai_workout_llm_rejected_no_think_kwargs",
+            extra={
+                "model": llm_kwargs.get("model"),
+                "base_url": llm_kwargs.get("base_url"),
+            },
+        )
+        llm = LLM(**_fallback_crewai_workout_llm_kwargs(llm_kwargs))
 
     workout_agent = Agent(
         role="Workout Candidate JSON Generator",
@@ -1597,7 +1665,7 @@ def _log_workout_candidate_runtime(
             "scenario": context.scenario,
             "configured_provider": metadata.configured_provider,
             "selected_provider": metadata.selected_provider,
-            "model": os.getenv("CREWAI_WORKOUT_MODEL", "ollama/qwen3:8b"),
+            "model": os.getenv(CREWAI_WORKOUT_MODEL_ENV, CREWAI_WORKOUT_DEFAULT_MODEL),
             "context_confidence": context.confidence,
             "crewai_attempted": metadata.crewai_attempted,
             "candidate_parse_status": metadata.candidate_parse_status,

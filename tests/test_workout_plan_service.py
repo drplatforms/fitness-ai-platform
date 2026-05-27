@@ -18,6 +18,7 @@ from services.user_state_service import build_user_health_state
 from services.workout_plan_persistence_service import select_current_workout_plan
 from services.workout_plan_service import (
     WorkoutCandidateParseError,
+    _crewai_workout_llm_kwargs,
     _select_exercise,
     approve_candidate_workout_plan,
     approve_workout_candidate_provider_or_fallback_with_metadata,
@@ -720,9 +721,50 @@ def test_crewai_workout_prompt_requires_raw_json_only(tmp_path, monkeypatch):
     prompt = build_crewai_candidate_workout_plan_prompt(context)
 
     assert "raw JSON object only" in prompt
+    assert "no_think" in prompt.lower()
+    assert "Do not think aloud" in prompt
     assert "markdown" in prompt.lower()
     assert "allowed_exercises" in prompt
     assert "automatic load-increase" in prompt
+
+
+def test_crewai_workout_llm_kwargs_disable_thinking_by_default(monkeypatch):
+    monkeypatch.delenv("CREWAI_WORKOUT_MODEL", raising=False)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    monkeypatch.delenv("CREWAI_WORKOUT_DISABLE_THINKING", raising=False)
+    monkeypatch.delenv("CREWAI_WORKOUT_JSON_RESPONSE_FORMAT", raising=False)
+
+    llm_kwargs = _crewai_workout_llm_kwargs()
+
+    assert llm_kwargs["model"] == "ollama/qwen3:8b"
+    assert llm_kwargs["base_url"] == "http://localhost:11434"
+    assert llm_kwargs["temperature"] == 0
+    assert llm_kwargs["response_format"] == {"type": "json"}
+    assert llm_kwargs["think"] is False
+    assert llm_kwargs["options"] == {"think": False}
+    assert llm_kwargs["extra_body"] == {
+        "think": False,
+        "options": {"think": False},
+    }
+    assert llm_kwargs["additional_params"] == {
+        "think": False,
+        "options": {"think": False},
+    }
+
+
+def test_crewai_workout_llm_kwargs_allow_no_think_disable_override(monkeypatch):
+    monkeypatch.setenv("CREWAI_WORKOUT_MODEL", "ollama/qwen3:8b")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://windows-host:11434")
+    monkeypatch.setenv("CREWAI_WORKOUT_DISABLE_THINKING", "false")
+    monkeypatch.setenv("CREWAI_WORKOUT_JSON_RESPONSE_FORMAT", "false")
+
+    llm_kwargs = _crewai_workout_llm_kwargs()
+
+    assert llm_kwargs == {
+        "model": "ollama/qwen3:8b",
+        "base_url": "http://windows-host:11434",
+        "temperature": 0,
+    }
 
 
 def test_configured_workout_provider_defaults_to_deterministic(tmp_path, monkeypatch):
@@ -779,6 +821,35 @@ def test_mocked_crewai_workout_provider_malformed_json_falls_back(
     assert result.runtime_metadata.fallback_reason == "malformed_json"
     assert result.runtime_metadata.candidate_parse_status == "failed"
     assert result.runtime_metadata.final_plan_source == "deterministic_fallback"
+
+
+def test_mocked_crewai_workout_provider_thinking_prefixed_output_falls_back(
+    tmp_path, monkeypatch
+):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    raw_json = _valid_provider_json_for_context(context)
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: (
+            "_numpy <think> I should reason about the plan first. " + raw_json
+        ),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "malformed_json"
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+    assert result.runtime_metadata.candidate_validation_status == "not_attempted"
+    assert result.runtime_metadata.final_plan_source == "deterministic_fallback"
+    assert result.runtime_metadata.raw_output_preview_truncated.startswith(
+        "_numpy <think>"
+    )
 
 
 def test_mocked_crewai_workout_provider_markdown_json_falls_back(tmp_path, monkeypatch):

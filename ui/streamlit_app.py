@@ -570,195 +570,352 @@ def display_metric_cards(metrics: list[dict], columns: int = 4) -> None:
             )
 
 
-def display_planned_vs_actual_summary(summary: dict) -> None:
-    st.subheader("Planned vs Actual Review")
+def compact_count(value: object) -> str:
+    if value is None or value == "":
+        return "0"
+
+    return str(value)
+
+
+def format_signed_delta(value: int | float | None, suffix: str = "") -> str:
+    if value is None:
+        return "Unknown"
+
+    if isinstance(value, float):
+        value = round(value, 2)
+        if value.is_integer():
+            value = int(value)
+
+    sign = "+" if value > 0 else ""
+    return f"{sign}{value}{suffix}"
+
+
+def planned_range_label(
+    minimum: int | float | None, maximum: int | float | None
+) -> str:
+    if minimum is None or maximum is None:
+        return "Unknown"
+
+    return f"{minimum}-{maximum}"
+
+
+def effort_delta_label(rir_deviation: int | float | None) -> str:
+    if rir_deviation is None:
+        return "⚪ Effort unknown"
+
+    if rir_deviation < 0:
+        return f"🔴 Harder than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+
+    if rir_deviation > 0:
+        return f"🟡 Easier than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+
+    return "✅ On target"
+
+
+def rep_result_label(below: int, inside: int, above: int) -> str:
+    parts = []
+
+    if below:
+        parts.append(f"🟡 {below} below")
+    if inside:
+        parts.append(f"✅ {inside} on target")
+    if above:
+        parts.append(f"🔴 {above} above")
+
+    if not parts:
+        return "⚪ Reps unknown"
+
+    return " / ".join(parts)
+
+
+def build_planned_vs_actual_delta_rows(
+    planned_exercises: list[dict] | None,
+    actual_sets: list[dict] | None,
+) -> list[dict]:
+    if not planned_exercises or not actual_sets:
+        return []
+
+    actual_sets_by_plan: dict[int, list[dict]] = {}
+    for actual_set in actual_sets:
+        planned_id = actual_set.get("planned_workout_exercise_id")
+        substitution_id = actual_set.get("substitution_for_planned_exercise_id")
+
+        candidate_ids = []
+        if planned_id is not None:
+            candidate_ids.append(planned_id)
+        if substitution_id is not None and substitution_id != planned_id:
+            candidate_ids.append(substitution_id)
+
+        for candidate_id in candidate_ids:
+            try:
+                actual_sets_by_plan.setdefault(int(candidate_id), []).append(actual_set)
+            except (TypeError, ValueError):
+                continue
+
+    delta_rows = []
+
+    for exercise in planned_exercises:
+        try:
+            planned_id = int(exercise.get("id"))
+        except (TypeError, ValueError):
+            continue
+
+        exercise_actual_sets = actual_sets_by_plan.get(planned_id, [])
+        completed_sets = [
+            actual_set
+            for actual_set in exercise_actual_sets
+            if actual_set.get("completed") and not actual_set.get("skipped")
+        ]
+        skipped_sets = [
+            actual_set
+            for actual_set in exercise_actual_sets
+            if actual_set.get("skipped")
+        ]
+
+        planned_sets = exercise.get("sets") or 0
+        reps_min = exercise.get("reps_min")
+        reps_max = exercise.get("reps_max")
+        rir_min = exercise.get("rir_min")
+        rir_max = exercise.get("rir_max")
+
+        active_exercise_name = exercise.get("name", "Unknown")
+        substituted = False
+
+        for actual_set in exercise_actual_sets:
+            actual_exercise_name = actual_set.get("exercise_name")
+            if actual_exercise_name and actual_exercise_name != exercise.get("name"):
+                active_exercise_name = actual_exercise_name
+                substituted = True
+                break
+            if actual_set.get("substitution_for_planned_exercise_id") == planned_id:
+                substituted = True
+
+        if substituted:
+            exercise_label = (
+                f"{active_exercise_name}  \nOriginal: {exercise.get('name', 'Unknown')}"
+            )
+        else:
+            exercise_label = exercise.get("name", "Unknown")
+
+        below_reps = 0
+        inside_reps = 0
+        above_reps = 0
+        actual_rirs = []
+        actual_reps = []
+        actual_weights = []
+
+        for actual_set in completed_sets:
+            reps = actual_set.get("actual_reps")
+            actual_rir = actual_set.get("actual_rir")
+            actual_weight = actual_set.get("actual_weight")
+
+            if reps is not None:
+                actual_reps.append(str(reps))
+                if reps_min is not None and reps_max is not None:
+                    if reps < reps_min:
+                        below_reps += 1
+                    elif reps > reps_max:
+                        above_reps += 1
+                    else:
+                        inside_reps += 1
+
+            if actual_rir is not None:
+                actual_rirs.append(actual_rir)
+            if actual_weight is not None:
+                actual_weights.append(str(actual_weight))
+
+        planned_rir_midpoint = None
+        if rir_min is not None and rir_max is not None:
+            planned_rir_midpoint = (rir_min + rir_max) / 2
+
+        actual_rir_average = None
+        if actual_rirs:
+            actual_rir_average = round(sum(actual_rirs) / len(actual_rirs), 2)
+
+        rir_delta = None
+        if planned_rir_midpoint is not None and actual_rir_average is not None:
+            rir_delta = round(actual_rir_average - planned_rir_midpoint, 2)
+
+        if skipped_sets and not completed_sets:
+            status = "⚪ Skipped"
+        elif completed_sets and len(completed_sets) >= planned_sets:
+            status = "✅ Complete"
+        elif completed_sets:
+            status = "🟡 Partially logged"
+        else:
+            status = "⚪ Not logged"
+
+        if substituted:
+            status = f"↔️ Substituted / {status}"
+
+        delta_rows.append(
+            {
+                "Exercise": exercise_label,
+                "Planned": (
+                    f"{planned_sets} sets × {planned_range_label(reps_min, reps_max)} reps "
+                    f"@ RIR {planned_range_label(rir_min, rir_max)}"
+                ),
+                "Actual": (
+                    f"{len(completed_sets)} completed"
+                    + (f" / {len(skipped_sets)} skipped" if skipped_sets else "")
+                    + (f"  \nReps: {', '.join(actual_reps)}" if actual_reps else "")
+                    + (
+                        f"  \nWeight: {', '.join(actual_weights)}"
+                        if actual_weights
+                        else ""
+                    )
+                    + (
+                        f"  \nRIR: {', '.join(str(rir) for rir in actual_rirs)}"
+                        if actual_rirs
+                        else ""
+                    )
+                ),
+                "Rep Delta": rep_result_label(below_reps, inside_reps, above_reps),
+                "Effort Delta": effort_delta_label(rir_delta),
+                "Status": status,
+            }
+        )
+
+    return delta_rows
+
+
+def display_review_signal_rows(summary: dict, deviation_flags: list[str]) -> None:
+    signal_rows = [
+        {
+            "Area": "Completion",
+            "Signal": (
+                f"{format_summary_metric(summary.get('completion_percentage'), '%')} complete; "
+                f"{compact_count(summary.get('completed_set_count'))}/"
+                f"{compact_count(summary.get('planned_set_count'))} planned sets logged"
+            ),
+        },
+        {
+            "Area": "Effort vs Plan",
+            "Signal": effort_delta_label(summary.get("rir_deviation")),
+        },
+        {
+            "Area": "Reps vs Plan",
+            "Signal": rep_result_label(
+                int(summary.get("sets_below_planned_reps") or 0),
+                int(summary.get("sets_inside_planned_reps") or 0),
+                int(summary.get("sets_above_planned_reps") or 0),
+            ),
+        },
+        {
+            "Area": "Substitutions / Skips",
+            "Signal": (
+                f"{compact_count(summary.get('substituted_exercise_count'))} substitutions; "
+                f"{compact_count(summary.get('skipped_set_count'))} skipped sets"
+            ),
+        },
+        {
+            "Area": "Logging Quality",
+            "Signal": (
+                "No review flags returned"
+                if not deviation_flags
+                else "; ".join(
+                    planned_vs_actual_flag_label(flag) for flag in deviation_flags
+                )
+            ),
+        },
+    ]
+
+    st.dataframe(
+        pd.DataFrame(signal_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def display_planned_vs_actual_summary(
+    summary: dict,
+    planned_exercises: list[dict] | None = None,
+    actual_sets: list[dict] | None = None,
+) -> None:
+    st.subheader("Workout Review")
 
     if not summary:
         st.info("Planned-vs-actual summary is not available yet.")
         return
 
-    completion_percentage = summary.get("completion_percentage")
+    completion_percentage = summary.get("completion_percentage") or 0
     deviation_flags = summary.get("deviation_flags") or []
     notes = summary.get("notes") or []
 
-    st.markdown("#### Completion")
+    progress_value = max(0.0, min(float(completion_percentage) / 100, 1.0))
+    st.progress(
+        progress_value,
+        text=f"{format_summary_metric(completion_percentage, '%')} of planned sets completed",
+    )
 
     display_metric_cards(
         [
             {
-                "label": "Completion",
-                "value": format_summary_metric(completion_percentage, "%"),
-            },
-            {
-                "label": "Planned Sets",
-                "value": format_summary_metric(summary.get("planned_set_count")),
-            },
-            {
-                "label": "Actual Sets",
-                "value": format_summary_metric(summary.get("actual_set_count")),
-            },
-            {
-                "label": "Completed Sets",
-                "value": format_summary_metric(summary.get("completed_set_count")),
+                "label": "Sets Logged",
+                "value": (
+                    f"{compact_count(summary.get('completed_set_count'))}/"
+                    f"{compact_count(summary.get('planned_set_count'))}"
+                ),
+                "help": "Completed actual sets compared with planned sets.",
             },
             {
                 "label": "Skipped Sets",
                 "value": format_summary_metric(summary.get("skipped_set_count")),
-            },
-        ]
-    )
-
-    exercise_rows = [
-        {
-            "Category": "Planned exercises",
-            "Count": summary.get("planned_exercise_count", "Unknown"),
-        },
-        {
-            "Category": "Completed exercises",
-            "Count": summary.get("completed_exercise_count", "Unknown"),
-        },
-        {
-            "Category": "Skipped exercises",
-            "Count": summary.get("skipped_exercise_count", "Unknown"),
-        },
-        {
-            "Category": "Substituted exercises",
-            "Count": summary.get("substituted_exercise_count", "Unknown"),
-        },
-    ]
-
-    st.dataframe(
-        pd.DataFrame(exercise_rows),
-        width="stretch",
-        hide_index=True,
-    )
-
-    st.markdown("#### Effort vs Plan")
-
-    display_metric_cards(
-        [
-            {
-                "label": "Avg Planned RIR",
-                "value": format_summary_metric(summary.get("average_planned_rir")),
-                "help": "The average target reps-in-reserve from the planned workout.",
+                "help": "Skipped work is recorded neutrally.",
             },
             {
-                "label": "Avg Actual RIR",
-                "value": format_summary_metric(summary.get("average_actual_rir")),
-                "help": "The average logged reps-in-reserve from completed sets.",
-            },
-            {
-                "label": "RIR Deviation",
-                "value": format_summary_metric(summary.get("rir_deviation")),
+                "label": "Effort Delta",
+                "value": format_signed_delta(summary.get("rir_deviation"), " RIR"),
                 "help": (
                     "Negative means logged effort was harder than planned. "
                     "Positive means logged effort was easier than planned."
                 ),
             },
-        ],
-        columns=3,
-    )
-
-    rir_deviation = summary.get("rir_deviation")
-    if rir_deviation is None:
-        st.info("Actual effort comparison is limited until actual RIR is logged.")
-    elif rir_deviation < 0:
-        st.info("Logged effort was harder than planned based on actual RIR.")
-    elif rir_deviation > 0:
-        st.info("Logged effort was easier than planned based on actual RIR.")
-    else:
-        st.info("Logged effort matched the planned RIR closely.")
-
-    st.markdown("#### Reps vs Plan")
-
-    rep_rows = [
-        {
-            "Rep Result": "Below planned range",
-            "Sets": summary.get("sets_below_planned_reps", "Unknown"),
-        },
-        {
-            "Rep Result": "Inside planned range",
-            "Sets": summary.get("sets_inside_planned_reps", "Unknown"),
-        },
-        {
-            "Rep Result": "Above planned range",
-            "Sets": summary.get("sets_above_planned_reps", "Unknown"),
-        },
-    ]
-
-    rep_deviation = summary.get("rep_deviation") or {}
-
-    for key, value in rep_deviation.items():
-        if key in {
-            "sets_below_planned_reps",
-            "sets_inside_planned_reps",
-            "sets_above_planned_reps",
-        }:
-            continue
-
-        rep_rows.append(
             {
-                "Rep Result": humanize_label(key),
-                "Sets": value,
-            }
-        )
-
-    st.dataframe(
-        pd.DataFrame(rep_rows),
-        width="stretch",
-        hide_index=True,
-    )
-
-    st.markdown("#### Skips / Substitutions")
-
-    display_metric_cards(
-        [
-            {
-                "label": "Skipped Exercises",
-                "value": format_summary_metric(summary.get("skipped_exercise_count")),
-            },
-            {
-                "label": "Skipped Sets",
-                "value": format_summary_metric(summary.get("skipped_set_count")),
-            },
-            {
-                "label": "Substitutions",
-                "value": format_summary_metric(
-                    summary.get("substituted_exercise_count")
+                "label": "Rep Target",
+                "value": (
+                    f"{compact_count(summary.get('sets_inside_planned_reps'))} in / "
+                    f"{compact_count(summary.get('sets_below_planned_reps'))} below / "
+                    f"{compact_count(summary.get('sets_above_planned_reps'))} above"
                 ),
+                "help": "How completed sets compared with the planned rep range.",
             },
         ],
-        columns=3,
+        columns=4,
     )
 
-    if "skipped_exercises_present" in deviation_flags:
-        st.info("Some planned work was skipped. This is recorded neutrally.")
-    if "substitutions_present" in deviation_flags:
-        st.info("Some exercises were substituted. This is recorded for review.")
+    st.markdown("#### Planned vs Actual Deltas")
+    delta_rows = build_planned_vs_actual_delta_rows(planned_exercises, actual_sets)
 
-    st.markdown("#### Logging Quality")
-
-    logging_flags = [
-        {
-            "Signal": planned_vs_actual_flag_label(flag),
-            "Raw Flag": flag,
-        }
-        for flag in deviation_flags
-    ]
-
-    if logging_flags:
+    if delta_rows:
         st.dataframe(
-            pd.DataFrame(logging_flags),
+            pd.DataFrame(delta_rows),
             width="stretch",
             hide_index=True,
         )
     else:
-        st.success("No planned-vs-actual review flags were returned.")
+        st.info(
+            "Exercise-level deltas will appear when planned exercises and actual sets "
+            "are available for this review."
+        )
+
+    st.markdown("#### Review Signals")
+    display_review_signal_rows(summary, deviation_flags)
 
     if notes:
-        st.write("**Backend notes**")
-        for note in notes:
-            st.info(note)
+        with st.expander("Review notes", expanded=False):
+            for note in notes:
+                st.info(note)
+
+    if st.session_state.get("developer_mode", False):
+        with st.expander("Developer details: planned-vs-actual summary"):
+            st.json(summary)
+            if planned_exercises is not None:
+                st.subheader("Planned Exercises Used For Delta Table")
+                st.json(planned_exercises)
+            if actual_sets is not None:
+                st.subheader("Actual Sets Used For Delta Table")
+                st.json(actual_sets)
 
 
 def planned_exercise_option_label(exercise: dict) -> str:
@@ -2083,7 +2240,11 @@ def display_complete_workout_control(
             or "Unknown",
         )
 
-        display_planned_vs_actual_summary(summary)
+        display_planned_vs_actual_summary(
+            summary,
+            planned_exercises=planned_exercises,
+            actual_sets=execution_response.get("actual_sets", []),
+        )
 
     with st.expander("Developer details: workout completion"):
         st.subheader("Raw Execution Response Used By Completion Control")
@@ -2162,7 +2323,9 @@ def display_workout_execution_review(plan_instance_id: int) -> None:
             f"/workout-plans/{plan_instance_id}/planned-vs-actual"
         )
         display_planned_vs_actual_summary(
-            planned_vs_actual_response.get("planned_vs_actual_summary", {})
+            planned_vs_actual_response.get("planned_vs_actual_summary", {}),
+            planned_exercises=planned_vs_actual_response.get("planned_exercises", []),
+            actual_sets=planned_vs_actual_response.get("actual_sets", []),
         )
     except requests.RequestException as exc:
         planned_vs_actual_error = extract_api_error_message(exc)
@@ -3320,7 +3483,9 @@ def render_today_workout_panel(user_id: int) -> None:
                 )
             else:
                 display_planned_vs_actual_summary(
-                    summary_response.get("planned_vs_actual_summary", {})
+                    summary_response.get("planned_vs_actual_summary", {}),
+                    planned_exercises=summary_response.get("planned_exercises", []),
+                    actual_sets=summary_response.get("actual_sets", []),
                 )
                 developer_details(
                     "Developer details: completed planned-vs-actual summary",

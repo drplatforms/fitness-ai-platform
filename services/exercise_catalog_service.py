@@ -3,8 +3,27 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
+import database
 from database import get_connection
 from models.exercise_catalog_models import ExerciseCatalogEntry
+
+_CATALOG_CACHE_BY_DB_PATH: dict[str, list[ExerciseCatalogEntry]] = {}
+
+
+def clear_exercise_catalog_cache() -> None:
+    """Clear the in-process exercise catalog cache.
+
+    The catalog itself is deterministic and database-backed. Tests frequently
+    monkeypatch database.DB_PATH, so the cache is keyed by the current DB path
+    and can be cleared explicitly after reseeding.
+    """
+
+    _CATALOG_CACHE_BY_DB_PATH.clear()
+
+
+def _exercise_catalog_cache_key() -> str:
+    return str(database.DB_PATH)
+
 
 CURATED_EXERCISE_CATALOG: list[ExerciseCatalogEntry] = [
     # Bodyweight
@@ -1794,6 +1813,7 @@ def seed_exercise_catalog() -> list[ExerciseCatalogEntry]:
 
     conn.commit()
     conn.close()
+    _CATALOG_CACHE_BY_DB_PATH.pop(_exercise_catalog_cache_key(), None)
     return list(CURATED_EXERCISE_CATALOG)
 
 
@@ -1810,6 +1830,11 @@ def _row_to_catalog_entry(row, equipment_required: list[str]) -> ExerciseCatalog
 
 
 def get_exercise_catalog() -> list[ExerciseCatalogEntry]:
+    cache_key = _exercise_catalog_cache_key()
+    cached_entries = _CATALOG_CACHE_BY_DB_PATH.get(cache_key)
+    if cached_entries is not None:
+        return list(cached_entries)
+
     seed_exercise_catalog()
     conn = get_connection()
     cursor = conn.cursor()
@@ -1841,7 +1866,8 @@ def get_exercise_catalog() -> list[ExerciseCatalogEntry]:
         )
 
     conn.close()
-    return entries
+    _CATALOG_CACHE_BY_DB_PATH[cache_key] = entries
+    return list(entries)
 
 
 def get_exercise_catalog_dicts() -> list[dict]:

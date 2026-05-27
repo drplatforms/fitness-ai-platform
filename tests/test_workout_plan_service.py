@@ -1,17 +1,22 @@
 import json
 from dataclasses import replace
 
+import pytest
 from fastapi.testclient import TestClient
 
 import database
 from api.main import app
+from models.exercise_catalog_models import ExerciseCatalogEntry
+from models.training_constraint_models import TrainingConstraints
 from models.workout_constraint_models import WorkoutConstraints
+from models.workout_plan_models import WorkoutContext
 from scripts.seed_qa_scenarios import QA_USER_IDS, seed_qa_scenarios
 from services.equipment_profile_service import save_equipment_profile
 from services.exercise_catalog_service import find_catalog_entry_by_name
 from services.user_state_service import build_user_health_state
 from services.workout_plan_persistence_service import select_current_workout_plan
 from services.workout_plan_service import (
+    WorkoutCandidateParseError,
     _select_exercise,
     approve_candidate_workout_plan,
     build_approved_workout_plan,
@@ -317,6 +322,100 @@ def _approved_fallback_title(context):
     return fallback.title
 
 
+_LIGHTWEIGHT_CATALOG = {
+    "Goblet Squat": ExerciseCatalogEntry(
+        1,
+        "Goblet Squat",
+        "strength",
+        "squat",
+        ["quadriceps", "glutes"],
+        ["dumbbell"],
+        "beginner",
+    ),
+    "Dumbbell Bench Press": ExerciseCatalogEntry(
+        2,
+        "Dumbbell Bench Press",
+        "strength",
+        "horizontal_push",
+        ["chest", "triceps", "shoulders"],
+        ["dumbbell", "adjustable_bench"],
+        "intermediate",
+    ),
+    "Barbell Squat": ExerciseCatalogEntry(
+        3,
+        "Barbell Squat",
+        "strength",
+        "squat",
+        ["quadriceps", "glutes"],
+        ["barbell", "rack", "plates"],
+        "intermediate",
+    ),
+    "Leg Press": ExerciseCatalogEntry(
+        4,
+        "Leg Press",
+        "strength",
+        "squat",
+        ["quadriceps", "glutes"],
+        ["machine"],
+        "beginner",
+    ),
+}
+
+
+def _patch_lightweight_catalog(monkeypatch):
+    def fake_find_catalog_entry_by_name(name: str):
+        return _LIGHTWEIGHT_CATALOG.get(name)
+
+    monkeypatch.setattr(
+        "services.workout_plan_service.find_catalog_entry_by_name",
+        fake_find_catalog_entry_by_name,
+    )
+
+
+def _lightweight_workout_context(
+    *,
+    scenario: str = "aligned_managed",
+    available_equipment: list[str] | None = None,
+    unavailable_equipment: list[str] | None = None,
+    rir_min: int = 2,
+    rir_max: int = 4,
+) -> WorkoutContext:
+    return WorkoutContext(
+        user_id=999,
+        scenario=scenario,
+        primary_goal="strength_and_recomposition",
+        training_load="moderate",
+        recovery_demand="normal",
+        avg_rir=2.5,
+        workout_count=4,
+        training_constraints=TrainingConstraints(
+            recommended_rir_min=rir_min,
+            recommended_rir_max=rir_max,
+            low_rir_guidance="Keep most working sets controlled.",
+            progression_guidance="Progress gradually when recovery is stable.",
+            recovery_constraint="normal",
+            confidence="Moderate",
+            reason_codes=["unit_test_training_constraints"],
+        ),
+        workout_constraints=WorkoutConstraints(
+            available_equipment=available_equipment
+            or [
+                "bodyweight",
+                "dumbbell",
+                "adjustable_bench",
+                "barbell",
+                "rack",
+                "plates",
+            ],
+            unavailable_equipment=unavailable_equipment or ["machine"],
+            confidence="Moderate",
+            reason_codes=["unit_test_workout_constraints"],
+        ),
+        confidence="Moderate",
+        reason_codes=["unit_test_context"],
+    )
+
+
 def _candidate_payload_for_entry(
     entry_name: str,
     *,
@@ -325,8 +424,7 @@ def _candidate_payload_for_entry(
     progression_guidance: str = "Progress only when recovery and performance stay stable.",
     confidence: str = "Moderate",
 ) -> dict:
-    entry = find_catalog_entry_by_name(entry_name)
-    assert entry is not None
+    entry = _LIGHTWEIGHT_CATALOG[entry_name]
     assert entry.id is not None
     return {
         "title": title,
@@ -366,8 +464,9 @@ def _context_for_user_102_home_gym(tmp_path, monkeypatch):
     return build_workout_context(build_user_health_state(102))
 
 
-def test_candidate_workout_plan_json_parses_and_approves(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+def test_candidate_workout_plan_json_parses_and_approves(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context()
     raw_output = json.dumps(_candidate_payload_for_entry("Goblet Squat"))
 
     candidate = parse_candidate_workout_plan_json(raw_output)
@@ -379,7 +478,45 @@ def test_candidate_workout_plan_json_parses_and_approves(tmp_path, monkeypatch):
     assert approved.exercises[0].equipment_required == ["dumbbell"]
 
 
-def test_malformed_candidate_json_falls_back_deterministically(tmp_path, monkeypatch):
+def test_malformed_candidate_json_is_rejected_without_full_fallback():
+    with pytest.raises(WorkoutCandidateParseError):
+        parse_candidate_workout_plan_json("not-json")
+
+
+def test_markdown_wrapped_candidate_json_is_rejected_without_full_fallback():
+    raw_output = (
+        "```json\n" + json.dumps(_candidate_payload_for_entry("Goblet Squat")) + "\n```"
+    )
+
+    with pytest.raises(WorkoutCandidateParseError):
+        parse_candidate_workout_plan_json(raw_output)
+
+
+def test_candidate_missing_required_field_is_rejected_without_full_fallback():
+    payload = _candidate_payload_for_entry("Goblet Squat")
+    payload.pop("rationale")
+
+    with pytest.raises(WorkoutCandidateParseError):
+        parse_candidate_workout_plan_json(json.dumps(payload))
+
+
+def test_candidate_extra_field_is_rejected_under_strict_parsing():
+    payload = _candidate_payload_for_entry("Goblet Squat")
+    payload["debug_reason_codes"] = ["not_allowed"]
+
+    with pytest.raises(WorkoutCandidateParseError):
+        parse_candidate_workout_plan_json(json.dumps(payload))
+
+
+def test_candidate_invalid_confidence_is_rejected_without_full_fallback():
+    payload = _candidate_payload_for_entry("Goblet Squat")
+    payload["confidence"] = "Pretty Good"
+
+    with pytest.raises(WorkoutCandidateParseError):
+        parse_candidate_workout_plan_json(json.dumps(payload))
+
+
+def test_malformed_candidate_output_falls_back_deterministically(tmp_path, monkeypatch):
     context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
 
     approved = build_approved_workout_plan_from_candidate_output(
@@ -390,186 +527,115 @@ def test_malformed_candidate_json_falls_back_deterministically(tmp_path, monkeyp
     assert approved.title == _approved_fallback_title(context)
 
 
-def test_markdown_wrapped_candidate_json_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
-    raw_output = (
-        "```json\n" + json.dumps(_candidate_payload_for_entry("Goblet Squat")) + "\n```"
-    )
-
-    approved = build_approved_workout_plan_from_candidate_output(raw_output, context)
-
-    assert approved.title == _approved_fallback_title(context)
-
-
-def test_candidate_missing_required_field_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
-    payload = _candidate_payload_for_entry("Goblet Squat")
-    payload.pop("rationale")
-
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
-
-    assert approved.title == _approved_fallback_title(context)
-
-
-def test_candidate_extra_field_falls_back_under_strict_parsing(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
-    payload = _candidate_payload_for_entry("Goblet Squat")
-    payload["debug_reason_codes"] = ["not_allowed"]
-
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
-
-    assert approved.title == _approved_fallback_title(context)
-
-
-def test_unknown_catalog_exercise_candidate_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+def test_unknown_catalog_exercise_candidate_is_rejected_by_validator(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context()
     payload = _candidate_payload_for_entry("Goblet Squat")
     payload["exercises"][0]["exercise_name"] = "Imaginary Cable Machine Squat"
     payload["exercises"][0]["catalog_exercise_id"] = None
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
+    violations = validate_candidate_workout_plan(candidate, context)
 
-    assert approved.title == _approved_fallback_title(context)
+    assert any("exercise catalog" in violation for violation in violations)
 
 
-def test_catalog_exercise_id_name_mismatch_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+def test_catalog_exercise_id_name_mismatch_is_rejected_by_validator(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context()
     payload = _candidate_payload_for_entry("Goblet Squat")
-    mismatched_entry = find_catalog_entry_by_name("Dumbbell Bench Press")
-    assert mismatched_entry is not None
-    assert mismatched_entry.id is not None
-    payload["exercises"][0]["catalog_exercise_id"] = mismatched_entry.id
+    payload["exercises"][0]["catalog_exercise_id"] = _LIGHTWEIGHT_CATALOG[
+        "Dumbbell Bench Press"
+    ].id
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
+    violations = validate_candidate_workout_plan(candidate, context)
+
+    assert any("catalog_exercise_id" in violation for violation in violations)
+
+
+def test_unavailable_equipment_candidate_is_rejected_by_validator(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=["barbell", "machine", "cable", "pull_up_bar"],
+    )
+    candidate = parse_candidate_workout_plan_json(
+        json.dumps(_candidate_payload_for_entry("Barbell Squat"))
     )
 
-    assert approved.title == _approved_fallback_title(context)
+    violations = validate_candidate_workout_plan(candidate, context)
+
+    assert any("equipment" in violation.lower() for violation in violations)
 
 
-def test_unavailable_equipment_candidate_falls_back(tmp_path, monkeypatch):
-    _seeded_health_states(tmp_path, monkeypatch)
-    context = build_workout_context(build_user_health_state(102))
-    restricted_context = replace(
-        context,
-        workout_constraints=WorkoutConstraints(
-            available_equipment=["bodyweight", "dumbbell"],
-            unavailable_equipment=["barbell", "machine", "cable", "pull_up_bar"],
-            confidence="Low",
-            reason_codes=["test_equipment_restricted"],
-        ),
+def test_machine_candidate_is_rejected_when_machine_unavailable(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=["machine"],
     )
-    raw_output = json.dumps(_candidate_payload_for_entry("Barbell Squat"))
-
-    approved = build_approved_workout_plan_from_candidate_output(
-        raw_output,
-        restricted_context,
+    candidate = parse_candidate_workout_plan_json(
+        json.dumps(_candidate_payload_for_entry("Leg Press"))
     )
 
-    assert approved.title == _approved_fallback_title(restricted_context)
-    assert all(
-        "barbell" not in exercise.equipment_required for exercise in approved.exercises
-    )
+    violations = validate_candidate_workout_plan(candidate, context)
+
+    assert any("equipment" in violation.lower() for violation in violations)
 
 
-def test_machine_candidate_falls_back_when_machine_unavailable(tmp_path, monkeypatch):
-    _seeded_health_states(tmp_path, monkeypatch)
-    context = build_workout_context(build_user_health_state(102))
-    restricted_context = replace(
-        context,
-        workout_constraints=WorkoutConstraints(
-            available_equipment=["bodyweight", "dumbbell"],
-            unavailable_equipment=["machine"],
-            confidence="Low",
-            reason_codes=["test_machine_unavailable"],
-        ),
-    )
-    raw_output = json.dumps(_candidate_payload_for_entry("Leg Press"))
-
-    approved = build_approved_workout_plan_from_candidate_output(
-        raw_output,
-        restricted_context,
-    )
-
-    assert approved.title == _approved_fallback_title(restricted_context)
-    assert all(
-        "machine" not in exercise.equipment_required for exercise in approved.exercises
-    )
-
-
-def test_candidate_rir_outside_training_constraints_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+def test_candidate_rir_outside_training_constraints_is_rejected(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(rir_min=2, rir_max=4)
     payload = _candidate_payload_for_entry("Goblet Squat")
     payload["exercises"][0]["target_rir_min"] = 0
     payload["exercises"][0]["target_rir_max"] = 1
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
+    violations = validate_candidate_workout_plan(candidate, context)
+
+    assert any("RIR" in violation for violation in violations)
+
+
+def test_recovery_limited_max_effort_candidate_is_rejected(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(
+        scenario="recovery_limited", rir_min=2, rir_max=3
     )
-
-    assert approved.title == _approved_fallback_title(context)
-
-
-def test_recovery_limited_max_effort_candidate_falls_back(tmp_path, monkeypatch):
-    health_states = _seeded_health_states(tmp_path, monkeypatch)
-    context = build_workout_context(health_states[101])
     payload = _candidate_payload_for_entry(
         "Goblet Squat",
         notes="Use max effort sets to failure.",
     )
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
+    violations = validate_candidate_workout_plan(candidate, context)
 
-    assert approved.title == _approved_fallback_title(context)
-    assert "max effort" not in render_approved_workout_plan(approved).lower()
+    assert any("max-effort" in violation for violation in violations)
 
 
-def test_data_quality_limited_overtraining_candidate_falls_back(tmp_path, monkeypatch):
-    health_states = _seeded_health_states(tmp_path, monkeypatch)
-    context = build_workout_context(health_states[105])
+def test_data_quality_limited_overtraining_candidate_is_rejected(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(scenario="data_quality_limited")
     payload = _candidate_payload_for_entry(
         "Goblet Squat",
         notes="This avoids overtraining and stalled progress.",
     )
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
+    violations = validate_candidate_workout_plan(candidate, context)
 
-    rendered = render_approved_workout_plan(approved).lower()
-    assert approved.title == _approved_fallback_title(context)
-    assert "overtraining" not in rendered
-    assert "stalled progress" not in rendered
+    assert any("overconfident" in violation for violation in violations)
 
 
-def test_automatic_load_increase_candidate_falls_back(tmp_path, monkeypatch):
-    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+def test_automatic_load_increase_candidate_is_rejected(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context()
     payload = _candidate_payload_for_entry(
         "Goblet Squat",
         progression_guidance="Use an automatic load increase every session.",
     )
+    candidate = parse_candidate_workout_plan_json(json.dumps(payload))
 
-    approved = build_approved_workout_plan_from_candidate_output(
-        json.dumps(payload),
-        context,
-    )
+    violations = validate_candidate_workout_plan(candidate, context)
 
-    assert approved.title == _approved_fallback_title(context)
-    assert (
-        "automatic load increase" not in render_approved_workout_plan(approved).lower()
-    )
+    assert any("forbidden workout guidance" in violation for violation in violations)

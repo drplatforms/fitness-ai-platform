@@ -1,19 +1,60 @@
 import json
+import logging
+import os
+import time
+from collections.abc import Callable
 from dataclasses import asdict
+from typing import Any
 
 from models.user_state_models import UserHealthState
 from models.workout_constraint_models import WorkoutConstraints
 from models.workout_plan_models import (
     ApprovedWorkoutExercise,
     ApprovedWorkoutPlan,
+    ApprovedWorkoutPlanResult,
     CandidateWorkoutExercise,
     CandidateWorkoutPlan,
     WorkoutContext,
+    WorkoutPlanRuntimeMetadata,
 )
 from services.coaching_decision_service import build_coaching_decision
-from services.exercise_catalog_service import find_catalog_entry_by_name
+from services.exercise_catalog_service import (
+    find_catalog_entry_by_name,
+    get_exercise_catalog,
+)
 from services.training_constraint_service import build_training_constraints
+from services.training_execution_summary_service import build_training_execution_summary
 from services.workout_constraint_service import build_workout_constraints
+
+WorkoutCandidateProvider = Callable[[WorkoutContext], str]
+WORKOUT_CANDIDATE_PROVIDER_ENV = "WORKOUT_CANDIDATE_PROVIDER"
+WORKOUT_PROVIDER_DETERMINISTIC = "deterministic"
+WORKOUT_PROVIDER_CREWAI = "crewai"
+
+logger = logging.getLogger(__name__)
+
+FALLBACK_REASON_DETERMINISTIC_SELECTED = "deterministic_selected"
+FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider"
+FALLBACK_REASON_PROVIDER_EXCEPTION = "provider_exception"
+FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT = "provider_non_string_output"
+FALLBACK_REASON_MALFORMED_JSON = "malformed_json"
+FALLBACK_REASON_SCHEMA_MISMATCH = "schema_mismatch"
+FALLBACK_REASON_INVALID_CONFIDENCE = "invalid_confidence"
+FALLBACK_REASON_VALIDATION_FAILURE = "validation_failure"
+
+CANDIDATE_PARSE_STATUS_SUCCESS = "success"
+CANDIDATE_PARSE_STATUS_FAILED = "failed"
+CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED = "not_attempted"
+CANDIDATE_VALIDATION_STATUS_SUCCESS = "success"
+CANDIDATE_VALIDATION_STATUS_FAILED = "failed"
+CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED = "not_attempted"
+FINAL_PLAN_SOURCE_DETERMINISTIC = "deterministic"
+FINAL_PLAN_SOURCE_CREWAI_APPROVED = "crewai_approved"
+FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallback"
+RAW_OUTPUT_PREVIEW_LIMIT = 240
+ALLOWED_CATALOG_CONTEXT_LIMIT = 80
+
+_CONFIDENCE_RANK = {"Limited": 0, "Low": 1, "Moderate": 2, "High": 3}
 
 _INTERNAL_DEBUG_TERMS = [
     "guardrail",
@@ -183,6 +224,174 @@ def build_workout_context(health_state: UserHealthState) -> WorkoutContext:
             )
         ),
     )
+
+
+def _movement_pattern_targets_for_context(context: WorkoutContext) -> list[str]:
+    if context.scenario == "recovery_limited":
+        return ["hinge", "horizontal_push", "horizontal_pull", "core"]
+
+    if context.scenario == "nutrition_training_mismatch":
+        return ["squat", "horizontal_push", "horizontal_pull", "core"]
+
+    if context.scenario == "improving_after_deload":
+        return ["hinge", "vertical_push", "vertical_pull", "core"]
+
+    if context.scenario == "data_quality_limited":
+        return ["squat", "horizontal_push", "horizontal_pull", "core"]
+
+    return [
+        "squat",
+        "hinge",
+        "lunge",
+        "horizontal_push",
+        "vertical_push",
+        "horizontal_pull",
+        "vertical_pull",
+        "core",
+        "carry",
+        "conditioning",
+    ]
+
+
+def _scenario_safety_constraints(context: WorkoutContext) -> list[str]:
+    base_constraints = [
+        "Exercises must come from allowed_exercises only.",
+        "Required equipment must be currently available.",
+        "Unavailable equipment must not be used.",
+        "Target RIR must remain within TrainingConstraints.",
+        "Do not include overtraining, stalled-progress, poor-adherence, medical, injury, automatic-deload, or automatic-load-increase claims.",
+    ]
+
+    scenario_constraints = {
+        "recovery_limited": [
+            "Keep effort controlled and avoid max-effort or failure language.",
+            "Prefer manageable volume and recovery-aware exercise choices.",
+        ],
+        "aligned_managed": [
+            "Use normal variety without deload or reduce-intensity framing unless constraints explicitly require it.",
+        ],
+        "nutrition_training_mismatch": [
+            "Avoid aggressive conditioning volume while nutrition support is being reviewed.",
+        ],
+        "improving_after_deload": [
+            "Use controlled progression and avoid aggressive ramping language.",
+        ],
+        "data_quality_limited": [
+            "Keep the plan simple and manageable while logging quality improves.",
+            "Do not claim overtraining, stalled progress, or failed programming.",
+        ],
+    }
+    return base_constraints + scenario_constraints.get(context.scenario, [])
+
+
+def _catalog_entry_allowed_for_context(entry, context: WorkoutContext) -> bool:
+    catalog_equipment = _normalize_required_equipment(entry.equipment_required)
+    if not _equipment_allowed(catalog_equipment, context.workout_constraints):
+        return False
+
+    avoid_movements = {
+        movement.strip().lower()
+        for movement in context.workout_constraints.avoid_movements
+        + context.workout_constraints.movement_restrictions
+        if movement.strip()
+    }
+    return entry.movement_pattern not in avoid_movements
+
+
+def _allowed_catalog_exercise_slice(context: WorkoutContext) -> list[dict[str, Any]]:
+    target_patterns = _movement_pattern_targets_for_context(context)
+    target_pattern_set = set(target_patterns)
+    scored_entries: list[tuple[int, dict[str, Any]]] = []
+
+    for index, entry in enumerate(get_exercise_catalog()):
+        if not _catalog_entry_allowed_for_context(entry, context):
+            continue
+
+        score = 1000 - index
+        if entry.movement_pattern in target_pattern_set:
+            score += 250
+        score += _difficulty_score(entry.difficulty, context.workout_constraints)
+
+        equipment = {_normalize_equipment(item) for item in entry.equipment_required}
+        if _is_home_gym_like(context.workout_constraints):
+            score += 10 * len(
+                equipment
+                & {
+                    "barbell",
+                    "cable",
+                    "dumbbell",
+                    "ez_bar",
+                    "pull_up_bar",
+                    "resistance_band",
+                    "rope_cable_attachment",
+                }
+            )
+
+        scored_entries.append(
+            (
+                score,
+                {
+                    "catalog_exercise_id": entry.id,
+                    "name": entry.name,
+                    "exercise_type": entry.exercise_type,
+                    "movement_pattern": entry.movement_pattern,
+                    "primary_muscle_groups": list(entry.primary_muscle_groups),
+                    "required_equipment": [
+                        _normalize_equipment(item) for item in entry.equipment_required
+                    ],
+                    "difficulty": entry.difficulty,
+                },
+            )
+        )
+
+    scored_entries.sort(key=lambda item: item[0], reverse=True)
+    return [entry for _, entry in scored_entries[:ALLOWED_CATALOG_CONTEXT_LIMIT]]
+
+
+def workout_context_to_llm_json(context: WorkoutContext) -> dict[str, Any]:
+    """Build the bounded, LLM-safe workout context for a candidate provider.
+
+    This intentionally excludes raw actual-set rows, raw notes, unbounded workout
+    history, internal debug payloads, and backend-only metadata. The provider can
+    suggest CandidateWorkoutPlan JSON only; backend validation remains the source
+    of approval.
+    """
+
+    training_execution_summary = build_training_execution_summary(context.user_id)
+
+    return {
+        "user_id": context.user_id,
+        "scenario": context.scenario,
+        "confidence": context.confidence,
+        "primary_goal": context.primary_goal,
+        "training_load": context.training_load,
+        "recovery_demand": context.recovery_demand,
+        "avg_rir": context.avg_rir,
+        "workout_count": context.workout_count,
+        "training_constraints": asdict(context.training_constraints),
+        "workout_constraints": {
+            "available_equipment": list(
+                context.workout_constraints.available_equipment
+            ),
+            "unavailable_equipment": list(
+                context.workout_constraints.unavailable_equipment
+            ),
+            "preferred_movements": list(
+                context.workout_constraints.preferred_movements
+            ),
+            "avoid_movements": list(context.workout_constraints.avoid_movements),
+            "movement_restrictions": list(
+                context.workout_constraints.movement_restrictions
+            ),
+            "sore_regions": list(context.workout_constraints.sore_regions),
+            "recent_exercises": list(context.workout_constraints.recent_exercises[:12]),
+            "confidence": context.workout_constraints.confidence,
+        },
+        "movement_pattern_targets": _movement_pattern_targets_for_context(context),
+        "allowed_exercises": _allowed_catalog_exercise_slice(context),
+        "training_execution_summary": asdict(training_execution_summary),
+        "safety_constraints": _scenario_safety_constraints(context),
+    }
 
 
 def _equipment_allowed(
@@ -1099,14 +1308,10 @@ def build_approved_workout_plan_from_candidate_output(
 ) -> ApprovedWorkoutPlan:
     """Parse/validate provider output, with deterministic fallback on failure."""
 
-    try:
-        candidate = parse_candidate_workout_plan_json(raw_output)
-        return approve_candidate_workout_plan(candidate, context)
-    except (ValueError, WorkoutCandidateParseError):
-        return approve_candidate_workout_plan(
-            generate_candidate_workout_plan(context),
-            context,
-        )
+    return approve_workout_candidate_json_or_fallback(
+        raw_output,
+        context,
+    )
 
 
 def validate_candidate_workout_plan(
@@ -1117,6 +1322,21 @@ def validate_candidate_workout_plan(
 
     if not candidate.exercises:
         violations.append("Workout plan must include at least one exercise.")
+
+    if len(candidate.exercises) < 3:
+        violations.append("Workout plan must include at least three exercises.")
+
+    if len(candidate.exercises) > 6:
+        violations.append("Workout plan must not include more than six exercises.")
+
+    if candidate.duration_minutes < 20 or candidate.duration_minutes > 90:
+        violations.append("Workout plan duration must be realistic for a preview.")
+
+    if _CONFIDENCE_RANK.get(candidate.confidence, -1) > _CONFIDENCE_RANK.get(
+        context.confidence,
+        -1,
+    ):
+        violations.append("Workout plan confidence must not exceed context confidence.")
 
     training_constraints = context.training_constraints
     for exercise in candidate.exercises:
@@ -1222,6 +1442,434 @@ def approve_candidate_workout_plan(
         scenario=context.scenario,
         reason_codes=context.reason_codes,
     )
+
+
+def _crew_result_to_raw_json(result: Any) -> str:
+    raw = getattr(result, "raw", None)
+    if raw is not None:
+        return str(raw)
+    return str(result)
+
+
+def build_crewai_candidate_workout_plan_prompt(context: WorkoutContext) -> str:
+    safe_context = workout_context_to_llm_json(context)
+    return f"""
+You are a workout-plan JSON generator. You receive approved context only.
+Return one raw JSON object only. Do not return markdown, code fences, commentary,
+extra keys, explanations, or final report prose.
+
+Required JSON object:
+{{
+  "title": "string",
+  "session_focus": "string",
+  "duration_minutes": 20-90,
+  "exercises": [
+    {{
+      "exercise_name": "must match an allowed_exercises name",
+      "catalog_exercise_id": "must match the allowed exercise id when present",
+      "movement_pattern": "must match the allowed exercise movement_pattern",
+      "target_zone": "main | accessory | core | carry | conditioning",
+      "sets": 1-6,
+      "reps_min": 1 or higher,
+      "reps_max": reps_min or higher,
+      "target_rir_min": "within TrainingConstraints",
+      "target_rir_max": "within TrainingConstraints",
+      "required_equipment": ["must match allowed exercise required_equipment"],
+      "notes": "short user-facing coaching note"
+    }}
+  ],
+  "warmup": "string",
+  "cooldown": "string",
+  "progression_guidance": "string",
+  "rationale": "string",
+  "confidence": "Limited | Low | Moderate | High"
+}}
+
+Rules:
+- Use only allowed_exercises from the approved context.
+- Do not invent exercises, equipment, movement patterns, or progression rules.
+- Exercise name, catalog_exercise_id, movement_pattern, and required_equipment must match the allowed catalog item.
+- Target RIR must stay inside the approved TrainingConstraints.
+- Confidence must not exceed approved context confidence.
+- Use 3-6 exercises.
+- Do not include overtraining, stalled-progress, poor-adherence, injury, medical, automatic deload, or automatic load-increase claims.
+- CrewAI output is a candidate only; the backend validates and approves it.
+
+Approved context:
+{json.dumps(safe_context, indent=2, sort_keys=True)}
+""".strip()
+
+
+def generate_crewai_candidate_workout_plan_json(context: WorkoutContext) -> str:
+    """Run the CrewAI CandidateWorkoutPlan task and return raw JSON output.
+
+    The returned string is intentionally untrusted. It must pass through
+    parse_candidate_workout_plan_json(), validate_candidate_workout_plan(), and
+    approval before it can become user-facing.
+    """
+    from crewai import LLM, Agent, Crew, Task
+
+    llm = LLM(
+        model=os.getenv("CREWAI_WORKOUT_MODEL", "ollama/qwen3:8b"),
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
+
+    workout_agent = Agent(
+        role="Workout Candidate JSON Generator",
+        goal="Generate safe CandidateWorkoutPlan JSON from approved context only.",
+        backstory=(
+            "You create candidate workout plans from structured training, "
+            "equipment, exercise catalog, and execution-summary context."
+        ),
+        llm=llm,
+        verbose=False,
+    )
+
+    workout_task = Task(
+        description=build_crewai_candidate_workout_plan_prompt(context),
+        expected_output="Raw CandidateWorkoutPlan JSON object only. No markdown.",
+        agent=workout_agent,
+    )
+
+    crew = Crew(agents=[workout_agent], tasks=[workout_task], verbose=False)
+    result = crew.kickoff()
+    return _crew_result_to_raw_json(result)
+
+
+def _markdown_wrapper_detected(raw_output: str) -> bool:
+    stripped = raw_output.strip().lower()
+    return stripped.startswith("```") or "```json" in stripped or "```" in stripped
+
+
+def _truncate_raw_output_preview(raw_output: str) -> str:
+    compact = " ".join(raw_output.split())
+    if len(compact) <= RAW_OUTPUT_PREVIEW_LIMIT:
+        return compact
+    return compact[:RAW_OUTPUT_PREVIEW_LIMIT] + "..."
+
+
+def _raw_output_diagnostics(raw_output: str | None) -> dict[str, Any]:
+    if raw_output is None:
+        return {
+            "raw_output_length": None,
+            "raw_output_preview_truncated": None,
+            "markdown_wrapper_detected": False,
+        }
+
+    return {
+        "raw_output_length": len(raw_output),
+        "raw_output_preview_truncated": _truncate_raw_output_preview(raw_output),
+        "markdown_wrapper_detected": _markdown_wrapper_detected(raw_output),
+    }
+
+
+def _fallback_reason_for_parse_error(exc: Exception) -> str:
+    message = str(exc).lower()
+    if "confidence" in message:
+        return FALLBACK_REASON_INVALID_CONFIDENCE
+    if "malformed" in message or "markdown" in message or "empty" in message:
+        return FALLBACK_REASON_MALFORMED_JSON
+    return FALLBACK_REASON_SCHEMA_MISMATCH
+
+
+def _deterministic_workout_result(
+    context: WorkoutContext,
+    metadata: WorkoutPlanRuntimeMetadata,
+) -> ApprovedWorkoutPlanResult:
+    return ApprovedWorkoutPlanResult(
+        approved_workout_plan=approve_candidate_workout_plan(
+            generate_candidate_workout_plan(context),
+            context,
+        ),
+        runtime_metadata=metadata,
+    )
+
+
+def _log_workout_candidate_runtime(
+    context: WorkoutContext,
+    metadata: WorkoutPlanRuntimeMetadata,
+    elapsed_ms: int,
+) -> None:
+    logger.info(
+        "workout_candidate_provider_result",
+        extra={
+            "user_id": context.user_id,
+            "scenario": context.scenario,
+            "configured_provider": metadata.configured_provider,
+            "selected_provider": metadata.selected_provider,
+            "model": os.getenv("CREWAI_WORKOUT_MODEL", "ollama/qwen3:8b"),
+            "context_confidence": context.confidence,
+            "crewai_attempted": metadata.crewai_attempted,
+            "candidate_parse_status": metadata.candidate_parse_status,
+            "candidate_validation_status": metadata.candidate_validation_status,
+            "final_plan_source": metadata.final_plan_source,
+            "fallback_used": metadata.fallback_used,
+            "fallback_reason": metadata.fallback_reason,
+            "validation_violations": metadata.validation_errors,
+            "raw_output_length": metadata.raw_output_length,
+            "raw_output_preview_truncated": metadata.raw_output_preview_truncated,
+            "markdown_wrapper_detected": metadata.markdown_wrapper_detected,
+            "elapsed_ms": elapsed_ms,
+        },
+    )
+
+
+def approve_workout_candidate_json_or_fallback_with_metadata(
+    raw_json: str,
+    context: WorkoutContext,
+    *,
+    configured_provider: str = WORKOUT_PROVIDER_DETERMINISTIC,
+    selected_provider: str = WORKOUT_PROVIDER_DETERMINISTIC,
+    crewai_attempted: bool = False,
+) -> ApprovedWorkoutPlanResult:
+    """Approve CandidateWorkoutPlan JSON or fall back deterministically."""
+
+    start_time = time.perf_counter()
+    raw_diagnostics = _raw_output_diagnostics(raw_json)
+    try:
+        candidate = parse_candidate_workout_plan_json(raw_json)
+        violations = validate_candidate_workout_plan(candidate, context)
+        if violations:
+            metadata = WorkoutPlanRuntimeMetadata(
+                configured_provider=configured_provider,
+                selected_provider=selected_provider,
+                crewai_attempted=crewai_attempted,
+                fallback_used=True,
+                fallback_reason=FALLBACK_REASON_VALIDATION_FAILURE,
+                candidate_valid=False,
+                validation_errors=violations,
+                candidate_parse_status=CANDIDATE_PARSE_STATUS_SUCCESS,
+                candidate_validation_status=CANDIDATE_VALIDATION_STATUS_FAILED,
+                final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK,
+                **raw_diagnostics,
+            )
+            result = _deterministic_workout_result(context, metadata)
+        else:
+            metadata = WorkoutPlanRuntimeMetadata(
+                configured_provider=configured_provider,
+                selected_provider=selected_provider,
+                crewai_attempted=crewai_attempted,
+                fallback_used=False,
+                fallback_reason=None,
+                candidate_valid=True,
+                validation_errors=[],
+                candidate_parse_status=CANDIDATE_PARSE_STATUS_SUCCESS,
+                candidate_validation_status=CANDIDATE_VALIDATION_STATUS_SUCCESS,
+                final_plan_source=(
+                    FINAL_PLAN_SOURCE_CREWAI_APPROVED
+                    if crewai_attempted
+                    else FINAL_PLAN_SOURCE_DETERMINISTIC
+                ),
+                **raw_diagnostics,
+            )
+            result = ApprovedWorkoutPlanResult(
+                approved_workout_plan=approve_candidate_workout_plan(
+                    candidate,
+                    context,
+                ),
+                runtime_metadata=metadata,
+            )
+    except (ValueError, WorkoutCandidateParseError) as exc:
+        metadata = WorkoutPlanRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=crewai_attempted,
+            fallback_used=True,
+            fallback_reason=_fallback_reason_for_parse_error(exc),
+            candidate_valid=False,
+            validation_errors=[str(exc)],
+            candidate_parse_status=CANDIDATE_PARSE_STATUS_FAILED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
+            final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK,
+            **raw_diagnostics,
+        )
+        result = _deterministic_workout_result(context, metadata)
+
+    _log_workout_candidate_runtime(
+        context,
+        result.runtime_metadata,
+        elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+    )
+    return result
+
+
+def approve_workout_candidate_json_or_fallback(
+    raw_json: str,
+    context: WorkoutContext,
+) -> ApprovedWorkoutPlan:
+    """Approve CandidateWorkoutPlan JSON or fall back deterministically."""
+
+    return approve_workout_candidate_json_or_fallback_with_metadata(
+        raw_json,
+        context,
+    ).approved_workout_plan
+
+
+def approve_workout_candidate_provider_or_fallback_with_metadata(
+    candidate_provider: WorkoutCandidateProvider,
+    context: WorkoutContext,
+    *,
+    configured_provider: str = WORKOUT_PROVIDER_CREWAI,
+    selected_provider: str = WORKOUT_PROVIDER_CREWAI,
+) -> ApprovedWorkoutPlanResult:
+    """Run a workout candidate provider behind the backend safety boundary."""
+
+    start_time = time.perf_counter()
+    try:
+        raw_json = candidate_provider(context)
+    except Exception as exc:
+        metadata = WorkoutPlanRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=True,
+            fallback_used=True,
+            fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
+            candidate_valid=False,
+            validation_errors=[type(exc).__name__],
+            candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
+            final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK,
+        )
+        result = _deterministic_workout_result(context, metadata)
+        _log_workout_candidate_runtime(
+            context,
+            result.runtime_metadata,
+            elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+        )
+        return result
+
+    if not isinstance(raw_json, str):
+        metadata = WorkoutPlanRuntimeMetadata(
+            configured_provider=configured_provider,
+            selected_provider=selected_provider,
+            crewai_attempted=True,
+            fallback_used=True,
+            fallback_reason=FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT,
+            candidate_valid=False,
+            validation_errors=[
+                "CandidateWorkoutPlan provider returned non-string output."
+            ],
+            candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
+            final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK,
+        )
+        result = _deterministic_workout_result(context, metadata)
+        _log_workout_candidate_runtime(
+            context,
+            result.runtime_metadata,
+            elapsed_ms=round((time.perf_counter() - start_time) * 1000),
+        )
+        return result
+
+    return approve_workout_candidate_json_or_fallback_with_metadata(
+        raw_json,
+        context,
+        configured_provider=configured_provider,
+        selected_provider=selected_provider,
+        crewai_attempted=True,
+    )
+
+
+def approve_workout_candidate_provider_or_fallback(
+    candidate_provider: WorkoutCandidateProvider,
+    context: WorkoutContext,
+) -> ApprovedWorkoutPlan:
+    return approve_workout_candidate_provider_or_fallback_with_metadata(
+        candidate_provider,
+        context,
+    ).approved_workout_plan
+
+
+def build_crewai_approved_workout_plan_with_metadata(
+    health_state: UserHealthState,
+) -> ApprovedWorkoutPlanResult:
+    context = build_workout_context(health_state)
+    return approve_workout_candidate_provider_or_fallback_with_metadata(
+        generate_crewai_candidate_workout_plan_json,
+        context,
+        configured_provider=WORKOUT_PROVIDER_CREWAI,
+        selected_provider=WORKOUT_PROVIDER_CREWAI,
+    )
+
+
+def build_crewai_approved_workout_plan(
+    health_state: UserHealthState,
+) -> ApprovedWorkoutPlan:
+    return build_crewai_approved_workout_plan_with_metadata(
+        health_state,
+    ).approved_workout_plan
+
+
+def _configured_workout_candidate_provider() -> str:
+    return (
+        os.getenv(WORKOUT_CANDIDATE_PROVIDER_ENV, WORKOUT_PROVIDER_DETERMINISTIC)
+        .strip()
+        .lower()
+    )
+
+
+def build_configured_approved_workout_plan_with_metadata(
+    health_state: UserHealthState,
+) -> ApprovedWorkoutPlanResult:
+    """Build an ApprovedWorkoutPlan and runtime metadata for debug inspection."""
+
+    context = build_workout_context(health_state)
+    provider = _configured_workout_candidate_provider()
+
+    if provider == WORKOUT_PROVIDER_DETERMINISTIC:
+        metadata = WorkoutPlanRuntimeMetadata(
+            configured_provider=provider,
+            selected_provider=WORKOUT_PROVIDER_DETERMINISTIC,
+            crewai_attempted=False,
+            fallback_used=False,
+            fallback_reason=FALLBACK_REASON_DETERMINISTIC_SELECTED,
+            candidate_valid=True,
+            validation_errors=[],
+            candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
+            final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC,
+        )
+        result = _deterministic_workout_result(context, metadata)
+        _log_workout_candidate_runtime(context, result.runtime_metadata, elapsed_ms=0)
+        return result
+
+    if provider == WORKOUT_PROVIDER_CREWAI:
+        return approve_workout_candidate_provider_or_fallback_with_metadata(
+            generate_crewai_candidate_workout_plan_json,
+            context,
+            configured_provider=provider,
+            selected_provider=WORKOUT_PROVIDER_CREWAI,
+        )
+
+    metadata = WorkoutPlanRuntimeMetadata(
+        configured_provider=provider,
+        selected_provider=WORKOUT_PROVIDER_DETERMINISTIC,
+        crewai_attempted=False,
+        fallback_used=True,
+        fallback_reason=FALLBACK_REASON_INVALID_PROVIDER,
+        candidate_valid=True,
+        validation_errors=[f"Unsupported workout candidate provider: {provider}"],
+        candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+        candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
+        final_plan_source=FINAL_PLAN_SOURCE_DETERMINISTIC_FALLBACK,
+    )
+    result = _deterministic_workout_result(context, metadata)
+    _log_workout_candidate_runtime(context, result.runtime_metadata, elapsed_ms=0)
+    return result
+
+
+def build_configured_approved_workout_plan(
+    health_state: UserHealthState,
+) -> ApprovedWorkoutPlan:
+    """Build an ApprovedWorkoutPlan through the configured provider.
+
+    This remains deterministic by default. CrewAI is opt-in and should be used
+    through debug/manual runtime paths until Architecture approves broader use.
+    """
+
+    return build_configured_approved_workout_plan_with_metadata(
+        health_state,
+    ).approved_workout_plan
 
 
 def build_approved_workout_plan(health_state: UserHealthState) -> ApprovedWorkoutPlan:

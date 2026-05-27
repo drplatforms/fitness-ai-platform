@@ -75,6 +75,29 @@ class ApprovedWorkoutPlan:
 
 
 @dataclass
+class WorkoutPlanRuntimeMetadata:
+    configured_provider: str
+    selected_provider: str
+    crewai_attempted: bool
+    fallback_used: bool
+    fallback_reason: str | None
+    candidate_valid: bool
+    validation_errors: list[str] = field(default_factory=list)
+    candidate_parse_status: str = "not_attempted"
+    candidate_validation_status: str = "not_attempted"
+    final_plan_source: str = "deterministic"
+    raw_output_length: int | None = None
+    raw_output_preview_truncated: str | None = None
+    markdown_wrapper_detected: bool = False
+
+
+@dataclass
+class ApprovedWorkoutPlanResult:
+    approved_workout_plan: ApprovedWorkoutPlan
+    runtime_metadata: WorkoutPlanRuntimeMetadata
+
+
+@dataclass
 class PlannedWorkoutExercise:
     id: int
     workout_plan_instance_id: int

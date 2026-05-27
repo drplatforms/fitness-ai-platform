@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import database
+import services.workout_plan_service as workout_plan_service
 from api.main import app
 from models.exercise_catalog_models import ExerciseCatalogEntry
 from models.training_constraint_models import TrainingConstraints
@@ -19,13 +20,17 @@ from services.workout_plan_service import (
     WorkoutCandidateParseError,
     _select_exercise,
     approve_candidate_workout_plan,
+    approve_workout_candidate_provider_or_fallback_with_metadata,
     build_approved_workout_plan,
     build_approved_workout_plan_from_candidate_output,
+    build_configured_approved_workout_plan_with_metadata,
+    build_crewai_candidate_workout_plan_prompt,
     build_workout_context,
     generate_candidate_workout_plan,
     parse_candidate_workout_plan_json,
     render_approved_workout_plan,
     validate_candidate_workout_plan,
+    workout_context_to_llm_json,
 )
 
 EXPECTED_SCENARIOS = {
@@ -424,19 +429,23 @@ def _candidate_payload_for_entry(
     progression_guidance: str = "Progress only when recovery and performance stay stable.",
     confidence: str = "Moderate",
 ) -> dict:
-    entry = _LIGHTWEIGHT_CATALOG[entry_name]
-    assert entry.id is not None
-    return {
-        "title": title,
-        "session_focus": "Use a controlled strength session.",
-        "duration_minutes": 45,
-        "warmup": "Use easy movement and ramp-up sets before work sets.",
-        "exercises": [
+    selected_names = []
+    for name in [entry_name, "Goblet Squat", "Dumbbell Bench Press", "Barbell Squat"]:
+        if name not in selected_names:
+            selected_names.append(name)
+        if len(selected_names) == 3:
+            break
+
+    exercises = []
+    for index, name in enumerate(selected_names):
+        entry = _LIGHTWEIGHT_CATALOG[name]
+        assert entry.id is not None
+        exercises.append(
             {
                 "exercise_name": entry.name,
                 "catalog_exercise_id": entry.id,
                 "movement_pattern": entry.movement_pattern,
-                "target_zone": "main",
+                "target_zone": "main" if index == 0 else "accessory",
                 "sets": 3,
                 "reps_min": 8,
                 "reps_max": 10,
@@ -445,7 +454,14 @@ def _candidate_payload_for_entry(
                 "required_equipment": entry.equipment_required,
                 "notes": notes,
             }
-        ],
+        )
+
+    return {
+        "title": title,
+        "session_focus": "Use a controlled strength session.",
+        "duration_minutes": 45,
+        "warmup": "Use easy movement and ramp-up sets before work sets.",
+        "exercises": exercises,
         "cooldown": "Log performance, soreness, and energy after training.",
         "progression_guidance": progression_guidance,
         "rationale": "This plan stays within today's training limits.",
@@ -639,3 +655,347 @@ def test_automatic_load_increase_candidate_is_rejected(monkeypatch):
     violations = validate_candidate_workout_plan(candidate, context)
 
     assert any("forbidden workout guidance" in violation for violation in violations)
+
+
+def _provider_payload_from_candidate(candidate) -> dict:
+    exercises = []
+    for exercise in candidate.exercises:
+        entry = find_catalog_entry_by_name(exercise.name)
+        assert entry is not None
+        exercises.append(
+            {
+                "exercise_name": entry.name,
+                "catalog_exercise_id": entry.id,
+                "movement_pattern": entry.movement_pattern,
+                "target_zone": exercise.target_zone or "main",
+                "sets": exercise.sets,
+                "reps_min": exercise.reps_min,
+                "reps_max": exercise.reps_max,
+                "target_rir_min": exercise.rir_min,
+                "target_rir_max": exercise.rir_max,
+                "required_equipment": entry.equipment_required,
+                "notes": exercise.notes,
+            }
+        )
+
+    return {
+        "title": candidate.title,
+        "session_focus": candidate.session_focus,
+        "duration_minutes": candidate.duration_minutes,
+        "warmup": candidate.warmup,
+        "exercises": exercises,
+        "cooldown": candidate.cooldown,
+        "progression_guidance": candidate.progression_guidance,
+        "rationale": candidate.rationale,
+        "confidence": candidate.confidence,
+    }
+
+
+def _valid_provider_json_for_context(context: WorkoutContext) -> str:
+    candidate = generate_candidate_workout_plan(context)
+    return json.dumps(_provider_payload_from_candidate(candidate))
+
+
+def test_workout_context_to_llm_json_is_bounded_and_safe(tmp_path, monkeypatch):
+    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+
+    payload = workout_context_to_llm_json(context)
+
+    assert payload["scenario"] == "aligned_managed"
+    assert payload["training_constraints"]
+    assert payload["workout_constraints"]["available_equipment"]
+    assert payload["allowed_exercises"]
+    assert len(payload["allowed_exercises"]) <= 80
+    assert payload["training_execution_summary"]
+    assert payload["movement_pattern_targets"]
+    assert payload["safety_constraints"]
+    assert "raw_actual_set_rows" not in payload
+    assert "actual_sets" not in payload
+    assert all("notes" not in exercise for exercise in payload["allowed_exercises"])
+
+
+def test_crewai_workout_prompt_requires_raw_json_only(tmp_path, monkeypatch):
+    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+
+    prompt = build_crewai_candidate_workout_plan_prompt(context)
+
+    assert "raw JSON object only" in prompt
+    assert "markdown" in prompt.lower()
+    assert "allowed_exercises" in prompt
+    assert "automatic load-increase" in prompt
+
+
+def test_configured_workout_provider_defaults_to_deterministic(tmp_path, monkeypatch):
+    monkeypatch.delenv("WORKOUT_CANDIDATE_PROVIDER", raising=False)
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.selected_provider == "deterministic"
+    assert result.runtime_metadata.crewai_attempted is False
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.final_plan_source == "deterministic"
+
+
+def test_mocked_crewai_workout_provider_valid_json_approves(tmp_path, monkeypatch):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    raw_json = _valid_provider_json_for_context(context)
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: raw_json,
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.selected_provider == "crewai"
+    assert result.runtime_metadata.crewai_attempted is True
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.candidate_parse_status == "success"
+    assert result.runtime_metadata.candidate_validation_status == "success"
+    assert result.runtime_metadata.final_plan_source == "crewai_approved"
+
+
+def test_mocked_crewai_workout_provider_malformed_json_falls_back(
+    tmp_path, monkeypatch
+):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: "not-json",
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "malformed_json"
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+    assert result.runtime_metadata.final_plan_source == "deterministic_fallback"
+
+
+def test_mocked_crewai_workout_provider_markdown_json_falls_back(tmp_path, monkeypatch):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    raw_json = _valid_provider_json_for_context(context)
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: f"```json\n{raw_json}\n```",
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.markdown_wrapper_detected is True
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+
+
+def test_mocked_crewai_workout_provider_extra_fields_fall_back(tmp_path, monkeypatch):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    payload = json.loads(_valid_provider_json_for_context(context))
+    payload["debug_reason_codes"] = ["not_allowed"]
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: json.dumps(payload),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "schema_mismatch"
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+
+
+def test_mocked_crewai_workout_provider_missing_fields_fall_back(tmp_path, monkeypatch):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    payload = json.loads(_valid_provider_json_for_context(context))
+    payload.pop("rationale")
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: json.dumps(payload),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "schema_mismatch"
+
+
+def test_mocked_crewai_aligned_managed_deload_candidate_falls_back(
+    tmp_path, monkeypatch
+):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+    context = build_workout_context(health_state)
+    payload = json.loads(_valid_provider_json_for_context(context))
+    payload["progression_guidance"] = (
+        "Deload and reduce intensity despite stable recovery."
+    )
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: json.dumps(payload),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "validation_failure"
+    assert any(
+        "intervention" in violation.lower()
+        for violation in result.runtime_metadata.validation_errors
+    )
+
+
+def test_mocked_crewai_workout_provider_unsafe_candidate_falls_back(
+    tmp_path, monkeypatch
+):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[105]
+    context = build_workout_context(health_state)
+    payload = json.loads(_valid_provider_json_for_context(context))
+    payload["progression_guidance"] = "This prevents overtraining and stalled progress."
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: json.dumps(payload),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "validation_failure"
+    assert result.runtime_metadata.candidate_parse_status == "success"
+    assert result.runtime_metadata.candidate_validation_status == "failed"
+
+
+def test_mocked_crewai_workout_provider_confidence_above_context_falls_back(
+    tmp_path, monkeypatch
+):
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[105]
+    context = build_workout_context(health_state)
+    payload = json.loads(_valid_provider_json_for_context(context))
+    payload["confidence"] = "High"
+
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_candidate_workout_plan_json",
+        lambda provided_context: json.dumps(payload),
+    )
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "validation_failure"
+    assert any(
+        "confidence" in violation.lower()
+        for violation in result.runtime_metadata.validation_errors
+    )
+
+
+def test_workout_candidate_provider_exception_falls_back(tmp_path, monkeypatch):
+    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+
+    def broken_provider(provided_context):
+        raise RuntimeError("provider exploded")
+
+    result = approve_workout_candidate_provider_or_fallback_with_metadata(
+        broken_provider,
+        context,
+    )
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "provider_exception"
+    assert result.runtime_metadata.candidate_parse_status == "not_attempted"
+
+
+def test_workout_candidate_provider_non_string_output_falls_back(tmp_path, monkeypatch):
+    context = _context_for_user_102_home_gym(tmp_path, monkeypatch)
+
+    result = approve_workout_candidate_provider_or_fallback_with_metadata(
+        lambda provided_context: {"not": "a string"},
+        context,
+    )
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "provider_non_string_output"
+    assert result.runtime_metadata.candidate_parse_status == "not_attempted"
+
+
+def test_workout_preview_debug_endpoint_returns_runtime_metadata(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "deterministic")
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/105/debug")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["user_id"] == 105
+    assert payload["approved_workout_plan"]["exercises"]
+    assert payload["runtime_metadata"]["selected_provider"] == "deterministic"
+    assert payload["runtime_metadata"]["crewai_attempted"] is False
+
+
+def test_normal_workout_preview_response_shape_does_not_expose_runtime_metadata(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "crewai")
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/105")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "runtime_metadata" not in payload
+    assert set(payload) == {
+        "success",
+        "user_id",
+        "scenario",
+        "confidence",
+        "training_constraints",
+        "workout_constraints",
+        "approved_workout_plan",
+        "rendered_workout_plan",
+    }
+
+
+def test_invalid_workout_candidate_provider_falls_back_to_deterministic(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("WORKOUT_CANDIDATE_PROVIDER", "banana")
+    health_state = _seeded_health_states(tmp_path, monkeypatch)[102]
+
+    result = build_configured_approved_workout_plan_with_metadata(health_state)
+
+    assert result.approved_workout_plan.exercises
+    assert result.runtime_metadata.selected_provider == "deterministic"
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "invalid_provider"

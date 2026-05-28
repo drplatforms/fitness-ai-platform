@@ -131,6 +131,27 @@ def workout_plan_preview_debug(user_id: int):
     }
 
 
+@router.get("/workout-plans/preview/{user_id}/explanation")
+def workout_plan_explanation(user_id: int):
+    health_state = build_user_health_state(user_id)
+    context = build_workout_context(health_state)
+    approved_plan = build_approved_workout_plan(health_state)
+    explanation_result = build_configured_workout_explanation_with_metadata(
+        approved_plan,
+        context,
+    )
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "scenario": approved_plan.scenario,
+        "confidence": approved_plan.confidence,
+        "approved_workout_explanation": asdict(
+            explanation_result.approved_workout_explanation
+        ),
+    }
+
+
 @router.get("/workout-plans/preview/{user_id}/explanation/debug")
 def workout_plan_explanation_debug(user_id: int):
     health_state = build_user_health_state(user_id)

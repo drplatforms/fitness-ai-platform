@@ -1437,6 +1437,78 @@ def test_configured_workout_explanation_defaults_to_deterministic(
     assert result.runtime_metadata.fallback_used is False
 
 
+def test_public_workout_explanation_endpoint_returns_approved_copy_only(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "deterministic")
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["user_id"] == 102
+    assert payload["scenario"] == "aligned_managed"
+    assert payload["confidence"]
+    assert payload["approved_workout_explanation"]["session_summary"]
+
+    assert "approved_workout_plan" not in payload
+    assert "explanation_runtime_metadata" not in payload
+    assert "runtime_metadata" not in payload
+    assert "raw_output" not in payload
+
+
+def test_public_workout_explanation_endpoint_uses_mocked_crewai_when_enabled(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_workout_explanation_json",
+        lambda approved_plan, context: json.dumps(_valid_explanation_payload()),
+    )
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["approved_workout_explanation"]["session_summary"].startswith(
+        "This is a controlled"
+    )
+    assert "explanation_runtime_metadata" not in payload
+    assert "approved_workout_plan" not in payload
+
+
+def test_public_workout_explanation_endpoint_falls_back_on_bad_crewai_output(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_workout_explanation_json",
+        lambda approved_plan, context: "not-json",
+    )
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["approved_workout_explanation"]["session_summary"]
+    assert "explanation_runtime_metadata" not in payload
+    assert "approved_workout_plan" not in payload
+
+
 def test_workout_explanation_debug_endpoint_returns_debug_only_metadata(
     tmp_path, monkeypatch
 ):
@@ -1471,3 +1543,76 @@ def test_normal_workout_preview_response_shape_does_not_expose_explanation(
     payload = response.json()
     assert "approved_workout_explanation" not in payload
     assert "explanation_runtime_metadata" not in payload
+
+
+def test_public_workout_explanation_endpoint_returns_approved_explanation(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "deterministic")
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["user_id"] == 102
+    assert payload["scenario"] == "aligned_managed"
+    assert payload["approved_workout_explanation"]["session_summary"]
+    assert "approved_workout_plan" not in payload
+    assert "explanation_runtime_metadata" not in payload
+    assert "runtime_metadata" not in payload
+    assert "raw_output" not in payload
+
+
+def test_public_workout_explanation_endpoint_uses_mocked_crewai_when_valid(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "crewai")
+
+    payload = _valid_explanation_payload()
+    payload["session_summary"] = "This is a controlled CrewAI-approved explanation."
+
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_workout_explanation_json",
+        lambda approved_plan, context: json.dumps(payload),
+    )
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["approved_workout_explanation"]["session_summary"].startswith(
+        "This is a controlled"
+    )
+    assert "explanation_runtime_metadata" not in payload
+    assert "approved_workout_plan" not in payload
+
+
+def test_public_workout_explanation_endpoint_falls_back_on_malformed_crewai(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    monkeypatch.setenv("WORKOUT_EXPLANATION_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        workout_plan_service,
+        "generate_crewai_workout_explanation_json",
+        lambda provided_plan, provided_context: "not-json",
+    )
+
+    client = TestClient(app)
+    response = client.get("/workout-plans/preview/102/explanation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["approved_workout_explanation"]["session_summary"]
+    assert "explanation_runtime_metadata" not in payload
+    assert "runtime_metadata" not in payload

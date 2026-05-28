@@ -823,7 +823,7 @@ def test_crewai_workout_llm_kwargs_disable_thinking_by_default(monkeypatch):
     assert llm_kwargs["model"] == "ollama/qwen3:8b"
     assert llm_kwargs["base_url"] == "http://localhost:11434"
     assert llm_kwargs["temperature"] == 0
-    assert llm_kwargs["response_format"] == {"type": "json"}
+    assert llm_kwargs["response_format"] == {"type": "json_object"}
     assert llm_kwargs["think"] is False
     assert llm_kwargs["options"] == {"think": False}
     assert llm_kwargs["extra_body"] == {

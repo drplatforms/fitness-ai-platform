@@ -2243,7 +2243,7 @@ def _crewai_workout_llm_kwargs() -> dict[str, Any]:
     }
 
     if _env_flag_enabled(CREWAI_WORKOUT_JSON_RESPONSE_FORMAT_ENV, default=True):
-        llm_kwargs["response_format"] = {"type": "json"}
+        llm_kwargs["response_format"] = {"type": "json_object"}
 
     if _env_flag_enabled(CREWAI_WORKOUT_DISABLE_THINKING_ENV, default=True):
         no_think_payload = {"think": False}

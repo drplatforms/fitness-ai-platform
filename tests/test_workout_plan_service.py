@@ -1768,6 +1768,113 @@ def test_post_workout_review_debug_endpoint_returns_runtime_metadata(
     assert payload["post_workout_review_runtime_metadata"]["crewai_attempted"] is False
 
 
+def test_public_post_workout_review_endpoint_returns_approved_summary_only(
+    tmp_path, monkeypatch
+):
+    execution_id, plan_instance_id = _completed_workout_execution(tmp_path, monkeypatch)
+    monkeypatch.setenv("POST_WORKOUT_REVIEW_PROVIDER", "deterministic")
+
+    client = TestClient(app)
+    response = client.get(f"/workout-executions/{execution_id}/post-workout-summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["execution_id"] == execution_id
+    assert payload["plan_instance_id"] == plan_instance_id
+    assert payload["approved_post_workout_review_summary"]["session_summary"]
+    assert "approved_workout_plan" not in payload
+    assert "planned_vs_actual_summary" not in payload
+    assert "post_workout_review_runtime_metadata" not in payload
+    assert "runtime_metadata" not in payload
+    assert "raw_output" not in payload
+    assert "validation_errors" not in payload
+    assert "fallback_reason" not in payload
+
+
+def test_public_post_workout_review_endpoint_rejects_missing_execution(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+
+    client = TestClient(app)
+    response = client.get("/workout-executions/999999/post-workout-summary")
+
+    assert response.status_code == 404
+
+
+def test_public_post_workout_review_endpoint_rejects_non_completed_execution(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "fitness_ai_test.db")
+    seed_qa_scenarios()
+    selected = select_current_workout_plan(102)
+    execution_id = selected["execution_session"].id
+
+    client = TestClient(app)
+    response = client.get(f"/workout-executions/{execution_id}/post-workout-summary")
+
+    assert response.status_code == 400
+
+
+def test_public_post_workout_review_endpoint_uses_mocked_crewai_when_valid(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    monkeypatch.setenv("POST_WORKOUT_REVIEW_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        post_workout_review_service,
+        "generate_crewai_post_workout_review_summary_json",
+        lambda provided_context: json.dumps(
+            _valid_post_workout_review_payload(confidence=provided_context.confidence)
+        ),
+    )
+
+    client = TestClient(app)
+    response = client.get(f"/workout-executions/{execution_id}/post-workout-summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["approved_post_workout_review_summary"][
+        "session_summary"
+    ].startswith("You completed")
+    assert "post_workout_review_runtime_metadata" not in payload
+    assert "approved_workout_plan" not in payload
+
+
+def test_public_post_workout_review_endpoint_falls_back_on_unsafe_crewai_output(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    monkeypatch.setenv("POST_WORKOUT_REVIEW_PROVIDER", "crewai")
+    monkeypatch.setattr(
+        post_workout_review_service,
+        "generate_crewai_post_workout_review_summary_json",
+        lambda provided_context: json.dumps(
+            _valid_post_workout_review_payload(
+                confidence=provided_context.confidence,
+                next_time_focus="Use an automatic deload because progress has stalled.",
+            )
+        ),
+    )
+
+    client = TestClient(app)
+    response = client.get(f"/workout-executions/{execution_id}/post-workout-summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["approved_post_workout_review_summary"]["session_summary"]
+    assert "post_workout_review_runtime_metadata" not in payload
+    assert "fallback_reason" not in payload
+
+
 def test_configured_post_workout_review_uses_mocked_crewai_provider(
     tmp_path, monkeypatch
 ):

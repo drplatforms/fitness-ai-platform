@@ -351,7 +351,7 @@ def build_deterministic_post_workout_review_summary(
         ),
         completion_reflection=(
             "Most differences from the plan should be treated as session context, "
-            "not as a failure."
+            "not as a judgment."
         ),
         effort_reflection=context.effort_delta_summary,
         reps_or_volume_reflection=context.volume_completion_summary,

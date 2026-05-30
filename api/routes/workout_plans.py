@@ -179,6 +179,29 @@ def workout_plan_explanation_debug(user_id: int):
     }
 
 
+@router.get("/workout-executions/{execution_id}/post-workout-summary")
+def workout_execution_post_workout_summary(execution_id: int):
+    try:
+        review_context = build_post_workout_review_context(execution_id)
+        review_result = build_configured_post_workout_review_summary_with_metadata(
+            execution_id
+        )
+    except WorkoutPlanNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (WorkoutPlanInvalidStatusError, WorkoutPlanValidationError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "user_id": review_context.user_id,
+        "execution_id": review_context.execution_id,
+        "plan_instance_id": review_context.plan_instance_id,
+        "approved_post_workout_review_summary": asdict(
+            review_result.approved_post_workout_review_summary
+        ),
+    }
+
+
 @router.get("/workout-executions/{execution_id}/post-workout-summary/debug")
 def workout_execution_post_workout_summary_debug(execution_id: int):
     try:

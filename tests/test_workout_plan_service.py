@@ -1598,7 +1598,7 @@ def _valid_post_workout_review_payload(
         "substitutions_or_skips_context": "No major substitution pattern needs emphasis from this session.",
         "logging_quality_note": "Set-level logging was complete enough for a useful review.",
         "next_time_focus": next_time_focus
-        or "Next time, focus on clean execution and consistent logging.",
+        or "For the next logged session, keep reps, weight, and RIR as complete as possible.",
         "confidence": confidence,
     }
 
@@ -1680,6 +1680,60 @@ def test_configured_post_workout_review_defaults_to_deterministic(
     assert result.runtime_metadata.selected_provider == "deterministic"
     assert result.runtime_metadata.crewai_attempted is False
     assert result.runtime_metadata.fallback_used is False
+
+
+def test_deterministic_post_workout_review_copy_uses_session_counts(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+
+    result = build_configured_post_workout_review_summary_with_metadata(execution_id)
+    review = result.approved_post_workout_review_summary
+
+    assert "planned sets" in review.session_summary
+    assert "failure" not in review.completion_reflection.lower()
+    assert "policy" not in review.completion_reflection.lower()
+
+
+def test_deterministic_post_workout_review_next_time_focus_is_logging_focused(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+
+    result = build_configured_post_workout_review_summary_with_metadata(execution_id)
+    focus = result.approved_post_workout_review_summary.next_time_focus.lower()
+
+    assert "reps" in focus
+    assert "weight" in focus
+    assert "rir" in focus
+    assert "increase" not in focus
+    assert "deload" not in focus
+    assert "next workout should" not in focus
+
+
+def test_post_workout_review_validator_rejects_prescriptive_and_judgmental_copy(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    candidate = parse_candidate_post_workout_review_summary_json(
+        json.dumps(
+            _valid_post_workout_review_payload(
+                next_time_focus="Next workout should increase weight because this proves progress."
+            )
+        )
+    )
+
+    violations = validate_candidate_post_workout_review_summary(candidate, context)
+
+    assert violations
+    assert any("programming" in violation.lower() for violation in violations)
 
 
 def test_mocked_crewai_post_workout_review_valid_json_approves(tmp_path, monkeypatch):

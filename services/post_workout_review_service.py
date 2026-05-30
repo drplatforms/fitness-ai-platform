@@ -92,6 +92,10 @@ _POST_WORKOUT_REVIEW_FORBIDDEN_TERMS = [
     "protein target",
     "carb target",
     "fat target",
+    "this proves",
+    "this means",
+    "failed to",
+    "programming failure",
 ]
 
 _POST_WORKOUT_REVIEW_PROGRAMMING_TERMS = [
@@ -107,7 +111,11 @@ _POST_WORKOUT_REVIEW_PROGRAMMING_TERMS = [
     "next session should add",
     "add weight",
     "increase the weight",
+    "increase weight",
     "increase load",
+    "add more weight",
+    "reduce the weight",
+    "cut volume",
     "deload",
     "new exercise",
     "swap the exercise",
@@ -341,28 +349,98 @@ def post_workout_review_context_to_llm_json(
     }
 
 
+def _format_review_number(value: float | int | None) -> str:
+    if value is None:
+        return "unknown"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return f"{value:.1f}" if isinstance(value, float) else str(value)
+
+
+def _has_incomplete_logging(context: PostWorkoutReviewContext) -> bool:
+    return "incomplete" in context.logging_completeness.lower()
+
+
+def _deterministic_session_summary(context: PostWorkoutReviewContext) -> str:
+    if context.planned_sets:
+        return (
+            f"You completed {context.completed_sets} of {context.planned_sets} "
+            "planned sets from the approved workout."
+        )
+    return "You completed the approved workout session and logged enough detail to review it."
+
+
+def _deterministic_completion_reflection(context: PostWorkoutReviewContext) -> str:
+    if context.planned_sets and context.completed_sets >= context.planned_sets:
+        return (
+            "You completed the planned work for this session, which gives a clear "
+            "basis for comparing effort and execution against the plan."
+        )
+    if context.planned_sets and context.completed_sets > 0:
+        return (
+            "You completed part of the planned work, and the remaining gap is useful "
+            "session context for review."
+        )
+    return (
+        "Differences from the plan should be treated as session context rather than "
+        "a negative judgment."
+    )
+
+
+def _deterministic_effort_reflection(context: PostWorkoutReviewContext) -> str:
+    planned_min, planned_max = context.planned_rir_range
+    if (
+        context.actual_rir_average is not None
+        and planned_min is not None
+        and planned_max is not None
+    ):
+        return (
+            f"Logged effort averaged around RIR {_format_review_number(context.actual_rir_average)}, "
+            f"compared with the planned RIR {_format_review_number(planned_min)}-"
+            f"{_format_review_number(planned_max)} range."
+        )
+    return "Effort comparison is limited because some RIR values were not logged."
+
+
+def _deterministic_reps_or_volume_reflection(context: PostWorkoutReviewContext) -> str:
+    summary = context.planned_vs_actual_summary
+    if summary.planned_set_count:
+        return f"Completed volume was about {summary.completion_percentage:.0f}% of the planned work."
+    return "Review completed sets and reps against the plan to understand where the session matched or differed."
+
+
+def _deterministic_substitution_skip_context(context: PostWorkoutReviewContext) -> str:
+    if context.substitution_count and context.skipped_exercise_count:
+        return "Substitutions and skipped work were logged and should be treated as context for this session."
+    if context.substitution_count:
+        return "Substitutions were logged and should be considered part of the session context."
+    if context.skipped_exercise_count:
+        return "Some planned work was skipped, which is useful context for reviewing the session."
+    return "No substitutions or skipped exercises were logged."
+
+
+def _deterministic_logging_quality_note(context: PostWorkoutReviewContext) -> str:
+    if _has_incomplete_logging(context):
+        return "More complete reps, weight, and RIR logging will make future reviews more accurate."
+    return "Set-level logging was complete enough to support a useful review."
+
+
 def build_deterministic_post_workout_review_summary(
     context: PostWorkoutReviewContext,
 ) -> ApprovedPostWorkoutReviewSummary:
     return ApprovedPostWorkoutReviewSummary(
-        session_summary=(
-            "You completed the approved workout session and logged enough detail "
-            "to review the session."
+        session_summary=_deterministic_session_summary(context),
+        completion_reflection=_deterministic_completion_reflection(context),
+        effort_reflection=_deterministic_effort_reflection(context),
+        reps_or_volume_reflection=_deterministic_reps_or_volume_reflection(context),
+        substitutions_or_skips_context=_deterministic_substitution_skip_context(
+            context
         ),
-        completion_reflection=(
-            "Most differences from the plan should be treated as session context, "
-            "not as a judgment."
+        logging_quality_note=_deterministic_logging_quality_note(context),
+        next_time_focus=(
+            "For the next logged session, keep reps, weight, and RIR as complete as "
+            "possible so the review has better context."
         ),
-        effort_reflection=context.effort_delta_summary,
-        reps_or_volume_reflection=context.volume_completion_summary,
-        substitutions_or_skips_context=(
-            "Any substitutions or skipped items should be reviewed as context "
-            "for future planning."
-            if context.substitution_count or context.skipped_exercise_count
-            else "No major substitution or skipped-exercise pattern needs emphasis from this session."
-        ),
-        logging_quality_note=context.logging_completeness,
-        next_time_focus="Next time, focus on clean execution and consistent logging.",
         confidence=_bounded_confidence(context.confidence),
     )
 
@@ -524,7 +602,7 @@ def build_crewai_post_workout_review_summary_prompt(
 ) -> str:
     safe_context = post_workout_review_context_to_llm_json(context)
     return f"""
-You are a post-workout review JSON writer.
+You are a post-workout review JSON writer. Write like a calm coach reviewing a completed session, not like a policy document.
 
 The workout has already been planned and completed. The programming decisions are already set.
 Your job is only to summarize the completed session in concise, supportive coaching language.
@@ -556,8 +634,12 @@ Rules:
 - Do not claim overtraining.
 - Do not claim stalled progress.
 - Do not criticize adherence, discipline, or effort.
+- Differences from the plan are session context, not a score or judgment.
+- Substitutions and skipped items must be described neutrally as context.
+- The next_time_focus field must only mention logging quality, review quality, execution awareness, or noting substitutions/skips.
+- The next_time_focus field must not prescribe changes to the next workout.
 - Do not make nutrition claims unless explicitly present in the context.
-- Keep the tone neutral, supportive, and practical.
+- Keep the tone neutral, supportive, practical, and coach-like.
 - If data is incomplete, mention logging quality gently.
 - Confidence must not exceed the approved context confidence.
 

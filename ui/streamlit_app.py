@@ -2249,6 +2249,109 @@ def display_actual_set_editing(
                 st.json(st.session_state.actual_set_edit_response)
 
 
+def display_post_workout_review_summary(
+    execution_id: int | None,
+    context_key: str,
+) -> None:
+    st.subheader("Post-Workout Review")
+    st.caption(
+        "Reflection only: this summarizes the completed workout. It does not "
+        "change the next workout, progression, exercises, sets, reps, RIR, or "
+        "nutrition decisions."
+    )
+
+    if execution_id is None:
+        st.info(
+            "Post-workout review is available after the completed execution ID "
+            "is available."
+        )
+        return
+
+    try:
+        review_response = api_get(
+            f"/workout-executions/{execution_id}/post-workout-summary"
+        )
+    except requests.RequestException as exc:
+        st.info(
+            "Post-workout review is not available for this completed workout yet: "
+            f"{extract_api_error_message(exc)}"
+        )
+        return
+
+    if not review_response.get("success"):
+        st.info("Post-workout review is not available for this completed workout yet.")
+        developer_details(
+            f"Developer details: post-workout review {context_key}",
+            review_response,
+        )
+        return
+
+    review_summary = review_response.get("approved_post_workout_review_summary") or {}
+
+    if not review_summary:
+        st.info("Post-workout review did not return summary copy.")
+        developer_details(
+            f"Developer details: post-workout review {context_key}",
+            review_response,
+        )
+        return
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        st.write(
+            "**Session summary:** "
+            f"{review_summary.get('session_summary', 'Not available.')}"
+        )
+
+    with col2:
+        st.metric("Confidence", review_summary.get("confidence", "Unknown"))
+
+    review_rows = [
+        {
+            "Area": "Completion reflection",
+            "Review": review_summary.get("completion_reflection", "Not available."),
+        },
+        {
+            "Area": "Effort reflection",
+            "Review": review_summary.get("effort_reflection", "Not available."),
+        },
+        {
+            "Area": "Reps / volume reflection",
+            "Review": review_summary.get(
+                "reps_or_volume_reflection",
+                "Not available.",
+            ),
+        },
+        {
+            "Area": "Substitutions / skips",
+            "Review": review_summary.get(
+                "substitutions_or_skips_context",
+                "Not available.",
+            ),
+        },
+        {
+            "Area": "Logging quality",
+            "Review": review_summary.get("logging_quality_note", "Not available."),
+        },
+        {
+            "Area": "Next-time focus",
+            "Review": review_summary.get("next_time_focus", "Not available."),
+        },
+    ]
+
+    st.dataframe(
+        pd.DataFrame(review_rows),
+        width="stretch",
+        hide_index=True,
+    )
+
+    developer_details(
+        f"Developer details: post-workout review {context_key}",
+        review_response,
+    )
+
+
 def display_complete_workout_control(
     plan_instance_id: int, context_key: str = "workout"
 ) -> None:
@@ -2360,6 +2463,13 @@ def display_complete_workout_control(
             actual_sets=execution_response.get("actual_sets", []),
         )
 
+        completion_execution_id = execution_result.get("id")
+        if completion_execution_id is not None:
+            display_post_workout_review_summary(
+                int(completion_execution_id),
+                context_key=f"completion_result_{plan_instance_id}",
+            )
+
     with st.expander("Developer details: workout completion"):
         st.subheader("Raw Execution Response Used By Completion Control")
         st.json(execution_response)
@@ -2445,6 +2555,16 @@ def display_workout_execution_review(plan_instance_id: int) -> None:
         planned_vs_actual_error = extract_api_error_message(exc)
         st.info(
             f"Planned-vs-actual summary is not available yet: {planned_vs_actual_error}"
+        )
+
+    review_execution_id = execution_session.get("id")
+    if (
+        workout_plan_instance.get("status") == "completed"
+        or execution_session.get("status") == "completed"
+    ) and review_execution_id is not None:
+        display_post_workout_review_summary(
+            int(review_execution_id),
+            context_key=f"execution_review_{plan_instance_id}",
         )
 
     if st.session_state.get("developer_mode", False):
@@ -2540,6 +2660,15 @@ def display_workout_execution_history_item(history_item: dict) -> None:
     }:
         if planned_vs_actual_summary:
             display_planned_vs_actual_summary(planned_vs_actual_summary)
+
+            history_execution_id = execution_session.get("id")
+            if (
+                plan_status == "completed" or execution_status == "completed"
+            ) and history_execution_id is not None:
+                display_post_workout_review_summary(
+                    int(history_execution_id),
+                    context_key=f"history_{plan_instance_id}",
+                )
         else:
             st.info("Planned-vs-actual summary is not available for this item yet.")
     else:

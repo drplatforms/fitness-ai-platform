@@ -405,6 +405,47 @@ def test_home_gym_preview_rotates_movement_patterns_after_recent_trio(
     assert "horizontal_pull" in patterns or "vertical_pull" in patterns
 
 
+def test_home_gym_ten_preview_select_cycles_do_not_converge_to_same_plan(
+    tmp_path, monkeypatch
+):
+    _seeded_health_states(tmp_path, monkeypatch)
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+
+    plan_name_lists: list[tuple[str, ...]] = []
+    distinct_exercises: set[str] = set()
+    equipment_modalities: set[str] = set()
+
+    for _index in range(10):
+        approved = build_approved_workout_plan(build_user_health_state(102))
+        names = tuple(exercise.name for exercise in approved.exercises)
+        plan_name_lists.append(names)
+        distinct_exercises.update(names)
+
+        for exercise in approved.exercises:
+            equipment_modalities.update(exercise.equipment_required)
+            assert "machine" not in exercise.equipment_required
+            assert exercise.rir_min >= 2
+            assert exercise.rir_max <= 4
+
+        select_current_workout_plan(102)
+
+    for index in range(2, len(plan_name_lists)):
+        assert not (
+            plan_name_lists[index]
+            == plan_name_lists[index - 1]
+            == plan_name_lists[index - 2]
+        )
+
+    assert len(distinct_exercises) >= 15
+    assert len(equipment_modalities) >= 5
+    assert len(set(plan_name_lists[-3:])) > 1
+
+
 def _approved_fallback_title(context):
     fallback = approve_candidate_workout_plan(
         generate_candidate_workout_plan(context),

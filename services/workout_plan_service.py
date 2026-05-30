@@ -564,6 +564,27 @@ def _recent_exercise_counts(workout_constraints: WorkoutConstraints) -> dict[str
     return counts
 
 
+def _most_recent_plan_names(
+    workout_constraints: WorkoutConstraints, slot_count: int = 4
+) -> set[str]:
+    """Return normalized names from the most recent selected workout plan.
+
+    build_workout_constraints() orders selected-plan exercises newest-first and
+    preserves duplicates. The first four names therefore represent the most
+    recent generated plan for the current deterministic preview flow.
+    """
+
+    return {
+        _normalize_exercise_name(name)
+        for name in workout_constraints.recent_exercises[:slot_count]
+        if name
+    }
+
+
+def _recent_history_depth(workout_constraints: WorkoutConstraints) -> int:
+    return len([name for name in workout_constraints.recent_exercises if name])
+
+
 def _recent_movement_patterns(workout_constraints: WorkoutConstraints) -> set[str]:
     return set(_recent_movement_pattern_counts(workout_constraints))
 
@@ -672,6 +693,7 @@ def _option_score(
     recent_name_counts: dict[str, int],
     recent_pattern_counts: dict[str, int],
     recent_modality_counts: dict[str, int],
+    most_recent_plan_names: set[str],
 ) -> int:
     catalog_entry = find_catalog_entry_by_name(name)
     catalog_name, normalized_equipment = _catalog_equipment_for_option(
@@ -682,9 +704,12 @@ def _option_score(
     normalized_name = _normalize_exercise_name(catalog_name)
     recent_name_count = recent_name_counts.get(normalized_name, 0)
     if recent_name_count:
-        score -= 700 + (175 * (recent_name_count - 1))
+        score -= 700 + (220 * (recent_name_count - 1))
     else:
         score += 35
+
+    if normalized_name in most_recent_plan_names:
+        score -= 950
 
     if catalog_entry is not None:
         recent_pattern_count = recent_pattern_counts.get(
@@ -731,6 +756,8 @@ def _select_from_rotated_top_options(
     user_id: int | None,
     slot_key: str,
     recent_name_counts: dict[str, int],
+    most_recent_plan_names: set[str],
+    history_depth: int,
 ) -> tuple[str, list[str]]:
     ranked = sorted(allowed_options, key=lambda item: item[0], reverse=True)
     best_score = ranked[0][0]
@@ -750,14 +777,23 @@ def _select_from_rotated_top_options(
         if same_pattern_options:
             top_options = same_pattern_options
 
+    if most_recent_plan_names and len(top_options) > 1:
+        non_recent_options = [
+            item
+            for item in top_options
+            if _normalize_exercise_name(item[1]) not in most_recent_plan_names
+        ]
+        if non_recent_options:
+            top_options = non_recent_options
+
     if user_id is None or len(top_options) <= 1:
         _score, name, equipment_required = top_options[0]
         return name, equipment_required
 
     recent_seed = "|".join(
-        f"{name}:{count}" for name, count in sorted(recent_name_counts.items())[:12]
+        f"{name}:{count}" for name, count in sorted(recent_name_counts.items())[:16]
     )
-    rotation_seed = f"{slot_key}:{recent_seed}"
+    rotation_seed = f"{slot_key}:{history_depth}:{recent_seed}"
     rotation_index = _stable_rotation_index(
         rotation_seed, len(top_options), user_id=user_id
     )
@@ -776,6 +812,8 @@ def _select_exercise(
     recent_name_counts = _recent_exercise_counts(workout_constraints)
     recent_pattern_counts = _recent_movement_pattern_counts(workout_constraints)
     recent_modality_counts = _recent_equipment_modality_counts(workout_constraints)
+    most_recent_plan_names = _most_recent_plan_names(workout_constraints)
+    history_depth = _recent_history_depth(workout_constraints)
 
     for index, (name, equipment_required) in enumerate(options):
         catalog_name, catalog_equipment_required = _catalog_equipment_for_option(
@@ -793,6 +831,7 @@ def _select_exercise(
                         recent_name_counts,
                         recent_pattern_counts,
                         recent_modality_counts,
+                        most_recent_plan_names,
                     ),
                     catalog_name,
                     catalog_equipment_required,
@@ -805,6 +844,8 @@ def _select_exercise(
             user_id=user_id,
             slot_key=slot_key or _selection_slot_key(options),
             recent_name_counts=recent_name_counts,
+            most_recent_plan_names=most_recent_plan_names,
+            history_depth=history_depth,
         )
 
     name, equipment_required = options[-1]

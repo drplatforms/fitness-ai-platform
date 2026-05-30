@@ -31,12 +31,17 @@ def _recent_exercise_names(user_id: int, limit: int = 5) -> list[str]:
     return _unique_preserve_order(names)
 
 
-def _recent_planned_exercise_names(user_id: int, limit: int = 12) -> list[str]:
-    """Return recent selected/executed plan exercises without importing plan services.
+def _recent_planned_exercise_names(user_id: int, limit: int = 40) -> list[str]:
+    """Return recent selected/executed plan exercises with repeated exposure intact.
 
     Workout plan services import this module while building previews, so this
     direct read avoids a circular import. Missing tables are allowed in fresh
     databases and simply mean there is no plan history yet.
+
+    Unlike manual workout history, selected workout-plan history intentionally
+    preserves repeated exercise names and plan order. The workout generator uses
+    those repeated exposures to penalize recently repeated full-plan loops and
+    slot-level choices.
     """
 
     try:
@@ -62,7 +67,7 @@ def _recent_planned_exercise_names(user_id: int, limit: int = 12) -> list[str]:
     except Exception:
         return []
 
-    return _unique_preserve_order([str(row["name"]) for row in rows if row["name"]])
+    return [str(row["name"]) for row in rows if row["name"]]
 
 
 def build_workout_constraints(health_state: UserHealthState) -> WorkoutConstraints:
@@ -73,10 +78,12 @@ def build_workout_constraints(health_state: UserHealthState) -> WorkoutConstrain
     """
 
     equipment_profile = get_effective_equipment_profile(health_state.user_id)
-    recent_exercises = _unique_preserve_order(
-        _recent_exercise_names(health_state.user_id)
-        + _recent_planned_exercise_names(health_state.user_id)
-    )
+    recent_planned_exercises = _recent_planned_exercise_names(health_state.user_id)
+    manual_recent_exercises = _recent_exercise_names(health_state.user_id)
+    planned_exercise_set = set(recent_planned_exercises)
+    recent_exercises = recent_planned_exercises + [
+        name for name in manual_recent_exercises if name not in planned_exercise_set
+    ]
     reason_codes = list(equipment_profile.reason_codes)
 
     if recent_exercises:

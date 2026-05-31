@@ -2583,7 +2583,10 @@ def display_workout_execution_review(plan_instance_id: int) -> None:
                 st.write(planned_vs_actual_error)
 
 
-def display_workout_execution_history_item(history_item: dict) -> None:
+def display_workout_execution_history_item(
+    history_item: dict,
+    context_scope: str = "history",
+) -> None:
     workout_plan_instance = history_item.get("workout_plan_instance", {})
     execution_session = history_item.get("execution_session") or {}
     planned_vs_actual_summary = history_item.get("planned_vs_actual_summary")
@@ -2669,7 +2672,7 @@ def display_workout_execution_history_item(history_item: dict) -> None:
             ) and history_execution_id is not None:
                 display_post_workout_review_summary(
                     int(history_execution_id),
-                    context_key=f"history_{plan_instance_id}",
+                    context_key=f"{context_scope}_{plan_instance_id}",
                 )
         else:
             st.info("Planned-vs-actual summary is not available for this item yet.")
@@ -2689,7 +2692,10 @@ def display_workout_execution_history_item(history_item: dict) -> None:
         )
 
 
-def display_workout_execution_history(user_id: int) -> None:
+def display_workout_execution_history(
+    user_id: int,
+    context_scope: str = "history",
+) -> None:
     st.subheader("Workout Execution History")
 
     try:
@@ -2729,7 +2735,10 @@ def display_workout_execution_history(user_id: int) -> None:
                 expander_label = f"{title} — {plan_status} — selected {selected_at}"
 
             with st.expander(expander_label):
-                display_workout_execution_history_item(history_item)
+                display_workout_execution_history_item(
+                    history_item,
+                    context_scope=context_scope,
+                )
 
                 if execution_session.get("completed_at"):
                     st.caption(f"Completed at: {execution_session['completed_at']}")
@@ -4314,7 +4323,10 @@ def render_workout_plan_section(user_id: int) -> None:
 
     st.divider()
     with st.expander("Workout History", expanded=False):
-        display_workout_execution_history(user_id)
+        display_workout_execution_history(
+            user_id,
+            context_scope="workout_history",
+        )
 
     with st.expander("Exercise Catalog", expanded=False):
         display_exercise_catalog(user_id)

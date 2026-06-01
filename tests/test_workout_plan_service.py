@@ -1802,6 +1802,195 @@ def test_deterministic_post_workout_review_copy_uses_session_counts(
     assert "policy" not in review.completion_reflection.lower()
 
 
+def _post_workout_context_with_set_counts(
+    tmp_path,
+    monkeypatch,
+    *,
+    planned_sets: int,
+    completed_sets: int,
+    skipped_exercises: int = 0,
+    substitutions: int = 0,
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    context.planned_sets = planned_sets
+    context.completed_sets = completed_sets
+    context.skipped_exercise_count = skipped_exercises
+    context.substitution_count = substitutions
+    context.planned_vs_actual_summary.planned_set_count = planned_sets
+    context.planned_vs_actual_summary.completed_set_count = completed_sets
+    context.planned_vs_actual_summary.skipped_exercise_count = skipped_exercises
+    context.planned_vs_actual_summary.substituted_exercise_count = substitutions
+    context.planned_vs_actual_summary.completion_percentage = (
+        (completed_sets / planned_sets) * 100 if planned_sets else 0
+    )
+    return context
+
+
+def test_deterministic_post_workout_review_exact_plan_completion_language(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=11,
+        completed_sets=11,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+
+    assert "completed all 11 planned sets" in review.session_summary.lower()
+    assert "extra" not in review.session_summary.lower()
+    assert "12 of 11" not in review.session_summary
+
+
+def test_deterministic_post_workout_review_partial_completion_language(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=11,
+        completed_sets=8,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+
+    assert "8 of 11 planned sets" in review.session_summary.lower()
+    assert "part of the planned work" in review.completion_reflection.lower()
+    assert "increase" not in str(review).lower()
+
+
+def test_deterministic_post_workout_review_extra_sets_use_extra_set_language(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=11,
+        completed_sets=12,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+    combined = str(review).lower()
+
+    assert "12 of 11" not in review.session_summary
+    assert "completed the planned work" in review.session_summary.lower()
+    assert "1 extra set" in review.session_summary.lower()
+    assert "slightly above the written plan" in review.reps_or_volume_reflection.lower()
+    assert "not a new target" in review.completion_reflection.lower()
+    assert "note why" in review.next_time_focus.lower()
+    assert "increase volume" not in combined
+    assert "increase weight" not in combined
+    assert "overtraining" not in combined
+    assert "failed" not in combined
+
+
+def test_deterministic_post_workout_review_extra_sets_pluralize_cleanly(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=10,
+        completed_sets=13,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+
+    assert "3 extra sets" in review.session_summary.lower()
+    assert "13 of 10" not in review.session_summary
+
+
+def test_deterministic_post_workout_review_handles_missing_planned_set_count(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=0,
+        completed_sets=3,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+
+    assert "approved workout session" in review.session_summary.lower()
+    assert "0 planned" not in review.session_summary.lower()
+    assert "0 planned" not in review.reps_or_volume_reflection.lower()
+
+
+def test_deterministic_post_workout_review_substitutions_and_skips_stay_neutral(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=11,
+        completed_sets=12,
+        skipped_exercises=1,
+        substitutions=1,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+    combined = str(review).lower()
+
+    assert (
+        "substitutions and skipped work"
+        in review.substitutions_or_skips_context.lower()
+    )
+    assert "poor adherence" not in combined
+    assert "discipline" not in combined
+    assert "failed" not in combined
+
+
+def test_post_workout_review_validator_rejects_old_over_plan_ratio_copy(
+    tmp_path, monkeypatch
+):
+    context = _post_workout_context_with_set_counts(
+        tmp_path,
+        monkeypatch,
+        planned_sets=11,
+        completed_sets=12,
+    )
+    payload = _valid_post_workout_review_payload(
+        next_time_focus="Keep noting anything extra so reviews have context."
+    )
+    payload["session_summary"] = (
+        "You completed 12 of 11 planned sets from the approved workout."
+    )
+    candidate = parse_candidate_post_workout_review_summary_json(json.dumps(payload))
+
+    violations = validate_candidate_post_workout_review_summary(candidate, context)
+
+    assert any("extra-set language" in violation for violation in violations)
+
+
 def test_deterministic_post_workout_review_next_time_focus_is_logging_focused(
     tmp_path, monkeypatch
 ):

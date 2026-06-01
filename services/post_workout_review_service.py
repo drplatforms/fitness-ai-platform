@@ -204,7 +204,30 @@ def _reps_completed_summary(summary) -> str:
     return "Rep completion is hard to assess from the current logs."
 
 
+def _set_word(count: int) -> str:
+    return "set" if abs(count) == 1 else "sets"
+
+
+def _extra_set_count(context: PostWorkoutReviewContext) -> int:
+    if context.planned_sets <= 0:
+        return 0
+    return max(context.completed_sets - context.planned_sets, 0)
+
+
 def _volume_completion_summary(summary) -> str:
+    if summary.planned_set_count <= 0:
+        return "Completed set volume can be reviewed, but no planned set total was available."
+
+    extra_sets = max(summary.completed_set_count - summary.planned_set_count, 0)
+    if extra_sets:
+        return (
+            "Logged set volume was slightly above the written plan because "
+            f"{extra_sets} extra {_set_word(extra_sets)} were completed."
+        )
+
+    if summary.completed_set_count == summary.planned_set_count:
+        return "Logged set volume matched the written plan."
+
     return (
         f"{summary.completed_set_count} of {summary.planned_set_count} planned sets "
         f"were completed ({summary.completion_percentage:.0f}%)."
@@ -362,15 +385,34 @@ def _has_incomplete_logging(context: PostWorkoutReviewContext) -> bool:
 
 
 def _deterministic_session_summary(context: PostWorkoutReviewContext) -> str:
-    if context.planned_sets:
+    if context.planned_sets <= 0:
+        return "You completed the approved workout session and logged enough detail to review it."
+
+    extra_sets = _extra_set_count(context)
+    if extra_sets:
+        return (
+            "You completed the planned work and logged "
+            f"{extra_sets} extra {_set_word(extra_sets)}."
+        )
+
+    if context.completed_sets == context.planned_sets:
+        return (
+            f"You completed all {context.planned_sets} planned "
+            f"{_set_word(context.planned_sets)} from the approved workout."
+        )
+
+    if context.completed_sets > 0:
         return (
             f"You completed {context.completed_sets} of {context.planned_sets} "
             "planned sets from the approved workout."
         )
-    return "You completed the approved workout session and logged enough detail to review it."
+
+    return "No planned sets were completed, which is useful context for reviewing the session."
 
 
 def _deterministic_completion_reflection(context: PostWorkoutReviewContext) -> str:
+    if _extra_set_count(context):
+        return "The extra work is useful session context, not a new target to beat."
     if context.planned_sets and context.completed_sets >= context.planned_sets:
         return (
             "You completed the planned work for this session, which gives a clear "
@@ -404,6 +446,8 @@ def _deterministic_effort_reflection(context: PostWorkoutReviewContext) -> str:
 
 def _deterministic_reps_or_volume_reflection(context: PostWorkoutReviewContext) -> str:
     summary = context.planned_vs_actual_summary
+    if _extra_set_count(context):
+        return "Logged set volume was slightly above the written plan."
     if summary.planned_set_count:
         return f"Completed volume was about {summary.completion_percentage:.0f}% of the planned work."
     return "Review completed sets and reps against the plan to understand where the session matched or differed."
@@ -425,6 +469,18 @@ def _deterministic_logging_quality_note(context: PostWorkoutReviewContext) -> st
     return "Set-level logging was complete enough to support a useful review."
 
 
+def _deterministic_next_time_focus(context: PostWorkoutReviewContext) -> str:
+    if _extra_set_count(context):
+        return (
+            "If you add extra work again, note why so future reviews can separate "
+            "planned work from intentional add-ons."
+        )
+    return (
+        "For the next logged session, keep reps, weight, and RIR as complete as "
+        "possible so the review has better context."
+    )
+
+
 def build_deterministic_post_workout_review_summary(
     context: PostWorkoutReviewContext,
 ) -> ApprovedPostWorkoutReviewSummary:
@@ -437,10 +493,7 @@ def build_deterministic_post_workout_review_summary(
             context
         ),
         logging_quality_note=_deterministic_logging_quality_note(context),
-        next_time_focus=(
-            "For the next logged session, keep reps, weight, and RIR as complete as "
-            "possible so the review has better context."
-        ),
+        next_time_focus=_deterministic_next_time_focus(context),
         confidence=_bounded_confidence(context.confidence),
     )
 
@@ -547,6 +600,15 @@ def validate_candidate_post_workout_review_summary(
     if any(len(field) > 240 for field in fields):
         violations.append("Post-workout review fields must be concise.")
 
+    if context.completed_sets > context.planned_sets > 0:
+        old_ratio_phrase = (
+            f"{context.completed_sets} of {context.planned_sets} planned set"
+        )
+        if old_ratio_phrase in candidate.session_summary.lower():
+            violations.append(
+                "Post-workout review should use explicit extra-set language when completed sets exceed planned sets."
+            )
+
     text = _post_workout_review_text_blob(candidate)
 
     for term in _POST_WORKOUT_REVIEW_FORBIDDEN_TERMS:
@@ -636,7 +698,8 @@ Rules:
 - Do not criticize adherence, discipline, or effort.
 - Differences from the plan are session context, not a score or judgment.
 - Substitutions and skipped items must be described neutrally as context.
-- The next_time_focus field must only mention logging quality, review quality, execution awareness, or noting substitutions/skips.
+- If completed_sets is greater than planned_sets, say the planned work was completed and extra sets were logged. Do not write phrases like "12 of 11 planned sets" or make extra work a new target.
+- The next_time_focus field must only mention logging quality, review quality, execution awareness, noting substitutions/skips, or noting why extra work was added.
 - The next_time_focus field must not prescribe changes to the next workout.
 - Do not make nutrition claims unless explicitly present in the context.
 - Keep the tone neutral, supportive, practical, and coach-like.

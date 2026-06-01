@@ -384,45 +384,92 @@ def _has_incomplete_logging(context: PostWorkoutReviewContext) -> bool:
     return "incomplete" in context.logging_completeness.lower()
 
 
+def _set_word(count: int) -> str:
+    return "set" if count == 1 else "sets"
+
+
+def _skipped_set_word(count: int) -> str:
+    return "planned set was" if count == 1 else "planned sets were"
+
+
+def _skipped_set_count(context: PostWorkoutReviewContext) -> int:
+    return context.planned_vs_actual_summary.skipped_set_count
+
+
+def _planned_sets_were_all_completed(context: PostWorkoutReviewContext) -> bool:
+    return (
+        bool(context.planned_sets)
+        and _skipped_set_count(context) == 0
+        and context.completed_sets >= context.planned_sets
+    )
+
+
+def _logged_volume_status(context: PostWorkoutReviewContext) -> str:
+    if not context.planned_sets:
+        return "available"
+    if context.completed_sets > context.planned_sets:
+        return "above"
+    if context.completed_sets == context.planned_sets:
+        return "close to"
+    return "below"
+
+
 def _deterministic_session_summary(context: PostWorkoutReviewContext) -> str:
-    if context.planned_sets <= 0:
+    if not context.planned_sets:
         return "You completed the approved workout session and logged enough detail to review it."
 
-    extra_sets = _extra_set_count(context)
-    if extra_sets:
+    skipped_sets = _skipped_set_count(context)
+    if skipped_sets:
         return (
-            "You completed the planned work and logged "
-            f"{extra_sets} extra {_set_word(extra_sets)}."
+            f"You logged {context.completed_sets} completed {_set_word(context.completed_sets)} "
+            f"against {context.planned_sets} planned {_set_word(context.planned_sets)}, "
+            f"with {skipped_sets} {_skipped_set_word(skipped_sets)} skipped."
+        )
+
+    if context.completed_sets > context.planned_sets:
+        extra_sets = context.completed_sets - context.planned_sets
+        return (
+            f"You completed the planned work and logged {extra_sets} "
+            f"extra {_set_word(extra_sets)}."
         )
 
     if context.completed_sets == context.planned_sets:
-        return (
-            f"You completed all {context.planned_sets} planned "
-            f"{_set_word(context.planned_sets)} from the approved workout."
-        )
+        return f"You completed all {context.planned_sets} planned {_set_word(context.planned_sets)} from the approved workout."
 
-    if context.completed_sets > 0:
-        return (
-            f"You completed {context.completed_sets} of {context.planned_sets} "
-            "planned sets from the approved workout."
-        )
-
-    return "No planned sets were completed, which is useful context for reviewing the session."
+    return (
+        f"You completed {context.completed_sets} of {context.planned_sets} "
+        "planned sets from the approved workout."
+    )
 
 
 def _deterministic_completion_reflection(context: PostWorkoutReviewContext) -> str:
-    if _extra_set_count(context):
+    skipped_sets = _skipped_set_count(context)
+    if skipped_sets:
+        if context.planned_sets and context.completed_sets >= context.planned_sets:
+            return (
+                "Some planned work was skipped, while total logged set volume stayed "
+                "close to the written plan because other work was completed."
+            )
+        return (
+            "Some planned work was skipped, and that gap is useful session context "
+            "for review."
+        )
+
+    if context.planned_sets and context.completed_sets > context.planned_sets:
         return "The extra work is useful session context, not a new target to beat."
-    if context.planned_sets and context.completed_sets >= context.planned_sets:
+
+    if context.planned_sets and context.completed_sets == context.planned_sets:
         return (
             "You completed the planned work for this session, which gives a clear "
             "basis for comparing effort and execution against the plan."
         )
+
     if context.planned_sets and context.completed_sets > 0:
         return (
             "You completed part of the planned work, and the remaining gap is useful "
             "session context for review."
         )
+
     return (
         "Differences from the plan should be treated as session context rather than "
         "a negative judgment."
@@ -436,21 +483,54 @@ def _deterministic_effort_reflection(context: PostWorkoutReviewContext) -> str:
         and planned_min is not None
         and planned_max is not None
     ):
+        actual = _format_review_number(context.actual_rir_average)
+        planned_range = (
+            f"{_format_review_number(planned_min)}-{_format_review_number(planned_max)}"
+        )
+        if context.actual_rir_average < planned_min:
+            return (
+                f"Logged effort averaged around RIR {actual}, which was harder "
+                f"than the planned RIR {planned_range} range."
+            )
+        if context.actual_rir_average > planned_max:
+            return (
+                f"Logged effort averaged around RIR {actual}, which was easier "
+                f"than the planned RIR {planned_range} range."
+            )
         return (
-            f"Logged effort averaged around RIR {_format_review_number(context.actual_rir_average)}, "
-            f"compared with the planned RIR {_format_review_number(planned_min)}-"
-            f"{_format_review_number(planned_max)} range."
+            f"Logged effort averaged around RIR {actual}, which stayed within "
+            f"the planned RIR {planned_range} range."
         )
     return "Effort comparison is limited because some RIR values were not logged."
 
 
 def _deterministic_reps_or_volume_reflection(context: PostWorkoutReviewContext) -> str:
     summary = context.planned_vs_actual_summary
-    if _extra_set_count(context):
+    if not summary.planned_set_count:
+        return "Review completed sets and reps against the plan to understand where the session matched or differed."
+
+    skipped_sets = _skipped_set_count(context)
+    if skipped_sets:
+        status = _logged_volume_status(context)
+        if status == "above":
+            return (
+                "Total logged set volume was above the written plan, but one or "
+                "more planned sets were skipped."
+            )
+        if status == "close to":
+            return (
+                "Total logged set volume was close to the written plan, but one "
+                "or more planned sets were skipped."
+            )
+        return (
+            "Total logged set volume was below the written plan, and skipped "
+            "planned sets are useful session context for review."
+        )
+
+    if summary.completed_set_count > summary.planned_set_count:
         return "Logged set volume was slightly above the written plan."
-    if summary.planned_set_count:
-        return f"Completed volume was about {summary.completion_percentage:.0f}% of the planned work."
-    return "Review completed sets and reps against the plan to understand where the session matched or differed."
+
+    return f"Completed volume was about {summary.completion_percentage:.0f}% of the planned work."
 
 
 def _deterministic_substitution_skip_context(context: PostWorkoutReviewContext) -> str:
@@ -611,6 +691,31 @@ def validate_candidate_post_workout_review_summary(
 
     text = _post_workout_review_text_blob(candidate)
 
+    skipped_sets = context.planned_vs_actual_summary.skipped_set_count
+    if skipped_sets:
+        skipped_completion_terms = [
+            "completed the planned work",
+            "completed all",
+            "planned work was completed",
+        ]
+        if any(term in text for term in skipped_completion_terms):
+            violations.append(
+                "Post-workout review must distinguish skipped planned work from total logged volume."
+            )
+        if "100%" in text and "planned" in text:
+            violations.append(
+                "Post-workout review must not use clean 100% planned-completion language when planned sets were skipped."
+            )
+
+    if context.planned_sets and context.completed_sets > context.planned_sets:
+        old_ratio_phrase = (
+            f"{context.completed_sets} of {context.planned_sets} planned sets"
+        )
+        if old_ratio_phrase in text:
+            violations.append(
+                "Post-workout review must use extra-set language instead of over-plan ratio wording."
+            )
+
     for term in _POST_WORKOUT_REVIEW_FORBIDDEN_TERMS:
         if term in text:
             violations.append("Post-workout review contains forbidden coaching claims.")
@@ -698,6 +803,9 @@ Rules:
 - Do not criticize adherence, discipline, or effort.
 - Differences from the plan are session context, not a score or judgment.
 - Substitutions and skipped items must be described neutrally as context.
+- Distinguish planned-set completion from total logged set volume.
+- If planned sets were skipped, do not say the planned work was completed just because extra work offset total volume.
+- If completed sets exceed planned sets, treat extra work as session context, not a target or progression signal.
 - If completed_sets is greater than planned_sets, say the planned work was completed and extra sets were logged. Do not write phrases like "12 of 11 planned sets" or make extra work a new target.
 - The next_time_focus field must only mention logging quality, review quality, execution awareness, noting substitutions/skips, or noting why extra work was added.
 - The next_time_focus field must not prescribe changes to the next workout.

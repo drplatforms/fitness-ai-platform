@@ -2030,6 +2030,138 @@ def test_post_workout_review_validator_rejects_prescriptive_and_judgmental_copy(
     assert any("programming" in violation.lower() for violation in violations)
 
 
+def _context_with_summary_overrides(context, **summary_overrides):
+    summary = replace(context.planned_vs_actual_summary, **summary_overrides)
+    context_overrides = {
+        "completed_sets": summary.completed_set_count,
+        "planned_sets": summary.planned_set_count,
+        "skipped_exercise_count": summary.skipped_exercise_count,
+        "substitution_count": summary.substituted_exercise_count,
+        "planned_vs_actual_summary": summary,
+    }
+    return replace(context, **context_overrides)
+
+
+def test_post_workout_review_distinguishes_skipped_sets_from_offset_volume(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    context = _context_with_summary_overrides(
+        context,
+        planned_set_count=11,
+        completed_set_count=11,
+        skipped_set_count=1,
+        completion_percentage=100.0,
+        deviation_flags=["skipped_sets"],
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+    combined = str(review).lower()
+
+    assert "skipped" in review.session_summary.lower()
+    assert "completed the planned work" not in review.session_summary.lower()
+    assert "completed the planned work" not in review.completion_reflection.lower()
+    assert "total logged set volume" in review.reps_or_volume_reflection.lower()
+    assert "planned sets were skipped" in review.reps_or_volume_reflection.lower()
+    assert "100% of the planned work" not in combined
+    assert "increase" not in combined
+    assert "deload" not in combined
+
+
+def test_post_workout_review_extra_sets_do_not_hide_skipped_planned_sets(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    context = _context_with_summary_overrides(
+        context,
+        planned_set_count=11,
+        completed_set_count=12,
+        skipped_set_count=1,
+        completion_percentage=109.0,
+        deviation_flags=["skipped_sets", "extra_sets"],
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+    combined = str(review).lower()
+
+    assert "skipped" in review.session_summary.lower()
+    assert "completed the planned work and logged" not in review.session_summary.lower()
+    assert "above the written plan" in review.reps_or_volume_reflection.lower()
+    assert "planned sets were skipped" in review.reps_or_volume_reflection.lower()
+    assert "new target" not in combined or "not a new target" in combined
+    assert "add weight" not in combined
+    assert "automatic" not in combined
+
+
+def test_post_workout_review_effort_outside_planned_rir_uses_clear_direction(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    context = replace(
+        context,
+        planned_rir_range=[2, 4],
+        actual_rir_average=1,
+    )
+
+    review = (
+        post_workout_review_service.build_deterministic_post_workout_review_summary(
+            context
+        )
+    )
+
+    assert "which was harder than the planned RIR 2-4 range" in review.effort_reflection
+
+
+def test_post_workout_review_validator_rejects_clean_completion_when_sets_skipped(
+    tmp_path, monkeypatch
+):
+    execution_id, _plan_instance_id = _completed_workout_execution(
+        tmp_path, monkeypatch
+    )
+    context = build_post_workout_review_context(execution_id)
+    context = _context_with_summary_overrides(
+        context,
+        planned_set_count=11,
+        completed_set_count=11,
+        skipped_set_count=1,
+        completion_percentage=100.0,
+        deviation_flags=["skipped_sets"],
+    )
+    candidate = parse_candidate_post_workout_review_summary_json(
+        json.dumps(
+            _valid_post_workout_review_payload(
+                next_time_focus="Keep future session notes complete for review."
+            )
+            | {
+                "session_summary": "You completed the planned work and logged enough detail to review it.",
+                "reps_or_volume_reflection": "Completed volume was about 100% of the planned work.",
+            }
+        )
+    )
+
+    violations = validate_candidate_post_workout_review_summary(candidate, context)
+
+    assert violations
+    assert any("skipped planned work" in violation.lower() for violation in violations)
+
+
 def test_mocked_crewai_post_workout_review_valid_json_approves(tmp_path, monkeypatch):
     execution_id, _plan_instance_id = _completed_workout_execution(
         tmp_path, monkeypatch

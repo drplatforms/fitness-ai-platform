@@ -1067,38 +1067,66 @@ def display_substitution_candidate_table(candidates: list[dict]) -> None:
         st.info("No compatible substitutions were returned for this planned exercise.")
         return
 
-    candidate_rows = []
+    top_candidates = candidates[:5]
+    summary_rows = []
 
-    for candidate in candidates:
+    for candidate in top_candidates:
         reason_codes = candidate.get("compatibility_reason_codes") or []
-
-        candidate_rows.append(
+        first_reason = (
+            substitution_reason_label(reason_codes[0])
+            if reason_codes
+            else "Compatible with current constraints"
+        )
+        summary_rows.append(
             {
-                "Exercise": candidate.get("name", "Unknown"),
-                "Movement Pattern": humanize_label(
-                    candidate.get("movement_pattern"),
+                "Option": candidate.get("name", "Unknown"),
+                "Equipment": format_substitution_list(
+                    candidate.get("required_equipment")
                 ),
-                "Required Equipment": format_substitution_list(
-                    candidate.get("required_equipment"),
-                ),
-                "Primary Muscle Groups": format_substitution_list(
-                    candidate.get("primary_muscle_groups"),
-                ),
-                "Type": humanize_label(candidate.get("exercise_type")),
-                "Difficulty": humanize_label(candidate.get("difficulty")),
-                "Why Compatible": ", ".join(
-                    substitution_reason_label(reason_code)
-                    for reason_code in reason_codes
-                )
-                or "Compatible with current constraints",
+                "Why it fits": first_reason,
             }
         )
 
+    st.caption(
+        "Top compatible substitutions are shown first. Full details are hidden below."
+    )
     st.dataframe(
-        pd.DataFrame(candidate_rows),
+        pd.DataFrame(summary_rows),
         width="stretch",
         hide_index=True,
     )
+
+    with st.expander("More options / candidate details", expanded=False):
+        candidate_rows = []
+        for candidate in candidates:
+            reason_codes = candidate.get("compatibility_reason_codes") or []
+            candidate_rows.append(
+                {
+                    "Exercise": candidate.get("name", "Unknown"),
+                    "Movement Pattern": humanize_label(
+                        candidate.get("movement_pattern")
+                    ),
+                    "Required Equipment": format_substitution_list(
+                        candidate.get("required_equipment")
+                    ),
+                    "Primary Muscle Groups": format_substitution_list(
+                        candidate.get("primary_muscle_groups")
+                    ),
+                    "Type": humanize_label(candidate.get("exercise_type")),
+                    "Difficulty": humanize_label(candidate.get("difficulty")),
+                    "Why Compatible": ", ".join(
+                        substitution_reason_label(reason_code)
+                        for reason_code in reason_codes
+                    )
+                    or "Compatible with current constraints",
+                }
+            )
+
+        st.dataframe(
+            pd.DataFrame(candidate_rows),
+            width="stretch",
+            hide_index=True,
+        )
 
 
 def substitution_candidate_option_label(candidate: dict) -> str:
@@ -1249,6 +1277,61 @@ def can_apply_substitution(
     return plan_status in allowed_statuses or execution_status in allowed_statuses
 
 
+def apply_substitution_candidate(
+    plan_instance_id: int,
+    planned_exercise_id: int,
+    planned_exercise_name: str,
+    selected_candidate: dict,
+    apply_response_key: str,
+) -> None:
+    payload = {
+        "replacement_catalog_exercise_id": int(
+            selected_candidate["catalog_exercise_id"]
+        ),
+        "substitution_reason": "user_selected",
+    }
+
+    try:
+        apply_response = api_post(
+            "/workout-plans/"
+            f"{plan_instance_id}/planned-exercises/"
+            f"{planned_exercise_id}/substitute",
+            payload,
+        )
+    except requests.RequestException as exc:
+        st.session_state.substitution_apply_error = (
+            f"Substitution apply failed for {planned_exercise_name}: "
+            f"{extract_api_error_message(exc)}"
+        )
+        st.rerun()
+
+    if apply_response.get("success"):
+        st.session_state.applied_substitution_responses[apply_response_key] = (
+            apply_response
+        )
+        refresh_active_plan_response(plan_instance_id)
+        replacement_name = (
+            apply_response.get("active_substitution", {}).get(
+                "replacement_exercise_name"
+            )
+            or selected_candidate.get("name")
+            or "selected exercise"
+        )
+        st.session_state.substitution_apply_message = (
+            f"Substitution applied: {planned_exercise_name} → {replacement_name}. "
+            "Actual set logging will use the substituted exercise."
+        )
+        st.session_state.substitution_apply_error = None
+        st.session_state.substitution_flow_ready_to_do_workout = True
+        request_workout_flow_step("2. Do Workout")
+        st.rerun()
+
+    st.session_state.substitution_apply_error = (
+        f"Substitution apply failed for {planned_exercise_name}."
+    )
+    st.rerun()
+
+
 def display_apply_substitution_control(
     plan_instance_id: int,
     planned_exercise_id: int,
@@ -1261,75 +1344,79 @@ def display_apply_substitution_control(
         return
 
     if not allow_apply:
-        st.info(
-            "This workout is not eligible for substitution changes. "
-            "Completed workouts preserve completed history and cannot be corrected "
-            "through substitution apply."
+        st.caption(
+            "Apply is available after a plan is selected, started, or in progress. "
+            "Completed workouts preserve completed history."
         )
         return
 
-    candidate_options = {
-        substitution_candidate_option_label(candidate): candidate
+    candidate_options = [
+        candidate
         for candidate in candidates
         if candidate.get("catalog_exercise_id") is not None
-    }
+    ]
 
     if not candidate_options:
-        st.info("No selectable substitution candidates were returned.")
+        st.caption("No selectable substitution candidates were returned.")
         return
 
-    selected_candidate_label = st.selectbox(
-        "Select compatible substitution",
-        options=list(candidate_options.keys()),
-        key=f"substitution_apply_select_{apply_response_key}",
-    )
+    st.markdown("##### Apply substitution")
+    st.caption("Use one of the top matches, or open More options for the full list.")
 
-    selected_candidate = candidate_options[selected_candidate_label]
+    for index, candidate in enumerate(candidate_options[:5], start=1):
+        reason_codes = candidate.get("compatibility_reason_codes") or []
+        first_reason = (
+            substitution_reason_label(reason_codes[0])
+            if reason_codes
+            else "Compatible with current constraints"
+        )
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            st.write(f"**{index}. {candidate.get('name', 'Unknown')}**")
+            st.caption(
+                f"{humanize_label(candidate.get('movement_pattern'))} · "
+                f"{format_substitution_list(candidate.get('required_equipment'))} · "
+                f"{first_reason}"
+            )
+        with col2:
+            if st.button(
+                "Use this",
+                key=(
+                    "substitution_quick_apply_"
+                    f"{apply_response_key}_{candidate.get('catalog_exercise_id')}"
+                ),
+            ):
+                apply_substitution_candidate(
+                    plan_instance_id=plan_instance_id,
+                    planned_exercise_id=planned_exercise_id,
+                    planned_exercise_name=planned_exercise_name,
+                    selected_candidate=candidate,
+                    apply_response_key=apply_response_key,
+                )
 
-    if st.button(
-        f"Apply substitution for {planned_exercise_name}",
-        key=f"substitution_apply_button_{apply_response_key}",
-    ):
-        payload = {
-            "replacement_catalog_exercise_id": int(
-                selected_candidate["catalog_exercise_id"]
-            ),
-            "substitution_reason": "user_selected",
+    with st.expander("More options", expanded=False):
+        candidate_option_map = {
+            substitution_candidate_option_label(candidate): candidate
+            for candidate in candidate_options
         }
+        selected_candidate_label = st.selectbox(
+            "All compatible substitutions",
+            options=list(candidate_option_map.keys()),
+            key=f"substitution_apply_select_{apply_response_key}",
+        )
+        selected_candidate = candidate_option_map[selected_candidate_label]
 
-        try:
-            apply_response = api_post(
-                "/workout-plans/"
-                f"{plan_instance_id}/planned-exercises/"
-                f"{planned_exercise_id}/substitute",
-                payload,
+        if st.button(
+            f"Apply selected substitution for {planned_exercise_name}",
+            key=f"substitution_apply_button_{apply_response_key}",
+        ):
+            apply_substitution_candidate(
+                plan_instance_id=plan_instance_id,
+                planned_exercise_id=planned_exercise_id,
+                planned_exercise_name=planned_exercise_name,
+                selected_candidate=selected_candidate,
+                apply_response_key=apply_response_key,
             )
-
-            if apply_response.get("success"):
-                st.session_state.applied_substitution_responses[apply_response_key] = (
-                    apply_response
-                )
-                refresh_active_plan_response(plan_instance_id)
-                st.session_state.substitution_apply_message = (
-                    f"Substitution applied for {planned_exercise_name}. "
-                    "The active workout plan has been updated for logging."
-                )
-                st.session_state.substitution_apply_error = None
-                st.session_state.substitution_flow_ready_to_do_workout = True
-                request_workout_flow_step("2. Do Workout")
-                st.rerun()
-
-            st.session_state.substitution_apply_error = (
-                f"Substitution apply failed for {planned_exercise_name}."
-            )
-            st.rerun()
-
-        except requests.RequestException as exc:
-            st.session_state.substitution_apply_error = (
-                f"Substitution apply failed for {planned_exercise_name}: "
-                f"{extract_api_error_message(exc)}"
-            )
-            st.rerun()
 
 
 def display_substitution_candidates(
@@ -1342,7 +1429,7 @@ def display_substitution_candidates(
     always_visible: bool = False,
     title: str = "Compatible Substitutions",
 ) -> None:
-    st.subheader(title)
+    st.markdown(f"#### {title}")
 
     if not planned_exercises:
         st.info("No planned exercises are available for substitution lookup.")
@@ -1360,14 +1447,14 @@ def display_substitution_candidates(
     active_substitutions = active_substitutions or {}
 
     st.caption(
-        "Optional compatible replacements based on the selected plan and equipment. "
-        "Applying one keeps the original plan preserved and updates the active workout."
+        "Substitutions are optional. The original plan stays preserved, while actual "
+        "set logging uses the active substituted exercise after apply."
     )
 
     if not allow_apply:
-        st.info(
-            "Substitution candidates can still be reviewed here, but Apply is only "
-            "available for selected, started, or in-progress workout plans."
+        st.caption(
+            "Substitution candidates can be reviewed here, but Apply is only available "
+            "for selected, started, or in-progress workout plans."
         )
 
     for planned_exercise in planned_exercises:
@@ -1375,53 +1462,35 @@ def display_substitution_candidates(
         planned_exercise_name = planned_exercise.get("name", "Unknown")
 
         if planned_exercise_id is None:
-            st.info(
+            st.caption(
                 f"Substitution lookup is unavailable for {planned_exercise_name} "
                 "because no planned exercise ID was returned."
             )
             continue
 
-        visibility_key = f"{context_key}_{plan_instance_id}_{planned_exercise_id}"
-
-        if always_visible:
-            is_visible = True
-        else:
-            is_visible = (
-                visibility_key in st.session_state.visible_substitution_candidates
-            )
-            button_label = (
-                f"Hide compatible substitutions for {planned_exercise_name}"
-                if is_visible
-                else f"Show compatible substitutions for {planned_exercise_name}"
-            )
-
-            if st.button(
-                button_label,
-                key=f"substitution_candidates_button_{visibility_key}",
-            ):
-                if is_visible:
-                    st.session_state.visible_substitution_candidates.remove(
-                        visibility_key
-                    )
-                else:
-                    st.session_state.visible_substitution_candidates.append(
-                        visibility_key
-                    )
-
-                st.rerun()
-
-        if not is_visible:
-            continue
+        planned_exercise_id_int = int(planned_exercise_id)
+        active_substitution = active_substitutions.get(planned_exercise_id_int)
+        expander_label = f"Need a substitution? {planned_exercise_name}"
+        if active_substitution:
+            expander_label = f"Substitution active: {planned_exercise_name}"
 
         with st.expander(
-            f"{planned_exercise_name} substitutions",
-            expanded=always_visible or int(planned_exercise_id) in active_substitutions,
+            expander_label,
+            expanded=bool(active_substitution) or bool(always_visible),
         ):
+            st.write(f"**Original:** {planned_exercise_name}")
+
+            apply_response_key = f"{plan_instance_id}_{planned_exercise_id_int}"
+            apply_response = st.session_state.applied_substitution_responses.get(
+                apply_response_key
+            ) or active_substitution_response_from_record(active_substitution)
+            display_active_substitution(apply_response)
+
             try:
                 candidate_response = api_get(
                     "/workout-plans/"
                     f"{plan_instance_id}/planned-exercises/"
-                    f"{planned_exercise_id}/substitution-candidates"
+                    f"{planned_exercise_id_int}/substitution-candidates"
                 )
             except requests.RequestException as exc:
                 st.error(
@@ -1430,22 +1499,12 @@ def display_substitution_candidates(
                 )
                 continue
 
-            st.write(f"**Original planned exercise:** {planned_exercise_name}")
-
-            apply_response_key = f"{plan_instance_id}_{planned_exercise_id}"
-            apply_response = st.session_state.applied_substitution_responses.get(
-                apply_response_key
-            ) or active_substitution_response_from_record(
-                active_substitutions.get(int(planned_exercise_id))
-            )
-            display_active_substitution(apply_response)
-
             candidates = candidate_response.get("substitution_candidates", [])
 
             display_substitution_candidate_table(candidates)
             display_apply_substitution_control(
                 plan_instance_id=plan_instance_id,
-                planned_exercise_id=int(planned_exercise_id),
+                planned_exercise_id=planned_exercise_id_int,
                 planned_exercise_name=planned_exercise_name,
                 candidates=candidates,
                 apply_response_key=apply_response_key,
@@ -1458,14 +1517,14 @@ def display_substitution_candidates(
                 ):
                     st.json(candidate_response)
 
-                    apply_response = (
+                    latest_apply_response = (
                         st.session_state.applied_substitution_responses.get(
                             apply_response_key
                         )
                     )
-                    if apply_response:
+                    if latest_apply_response:
                         st.subheader("Latest Raw Apply Response")
-                        st.json(apply_response)
+                        st.json(latest_apply_response)
 
 
 def actual_set_reference_id(actual_set: dict) -> int | None:
@@ -1615,12 +1674,14 @@ def display_active_workout_session_overview(
     active_substitutions: dict[int, dict],
 ) -> None:
     st.markdown("#### Active Workout")
+    st.caption(
+        "Log the next set below. Substitutions and corrections stay available when needed."
+    )
 
     if not planned_exercises:
         st.warning("No planned exercises are available for this active workout.")
         return
 
-    rows = []
     for exercise in planned_exercises:
         planned_exercise_id = exercise.get("id")
         if planned_exercise_id is None:
@@ -1641,32 +1702,36 @@ def display_active_workout_session_overview(
         skipped_sets = [
             actual_set for actual_set in logged_sets if actual_set.get("skipped")
         ]
-
-        rows.append(
-            {
-                "Exercise": active_name,
-                "Original": (planned_name if active_name != planned_name else ""),
-                "Planned": f"{exercise.get('sets', '?')} sets",
-                "Reps": format_workout_range(
-                    exercise.get("reps_min"),
-                    exercise.get("reps_max"),
-                ),
-                "Target RIR": format_workout_range(
-                    exercise.get("rir_min"),
-                    exercise.get("rir_max"),
-                ),
-                "Equipment": format_equipment_required(exercise),
-                "Logged": f"{len(completed_sets)}/{exercise.get('sets', '?')}",
-                "Skipped": len(skipped_sets),
-            }
+        planned_sets = exercise.get("sets", "?")
+        planned_reps = format_workout_range(
+            exercise.get("reps_min"),
+            exercise.get("reps_max"),
+            " reps",
+        )
+        target_rir = format_workout_range(
+            exercise.get("rir_min"),
+            exercise.get("rir_max"),
         )
 
-    if rows:
-        st.dataframe(
-            pd.DataFrame(rows),
-            width="stretch",
-            hide_index=True,
-        )
+        with st.container():
+            title_col, status_col = st.columns([4, 1])
+            with title_col:
+                st.markdown(f"**{active_name}**")
+                if active_name != planned_name:
+                    st.caption(f"Original planned exercise: {planned_name}")
+            with status_col:
+                st.metric("Logged", f"{len(completed_sets)}/{planned_sets}")
+
+            detail_cols = st.columns(4)
+            detail_cols[0].caption(f"Planned: {planned_sets} sets")
+            detail_cols[1].caption(f"Reps: {planned_reps}")
+            detail_cols[2].caption(f"Target RIR: {target_rir}")
+            detail_cols[3].caption(f"Equipment: {format_equipment_required(exercise)}")
+
+            if skipped_sets:
+                st.caption(f"Skipped sets recorded: {len(skipped_sets)}")
+
+        st.divider()
 
     if active_substitutions:
         st.caption(
@@ -1733,12 +1798,29 @@ def display_actual_set_logging(
         st.warning("No planned exercises have IDs available for set logging.")
         return
 
-    st.markdown("#### Log Next Set")
+    planned_option_labels = list(planned_options.keys())
+    next_exercise_index = 0
+    for index, option_label in enumerate(planned_option_labels):
+        option_exercise = planned_options[option_label]
+        option_exercise_id = int(option_exercise["id"])
+        logged_sets = actual_sets_for_planned_exercise(actual_sets, option_exercise_id)
+        completed_sets = [
+            actual_set
+            for actual_set in logged_sets
+            if actual_set.get("completed") and not actual_set.get("skipped")
+        ]
+        planned_set_count = option_exercise.get("sets") or 0
+        if len(completed_sets) < int(planned_set_count):
+            next_exercise_index = index
+            break
+
+    st.markdown("#### Quick Log Set")
 
     with st.form(f"actual_set_logging_form_{context_key}_{plan_instance_id}"):
         selected_planned_label = st.selectbox(
             "Exercise",
-            options=list(planned_options.keys()),
+            options=planned_option_labels,
+            index=next_exercise_index,
             key=f"actual_set_exercise_{context_key}_{plan_instance_id}",
             help=(
                 "If a substitution is active, this selector shows the substituted "
@@ -1764,14 +1846,11 @@ def display_actual_set_logging(
         else:
             st.caption(f"Logging sets for: {active_exercise_name}")
 
-        logging_mode = st.radio(
-            "Set status",
-            options=[
-                "Completed set",
-                "Skipped set",
-            ],
-            horizontal=True,
-            key=f"actual_set_mode_{context_key}_{plan_instance_id}",
+        skip_set = st.checkbox(
+            "Mark this set as skipped",
+            value=False,
+            key=f"actual_set_skip_{context_key}_{plan_instance_id}",
+            help="Use this only when you intentionally skipped the planned set.",
         )
 
         suggested_set_number = next_set_number_for_planned_exercise(
@@ -1791,7 +1870,7 @@ def display_actual_set_logging(
         actual_weight = None
         actual_rir = None
 
-        if logging_mode == "Completed set":
+        if not skip_set:
             default_reps = selected_planned_exercise.get("reps_min") or 1
             default_rir = selected_planned_exercise.get("rir_max") or 2
 
@@ -1824,17 +1903,18 @@ def display_actual_set_logging(
                     key=f"actual_rir_{context_key}_{plan_instance_id}",
                 )
         else:
-            st.info(
+            st.caption(
                 "Skipped sets are recorded without reps, weight, or RIR. "
-                "Use notes to explain why the set or exercise was skipped."
+                "Use optional notes only if useful."
             )
 
         actual_set_notes = st.text_area(
-            "Notes",
+            "Notes (optional)",
             key=f"actual_set_notes_{context_key}_{plan_instance_id}",
+            placeholder="Optional: pain, substitution context, form cue, or reason for a skipped set.",
         )
 
-        submit_actual_set = st.form_submit_button("Log Set")
+        submit_actual_set = st.form_submit_button("Log Set", type="primary")
 
     st.markdown("#### Logged Sets For Selected Exercise")
     display_logged_sets_for_exercise(actual_sets, selected_planned_exercise_id)
@@ -1845,7 +1925,7 @@ def display_actual_set_logging(
             "notes": actual_set_notes or None,
         }
 
-        if logging_mode == "Skipped set":
+        if skip_set:
             payload.update(
                 {
                     "planned_workout_exercise_id": selected_planned_exercise["id"],
@@ -1889,11 +1969,9 @@ def display_actual_set_logging(
 
             if actual_set_response.get("success"):
                 actual_set = actual_set_response.get("actual_set", {})
-                actual_set_id = actual_set.get("id", "Unknown")
                 logged_name = actual_set.get("exercise_name") or active_exercise_name
                 st.session_state.actual_set_logging_message = (
-                    f"Logged {logged_name} set {set_number}. "
-                    f"Actual set ID: {actual_set_id}."
+                    f"Logged {logged_name} set {set_number}."
                 )
                 st.rerun()
             else:
@@ -3886,9 +3964,8 @@ def render_today_workout_panel(user_id: int) -> None:
         plan_status, execution_status = get_plan_statuses(active_plan_response)
 
         if plan_status == "selected" or execution_status == "selected":
-            st.info(
-                "Workout selected. Use the Workout tab for substitutions, "
-                "or start when ready."
+            st.caption(
+                "Workout selected. Start here when ready, or use the Workout tab if you need substitutions first."
             )
             start_active_workout(active_plan_response, context_key="today")
 
@@ -4202,7 +4279,6 @@ def render_workout_plan_section(user_id: int) -> None:
     override_step = st.session_state.get("workout_flow_step_override")
     if override_step in workout_steps:
         st.session_state.workout_flow_step = override_step
-        st.session_state.workout_flow_step_selector = override_step
         st.session_state.workout_flow_step_override = None
 
     current_step = st.session_state.get("workout_flow_step", "1. Plan")
@@ -4210,18 +4286,12 @@ def render_workout_plan_section(user_id: int) -> None:
         current_step = "1. Plan"
         st.session_state.workout_flow_step = current_step
 
-    selector_step = st.session_state.get("workout_flow_step_selector", current_step)
-    if selector_step not in workout_steps:
-        selector_step = current_step
-        st.session_state.workout_flow_step_selector = current_step
-
     selected_step = st.radio(
         "Workout area",
         options=workout_steps,
-        index=workout_steps.index(selector_step),
+        index=workout_steps.index(current_step),
         horizontal=True,
         format_func=lambda step: workout_step_display_labels.get(step, step),
-        key="workout_flow_step_selector",
     )
 
     if selected_step != current_step:
@@ -4911,16 +4981,11 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
 def render_nutrition_section(user_id: int) -> None:
     st.header("Nutrition")
     st.caption(
-        "Start with today’s summary, then log food when you are ready. Detailed "
-        "nutrient rows stay lower on the page."
+        "Fast path: log food first, then review today’s guidance and target comparison."
     )
 
-    render_nutrition_target_vs_actual_card(user_id)
-
-    st.divider()
-
     st.subheader("Log Food")
-    st.caption("Search for a food, select the best match, enter grams, and log it.")
+    st.caption("Search, choose the closest match, enter grams, and save.")
 
     with st.form("nutrition_food_search_form"):
         food_query = st.text_input(
@@ -4929,7 +4994,7 @@ def render_nutrition_section(user_id: int) -> None:
             key="nutrition_food_query",
             placeholder="Example: chicken breast, rice, banana",
         )
-        search_food = st.form_submit_button("Search Food")
+        search_food = st.form_submit_button("Search Food", type="primary")
 
     if search_food:
         if not food_query.strip():
@@ -4957,13 +5022,16 @@ def render_nutrition_section(user_id: int) -> None:
                 key="nutrition_selected_food",
             )
             grams = st.number_input(
-                "Grams consumed",
+                "Amount in grams",
                 min_value=1.0,
                 value=100.0,
                 step=5.0,
                 key="nutrition_grams",
             )
-            log_food = st.form_submit_button("Log Selected Food")
+            st.caption(
+                "Meal tagging is not stored yet; keep this log focused on food and amount."
+            )
+            log_food = st.form_submit_button("Save Food Log", type="primary")
 
         if log_food:
             selected_food = food_options[selected_food_label]
@@ -4983,6 +5051,10 @@ def render_nutrition_section(user_id: int) -> None:
                     st.rerun()
                 else:
                     st.error(data.get("message", "Food logging failed."))
+
+    st.divider()
+
+    render_nutrition_target_vs_actual_card(user_id)
 
     with st.expander("Logged nutrient details", expanded=False):
         today = datetime.now().strftime("%Y-%m-%d")

@@ -4627,12 +4627,9 @@ def display_nutrition_actuals(actuals: dict, logging_summary: dict) -> None:
         st.caption("Logged today: " + " / ".join(caption_parts))
 
 
-def display_target_vs_actual_table(summary: dict) -> None:
-    st.markdown("#### Target vs Actual")
-
+def nutrition_comparison_rows_from_summary(summary: dict) -> list[dict]:
     if not summary:
-        st.caption("Target comparison is not available for this date yet.")
-        return
+        return []
 
     macro_specs = [
         ("Calories", ["calories", "calorie", "energy", "kcal"], "kcal"),
@@ -4657,11 +4654,12 @@ def display_target_vs_actual_table(summary: dict) -> None:
         if not comparison:
             continue
 
+        actual = target_comparison_value(
+            comparison,
+            ["actual", "actual_amount", "actual_value", "logged", "logged_amount"],
+        )
+
         if comparison_is_displayable(comparison):
-            actual = target_comparison_value(
-                comparison,
-                ["actual", "actual_amount", "actual_value", "logged", "logged_amount"],
-            )
             target = target_comparison_value(
                 comparison,
                 ["target", "target_amount", "target_value", "range", "approved_target"],
@@ -4674,39 +4672,58 @@ def display_target_vs_actual_table(summary: dict) -> None:
                 comparison.get("status") or comparison.get("guidance") or "Available"
             )
         else:
-            actual = target_comparison_value(
-                comparison,
-                ["actual", "actual_amount", "actual_value", "logged", "logged_amount"],
-            )
-            target = "Limited"
-            delta = "Limited"
-            status = nutrition_public_text(
+            target = None
+            delta = None
+            status = (
                 comparison.get("limitation")
                 or comparison.get("reason")
                 or comparison.get("reason_code")
                 or "target_not_approved"
             )
 
+        status_text = nutrition_public_text(status)
+        if not status_text:
+            status_text = "Comparison is limited for this date."
+
         rows.append(
             {
                 "Nutrient": label,
-                "Actual": format_nutrition_value(actual, unit),
-                "Target": format_nutrition_value(target, unit),
-                "Difference": format_nutrition_value(delta, unit),
-                "Status": (
-                    nutrition_public_text(status)
-                    if "_" in str(status)
-                    else humanize_label(str(status))
+                "Logged": format_nutrition_value(actual, unit),
+                "Target": (
+                    format_nutrition_value(target, unit)
+                    if target is not None
+                    else "Limited"
                 ),
+                "Difference": (
+                    format_nutrition_value(delta, unit)
+                    if delta is not None
+                    else "Limited"
+                ),
+                "Status": status_text,
             }
         )
 
-    if rows:
-        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-    else:
+    return rows
+
+
+def display_target_vs_actual_table(summary: dict) -> None:
+    st.markdown("#### Target vs Actual")
+
+    rows = nutrition_comparison_rows_from_summary(summary)
+    if not rows:
         st.caption(
             "Target comparisons are limited for this date. Keep logging meals to improve "
             "nutrition guidance."
+        )
+        return
+
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+    limited_rows = [row for row in rows if row.get("Target") == "Limited"]
+    if limited_rows:
+        st.caption(
+            "Some comparisons are limited because the backend did not approve those "
+            "targets for display with the current logging context."
         )
 
 
@@ -4787,14 +4804,18 @@ def display_logging_quality(
 def render_nutrition_target_vs_actual_card(user_id: int) -> None:
     st.subheader("Nutrition Today Summary")
     st.caption(
-        "Public-safe target comparison based on logged nutrition and approved display rules."
+        "Review logged nutrition against approved display targets. Comparisons stay "
+        "limited when logging is incomplete."
     )
 
-    selected_date = st.date_input(
-        "Nutrition summary date",
-        value=datetime.now().date(),
-        key=f"nutrition_target_vs_actual_date_{user_id}",
-    )
+    date_col, confidence_col, logging_col = st.columns([2, 1, 1])
+    with date_col:
+        selected_date = st.date_input(
+            "Summary date",
+            value=datetime.now().date(),
+            key=f"nutrition_target_vs_actual_date_{user_id}",
+            help="Choose the date to review. Today is selected by default.",
+        )
     selected_date_text = selected_date.isoformat()
 
     try:
@@ -4825,24 +4846,61 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
     confidence = nutrition_response.get("confidence", "Unknown")
     limitations = nutrition_response.get("limitations") or []
 
-    top_cols = st.columns(3)
-    top_cols[0].metric("Date", nutrition_response.get("date", selected_date_text))
-    top_cols[1].metric("Confidence", confidence)
-    top_cols[2].metric(
-        "Logging",
-        (
-            nutrition_public_text(logging_completeness)
-            if logging_completeness
-            else "Unknown"
-        ),
+    with confidence_col:
+        st.metric("Confidence", confidence)
+    logging_status_text = (
+        nutrition_public_text(logging_completeness)
+        if logging_completeness
+        else "Unknown"
     )
+    logging_status_key = str(logging_completeness or "").strip().lower()
+
+    if (
+        logging_status_key
+        in {
+            "no_logs",
+            "no_nutrition_logs",
+            "nutrition_logs_missing",
+        }
+        or "no nutrition logs" in logging_status_text.lower()
+    ):
+        logging_metric_label = "No logs"
+        logging_caption = (
+            "Nutrition logs are unavailable for this date. "
+            "Logging meals will improve guidance."
+        )
+    elif "partial" in logging_status_text.lower():
+        logging_metric_label = "Partial"
+        logging_caption = logging_status_text
+    elif "incomplete" in logging_status_text.lower():
+        logging_metric_label = "Incomplete"
+        logging_caption = logging_status_text
+    elif "complete" in logging_status_text.lower():
+        logging_metric_label = "Complete"
+        logging_caption = logging_status_text
+    elif logging_status_text and len(logging_status_text) <= 18:
+        logging_metric_label = logging_status_text
+        logging_caption = ""
+    else:
+        logging_metric_label = "Limited"
+        logging_caption = logging_status_text
+
+    with logging_col:
+        st.metric("Logging", logging_metric_label)
+
+    if logging_caption:
+        st.caption(logging_caption)
 
     st.markdown("#### Approved Guidance")
     display_approved_nutrition_guidance(approved_guidance)
 
     display_nutrition_actuals(nutrition_actuals, logging_summary)
-    display_target_vs_actual_table(target_vs_actual_summary)
-    display_logging_quality(logging_summary, logging_completeness, limitations)
+
+    with st.expander("Target comparisons", expanded=True):
+        display_target_vs_actual_table(target_vs_actual_summary)
+
+    with st.expander("Logging quality and limitations", expanded=False):
+        display_logging_quality(logging_summary, logging_completeness, limitations)
 
     developer_details(
         "Developer details: nutrition target-vs-actual response",
@@ -4853,7 +4911,8 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
 def render_nutrition_section(user_id: int) -> None:
     st.header("Nutrition")
     st.caption(
-        "Log food and review today's nutrition without leaving the main workflow."
+        "Start with today’s summary, then log food when you are ready. Detailed "
+        "nutrient rows stay lower on the page."
     )
 
     render_nutrition_target_vs_actual_card(user_id)
@@ -4861,13 +4920,20 @@ def render_nutrition_section(user_id: int) -> None:
     st.divider()
 
     st.subheader("Log Food")
+    st.caption("Search for a food, select the best match, enter grams, and log it.")
+
     with st.form("nutrition_food_search_form"):
-        food_query = st.text_input("Search Food", value="", key="nutrition_food_query")
+        food_query = st.text_input(
+            "Food search",
+            value="",
+            key="nutrition_food_query",
+            placeholder="Example: chicken breast, rice, banana",
+        )
         search_food = st.form_submit_button("Search Food")
 
     if search_food:
         if not food_query.strip():
-            st.warning("Enter a food search term.")
+            st.caption("Enter a food search term to look up nutrition entries.")
         else:
             try:
                 data = api_get("/foods/search", params={"query": food_query})
@@ -4876,28 +4942,31 @@ def render_nutrition_section(user_id: int) -> None:
             else:
                 st.session_state.food_search_results = data.get("foods", [])
                 if not st.session_state.food_search_results:
-                    st.warning("No foods found.")
+                    st.caption("No foods found. Try a simpler search term.")
 
     if st.session_state.food_search_results:
         food_options = {
             f"{food['id']} - {food['name']}": food
             for food in st.session_state.food_search_results
         }
-        selected_food_label = st.selectbox(
-            "Select Food",
-            list(food_options.keys()),
-            key="nutrition_selected_food",
-        )
-        selected_food = food_options[selected_food_label]
-        grams = st.number_input(
-            "Grams Consumed",
-            min_value=1.0,
-            value=100.0,
-            step=5.0,
-            key="nutrition_grams",
-        )
 
-        if st.button("Log Food", key="nutrition_log_food_button"):
+        with st.form("nutrition_log_selected_food_form"):
+            selected_food_label = st.selectbox(
+                "Selected food",
+                list(food_options.keys()),
+                key="nutrition_selected_food",
+            )
+            grams = st.number_input(
+                "Grams consumed",
+                min_value=1.0,
+                value=100.0,
+                step=5.0,
+                key="nutrition_grams",
+            )
+            log_food = st.form_submit_button("Log Selected Food")
+
+        if log_food:
+            selected_food = food_options[selected_food_label]
             payload = {
                 "user_id": user_id,
                 "food_id": selected_food["id"],
@@ -4915,30 +4984,32 @@ def render_nutrition_section(user_id: int) -> None:
                 else:
                     st.error(data.get("message", "Food logging failed."))
 
-    st.subheader("Today's Nutrition")
-    today = datetime.now().strftime("%Y-%m-%d")
-    try:
-        data = api_get(f"/nutrition/{user_id}/{today}")
-    except requests.RequestException as exc:
-        st.error(f"Failed to load nutrition: {extract_api_error_message(exc)}")
-    else:
-        nutrition = data.get("nutrition") or {}
-        if nutrition:
-            nutrition_rows = [
-                {
-                    "Nutrient": nutrient_name,
-                    "Amount": nutrient_data["amount"],
-                    "Unit": nutrient_data["unit"],
-                }
-                for nutrient_name, nutrient_data in nutrition.items()
-            ]
-            st.dataframe(
-                pd.DataFrame(nutrition_rows),
-                width="stretch",
-                hide_index=True,
+    with st.expander("Logged nutrient details", expanded=False):
+        today = datetime.now().strftime("%Y-%m-%d")
+        try:
+            data = api_get(f"/nutrition/{user_id}/{today}")
+        except requests.RequestException as exc:
+            st.error(
+                f"Failed to load nutrition details: {extract_api_error_message(exc)}"
             )
         else:
-            st.info("No nutrition data found for today.")
+            nutrition = data.get("nutrition") or {}
+            if nutrition:
+                nutrition_rows = [
+                    {
+                        "Nutrient": nutrient_name,
+                        "Amount": nutrient_data["amount"],
+                        "Unit": nutrient_data["unit"],
+                    }
+                    for nutrient_name, nutrient_data in nutrition.items()
+                ]
+                st.dataframe(
+                    pd.DataFrame(nutrition_rows),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.caption("No nutrition details found for today yet.")
 
 
 def render_manual_workout_logger(user_id: int) -> None:

@@ -7,6 +7,19 @@ import database
 from api.main import app
 from models.coaching_decision_models import CoachingDecision
 from models.nutrition_target_models import NutritionTargets
+from models.nutrition_target_vs_actual_models import (
+    LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+    LOGGING_COMPLETENESS_NO_LOGS,
+    LOGGING_COMPLETENESS_PARTIAL_DAY,
+    TARGET_STATUS_BELOW,
+    TARGET_STATUS_NEAR,
+    TARGET_STATUS_UNAVAILABLE,
+    ApprovedNutritionGuidance,
+    NutritionActuals,
+    NutritionLoggingSummary,
+    NutritionTargetComparison,
+    TargetVsActualNutritionSummary,
+)
 from models.recommendation_models import ApprovedActionPlan, RecommendationContext
 from models.training_constraint_models import TrainingConstraints
 from models.training_execution_summary_models import TrainingExecutionSummary
@@ -276,6 +289,184 @@ def _build_components(
     }
 
 
+def _comparison(
+    nutrient: str,
+    *,
+    status: str = TARGET_STATUS_UNAVAILABLE,
+    available: bool = False,
+    actual: float | None = None,
+    reason_codes: list[str] | None = None,
+) -> NutritionTargetComparison:
+    return NutritionTargetComparison(
+        nutrient=nutrient,
+        actual=actual,
+        target_min=100 if available else None,
+        target_max=150 if available else None,
+        delta_min=-20 if available else None,
+        delta_max=-70 if available else None,
+        percent_of_target=80 if available else None,
+        target_status=status,
+        comparison_available=available,
+        confidence="Moderate" if available else "Limited",
+        reason_codes=reason_codes or [],
+        limitations=[] if available else [f"{nutrient} comparison is unavailable."],
+    )
+
+
+def _nutrition_summary_and_guidance(
+    *,
+    completeness: str = LOGGING_COMPLETENESS_NO_LOGS,
+    confidence: str = "Limited",
+    protein_status: str = TARGET_STATUS_UNAVAILABLE,
+    protein_available: bool = False,
+    calories_available: bool = False,
+    macros_available: bool = False,
+) -> tuple[TargetVsActualNutritionSummary, ApprovedNutritionGuidance]:
+    actuals = NutritionActuals(
+        user_id=999,
+        logging_date="2026-06-05",
+        logging_window="calendar_day",
+        logged_calories=1800 if calories_available else None,
+        logged_protein=90 if protein_available else None,
+        logged_carbs=200 if macros_available else None,
+        logged_fat=65 if macros_available else None,
+        logged_meal_count=0 if completeness == LOGGING_COMPLETENESS_NO_LOGS else 2,
+        entry_count=0 if completeness == LOGGING_COMPLETENESS_NO_LOGS else 2,
+        source_count=0 if completeness == LOGGING_COMPLETENESS_NO_LOGS else 2,
+        reason_codes=[],
+    )
+    logging_summary = NutritionLoggingSummary(
+        user_id=999,
+        logging_date="2026-06-05",
+        logging_completeness=completeness,
+        confidence=confidence,
+        logged_meal_count=actuals.logged_meal_count,
+        entry_count=actuals.entry_count,
+        missing_nutrient_fields=(
+            [] if macros_available else ["calories", "carbohydrates", "fat"]
+        ),
+        reason_codes=[],
+        limitations=[],
+    )
+    comparisons = {
+        "calories": _comparison(
+            "calories",
+            status=(
+                TARGET_STATUS_NEAR if calories_available else TARGET_STATUS_UNAVAILABLE
+            ),
+            available=calories_available,
+            actual=1800 if calories_available else None,
+            reason_codes=(
+                ["calorie_target_available"]
+                if calories_available
+                else ["calorie_delta_not_available"]
+            ),
+        ),
+        "protein": _comparison(
+            "protein",
+            status=protein_status,
+            available=protein_available,
+            actual=90 if protein_available else None,
+            reason_codes=(
+                ["protein_target_available"]
+                if protein_available
+                else ["protein_delta_not_available"]
+            ),
+        ),
+        "carbs": _comparison(
+            "carbs",
+            status=(
+                TARGET_STATUS_NEAR if macros_available else TARGET_STATUS_UNAVAILABLE
+            ),
+            available=macros_available,
+            actual=200 if macros_available else None,
+        ),
+        "fat": _comparison(
+            "fat",
+            status=(
+                TARGET_STATUS_NEAR if macros_available else TARGET_STATUS_UNAVAILABLE
+            ),
+            available=macros_available,
+            actual=65 if macros_available else None,
+        ),
+    }
+    reason_codes = ["nutrition_target_vs_actual_fixture"]
+    if completeness == LOGGING_COMPLETENESS_NO_LOGS:
+        reason_codes.append("no_nutrition_logs_today")
+    if protein_available and protein_status == TARGET_STATUS_BELOW:
+        reason_codes.append("logged_protein_below_target")
+    if protein_available and protein_status == TARGET_STATUS_NEAR:
+        reason_codes.append("logged_intake_near_protein_target")
+
+    summary = TargetVsActualNutritionSummary(
+        user_id=999,
+        date="2026-06-05",
+        nutrition_actuals=actuals,
+        logging_summary=logging_summary,
+        comparisons=comparisons,
+        logging_completeness=completeness,
+        confidence=confidence,
+        reason_codes=reason_codes,
+        limitations=[],
+    )
+    guidance = ApprovedNutritionGuidance(
+        user_id=999,
+        date="2026-06-05",
+        summary_message=(
+            "No nutrition logs were found for this date."
+            if completeness == LOGGING_COMPLETENESS_NO_LOGS
+            else (
+                "Nutrition logging is incomplete, so conclusions should stay limited."
+                if completeness
+                in {
+                    LOGGING_COMPLETENESS_PARTIAL_DAY,
+                    LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+                }
+                else "Logged nutrition can be compared cautiously with approved targets."
+            )
+        ),
+        protein_guidance=(
+            "Based on logged meals, protein is below today's target."
+            if protein_available and protein_status == TARGET_STATUS_BELOW
+            else (
+                "Protein is close to target based on current logs."
+                if protein_available and protein_status == TARGET_STATUS_NEAR
+                else "Protein comparison is limited until approved protein targets and logged protein are available."
+            )
+        ),
+        calorie_guidance=(
+            "Logged calories are near the approved range based on complete-enough logs."
+            if calories_available
+            else "Nutrition logging is incomplete, so calorie conclusions should stay limited."
+        ),
+        macro_guidance=(
+            "Carbohydrate and fat logs can be compared cautiously against approved ranges."
+            if macros_available
+            else "Macro comparisons are limited until logging is more complete."
+        ),
+        logging_guidance=(
+            "No nutrition logs were found for this date, so guidance should stay limited."
+            if completeness == LOGGING_COMPLETENESS_NO_LOGS
+            else "Logged intake is incomplete, so avoid making bigger nutrition changes from this day alone."
+        ),
+        confidence=confidence,
+        reason_codes=reason_codes,
+        limitations=[],
+    )
+    return summary, guidance
+
+
+def _with_nutrition(
+    components: dict,
+    summary: TargetVsActualNutritionSummary,
+    guidance: ApprovedNutritionGuidance,
+) -> dict:
+    updated = dict(components)
+    updated["nutrition_target_vs_actual_summary"] = summary
+    updated["approved_nutrition_guidance"] = guidance
+    return updated
+
+
 def test_no_recovery_checkin_available_returns_safe_limitation_language():
     components = _build_components(
         _no_recovery_health_state(),
@@ -530,6 +721,150 @@ def test_seeded_users_produce_safe_scenario_aligned_synthesis(
     assert "lack of discipline" not in combined
     assert "automatic deload" not in combined
     assert "automatic progression" not in combined
+
+
+def test_no_logs_nutrition_adds_safe_limitation_and_no_macro_claims():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness=LOGGING_COMPLETENESS_NO_LOGS,
+        confidence="Limited",
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "No nutrition logs are available for today yet." in synthesis.limitations
+    assert "nutrition_no_logs_today" in synthesis.reason_codes
+    assert "carbs are" not in combined
+    assert "fat is" not in combined
+    assert "calories are below" not in combined
+    assert "calories are above" not in combined
+
+
+def test_incomplete_nutrition_logging_limits_calorie_and_macro_certainty():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness=LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+        confidence="Low",
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "nutrition_logging_incomplete" in synthesis.reason_codes
+    assert "calorie conclusions" in synthesis.logging_focus.lower()
+    assert "calorie conclusions are limited" in str(synthesis.limitations).lower()
+    assert "calories are below" not in combined
+    assert "macro comparisons are limited" in str(synthesis.limitations).lower()
+
+
+def test_approved_protein_below_target_can_appear_as_focus():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        protein_status=TARGET_STATUS_BELOW,
+        protein_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "protein_below_target_based_on_logs" in synthesis.reason_codes
+    assert "protein-centered meal" in synthesis.recommended_focus
+    assert "based on logged meals" in combined
+    assert "must" not in combined
+
+
+def test_approved_protein_near_target_can_appear_cautiously():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        protein_status=TARGET_STATUS_NEAR,
+        protein_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "protein_near_target_based_on_logs" in synthesis.reason_codes
+    assert "protein is close to target" in combined
+    assert "medical" not in combined
+
+
+def test_blocked_calorie_comparison_does_not_appear_as_hard_claim():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness=LOGGING_COMPLETENESS_PARTIAL_DAY,
+        confidence="Low",
+        protein_status=TARGET_STATUS_BELOW,
+        protein_available=True,
+        calories_available=False,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "calorie_comparison_limited" in synthesis.reason_codes
+    assert "calories are below" not in combined
+    assert "calories are above" not in combined
+    assert (
+        "calorie conclusions" in combined
+        or "calorie conclusions" in str(synthesis.limitations).lower()
+    )
+
+
+def test_carbs_and_fats_only_appear_when_approved_by_nutrition_service():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    blocked_summary, blocked_guidance = _nutrition_summary_and_guidance(
+        completeness=LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+        confidence="Low",
+        macros_available=False,
+    )
+    allowed_summary, allowed_guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        macros_available=True,
+    )
+
+    blocked = build_daily_coach_synthesis_from_components(
+        **_with_nutrition(components, blocked_summary, blocked_guidance)
+    )
+    allowed = build_daily_coach_synthesis_from_components(
+        **_with_nutrition(components, allowed_summary, allowed_guidance)
+    )
+
+    assert "carbohydrate and fat" not in str(blocked.to_dict()).lower()
+    assert "macro_comparison_limited" in blocked.reason_codes
+    assert "Carbohydrate and fat logs" in allowed.recommended_focus
+
+
+def test_nutrition_training_mismatch_mentions_support_without_hard_macro_claims():
+    components = _build_components(
+        summary=_summary(completed_execution_count=0),
+        scenario="nutrition_training_mismatch",
+    )
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness=LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+        confidence="Low",
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert synthesis.scenario == "nutrition_training_mismatch"
+    assert "nutrition" in combined
+    assert "logging" in combined
+    assert "zero intake" not in combined
+    assert "carbs are below" not in combined
+    assert "fat is below" not in combined
 
 
 _PUBLIC_DAILY_COACH_TOP_LEVEL_KEYS = {

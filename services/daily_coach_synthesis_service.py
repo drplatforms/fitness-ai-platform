@@ -4,6 +4,15 @@ from datetime import date
 from typing import Any
 
 from models.daily_coach_synthesis_models import DailyCoachSynthesis
+from models.nutrition_target_vs_actual_models import (
+    LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+    LOGGING_COMPLETENESS_NO_LOGS,
+    LOGGING_COMPLETENESS_PARTIAL_DAY,
+    TARGET_STATUS_BELOW,
+    TARGET_STATUS_NEAR,
+    ApprovedNutritionGuidance,
+    TargetVsActualNutritionSummary,
+)
 from models.recommendation_models import ApprovedActionPlan, RecommendationContext
 from models.training_constraint_models import TrainingConstraints
 from models.training_execution_summary_models import TrainingExecutionSummary
@@ -13,6 +22,11 @@ from models.workout_plan_models import (
     ApprovedWorkoutExplanation,
     ApprovedWorkoutPlan,
     WorkoutPlannedVsActualSummary,
+)
+from services.nutrition_target_vs_actual_service import (
+    build_approved_nutrition_guidance,
+    build_target_vs_actual_nutrition_summary,
+    validate_target_vs_actual_nutrition_summary,
 )
 from services.post_workout_review_service import (
     build_deterministic_post_workout_review_summary,
@@ -65,6 +79,17 @@ _FORBIDDEN_DAILY_COACH_TERMS = [
     "cut volume",
     "training is causing",
     "nutrition is inadequate",
+    "you must cut calories",
+    "must cut calories",
+    "skip meals",
+    "compensate tomorrow",
+    "burn this off",
+    "bad food",
+    "good food",
+    "eating disorder",
+    "supplement",
+    "stalled fat loss",
+    "stalled weight loss",
     "skipped work shows discipline",
     "skipped work means discipline",
 ]
@@ -158,6 +183,9 @@ def build_daily_coach_synthesis(user_id: int) -> DailyCoachSynthesis:
         workout_context,
     )
     latest_review, latest_summary = _latest_completed_post_workout_context(user_id)
+    nutrition_summary, approved_nutrition_guidance = _approved_nutrition_context(
+        user_id
+    )
 
     synthesis = build_daily_coach_synthesis_from_components(
         health_state=health_state,
@@ -168,6 +196,8 @@ def build_daily_coach_synthesis(user_id: int) -> DailyCoachSynthesis:
         training_execution_summary=recommendation_context.training_execution_summary,
         latest_post_workout_review=latest_review,
         latest_planned_vs_actual_summary=latest_summary,
+        nutrition_target_vs_actual_summary=nutrition_summary,
+        approved_nutrition_guidance=approved_nutrition_guidance,
         synthesis_date=date.today().isoformat(),
     )
 
@@ -177,6 +207,8 @@ def build_daily_coach_synthesis(user_id: int) -> DailyCoachSynthesis:
         approved_action_plan=approved_action_plan,
         approved_workout_plan=approved_workout_plan,
         training_execution_summary=recommendation_context.training_execution_summary,
+        nutrition_target_vs_actual_summary=nutrition_summary,
+        approved_nutrition_guidance=approved_nutrition_guidance,
     )
     if violations:
         raise DailyCoachSynthesisValidationError("; ".join(violations))
@@ -194,11 +226,16 @@ def build_daily_coach_synthesis_from_components(
     training_execution_summary: TrainingExecutionSummary | None,
     latest_post_workout_review: ApprovedPostWorkoutReviewSummary | None = None,
     latest_planned_vs_actual_summary: WorkoutPlannedVsActualSummary | None = None,
+    nutrition_target_vs_actual_summary: TargetVsActualNutritionSummary | None = None,
+    approved_nutrition_guidance: ApprovedNutritionGuidance | None = None,
     synthesis_date: str | None = None,
 ) -> DailyCoachSynthesis:
     training_summary = training_execution_summary
     limitations = _build_limitations(
-        health_state, recommendation_context, training_summary
+        health_state,
+        recommendation_context,
+        training_summary,
+        nutrition_target_vs_actual_summary,
     )
     reason_codes = _build_reason_codes(
         recommendation_context,
@@ -207,6 +244,8 @@ def build_daily_coach_synthesis_from_components(
         training_summary,
         latest_post_workout_review,
         latest_planned_vs_actual_summary,
+        nutrition_target_vs_actual_summary,
+        approved_nutrition_guidance,
         limitations,
     )
 
@@ -219,9 +258,19 @@ def build_daily_coach_synthesis_from_components(
             approved_action_plan.confidence,
             approved_workout_plan.confidence,
         ),
-        today_summary=_today_summary(recommendation_context, approved_action_plan),
+        today_summary=_today_summary(
+            recommendation_context,
+            approved_action_plan,
+            nutrition_target_vs_actual_summary,
+        ),
         recovery_signal=_recovery_signal(health_state, recommendation_context),
-        training_signal=_training_signal(health_state, approved_action_plan),
+        training_signal=_training_signal(
+            health_state,
+            approved_action_plan,
+            recommendation_context,
+            nutrition_target_vs_actual_summary,
+            approved_nutrition_guidance,
+        ),
         workout_guidance=_workout_guidance(
             approved_workout_plan,
             approved_workout_explanation,
@@ -232,10 +281,15 @@ def build_daily_coach_synthesis_from_components(
             health_state,
             training_summary,
             latest_post_workout_review,
+            nutrition_target_vs_actual_summary,
+            approved_nutrition_guidance,
         ),
         plan_fit_note=_plan_fit_note(training_summary, latest_post_workout_review),
         recommended_focus=_recommended_focus(
-            recommendation_context, approved_action_plan
+            recommendation_context,
+            approved_action_plan,
+            nutrition_target_vs_actual_summary,
+            approved_nutrition_guidance,
         ),
         reason_codes=reason_codes,
         limitations=limitations,
@@ -249,6 +303,8 @@ def validate_daily_coach_synthesis(
     approved_action_plan: ApprovedActionPlan | None = None,
     approved_workout_plan: ApprovedWorkoutPlan | None = None,
     training_execution_summary: TrainingExecutionSummary | None = None,
+    nutrition_target_vs_actual_summary: TargetVsActualNutritionSummary | None = None,
+    approved_nutrition_guidance: ApprovedNutritionGuidance | None = None,
 ) -> list[str]:
     violations: list[str] = []
 
@@ -325,6 +381,14 @@ def validate_daily_coach_synthesis(
                 "DailyCoachSynthesis must not mention calorie targets when they are not approved."
             )
 
+    if nutrition_target_vs_actual_summary is not None:
+        nutrition_violations = _validate_nutrition_synthesis_claims(
+            synthesis,
+            nutrition_target_vs_actual_summary,
+            approved_nutrition_guidance,
+        )
+        violations.extend(nutrition_violations)
+
     if approved_workout_plan is not None:
         workout_text = synthesis.workout_guidance.lower()
         for exercise in approved_workout_plan.exercises:
@@ -341,6 +405,24 @@ def validate_daily_coach_synthesis(
         )
 
     return violations
+
+
+def _approved_nutrition_context(
+    user_id: int,
+) -> tuple[TargetVsActualNutritionSummary | None, ApprovedNutritionGuidance | None]:
+    try:
+        summary = build_target_vs_actual_nutrition_summary(
+            user_id, date.today().isoformat()
+        )
+        guidance = build_approved_nutrition_guidance(summary)
+        violations = validate_target_vs_actual_nutrition_summary(summary, guidance)
+    except Exception:
+        return None, None
+
+    if violations:
+        return None, None
+
+    return summary, guidance
 
 
 def _latest_completed_post_workout_context(
@@ -377,11 +459,14 @@ def _latest_completed_post_workout_context(
 def _today_summary(
     context: RecommendationContext,
     plan: ApprovedActionPlan,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
 ) -> str:
     if context.scenario == "recovery_limited":
         return "Today is best treated as a controlled training day with recovery signals kept in view."
     if context.scenario == "nutrition_training_mismatch":
-        return "Today should connect training demand with nutrition and logging context without making hard target changes."
+        if _nutrition_logging_is_limited(nutrition_summary):
+            return "Today should connect training demand with nutrition logging context while keeping conclusions limited."
+        return "Today should connect training demand with approved nutrition context without making hard target changes."
     if context.scenario == "improving_after_deload":
         return "Today supports controlled training while the recent improvement trend continues to stabilize."
     if context.scenario == "data_quality_limited":
@@ -409,10 +494,21 @@ def _recovery_signal(
 def _training_signal(
     health_state: UserHealthState,
     plan: ApprovedActionPlan,
+    context: RecommendationContext,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
+    nutrition_guidance: ApprovedNutritionGuidance | None,
 ) -> str:
     training = health_state.training_state
     if not training.has_workout_data:
         return "Training history is limited, so today should emphasize clear logging and a manageable baseline."
+
+    if context.scenario == "nutrition_training_mismatch":
+        nutrition_text = _nutrition_training_signal(
+            nutrition_summary, nutrition_guidance
+        )
+        if nutrition_text:
+            return nutrition_text
+
     return plan.workout_recommendation
 
 
@@ -457,7 +553,15 @@ def _logging_focus(
     health_state: UserHealthState,
     summary: TrainingExecutionSummary | None,
     latest_review: ApprovedPostWorkoutReviewSummary | None,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
+    nutrition_guidance: ApprovedNutritionGuidance | None,
 ) -> str:
+    if _nutrition_no_logs(nutrition_summary):
+        return "No nutrition logs are available for today yet, so logging meals will make nutrition guidance more useful."
+
+    if _nutrition_logging_is_limited(nutrition_summary):
+        return _nutrition_logging_focus(nutrition_summary, nutrition_guidance)
+
     if not _has_recovery_checkin_data(health_state):
         return "Complete today's recovery check-in so sleep, energy, and soreness can improve the recommendation."
 
@@ -494,7 +598,15 @@ def _plan_fit_note(
 def _recommended_focus(
     context: RecommendationContext,
     plan: ApprovedActionPlan,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
+    nutrition_guidance: ApprovedNutritionGuidance | None,
 ) -> str:
+    nutrition_focus = _nutrition_recommended_focus(
+        nutrition_summary, nutrition_guidance
+    )
+    if nutrition_focus:
+        return nutrition_focus
+
     if context.scenario == "recovery_limited":
         return "Anchor today on controlled effort, recovery check-in quality, and staying within the approved RIR range."
     if context.scenario == "nutrition_training_mismatch":
@@ -510,6 +622,7 @@ def _build_limitations(
     health_state: UserHealthState,
     context: RecommendationContext,
     summary: TrainingExecutionSummary | None,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
 ) -> list[str]:
     limitations: list[str] = []
 
@@ -526,6 +639,8 @@ def _build_limitations(
     if context.nutrition_targets.confidence == "Limited":
         limitations.append("nutrition_targets_limited_by_logging_quality")
 
+    limitations.extend(_nutrition_limitations(nutrition_summary))
+
     return list(dict.fromkeys(limitations))
 
 
@@ -536,6 +651,8 @@ def _build_reason_codes(
     summary: TrainingExecutionSummary | None,
     latest_review: ApprovedPostWorkoutReviewSummary | None,
     latest_planned_vs_actual_summary: WorkoutPlannedVsActualSummary | None,
+    nutrition_summary: TargetVsActualNutritionSummary | None,
+    nutrition_guidance: ApprovedNutritionGuidance | None,
     limitations: list[str],
 ) -> list[str]:
     reason_codes = [
@@ -553,8 +670,211 @@ def _build_reason_codes(
         reason_codes.append("latest_post_workout_review_used")
     if latest_planned_vs_actual_summary is not None:
         reason_codes.append("latest_planned_vs_actual_summary_available")
+    reason_codes.extend(_nutrition_reason_codes(nutrition_summary, nutrition_guidance))
     reason_codes.extend(limitations)
     return list(dict.fromkeys(code for code in reason_codes if code))
+
+
+def _nutrition_no_logs(summary: TargetVsActualNutritionSummary | None) -> bool:
+    return bool(
+        summary and summary.logging_completeness == LOGGING_COMPLETENESS_NO_LOGS
+    )
+
+
+def _nutrition_logging_is_limited(
+    summary: TargetVsActualNutritionSummary | None,
+) -> bool:
+    return bool(
+        summary
+        and summary.logging_completeness
+        in {
+            LOGGING_COMPLETENESS_NO_LOGS,
+            LOGGING_COMPLETENESS_PARTIAL_DAY,
+            LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+        }
+    )
+
+
+def _protein_comparison(summary: TargetVsActualNutritionSummary | None):
+    if summary is None:
+        return None
+    return summary.comparisons.get("protein")
+
+
+def _calorie_comparison(summary: TargetVsActualNutritionSummary | None):
+    if summary is None:
+        return None
+    return summary.comparisons.get("calories")
+
+
+def _macro_comparisons_are_available(
+    summary: TargetVsActualNutritionSummary | None,
+) -> bool:
+    if summary is None:
+        return False
+    carb = summary.comparisons.get("carbs")
+    fat = summary.comparisons.get("fat")
+    return bool(carb and fat and carb.comparison_available and fat.comparison_available)
+
+
+def _nutrition_training_signal(
+    summary: TargetVsActualNutritionSummary | None,
+    guidance: ApprovedNutritionGuidance | None,
+) -> str | None:
+    if summary is None or guidance is None:
+        return None
+    if _nutrition_logging_is_limited(summary):
+        return "Nutrition logging is incomplete today, so nutrition conclusions should stay limited while training stays controlled."
+
+    protein = _protein_comparison(summary)
+    if protein and protein.comparison_available:
+        if protein.target_status == TARGET_STATUS_BELOW:
+            return "Based on logged meals, protein is below today's target; keep training controlled and consider a protein-centered meal."
+        if protein.target_status == TARGET_STATUS_NEAR:
+            return "Protein is close to target based on current logs, which gives useful support context for today's training."
+
+    return None
+
+
+def _nutrition_logging_focus(
+    summary: TargetVsActualNutritionSummary | None,
+    guidance: ApprovedNutritionGuidance | None,
+) -> str:
+    if summary is None or guidance is None:
+        return "Keep nutrition logging complete so nutrition guidance stays useful."
+    if summary.logging_completeness == LOGGING_COMPLETENESS_NO_LOGS:
+        return "No nutrition logs are available for today yet, so logging meals will make nutrition guidance more useful."
+    if summary.logging_completeness in {
+        LOGGING_COMPLETENESS_PARTIAL_DAY,
+        LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+    }:
+        return "Nutrition logging is incomplete today, so calorie conclusions and macro conclusions should stay limited."
+    return guidance.logging_guidance
+
+
+def _nutrition_recommended_focus(
+    summary: TargetVsActualNutritionSummary | None,
+    guidance: ApprovedNutritionGuidance | None,
+) -> str | None:
+    if summary is None or guidance is None:
+        return None
+
+    protein = _protein_comparison(summary)
+    if protein and protein.comparison_available:
+        if protein.target_status == TARGET_STATUS_BELOW:
+            return "A protein-centered meal may help support today's training while keeping conclusions based on logged meals."
+        if protein.target_status == TARGET_STATUS_NEAR:
+            return "Protein is close to target based on current logs; keep meals and training well logged today."
+
+    if _macro_comparisons_are_available(summary):
+        return guidance.macro_guidance
+
+    return None
+
+
+def _nutrition_limitations(
+    summary: TargetVsActualNutritionSummary | None,
+) -> list[str]:
+    if summary is None:
+        return ["Nutrition target-vs-actual context is unavailable today."]
+    if summary.logging_completeness == LOGGING_COMPLETENESS_NO_LOGS:
+        return ["No nutrition logs are available for today yet."]
+    limitations: list[str] = []
+    if summary.logging_completeness in {
+        LOGGING_COMPLETENESS_PARTIAL_DAY,
+        LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+    }:
+        limitations.append(
+            "Nutrition logging is incomplete, so calorie conclusions are limited."
+        )
+    if not _macro_comparisons_are_available(summary):
+        limitations.append("Macro comparisons are limited until more meals are logged.")
+    return limitations
+
+
+def _nutrition_reason_codes(
+    summary: TargetVsActualNutritionSummary | None,
+    guidance: ApprovedNutritionGuidance | None,
+) -> list[str]:
+    if summary is None or guidance is None:
+        return ["nutrition_target_vs_actual_unavailable"]
+
+    reason_codes = ["nutrition_target_vs_actual_available"]
+    if summary.logging_completeness == LOGGING_COMPLETENESS_NO_LOGS:
+        reason_codes.append("nutrition_no_logs_today")
+    if summary.logging_completeness in {
+        LOGGING_COMPLETENESS_PARTIAL_DAY,
+        LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
+    }:
+        reason_codes.extend(
+            [
+                "nutrition_logging_incomplete",
+                "nutrition_guidance_limited_by_logging_quality",
+            ]
+        )
+
+    protein = _protein_comparison(summary)
+    if protein and protein.comparison_available:
+        if protein.target_status == TARGET_STATUS_BELOW:
+            reason_codes.append("protein_below_target_based_on_logs")
+        if protein.target_status == TARGET_STATUS_NEAR:
+            reason_codes.append("protein_near_target_based_on_logs")
+
+    calories = _calorie_comparison(summary)
+    if calories is None or not calories.comparison_available:
+        reason_codes.append("calorie_comparison_limited")
+
+    if not _macro_comparisons_are_available(summary):
+        reason_codes.append("macro_comparison_limited")
+
+    return reason_codes
+
+
+def _validate_nutrition_synthesis_claims(
+    synthesis: DailyCoachSynthesis,
+    summary: TargetVsActualNutritionSummary,
+    guidance: ApprovedNutritionGuidance | None,
+) -> list[str]:
+    violations: list[str] = []
+    text = _synthesis_text(synthesis).lower()
+
+    calories = _calorie_comparison(summary)
+    if calories is not None and not calories.comparison_available:
+        hard_calorie_claims = [
+            "calories are below",
+            "calories are above",
+            "calories are near",
+            "calorie intake is below",
+            "calorie intake is above",
+            "calorie intake is near",
+        ]
+        if any(term in text for term in hard_calorie_claims):
+            violations.append(
+                "DailyCoachSynthesis must not make hard calorie claims when calorie comparison is unavailable."
+            )
+
+    if _nutrition_logging_is_limited(summary):
+        hard_macro_claims = [
+            "carbs are below",
+            "carbs are above",
+            "fat is below",
+            "fat is above",
+            "macros are on target",
+        ]
+        if any(term in text for term in hard_macro_claims):
+            violations.append(
+                "DailyCoachSynthesis must not make exact macro claims when nutrition logging is incomplete."
+            )
+
+    if summary.confidence in {"Limited", "Low"}:
+        for term in _LOW_CONFIDENCE_STRONG_TERMS:
+            if term in text:
+                violations.append(
+                    "Low/Limited nutrition confidence must keep synthesis language soft."
+                )
+                break
+
+    return violations
 
 
 def _has_recovery_checkin_data(health_state: UserHealthState) -> bool:

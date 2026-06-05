@@ -4871,6 +4871,300 @@ def display_logging_quality(
                 st.caption(f"• {friendly}")
 
 
+FORMULA_TARGET_DISPLAY_SPECS = [
+    {
+        "label": "Calories",
+        "target_key": "calorie_target",
+        "flag_key": "allow_calorie_targets",
+        "unit": "kcal/day",
+    },
+    {
+        "label": "Protein",
+        "target_key": "protein_target_g",
+        "flag_key": "allow_protein_targets",
+        "unit": "g/day",
+    },
+    {
+        "label": "Carbohydrates",
+        "target_key": "carbohydrate_target_g",
+        "flag_key": "allow_carbohydrate_targets",
+        "unit": "g/day",
+    },
+    {
+        "label": "Fat",
+        "target_key": "fat_target_g",
+        "flag_key": "allow_fat_targets",
+        "unit": "g/day",
+    },
+]
+
+FORMULA_LIMITATION_LABELS = {
+    "missing_body_weight": "A current body weight is needed before this target can be shown.",
+    "body_weight_missing": "A current body weight is needed before this target can be shown.",
+    "protein_requires_body_weight": "Protein targets require a current body weight.",
+    "missing_height": "Height is needed before calorie targets can be shown.",
+    "height_missing": "Height is needed before calorie targets can be shown.",
+    "missing_age": "Age is needed before calorie targets can be shown.",
+    "age_missing": "Age is needed before calorie targets can be shown.",
+    "missing_sex": "Sex is needed before calorie targets can be shown.",
+    "sex_missing": "Sex is needed before calorie targets can be shown.",
+    "missing_activity_level": "Activity level is needed before calorie targets can be shown.",
+    "activity_level_missing": "Activity level is needed before calorie targets can be shown.",
+    "missing_primary_goal": "A primary goal is needed before calorie targets can be shown.",
+    "primary_goal_missing": "A primary goal is needed before calorie targets can be shown.",
+    "calorie_formula_inputs_missing": "Calories are not shown yet because key profile inputs are missing.",
+    "calorie_targets_limited_by_profile_inputs": "Calories are not shown yet because key profile inputs are missing.",
+    "calorie_target_not_approved": "Calories are not approved for display yet.",
+    "carbohydrate_requires_calorie_target": "Carbohydrate targets depend on an approved calorie target.",
+    "carbohydrate_target_not_approved": "Carbohydrate targets are not approved for display yet.",
+    "fat_requires_calorie_target": "Fat targets depend on an approved calorie target.",
+    "fat_target_not_approved": "Fat targets are not approved for display yet.",
+    "target_not_approved": "This target is not approved for display yet.",
+    "nutrition_targets_limited_by_logging_quality": "Nutrition guidance is limited because recent logging quality is incomplete.",
+    "limited_confidence": "Target confidence is limited with the current profile and logging context.",
+}
+
+
+def formula_public_text(value: object) -> str:
+    """Humanize public-safe nutrition formula reason/limitation values."""
+
+    if value is None or value == "":
+        return ""
+
+    if isinstance(value, dict):
+        for key in (
+            "message",
+            "label",
+            "description",
+            "text",
+            "reason",
+            "reason_code",
+            "code",
+        ):
+            if value.get(key):
+                return formula_public_text(value.get(key))
+        return humanize_label(str(value))
+
+    text_value = str(value).strip()
+    if not text_value:
+        return ""
+
+    if text_value in FORMULA_LIMITATION_LABELS:
+        return FORMULA_LIMITATION_LABELS[text_value]
+
+    return humanize_label(text_value).rstrip(".") + "."
+
+
+def selected_nutrition_summary_date_text(user_id: int) -> str:
+    selected_date = st.session_state.get(f"nutrition_target_vs_actual_date_{user_id}")
+    if hasattr(selected_date, "isoformat"):
+        return selected_date.isoformat()
+    if selected_date:
+        return str(selected_date)
+    return datetime.now().date().isoformat()
+
+
+def formula_target_value(target: dict | None, default_unit: str) -> str | None:
+    if not target or not target.get("display_allowed"):
+        return None
+
+    display_value = target.get("display_value")
+    if display_value:
+        return str(display_value)
+
+    unit = target.get("unit") or default_unit
+    value = target.get("value")
+    if value is not None:
+        return format_nutrition_value(value, unit)
+
+    min_value = target.get("min_value")
+    max_value = target.get("max_value")
+    if min_value is not None and max_value is not None:
+        return f"{format_nutrition_value(min_value, unit)}–{format_nutrition_value(max_value, unit)}"
+
+    return None
+
+
+def formula_target_is_displayable(
+    target: dict | None,
+    display_flags: dict,
+    flag_key: str,
+) -> bool:
+    return bool(
+        display_flags.get(flag_key)
+        and target
+        and target.get("display_allowed")
+        and formula_target_value(target, target.get("unit") or "")
+    )
+
+
+def formula_target_reasons(
+    target: dict | None,
+    formula_response: dict,
+) -> list[str]:
+    raw_reasons = []
+    if target:
+        raw_reasons.extend(target.get("limitations") or [])
+        raw_reasons.extend(target.get("reason_codes") or [])
+
+    raw_reasons.extend(formula_response.get("limitations") or [])
+    raw_reasons.extend(formula_response.get("reason_codes") or [])
+
+    friendly_reasons = []
+    for reason in raw_reasons:
+        friendly = formula_public_text(reason)
+        if friendly and friendly not in friendly_reasons:
+            friendly_reasons.append(friendly)
+
+    return friendly_reasons
+
+
+def formula_target_rows(formula_response: dict) -> tuple[list[dict], list[dict]]:
+    approved_targets = formula_response.get("approved_macro_targets") or {}
+    display_flags = formula_response.get("display_flags") or {}
+
+    approved_rows = []
+    limited_rows = []
+
+    for spec in FORMULA_TARGET_DISPLAY_SPECS:
+        target = approved_targets.get(spec["target_key"])
+        is_displayable = formula_target_is_displayable(
+            target,
+            display_flags,
+            spec["flag_key"],
+        )
+
+        if is_displayable:
+            approved_rows.append(
+                {
+                    "Target": spec["label"],
+                    "Formula-derived target": formula_target_value(
+                        target, spec["unit"]
+                    ),
+                    "Confidence": target.get("confidence")
+                    or formula_response.get("confidence", "Unknown"),
+                    "Method": humanize_label(target.get("method")),
+                }
+            )
+            continue
+
+        reasons = formula_target_reasons(target, formula_response)
+        limited_rows.append(
+            {
+                "Target": spec["label"],
+                "Display status": "Limited",
+                "Why": (
+                    reasons[0]
+                    if reasons
+                    else "This target is not approved for display yet."
+                ),
+            }
+        )
+
+    return approved_rows, limited_rows
+
+
+def display_formula_transparency_metadata(formula_response: dict) -> None:
+    metadata = formula_response.get("formula_metadata") or {}
+    formula_name = metadata.get("formula_name") or "Nutrition target formula"
+    formula_version = metadata.get("formula_version") or "Unknown"
+    confidence = formula_response.get("confidence", "Unknown")
+
+    cols = st.columns(3)
+    cols[0].metric("Formula", humanize_label(formula_name))
+    cols[1].metric("Version", formula_version)
+    cols[2].metric("Confidence", confidence)
+
+    st.caption(
+        "Formula targets are coaching estimates, not medical advice. Only approved "
+        "display targets are shown in the normal UI."
+    )
+
+    with st.expander("Formula transparency", expanded=False):
+        target_basis = metadata.get("target_basis")
+        if target_basis:
+            st.write(f"**Target basis:** {formula_public_text(target_basis)}")
+
+        detail_specs = [
+            ("Inputs used", metadata.get("inputs_used") or []),
+            ("Assumptions", metadata.get("assumptions") or []),
+            ("Rounding rules", metadata.get("rounding_rules") or []),
+            ("Formula limitations", metadata.get("limitations") or []),
+        ]
+
+        for label, values in detail_specs:
+            if not values:
+                continue
+            st.write(f"**{label}:**")
+            for value in values:
+                friendly = formula_public_text(value)
+                if friendly:
+                    st.caption(f"• {friendly}")
+
+
+def render_nutrition_formula_target_transparency_card(user_id: int) -> None:
+    st.subheader("Formula-Derived Targets")
+    st.caption(
+        "Approved formula targets are shown here. Limited targets stay hidden until "
+        "the backend approves them for display."
+    )
+
+    target_date = selected_nutrition_summary_date_text(user_id)
+
+    try:
+        formula_response = api_get(
+            f"/nutrition/{user_id}/targets/formula",
+            params={"date": target_date},
+        )
+    except requests.RequestException as exc:
+        st.caption(
+            "Formula-derived target transparency is not available yet. "
+            f"{extract_api_error_message(exc)}"
+        )
+        return
+
+    if not formula_response.get("success"):
+        st.caption("Formula-derived target transparency is not available yet.")
+        developer_details(
+            "Developer details: nutrition target formula response",
+            formula_response,
+        )
+        return
+
+    approved_rows, limited_rows = formula_target_rows(formula_response)
+
+    st.markdown("#### Approved Targets")
+    if approved_rows:
+        st.dataframe(
+            pd.DataFrame(approved_rows),
+            width="stretch",
+            hide_index=True,
+        )
+    else:
+        st.caption(
+            "No formula-derived calorie or macro targets are approved for display yet."
+        )
+
+    if limited_rows:
+        with st.expander("Why some targets are limited", expanded=False):
+            st.dataframe(
+                pd.DataFrame(limited_rows),
+                width="stretch",
+                hide_index=True,
+            )
+            st.caption(
+                "Limited targets are intentionally not shown as numeric goals until "
+                "the backend approves them for display."
+            )
+
+    display_formula_transparency_metadata(formula_response)
+
+    developer_details(
+        "Developer details: nutrition target formula response",
+        formula_response,
+    )
+
+
 def render_nutrition_target_vs_actual_card(user_id: int) -> None:
     st.subheader("Nutrition Today Summary")
     st.caption(
@@ -4966,7 +5260,10 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
 
     display_nutrition_actuals(nutrition_actuals, logging_summary)
 
-    with st.expander("Target comparisons", expanded=True):
+    with st.expander("Target comparisons — approved targets only", expanded=True):
+        st.caption(
+            "Comparisons are shown only when the backend approves the target for display."
+        )
         display_target_vs_actual_table(target_vs_actual_summary)
 
     with st.expander("Logging quality and limitations", expanded=False):
@@ -5055,6 +5352,8 @@ def render_nutrition_section(user_id: int) -> None:
     st.divider()
 
     render_nutrition_target_vs_actual_card(user_id)
+
+    render_nutrition_formula_target_transparency_card(user_id)
 
     with st.expander("Logged nutrient details", expanded=False):
         today = datetime.now().strftime("%Y-%m-%d")

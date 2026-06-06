@@ -880,3 +880,291 @@ def test_approve_food_suggestions_can_represent_no_suitable_food(tmp_path, monke
     assert approved.suggestions == []
     assert "no_suitable_canonical_food_found" in approved.reason_codes
     assert approved.limitations
+
+
+def _fat_gap_macro_gaps(
+    *,
+    fat_display_allowed: bool = True,
+    calorie_display_allowed: bool = True,
+    calorie_status: str = "near_target",
+    logging_conflict_macro: str | None = None,
+) -> list[NutritionMacroGap]:
+    return [
+        _macro_gap(
+            "protein_g",
+            target_status=(
+                "above_target"
+                if logging_conflict_macro == "protein_g"
+                else "near_target"
+            ),
+            gap_value=None,
+        ),
+        _macro_gap(
+            "calories",
+            target_status=(calorie_status if calorie_display_allowed else "limited"),
+            display_allowed=calorie_display_allowed,
+            gap_value=(
+                250
+                if calorie_status == "below_target" and calorie_display_allowed
+                else None
+            ),
+            reason_codes=(
+                ["calorie_gap_available"]
+                if calorie_status == "below_target" and calorie_display_allowed
+                else (["target_not_approved"] if not calorie_display_allowed else [])
+            ),
+            limitations=[] if calorie_display_allowed else ["Target is limited."],
+        ),
+        _macro_gap(
+            "carbohydrate_g",
+            target_status=(
+                "above_target"
+                if logging_conflict_macro == "carbohydrate_g"
+                else "near_target"
+            ),
+            gap_value=None,
+        ),
+        _macro_gap(
+            "fat_g",
+            target_status="below_target" if fat_display_allowed else "limited",
+            display_allowed=fat_display_allowed,
+            gap_value=(20 if fat_display_allowed else None),
+            reason_codes=(
+                ["fat_gap_available"]
+                if fat_display_allowed
+                else ["target_not_approved"]
+            ),
+            limitations=[] if fat_display_allowed else ["Target is limited."],
+        ),
+    ]
+
+
+def test_existing_calorie_support_suggestions_still_work_after_fat_expansion(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    macro_gaps = _calorie_gap_macro_gaps()
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    assert approved.primary_gap == "calories"
+    assert approved.suggestions
+    assert all(
+        suggestion.macro_gap_addressed == "calories"
+        for suggestion in approved.suggestions
+    )
+
+
+def test_approved_fat_gap_produces_canonical_fat_support_suggestions(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    macro_gaps = _fat_gap_macro_gaps()
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    assert approved.primary_gap == "fat_g"
+    assert approved.suggestions
+    assert "fat_gap_available" in approved.reason_codes
+    assert "fat_support_suggestion_available" in approved.reason_codes
+    assert all(
+        suggestion.macro_gap_addressed == "fat_g" for suggestion in approved.suggestions
+    )
+    assert all(suggestion.canonical_food_id > 0 for suggestion in approved.suggestions)
+
+
+def test_fat_support_suggestions_use_canonical_nutrients_and_practical_servings(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    macro_gaps = _fat_gap_macro_gaps()
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    for suggestion in approved.suggestions:
+        assert suggestion.estimated_calories is not None
+        assert suggestion.estimated_calories >= 0
+        assert suggestion.estimated_protein_g is not None
+        assert suggestion.estimated_protein_g >= 0
+        assert suggestion.estimated_carbohydrate_g is not None
+        assert suggestion.estimated_carbohydrate_g >= 0
+        assert suggestion.estimated_fat_g is not None
+        assert suggestion.estimated_fat_g > 0
+        assert suggestion.suggested_grams > 0
+        if suggestion.display_name in {"Olive Oil", "Avocado Oil", "Butter"}:
+            assert 5 <= suggestion.suggested_grams <= 15
+        if suggestion.display_name in {"Peanut Butter", "Almond Butter"}:
+            assert 16 <= suggestion.suggested_grams <= 32
+        if suggestion.display_name in {"Almonds", "Walnuts", "Cashews"}:
+            assert 15 <= suggestion.suggested_grams <= 30
+        if suggestion.display_name == "Avocado":
+            assert 50 <= suggestion.suggested_grams <= 100
+        if "Cheese" in suggestion.display_name:
+            assert 15 <= suggestion.suggested_grams <= 40
+        if suggestion.display_name == "Whole Egg":
+            assert 50 <= suggestion.suggested_grams <= 100
+
+
+def test_fat_target_blocked_produces_no_fat_support_suggestions():
+    macro_gaps = _fat_gap_macro_gaps(fat_display_allowed=False)
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    assert approved.suggestions == []
+    assert "fat_support_suggestion_limited" in approved.reason_codes
+    assert any("fat target" in limitation for limitation in approved.limitations)
+
+
+def test_calorie_target_blocked_produces_no_fat_support_suggestions():
+    macro_gaps = _fat_gap_macro_gaps(calorie_display_allowed=False)
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    assert approved.suggestions == []
+    assert "fat_support_suggestion_limited" in approved.reason_codes
+    assert any("calorie target" in limitation for limitation in approved.limitations)
+
+
+def test_incomplete_logging_limits_fat_support_suggestions():
+    macro_gaps = _fat_gap_macro_gaps()
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=True,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Low",
+        logging_incomplete=True,
+    )
+
+    assert approved.suggestions == []
+    assert "logging_incomplete_limits_suggestions" in approved.reason_codes
+    assert any("logging appears incomplete" in item for item in approved.limitations)
+
+
+def test_calorie_above_target_conflict_blocks_fat_support_suggestions():
+    macro_gaps = _fat_gap_macro_gaps(calorie_status="above_target")
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+    )
+
+    assert approved.suggestions == []
+    assert "fat_support_suggestion_limited" in approved.reason_codes
+    assert "calorie_conflict_limits_fat_suggestions" in approved.reason_codes
+    assert any(
+        "calories are already above target" in item for item in approved.limitations
+    )
+
+
+def test_fat_support_ranking_is_deterministic(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    macro_gaps = _fat_gap_macro_gaps()
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+
+    first = rank_food_suggestion_candidates(candidates, limit=5)
+    second = rank_food_suggestion_candidates(list(reversed(candidates)), limit=5)
+
+    assert [candidate.canonical_food_id for candidate in first] == [
+        candidate.canonical_food_id for candidate in second
+    ]
+
+
+def test_fat_support_does_not_suggest_excessive_oil_nut_or_cheese_servings(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    macro_gaps = _fat_gap_macro_gaps()
+
+    candidates = get_canonical_food_suggestion_candidates(
+        macro_gaps,
+        logging_incomplete=False,
+    )
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=candidates,
+        summary_confidence="Moderate",
+        limit=10,
+    )
+
+    assert approved.suggestions
+    for suggestion in approved.suggestions:
+        if suggestion.display_name in {"Olive Oil", "Avocado Oil", "Butter"}:
+            assert suggestion.suggested_grams <= 15
+        if suggestion.display_name in {
+            "Almonds",
+            "Walnuts",
+            "Cashews",
+            "Peanut Butter",
+            "Almond Butter",
+        }:
+            assert suggestion.suggested_grams <= 32
+        if "Cheese" in suggestion.display_name:
+            assert suggestion.suggested_grams <= 40

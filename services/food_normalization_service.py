@@ -30,7 +30,9 @@ STARTER_CANONICAL_FOODS = [
         "display_name": "Chicken Breast, Cooked, Skinless",
         "food_type": "cooked",
         "aliases": [
+            "chicken",
             "chicken breast",
+            "cooked chicken",
             "cooked chicken breast",
             "skinless chicken breast",
             "grilled chicken breast",
@@ -61,33 +63,146 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
-        "display_name": "White Rice, Cooked",
+        "display_name": "Chicken Thigh, Cooked, Skinless",
         "food_type": "cooked",
-        "aliases": ["rice", "white rice", "cooked rice", "cooked white rice"],
-        "search_priority": 10,
+        "aliases": [
+            "chicken thigh",
+            "cooked chicken thigh",
+            "skinless chicken thigh",
+            "boneless chicken thigh",
+        ],
+        "search_priority": 30,
         "nutrients_per_100g": {
-            "Calories": (130.0, "kcal"),
-            "Protein": (2.7, "g"),
-            "Carbohydrate": (28.2, "g"),
+            "Calories": (209.0, "kcal"),
+            "Protein": (26.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (10.9, "g"),
+        },
+    },
+    {
+        "display_name": "Turkey Breast, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "turkey",
+            "turkey breast",
+            "cooked turkey breast",
+            "sliced turkey breast",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (135.0, "kcal"),
+            "Protein": (29.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (1.6, "g"),
+        },
+    },
+    {
+        "display_name": "Pork Tenderloin, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "pork tenderloin",
+            "cooked pork tenderloin",
+            "pork loin",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (143.0, "kcal"),
+            "Protein": (26.2, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (3.5, "g"),
+        },
+    },
+    {
+        "display_name": "Tuna, Canned in Water",
+        "food_type": "prepared",
+        "aliases": [
+            "tuna",
+            "canned tuna",
+            "tuna in water",
+            "canned tuna in water",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (116.0, "kcal"),
+            "Protein": (25.5, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (0.8, "g"),
+        },
+    },
+    {
+        "display_name": "Shrimp, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "shrimp",
+            "cooked shrimp",
+            "prawns",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (99.0, "kcal"),
+            "Protein": (24.0, "g"),
+            "Carbohydrate": (0.2, "g"),
             "Fat": (0.3, "g"),
         },
     },
     {
-        "display_name": "Brown Rice, Cooked",
+        "display_name": "Tilapia, Cooked",
         "food_type": "cooked",
-        "aliases": ["brown rice", "cooked brown rice"],
-        "search_priority": 20,
+        "aliases": [
+            "tilapia",
+            "cooked tilapia",
+        ],
+        "search_priority": 40,
         "nutrients_per_100g": {
-            "Calories": (123.0, "kcal"),
-            "Protein": (2.7, "g"),
-            "Carbohydrate": (25.6, "g"),
-            "Fat": (1.0, "g"),
+            "Calories": (128.0, "kcal"),
+            "Protein": (26.2, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (2.7, "g"),
+        },
+    },
+    {
+        "display_name": "Cod, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "cod",
+            "cooked cod",
+            "white fish",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (105.0, "kcal"),
+            "Protein": (22.8, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (0.9, "g"),
+        },
+    },
+    {
+        "display_name": "Sirloin Steak, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "sirloin",
+            "sirloin steak",
+            "steak",
+            "cooked steak",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (206.0, "kcal"),
+            "Protein": (29.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (9.0, "g"),
         },
     },
     {
         "display_name": "Egg, Large",
         "food_type": "generic",
-        "aliases": ["egg", "eggs", "large egg"],
+        "aliases": [
+            "egg",
+            "eggs",
+            "large egg",
+            "whole egg",
+            "whole eggs",
+        ],
         "search_priority": 10,
         "nutrients_per_100g": {
             "Calories": (143.0, "kcal"),
@@ -97,9 +212,30 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
+        "display_name": "Egg Whites",
+        "food_type": "generic",
+        "aliases": [
+            "egg whites",
+            "egg white",
+            "liquid egg whites",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (52.0, "kcal"),
+            "Protein": (10.9, "g"),
+            "Carbohydrate": (0.7, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
         "display_name": "Ground Beef, 90/10",
         "food_type": "raw",
-        "aliases": ["ground beef", "lean ground beef", "90/10 beef"],
+        "aliases": [
+            "ground beef",
+            "lean ground beef",
+            "90/10 beef",
+            "90 10 beef",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (176.0, "kcal"),
@@ -111,7 +247,11 @@ STARTER_CANONICAL_FOODS = [
     {
         "display_name": "Ground Beef, 80/20",
         "food_type": "raw",
-        "aliases": ["80/20 beef", "ground chuck"],
+        "aliases": [
+            "80/20 beef",
+            "80 20 beef",
+            "ground chuck",
+        ],
         "search_priority": 30,
         "nutrients_per_100g": {
             "Calories": (254.0, "kcal"),
@@ -123,7 +263,10 @@ STARTER_CANONICAL_FOODS = [
     {
         "display_name": "Salmon, Cooked",
         "food_type": "cooked",
-        "aliases": ["salmon", "cooked salmon"],
+        "aliases": [
+            "salmon",
+            "cooked salmon",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (206.0, "kcal"),
@@ -135,7 +278,11 @@ STARTER_CANONICAL_FOODS = [
     {
         "display_name": "Greek Yogurt, Plain",
         "food_type": "generic",
-        "aliases": ["greek yogurt", "plain greek yogurt", "yogurt"],
+        "aliases": [
+            "greek yogurt",
+            "plain greek yogurt",
+            "yogurt",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (59.0, "kcal"),
@@ -145,9 +292,231 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
+        "display_name": "Cottage Cheese, Low Fat",
+        "food_type": "generic",
+        "aliases": [
+            "cottage cheese",
+            "low fat cottage cheese",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (82.0, "kcal"),
+            "Protein": (11.1, "g"),
+            "Carbohydrate": (3.4, "g"),
+            "Fat": (2.3, "g"),
+        },
+    },
+    {
+        "display_name": "Milk, 2%",
+        "food_type": "generic",
+        "aliases": [
+            "milk",
+            "2% milk",
+            "two percent milk",
+            "reduced fat milk",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (50.0, "kcal"),
+            "Protein": (3.3, "g"),
+            "Carbohydrate": (4.8, "g"),
+            "Fat": (2.0, "g"),
+        },
+    },
+    {
+        "display_name": "Milk, Whole",
+        "food_type": "generic",
+        "aliases": [
+            "whole milk",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (61.0, "kcal"),
+            "Protein": (3.2, "g"),
+            "Carbohydrate": (4.8, "g"),
+            "Fat": (3.3, "g"),
+        },
+    },
+    {
+        "display_name": "Cheddar Cheese",
+        "food_type": "generic",
+        "aliases": [
+            "cheddar",
+            "cheese",
+            "cheddar cheese",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (403.0, "kcal"),
+            "Protein": (24.9, "g"),
+            "Carbohydrate": (1.3, "g"),
+            "Fat": (33.1, "g"),
+        },
+    },
+    {
+        "display_name": "Whey Protein Powder, Generic",
+        "food_type": "generic",
+        "aliases": [
+            "protein powder",
+            "whey",
+            "whey protein",
+            "whey protein powder",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (400.0, "kcal"),
+            "Protein": (80.0, "g"),
+            "Carbohydrate": (8.0, "g"),
+            "Fat": (6.0, "g"),
+        },
+    },
+    {
+        "display_name": "White Rice, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "rice",
+            "white rice",
+            "cooked rice",
+            "cooked white rice",
+        ],
+        "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (130.0, "kcal"),
+            "Protein": (2.7, "g"),
+            "Carbohydrate": (28.2, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Brown Rice, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "brown rice",
+            "cooked brown rice",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (123.0, "kcal"),
+            "Protein": (2.7, "g"),
+            "Carbohydrate": (25.6, "g"),
+            "Fat": (1.0, "g"),
+        },
+    },
+    {
+        "display_name": "Jasmine Rice, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "jasmine rice",
+            "cooked jasmine rice",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (129.0, "kcal"),
+            "Protein": (2.9, "g"),
+            "Carbohydrate": (28.2, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Basmati Rice, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "basmati rice",
+            "cooked basmati rice",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (121.0, "kcal"),
+            "Protein": (3.5, "g"),
+            "Carbohydrate": (25.2, "g"),
+            "Fat": (0.4, "g"),
+        },
+    },
+    {
+        "display_name": "Pasta, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "pasta",
+            "cooked pasta",
+            "noodles",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (158.0, "kcal"),
+            "Protein": (5.8, "g"),
+            "Carbohydrate": (30.9, "g"),
+            "Fat": (0.9, "g"),
+        },
+    },
+    {
+        "display_name": "Quinoa, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "quinoa",
+            "cooked quinoa",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (120.0, "kcal"),
+            "Protein": (4.4, "g"),
+            "Carbohydrate": (21.3, "g"),
+            "Fat": (1.9, "g"),
+        },
+    },
+    {
+        "display_name": "Whole Wheat Bread",
+        "food_type": "prepared",
+        "aliases": [
+            "bread",
+            "whole wheat bread",
+            "wheat bread",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (247.0, "kcal"),
+            "Protein": (12.4, "g"),
+            "Carbohydrate": (41.3, "g"),
+            "Fat": (4.2, "g"),
+        },
+    },
+    {
+        "display_name": "Bagel, Plain",
+        "food_type": "prepared",
+        "aliases": [
+            "bagel",
+            "plain bagel",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (250.0, "kcal"),
+            "Protein": (10.2, "g"),
+            "Carbohydrate": (48.9, "g"),
+            "Fat": (1.5, "g"),
+        },
+    },
+    {
+        "display_name": "Tortilla, Flour",
+        "food_type": "prepared",
+        "aliases": [
+            "tortilla",
+            "flour tortilla",
+        ],
+        "search_priority": 40,
+        "nutrients_per_100g": {
+            "Calories": (304.0, "kcal"),
+            "Protein": (8.9, "g"),
+            "Carbohydrate": (50.6, "g"),
+            "Fat": (8.4, "g"),
+        },
+    },
+    {
         "display_name": "Oats, Dry",
         "food_type": "raw",
-        "aliases": ["oats", "oatmeal", "dry oats"],
+        "aliases": [
+            "oats",
+            "oatmeal",
+            "dry oats",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (389.0, "kcal"),
@@ -157,21 +526,59 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
-        "display_name": "Banana",
-        "food_type": "generic",
-        "aliases": ["banana", "bananas"],
-        "search_priority": 10,
+        "display_name": "Black Beans, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "beans",
+            "black beans",
+            "cooked black beans",
+        ],
+        "search_priority": 30,
         "nutrients_per_100g": {
-            "Calories": (89.0, "kcal"),
-            "Protein": (1.1, "g"),
-            "Carbohydrate": (22.8, "g"),
-            "Fat": (0.3, "g"),
+            "Calories": (132.0, "kcal"),
+            "Protein": (8.9, "g"),
+            "Carbohydrate": (23.7, "g"),
+            "Fat": (0.5, "g"),
+        },
+    },
+    {
+        "display_name": "Pinto Beans, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "pinto beans",
+            "cooked pinto beans",
+        ],
+        "search_priority": 35,
+        "nutrients_per_100g": {
+            "Calories": (143.0, "kcal"),
+            "Protein": (9.0, "g"),
+            "Carbohydrate": (26.2, "g"),
+            "Fat": (0.7, "g"),
+        },
+    },
+    {
+        "display_name": "Lentils, Cooked",
+        "food_type": "cooked",
+        "aliases": [
+            "lentils",
+            "cooked lentils",
+        ],
+        "search_priority": 35,
+        "nutrients_per_100g": {
+            "Calories": (116.0, "kcal"),
+            "Protein": (9.0, "g"),
+            "Carbohydrate": (20.1, "g"),
+            "Fat": (0.4, "g"),
         },
     },
     {
         "display_name": "Potato, Baked",
         "food_type": "cooked",
-        "aliases": ["potato", "baked potato"],
+        "aliases": [
+            "potato",
+            "potatoes",
+            "baked potato",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (93.0, "kcal"),
@@ -183,7 +590,11 @@ STARTER_CANONICAL_FOODS = [
     {
         "display_name": "Sweet Potato, Baked",
         "food_type": "cooked",
-        "aliases": ["sweet potato", "baked sweet potato"],
+        "aliases": [
+            "sweet potato",
+            "sweet potatoes",
+            "baked sweet potato",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (90.0, "kcal"),
@@ -193,9 +604,117 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
+        "display_name": "Banana",
+        "food_type": "generic",
+        "aliases": [
+            "banana",
+            "bananas",
+        ],
+        "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (89.0, "kcal"),
+            "Protein": (1.1, "g"),
+            "Carbohydrate": (22.8, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Apple",
+        "food_type": "generic",
+        "aliases": [
+            "apple",
+            "apples",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (52.0, "kcal"),
+            "Protein": (0.3, "g"),
+            "Carbohydrate": (13.8, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Orange",
+        "food_type": "generic",
+        "aliases": [
+            "orange",
+            "oranges",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (47.0, "kcal"),
+            "Protein": (0.9, "g"),
+            "Carbohydrate": (11.8, "g"),
+            "Fat": (0.1, "g"),
+        },
+    },
+    {
+        "display_name": "Blueberries",
+        "food_type": "generic",
+        "aliases": [
+            "blueberries",
+            "blueberry",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (57.0, "kcal"),
+            "Protein": (0.7, "g"),
+            "Carbohydrate": (14.5, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Strawberries",
+        "food_type": "generic",
+        "aliases": [
+            "strawberries",
+            "strawberry",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (32.0, "kcal"),
+            "Protein": (0.7, "g"),
+            "Carbohydrate": (7.7, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Grapes",
+        "food_type": "generic",
+        "aliases": [
+            "grapes",
+            "grape",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (69.0, "kcal"),
+            "Protein": (0.7, "g"),
+            "Carbohydrate": (18.1, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Avocado",
+        "food_type": "generic",
+        "aliases": [
+            "avocado",
+            "avocados",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (160.0, "kcal"),
+            "Protein": (2.0, "g"),
+            "Carbohydrate": (8.5, "g"),
+            "Fat": (14.7, "g"),
+        },
+    },
+    {
         "display_name": "Broccoli, Cooked",
         "food_type": "cooked",
-        "aliases": ["broccoli", "cooked broccoli"],
+        "aliases": [
+            "broccoli",
+            "cooked broccoli",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (35.0, "kcal"),
@@ -205,15 +724,210 @@ STARTER_CANONICAL_FOODS = [
         },
     },
     {
+        "display_name": "Spinach",
+        "food_type": "generic",
+        "aliases": [
+            "spinach",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (23.0, "kcal"),
+            "Protein": (2.9, "g"),
+            "Carbohydrate": (3.6, "g"),
+            "Fat": (0.4, "g"),
+        },
+    },
+    {
+        "display_name": "Romaine Lettuce",
+        "food_type": "generic",
+        "aliases": [
+            "romaine",
+            "romaine lettuce",
+            "lettuce",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (17.0, "kcal"),
+            "Protein": (1.2, "g"),
+            "Carbohydrate": (3.3, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Green Beans",
+        "food_type": "generic",
+        "aliases": [
+            "green beans",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (35.0, "kcal"),
+            "Protein": (1.9, "g"),
+            "Carbohydrate": (7.9, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Asparagus",
+        "food_type": "generic",
+        "aliases": [
+            "asparagus",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (22.0, "kcal"),
+            "Protein": (2.4, "g"),
+            "Carbohydrate": (4.1, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Carrots",
+        "food_type": "generic",
+        "aliases": [
+            "carrot",
+            "carrots",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (41.0, "kcal"),
+            "Protein": (0.9, "g"),
+            "Carbohydrate": (9.6, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Bell Pepper",
+        "food_type": "generic",
+        "aliases": [
+            "bell pepper",
+            "peppers",
+            "pepper",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (31.0, "kcal"),
+            "Protein": (1.0, "g"),
+            "Carbohydrate": (6.0, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Onion",
+        "food_type": "generic",
+        "aliases": [
+            "onion",
+            "onions",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (40.0, "kcal"),
+            "Protein": (1.1, "g"),
+            "Carbohydrate": (9.3, "g"),
+            "Fat": (0.1, "g"),
+        },
+    },
+    {
+        "display_name": "Tomato",
+        "food_type": "generic",
+        "aliases": [
+            "tomato",
+            "tomatoes",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (18.0, "kcal"),
+            "Protein": (0.9, "g"),
+            "Carbohydrate": (3.9, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
         "display_name": "Olive Oil",
         "food_type": "generic",
-        "aliases": ["olive oil", "oil"],
+        "aliases": [
+            "olive oil",
+            "oil",
+        ],
         "search_priority": 20,
         "nutrients_per_100g": {
             "Calories": (884.0, "kcal"),
             "Protein": (0.0, "g"),
             "Carbohydrate": (0.0, "g"),
             "Fat": (100.0, "g"),
+        },
+    },
+    {
+        "display_name": "Avocado Oil",
+        "food_type": "generic",
+        "aliases": [
+            "avocado oil",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (884.0, "kcal"),
+            "Protein": (0.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (100.0, "g"),
+        },
+    },
+    {
+        "display_name": "Butter",
+        "food_type": "generic",
+        "aliases": [
+            "butter",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (717.0, "kcal"),
+            "Protein": (0.9, "g"),
+            "Carbohydrate": (0.1, "g"),
+            "Fat": (81.1, "g"),
+        },
+    },
+    {
+        "display_name": "Peanut Butter",
+        "food_type": "generic",
+        "aliases": [
+            "peanut butter",
+            "pb",
+        ],
+        "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (588.0, "kcal"),
+            "Protein": (25.0, "g"),
+            "Carbohydrate": (20.0, "g"),
+            "Fat": (50.0, "g"),
+        },
+    },
+    {
+        "display_name": "Almonds",
+        "food_type": "generic",
+        "aliases": [
+            "almonds",
+            "almond",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (579.0, "kcal"),
+            "Protein": (21.2, "g"),
+            "Carbohydrate": (21.6, "g"),
+            "Fat": (49.9, "g"),
+        },
+    },
+    {
+        "display_name": "Walnuts",
+        "food_type": "generic",
+        "aliases": [
+            "walnuts",
+            "walnut",
+        ],
+        "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (654.0, "kcal"),
+            "Protein": (15.2, "g"),
+            "Carbohydrate": (13.7, "g"),
+            "Fat": (65.2, "g"),
         },
     },
 ]
@@ -936,36 +1650,109 @@ def search_canonical_foods(
 def seed_starter_canonical_foods() -> list[CanonicalFood]:
     ensure_food_normalization_tables()
 
-    seeded_foods = []
+    conn = get_connection()
+    cursor = conn.cursor()
+    seeded_foods: list[CanonicalFood] = []
+
     for seed_food in STARTER_CANONICAL_FOODS:
-        food = create_canonical_food(
-            display_name=seed_food["display_name"],
-            food_type=seed_food["food_type"],
-            default_unit="grams",
-            default_grams=100.0,
-            search_priority=seed_food["search_priority"],
-            active=True,
-            notes="Starter canonical food for app-facing search.",
+        display_name = seed_food["display_name"]
+        food_type = _normalize_food_type(seed_food["food_type"])
+        normalized_name = normalize_food_name(display_name)
+        default_unit = "grams"
+        default_grams = 100.0
+        search_priority = int(seed_food["search_priority"])
+        notes = "Canonical food for app-facing search."
+
+        cursor.execute(
+            """
+            INSERT INTO canonical_foods (
+                display_name,
+                normalized_name,
+                food_type,
+                default_unit,
+                default_grams,
+                search_priority,
+                active,
+                notes,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(normalized_name, food_type) DO UPDATE SET
+                display_name = excluded.display_name,
+                default_unit = excluded.default_unit,
+                default_grams = excluded.default_grams,
+                search_priority = excluded.search_priority,
+                active = excluded.active,
+                notes = excluded.notes,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (
+                display_name.strip(),
+                normalized_name,
+                food_type,
+                default_unit,
+                default_grams,
+                search_priority,
+                notes,
+            ),
         )
-        seeded_foods.append(food)
+        cursor.execute(
+            """
+            SELECT *
+            FROM canonical_foods
+            WHERE normalized_name = ? AND food_type = ?
+            """,
+            (normalized_name, food_type),
+        )
+        food_row = cursor.fetchone()
+        canonical_food_id = int(food_row["id"])
+        seeded_foods.append(_row_to_canonical_food(food_row))
 
         for index, alias in enumerate(seed_food["aliases"]):
-            create_canonical_food_alias(
-                canonical_food_id=food.id,
-                alias=alias,
-                priority=10 + index,
+            normalized_alias = normalize_food_name(alias)
+            cursor.execute(
+                """
+                INSERT INTO canonical_food_aliases (
+                    canonical_food_id,
+                    alias,
+                    normalized_alias,
+                    priority,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(canonical_food_id, normalized_alias) DO UPDATE SET
+                    alias = excluded.alias,
+                    priority = excluded.priority,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (canonical_food_id, alias.strip(), normalized_alias, 10 + index),
             )
 
         for nutrient_name, (amount, unit) in seed_food["nutrients_per_100g"].items():
-            create_canonical_food_nutrient(
-                canonical_food_id=food.id,
-                nutrient_name=nutrient_name,
-                nutrient_unit=unit,
-                amount_per_100g=amount,
-                source_policy="manually_curated",
-                confidence="Moderate",
+            cursor.execute(
+                """
+                INSERT INTO canonical_food_nutrients (
+                    canonical_food_id,
+                    nutrient_name,
+                    nutrient_unit,
+                    amount_per_100g,
+                    source_policy,
+                    confidence,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, 'manually_curated', 'Moderate', CURRENT_TIMESTAMP)
+                ON CONFLICT(canonical_food_id, nutrient_name) DO UPDATE SET
+                    nutrient_unit = excluded.nutrient_unit,
+                    amount_per_100g = excluded.amount_per_100g,
+                    source_policy = excluded.source_policy,
+                    confidence = excluded.confidence,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (canonical_food_id, nutrient_name, unit, float(amount)),
             )
 
+    conn.commit()
+    conn.close()
     return seeded_foods
 
 

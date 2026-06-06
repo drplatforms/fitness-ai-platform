@@ -2,6 +2,7 @@ import json
 
 import database
 from services.food_normalization_service import (
+    STARTER_CANONICAL_FOODS,
     create_canonical_food,
     create_canonical_food_alias,
     create_canonical_food_nutrient,
@@ -31,8 +32,7 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
 
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT name
         FROM sqlite_master
         WHERE type = 'table'
@@ -43,8 +43,7 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
             'canonical_food_nutrients',
             'food_source_links'
           )
-        """
-    )
+        """)
     table_names = {row["name"] for row in cursor.fetchall()}
     conn.close()
 
@@ -243,14 +242,15 @@ def test_duplicate_raw_records_do_not_create_duplicate_canonical_foods(
     assert first.id == second.id
 
 
-def test_starter_canonical_seed_is_small_and_idempotent(tmp_path, monkeypatch):
+def test_starter_canonical_seed_is_expanded_and_idempotent(tmp_path, monkeypatch):
     _seed_test_db(tmp_path, monkeypatch)
 
     first_seed = seed_starter_canonical_foods()
     second_seed = seed_starter_canonical_foods()
 
-    assert len(first_seed) == 15
-    assert len(second_seed) == 15
+    assert len(first_seed) == len(STARTER_CANONICAL_FOODS)
+    assert len(second_seed) == len(STARTER_CANONICAL_FOODS)
+    assert len(first_seed) >= 50
 
     conn = database.get_connection()
     cursor = conn.cursor()
@@ -258,7 +258,7 @@ def test_starter_canonical_seed_is_small_and_idempotent(tmp_path, monkeypatch):
     canonical_count = cursor.fetchone()["count"]
     conn.close()
 
-    assert canonical_count == 15
+    assert canonical_count == len(STARTER_CANONICAL_FOODS)
 
     egg_result = search_canonical_foods("egg")[0]
     assert egg_result.canonical_food.display_name == "Egg, Large"
@@ -305,8 +305,37 @@ def test_ensure_starter_seed_populates_missing_active_database(tmp_path, monkeyp
     nutrient_count = cursor.fetchone()["count"]
     conn.close()
 
-    assert canonical_count == 15
-    assert nutrient_count == 60
+    assert canonical_count == len(STARTER_CANONICAL_FOODS)
+    assert nutrient_count == len(STARTER_CANONICAL_FOODS) * 4
+
+
+def test_expanded_seed_supports_common_daily_food_aliases(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    seed_starter_canonical_foods()
+
+    expected_names_by_query = {
+        "tuna": "Tuna, Canned in Water",
+        "pasta": "Pasta, Cooked",
+        "beans": "Black Beans, Cooked",
+        "potatoes": "Potato, Baked",
+        "protein powder": "Whey Protein Powder, Generic",
+        "peanut butter": "Peanut Butter",
+        "egg whites": "Egg Whites",
+        "cottage cheese": "Cottage Cheese, Low Fat",
+    }
+
+    for query, expected_name in expected_names_by_query.items():
+        results = search_canonical_foods(query)
+        assert results, query
+        assert results[0].canonical_food.display_name == expected_name
+        assert results[0].matched_on in {"display_name", "alias"}
+        nutrients = get_nutrients_for_canonical_food(results[0].canonical_food.id)
+        assert {nutrient.nutrient_name for nutrient in nutrients} >= {
+            "Calories",
+            "Protein",
+            "Carbohydrate",
+            "Fat",
+        }
 
 
 def test_existing_nutrition_logging_remains_stable(tmp_path, monkeypatch):

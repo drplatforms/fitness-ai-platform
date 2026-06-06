@@ -192,6 +192,40 @@ def test_target_vs_actual_reflects_canonical_logged_foods(tmp_path, monkeypatch)
     assert actuals["logged_fat"] == 7.2
 
 
+def test_expanded_canonical_food_can_be_logged_and_counted(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    seed_starter_canonical_foods()
+    search_response = _client().get("/foods/canonical/search?q=tuna")
+    assert search_response.status_code == 200
+    tuna_id = search_response.json()["results"][0]["canonical_food_id"]
+
+    response = _client().post(
+        "/nutrition/1/log-canonical",
+        json={
+            "canonical_food_id": tuna_id,
+            "grams": 100,
+            "entry_date": "2026-06-05",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["display_name"] == "Tuna, Canned in Water"
+    assert response.json()["nutrient_summary"] == {
+        "calories": 116.0,
+        "protein_g": 25.5,
+        "carbohydrate_g": 0.0,
+        "fat_g": 0.8,
+    }
+
+    target_response = _client().get("/nutrition/1/target-vs-actual?date=2026-06-05")
+    assert target_response.status_code == 200
+    actuals = target_response.json()["nutrition_actuals"]
+    assert actuals["logged_calories"] == 116.0
+    assert actuals["logged_protein"] == 25.5
+    assert actuals["logged_carbs"] == 0.0
+    assert actuals["logged_fat"] == 0.8
+
+
 def test_existing_raw_source_nutrition_log_behavior_remains_stable(
     tmp_path,
     monkeypatch,

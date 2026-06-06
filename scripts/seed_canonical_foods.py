@@ -1,5 +1,5 @@
 # ruff: noqa: E402
-"""Seed starter canonical app-facing foods."""
+"""Seed canonical app-facing foods."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def main() -> None:
     initialize_database()
     foods = seed_starter_canonical_foods()
 
-    print(f"Seeded starter canonical foods: {len(foods)}")
+    print(f"Seeded canonical foods: {len(foods)}")
     for food in foods:
         print(f"- {food.display_name} | {food.food_type} | {food.default_unit}")
 

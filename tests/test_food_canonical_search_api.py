@@ -53,6 +53,11 @@ def test_search_endpoint_returns_common_seeded_foods(tmp_path, monkeypatch):
         "rice": "White Rice, Cooked",
         "egg": "Egg, Large",
         "oats": "Oats, Dry",
+        "tuna": "Tuna, Canned in Water",
+        "pasta": "Pasta, Cooked",
+        "beans": "Black Beans, Cooked",
+        "protein powder": "Whey Protein Powder, Generic",
+        "peanut butter": "Peanut Butter",
     }
 
     for query, expected_name in expected_by_query.items():

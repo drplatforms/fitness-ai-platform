@@ -7,6 +7,7 @@ from services.food_normalization_service import (
     create_canonical_food_nutrient,
     create_raw_food_source_record,
     ensure_food_normalization_tables,
+    ensure_starter_canonical_foods_seeded,
     get_aliases_for_canonical_food,
     get_nutrients_for_canonical_food,
     get_raw_food_source_record,
@@ -258,7 +259,54 @@ def test_starter_canonical_seed_is_small_and_idempotent(tmp_path, monkeypatch):
     conn.close()
 
     assert canonical_count == 15
-    assert search_canonical_foods("egg")[0].canonical_food.display_name == "Egg, Large"
+
+    egg_result = search_canonical_foods("egg")[0]
+    assert egg_result.canonical_food.display_name == "Egg, Large"
+
+    chicken_result = search_canonical_foods("chicken breast")[0]
+    assert chicken_result.canonical_food.display_name == (
+        "Chicken Breast, Cooked, Skinless"
+    )
+    assert "grilled chicken breast" in chicken_result.aliases
+
+    nutrients = get_nutrients_for_canonical_food(chicken_result.canonical_food.id)
+    nutrient_amounts = {
+        nutrient.nutrient_name: nutrient.amount_per_100g for nutrient in nutrients
+    }
+    assert nutrient_amounts == {
+        "Calories": 165.0,
+        "Carbohydrate": 0.0,
+        "Fat": 3.6,
+        "Protein": 31.0,
+    }
+
+
+def test_ensure_starter_seed_populates_missing_active_database(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    ensure_starter_canonical_foods_seeded()
+    ensure_starter_canonical_foods_seeded()
+
+    chicken_results = search_canonical_foods("chicken breast")
+    rice_results = search_canonical_foods("rice")
+    oats_results = search_canonical_foods("oats")
+
+    assert chicken_results[0].canonical_food.display_name == (
+        "Chicken Breast, Cooked, Skinless"
+    )
+    assert rice_results[0].canonical_food.display_name == "White Rice, Cooked"
+    assert oats_results[0].canonical_food.display_name == "Oats, Dry"
+
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) AS count FROM canonical_foods")
+    canonical_count = cursor.fetchone()["count"]
+    cursor.execute("SELECT COUNT(*) AS count FROM canonical_food_nutrients")
+    nutrient_count = cursor.fetchone()["count"]
+    conn.close()
+
+    assert canonical_count == 15
+    assert nutrient_count == 60
 
 
 def test_existing_nutrition_logging_remains_stable(tmp_path, monkeypatch):

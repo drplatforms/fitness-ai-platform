@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from services.food_normalization_service import (
+    ensure_starter_canonical_foods_seeded,
     get_nutrients_for_canonical_food,
     get_raw_food_source_record,
     get_source_links_for_canonical_food,
@@ -114,6 +115,7 @@ def canonical_food_search_endpoint(
             detail="q must be at least 2 characters for canonical food search.",
         )
 
+    ensure_starter_canonical_foods_seeded()
     results = search_canonical_foods(
         query,
         limit=_bounded_limit(limit),

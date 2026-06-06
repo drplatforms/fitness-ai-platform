@@ -25,13 +25,8 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def test_search_endpoint_returns_canonical_display_name_match(tmp_path, monkeypatch):
+def test_search_endpoint_returns_seeded_canonical_chicken_match(tmp_path, monkeypatch):
     _seed_test_db(tmp_path, monkeypatch)
-    create_canonical_food(
-        display_name="Chicken Breast, Cooked, Skinless",
-        food_type="cooked",
-        search_priority=10,
-    )
 
     response = _client().get("/foods/canonical/search?q=chicken breast")
 
@@ -40,9 +35,34 @@ def test_search_endpoint_returns_canonical_display_name_match(tmp_path, monkeypa
     assert payload["success"] is True
     assert payload["query"] == "chicken breast"
     assert payload["results"][0]["display_name"] == "Chicken Breast, Cooked, Skinless"
-    assert payload["results"][0]["matched_on"] == "display_name"
+    assert payload["results"][0]["matched_on"] in {"display_name", "alias"}
+    assert payload["results"][0]["nutrient_summary"] == {
+        "calories_per_100g": 165.0,
+        "protein_g_per_100g": 31.0,
+        "carbohydrate_g_per_100g": 0.0,
+        "fat_g_per_100g": 3.6,
+    }
     assert "raw_description" not in payload["results"][0]
     assert "source_payload_json" not in payload["results"][0]
+
+
+def test_search_endpoint_returns_common_seeded_foods(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    expected_by_query = {
+        "rice": "White Rice, Cooked",
+        "egg": "Egg, Large",
+        "oats": "Oats, Dry",
+    }
+
+    for query, expected_name in expected_by_query.items():
+        response = _client().get(f"/foods/canonical/search?q={query}")
+
+        assert response.status_code == 200
+        results = response.json()["results"]
+        assert results
+        assert results[0]["display_name"] == expected_name
+        assert "nutrient_summary" in results[0]
 
 
 def test_search_endpoint_returns_alias_match(tmp_path, monkeypatch):
@@ -118,7 +138,8 @@ def test_inactive_foods_can_be_requested_explicitly(tmp_path, monkeypatch):
     response = _client().get("/foods/canonical/search?q=rice&include_inactive=true")
 
     assert response.status_code == 200
-    assert response.json()["results"][0]["display_name"] == "Inactive Rice"
+    names = [result["display_name"] for result in response.json()["results"]]
+    assert "Inactive Rice" in names
 
 
 def test_raw_source_payloads_are_not_exposed(tmp_path, monkeypatch):
@@ -160,9 +181,10 @@ def test_raw_source_records_do_not_appear_as_default_user_facing_results(
 
     assert response.status_code == 200
     results = response.json()["results"]
-    assert len(results) == 1
+    assert results
     assert results[0]["display_name"] == "Chicken Breast, Cooked, Skinless"
-    assert "raw_source_record_id" not in results[0]
+    assert all("raw_source_record_id" not in result for result in results)
+    assert all("source_payload_json" not in result for result in results)
 
 
 def test_nutrient_summary_is_included_only_when_nutrients_exist(
@@ -170,15 +192,15 @@ def test_nutrient_summary_is_included_only_when_nutrients_exist(
     monkeypatch,
 ):
     _seed_test_db(tmp_path, monkeypatch)
+    plain_food = create_canonical_food("Plain Test Food", "generic")
     chicken = create_canonical_food("Chicken Breast, Cooked, Skinless", "cooked")
-    rice = create_canonical_food("White Rice, Cooked", "cooked")
     create_canonical_food_nutrient(chicken.id, "Calories", "kcal", 165)
     create_canonical_food_nutrient(chicken.id, "Protein", "g", 31)
     create_canonical_food_nutrient(chicken.id, "Carbohydrate", "g", 0)
     create_canonical_food_nutrient(chicken.id, "Fat", "g", 3.6)
 
     chicken_response = _client().get("/foods/canonical/search?q=chicken")
-    rice_response = _client().get("/foods/canonical/search?q=rice")
+    plain_response = _client().get("/foods/canonical/search?q=plain test")
 
     assert chicken_response.status_code == 200
     assert chicken_response.json()["results"][0]["nutrient_summary"] == {
@@ -187,9 +209,9 @@ def test_nutrient_summary_is_included_only_when_nutrients_exist(
         "carbohydrate_g_per_100g": 0.0,
         "fat_g_per_100g": 3.6,
     }
-    assert rice_response.status_code == 200
-    assert rice_response.json()["results"][0]["canonical_food_id"] == rice.id
-    assert "nutrient_summary" not in rice_response.json()["results"][0]
+    assert plain_response.status_code == 200
+    assert plain_response.json()["results"][0]["canonical_food_id"] == plain_food.id
+    assert "nutrient_summary" not in plain_response.json()["results"][0]
 
 
 def test_empty_or_short_query_is_safe_and_deterministic(tmp_path, monkeypatch):

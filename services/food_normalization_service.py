@@ -29,92 +29,192 @@ STARTER_CANONICAL_FOODS = [
     {
         "display_name": "Chicken Breast, Cooked, Skinless",
         "food_type": "cooked",
-        "aliases": ["chicken breast", "cooked chicken", "boneless chicken"],
+        "aliases": [
+            "chicken breast",
+            "cooked chicken breast",
+            "skinless chicken breast",
+            "grilled chicken breast",
+            "boneless chicken",
+        ],
         "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (165.0, "kcal"),
+            "Protein": (31.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (3.6, "g"),
+        },
     },
     {
         "display_name": "Chicken Breast, Raw, Skinless",
         "food_type": "raw",
-        "aliases": ["raw chicken breast", "uncooked chicken breast"],
+        "aliases": [
+            "raw chicken breast",
+            "uncooked chicken breast",
+            "skinless raw chicken breast",
+        ],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (120.0, "kcal"),
+            "Protein": (22.5, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (2.6, "g"),
+        },
     },
     {
         "display_name": "White Rice, Cooked",
         "food_type": "cooked",
-        "aliases": ["white rice", "cooked rice", "rice"],
+        "aliases": ["rice", "white rice", "cooked rice", "cooked white rice"],
         "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (130.0, "kcal"),
+            "Protein": (2.7, "g"),
+            "Carbohydrate": (28.2, "g"),
+            "Fat": (0.3, "g"),
+        },
     },
     {
         "display_name": "Brown Rice, Cooked",
         "food_type": "cooked",
         "aliases": ["brown rice", "cooked brown rice"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (123.0, "kcal"),
+            "Protein": (2.7, "g"),
+            "Carbohydrate": (25.6, "g"),
+            "Fat": (1.0, "g"),
+        },
     },
     {
         "display_name": "Egg, Large",
         "food_type": "generic",
-        "aliases": ["egg", "large egg", "eggs"],
+        "aliases": ["egg", "eggs", "large egg"],
         "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (143.0, "kcal"),
+            "Protein": (12.6, "g"),
+            "Carbohydrate": (0.7, "g"),
+            "Fat": (9.5, "g"),
+        },
     },
     {
         "display_name": "Ground Beef, 90/10",
         "food_type": "raw",
         "aliases": ["ground beef", "lean ground beef", "90/10 beef"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (176.0, "kcal"),
+            "Protein": (20.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (10.0, "g"),
+        },
     },
     {
         "display_name": "Ground Beef, 80/20",
         "food_type": "raw",
         "aliases": ["80/20 beef", "ground chuck"],
         "search_priority": 30,
+        "nutrients_per_100g": {
+            "Calories": (254.0, "kcal"),
+            "Protein": (17.2, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (20.0, "g"),
+        },
     },
     {
         "display_name": "Salmon, Cooked",
         "food_type": "cooked",
         "aliases": ["salmon", "cooked salmon"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (206.0, "kcal"),
+            "Protein": (22.1, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (12.4, "g"),
+        },
     },
     {
         "display_name": "Greek Yogurt, Plain",
         "food_type": "generic",
         "aliases": ["greek yogurt", "plain greek yogurt", "yogurt"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (59.0, "kcal"),
+            "Protein": (10.3, "g"),
+            "Carbohydrate": (3.6, "g"),
+            "Fat": (0.4, "g"),
+        },
     },
     {
         "display_name": "Oats, Dry",
         "food_type": "raw",
-        "aliases": ["oats", "dry oats", "oatmeal"],
+        "aliases": ["oats", "oatmeal", "dry oats"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (389.0, "kcal"),
+            "Protein": (16.9, "g"),
+            "Carbohydrate": (66.3, "g"),
+            "Fat": (6.9, "g"),
+        },
     },
     {
         "display_name": "Banana",
         "food_type": "generic",
         "aliases": ["banana", "bananas"],
         "search_priority": 10,
+        "nutrients_per_100g": {
+            "Calories": (89.0, "kcal"),
+            "Protein": (1.1, "g"),
+            "Carbohydrate": (22.8, "g"),
+            "Fat": (0.3, "g"),
+        },
     },
     {
         "display_name": "Potato, Baked",
         "food_type": "cooked",
         "aliases": ["potato", "baked potato"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (93.0, "kcal"),
+            "Protein": (2.5, "g"),
+            "Carbohydrate": (21.2, "g"),
+            "Fat": (0.1, "g"),
+        },
     },
     {
         "display_name": "Sweet Potato, Baked",
         "food_type": "cooked",
         "aliases": ["sweet potato", "baked sweet potato"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (90.0, "kcal"),
+            "Protein": (2.0, "g"),
+            "Carbohydrate": (20.7, "g"),
+            "Fat": (0.2, "g"),
+        },
     },
     {
         "display_name": "Broccoli, Cooked",
         "food_type": "cooked",
         "aliases": ["broccoli", "cooked broccoli"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (35.0, "kcal"),
+            "Protein": (2.4, "g"),
+            "Carbohydrate": (7.2, "g"),
+            "Fat": (0.4, "g"),
+        },
     },
     {
         "display_name": "Olive Oil",
         "food_type": "generic",
         "aliases": ["olive oil", "oil"],
         "search_priority": 20,
+        "nutrients_per_100g": {
+            "Calories": (884.0, "kcal"),
+            "Protein": (0.0, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (100.0, "g"),
+        },
     },
 ]
 
@@ -783,7 +883,9 @@ def search_canonical_foods(
                     WHEN canonical_food_aliases.normalized_alias LIKE ? THEN 15
                     WHEN canonical_food_aliases.normalized_alias LIKE ? THEN 35
                     ELSE 90
-                END + canonical_foods.search_priority + canonical_food_aliases.priority AS rank_score
+                END
+                + canonical_foods.search_priority
+                + canonical_food_aliases.priority AS rank_score
             FROM canonical_food_aliases
             JOIN canonical_foods
                 ON canonical_food_aliases.canonical_food_id = canonical_foods.id
@@ -854,7 +956,44 @@ def seed_starter_canonical_foods() -> list[CanonicalFood]:
                 priority=10 + index,
             )
 
+        for nutrient_name, (amount, unit) in seed_food["nutrients_per_100g"].items():
+            create_canonical_food_nutrient(
+                canonical_food_id=food.id,
+                nutrient_name=nutrient_name,
+                nutrient_unit=unit,
+                amount_per_100g=amount,
+                source_policy="manually_curated",
+                confidence="Moderate",
+            )
+
     return seeded_foods
+
+
+def ensure_starter_canonical_foods_seeded() -> None:
+    ensure_food_normalization_tables()
+
+    required_names = [
+        normalize_food_name(seed_food["display_name"])
+        for seed_food in STARTER_CANONICAL_FOODS
+    ]
+    placeholders = ",".join("?" for _ in required_names)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT COUNT(*) AS count
+        FROM canonical_foods
+        WHERE normalized_name IN ({placeholders})
+          AND active = 1
+        """,
+        required_names,
+    )
+    existing_count = cursor.fetchone()["count"]
+    conn.close()
+
+    if existing_count < len(required_names):
+        seed_starter_canonical_foods()
 
 
 def canonical_food_to_dict(food: CanonicalFood) -> dict[str, Any]:

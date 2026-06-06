@@ -4589,12 +4589,29 @@ def target_comparison_value(comparison: dict, keys: list[str]) -> object | None:
 def macro_comparison_from_summary(
     summary: dict, candidate_keys: list[str]
 ) -> dict | None:
+    normalized_candidates = {
+        str(key).lower().replace(" ", "_") for key in candidate_keys
+    }
+
     for key in candidate_keys:
         value = summary.get(key)
         if isinstance(value, dict):
             return value
 
     comparisons = summary.get("comparisons")
+    if isinstance(comparisons, dict):
+        for key in candidate_keys:
+            value = comparisons.get(key)
+            if isinstance(value, dict):
+                return value
+
+        for comparison_key, value in comparisons.items():
+            if not isinstance(value, dict):
+                continue
+            normalized_key = str(comparison_key).lower().replace(" ", "_")
+            if normalized_key in normalized_candidates:
+                return value
+
     if isinstance(comparisons, list):
         for comparison in comparisons:
             if not isinstance(comparison, dict):
@@ -4648,6 +4665,7 @@ def display_nutrition_actuals(actuals: dict, logging_summary: dict) -> None:
             "Calories",
             [
                 "calories",
+                "logged_calories",
                 "calorie_actual",
                 "total_calories",
                 "energy",
@@ -4656,11 +4674,22 @@ def display_nutrition_actuals(actuals: dict, logging_summary: dict) -> None:
             ],
             "kcal",
         ),
-        ("Protein", ["protein", "protein_g", "protein_grams", "total_protein_g"], "g"),
+        (
+            "Protein",
+            [
+                "protein",
+                "logged_protein",
+                "protein_g",
+                "protein_grams",
+                "total_protein_g",
+            ],
+            "g",
+        ),
         (
             "Carbs",
             [
                 "carbs",
+                "logged_carbs",
                 "carbohydrates",
                 "carbohydrate",
                 "carbohydrate_g",
@@ -4669,7 +4698,11 @@ def display_nutrition_actuals(actuals: dict, logging_summary: dict) -> None:
             ],
             "g",
         ),
-        ("Fat", ["fat", "fat_g", "fat_grams", "total_fat_g"], "g"),
+        (
+            "Fat",
+            ["fat", "logged_fat", "fat_g", "fat_grams", "total_fat_g"],
+            "g",
+        ),
     ]
 
     cols = st.columns(4)
@@ -4739,15 +4772,22 @@ def nutrition_comparison_rows_from_summary(summary: dict) -> list[dict]:
                 ["delta", "difference", "variance", "remaining"],
             )
             status = (
-                comparison.get("status") or comparison.get("guidance") or "Available"
+                comparison.get("status")
+                or comparison.get("guidance")
+                or comparison.get("target_status")
+                or "Available"
             )
         else:
             target = None
             delta = None
+            limitations = comparison.get("limitations") or []
+            reason_codes = comparison.get("reason_codes") or []
             status = (
                 comparison.get("limitation")
                 or comparison.get("reason")
                 or comparison.get("reason_code")
+                or (limitations[0] if limitations else None)
+                or (reason_codes[0] if reason_codes else None)
                 or "target_not_approved"
             )
 
@@ -5541,9 +5581,7 @@ def render_nutrition_section(user_id: int) -> None:
                         payload,
                     )
                 except requests.RequestException as exc:
-                    st.error(
-                        "Food logging failed: " f"{extract_api_error_message(exc)}"
-                    )
+                    st.error(f"Food logging failed: {extract_api_error_message(exc)}")
                 else:
                     if data.get("success", True):
                         food_name = selected_food.get("display_name", "Selected food")
@@ -5599,8 +5637,7 @@ def render_nutrition_section(user_id: int) -> None:
                     )
                 except requests.RequestException as exc:
                     st.error(
-                        "Existing food search failed: "
-                        f"{extract_api_error_message(exc)}"
+                        f"Existing food search failed: {extract_api_error_message(exc)}"
                     )
                 else:
                     st.session_state.food_search_results = data.get("foods", [])
@@ -5644,9 +5681,7 @@ def render_nutrition_section(user_id: int) -> None:
                 try:
                     data = api_post("/nutrition/log", payload)
                 except requests.RequestException as exc:
-                    st.error(
-                        "Food logging failed: " f"{extract_api_error_message(exc)}"
-                    )
+                    st.error(f"Food logging failed: {extract_api_error_message(exc)}")
                 else:
                     if data.get("success", True):
                         st.success("Food logged successfully.")

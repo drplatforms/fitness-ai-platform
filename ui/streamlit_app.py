@@ -5275,79 +5275,385 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
     )
 
 
+def canonical_food_nutrient_summary_text(food: dict) -> str:
+    nutrient_summary = food.get("nutrient_summary") or {}
+    if not nutrient_summary:
+        return "Nutrients unavailable"
+
+    summary_parts = []
+    nutrient_specs = [
+        ("calories_per_100g", "kcal"),
+        ("protein_g_per_100g", "g protein"),
+        ("carbohydrate_g_per_100g", "g carbs"),
+        ("fat_g_per_100g", "g fat"),
+    ]
+
+    for key, label in nutrient_specs:
+        value = nutrient_summary.get(key)
+        if value is None:
+            continue
+
+        if isinstance(value, float):
+            value = round(value, 1)
+            if value.is_integer():
+                value = int(value)
+
+        summary_parts.append(f"{value} {label}")
+
+    if not summary_parts:
+        return "Nutrients unavailable"
+
+    return " / ".join(summary_parts) + " per 100g"
+
+
+def canonical_food_option_label(food: dict) -> str:
+    display_name = food.get("display_name") or "Unknown food"
+    food_type = humanize_label(food.get("food_type"))
+    serving_grams = food.get("default_grams")
+    nutrient_summary = canonical_food_nutrient_summary_text(food)
+
+    serving_label = ""
+    if serving_grams is not None:
+        serving_label = f" · default {serving_grams}g"
+
+    type_label = "" if food_type == "Unknown" else f" · {food_type}"
+
+    return f"{display_name}{type_label}{serving_label} · {nutrient_summary}"
+
+
+def canonical_food_result_rows(canonical_foods: list[dict]) -> list[dict]:
+    rows = []
+    for food in canonical_foods:
+        rows.append(
+            {
+                "Food": food.get("display_name", "Unknown food"),
+                "Type": humanize_label(food.get("food_type")),
+                "Default": (
+                    f"{food.get('default_grams')}g"
+                    if food.get("default_grams") is not None
+                    else "Unknown"
+                ),
+                "Nutrition": canonical_food_nutrient_summary_text(food),
+            }
+        )
+
+    return rows
+
+
+def raw_food_option_label(food: dict) -> str:
+    nutrients = food.get("nutrients") or {}
+    calories = nutrients.get("Calories") or nutrients.get("Energy") or {}
+    protein = nutrients.get("Protein") or {}
+
+    summary_parts = []
+    if calories.get("amount") is not None:
+        summary_parts.append(f"{calories.get('amount')} {calories.get('unit', 'kcal')}")
+    if protein.get("amount") is not None:
+        summary_parts.append(
+            f"{protein.get('amount')} {protein.get('unit', 'g')} protein"
+        )
+
+    suffix = f" · {' / '.join(summary_parts)}" if summary_parts else ""
+    return f"{food.get('name', 'Unknown food')}{suffix}"
+
+
+def canonical_food_search_option_label(food: dict) -> str:
+    """User-facing canonical food label. Do not expose backend IDs."""
+    display_name = food.get("display_name") or food.get("name") or "Unknown food"
+    food_type = food.get("food_type")
+    default_unit = food.get("default_unit")
+    default_grams = food.get("default_grams")
+
+    details = []
+    if food_type:
+        details.append(humanize_label(str(food_type)))
+    if default_unit and default_grams:
+        details.append(f"default {default_grams:g}g {default_unit}")
+
+    if details:
+        return f"{display_name} ({'; '.join(details)})"
+
+    return str(display_name)
+
+
+def raw_food_search_option_label(food: dict) -> str:
+    """User-facing fallback food label. Do not expose raw/source IDs."""
+    return str(food.get("name") or food.get("display_name") or "Unknown food")
+
+
+def unique_food_option_label(label: str, existing_labels: set[str]) -> str:
+    """Keep selectbox labels unique without exposing IDs."""
+    if label not in existing_labels:
+        existing_labels.add(label)
+        return label
+
+    suffix = 2
+    candidate = f"{label} ({suffix})"
+    while candidate in existing_labels:
+        suffix += 1
+        candidate = f"{label} ({suffix})"
+
+    existing_labels.add(candidate)
+    return candidate
+
+
 def render_nutrition_section(user_id: int) -> None:
     st.header("Nutrition")
     st.caption(
-        "Fast path: log food first, then review today’s guidance and target comparison."
+        "Fast path: search clean foods, log grams, then review today’s guidance "
+        "and target comparison."
     )
 
     st.subheader("Log Food")
-    st.caption("Search, choose the closest match, enter grams, and save.")
+    st.caption(
+        "Canonical foods are searched first. Existing raw/source foods remain "
+        "available as a fallback."
+    )
 
-    with st.form("nutrition_food_search_form"):
+    canonical_results_key = "canonical_food_search_results"
+    canonical_response_key = "canonical_food_search_response"
+    canonical_error_key = "canonical_food_search_error"
+    raw_fallback_query_key = "raw_food_fallback_query"
+
+    with st.form("nutrition_canonical_food_search_form"):
         food_query = st.text_input(
             "Food search",
             value="",
-            key="nutrition_food_query",
-            placeholder="Example: chicken breast, rice, banana",
+            key="nutrition_canonical_food_query",
+            placeholder="Example: chicken breast, rice, egg, oats",
         )
-        search_food = st.form_submit_button("Search Food", type="primary")
+        search_food = st.form_submit_button("Search Clean Foods", type="primary")
 
     if search_food:
-        if not food_query.strip():
-            st.caption("Enter a food search term to look up nutrition entries.")
+        query = food_query.strip()
+        st.session_state[canonical_results_key] = []
+        st.session_state[canonical_response_key] = {}
+        st.session_state[canonical_error_key] = None
+        st.session_state.food_search_results = []
+        st.session_state[raw_fallback_query_key] = query
+
+        if len(query) < 2:
+            st.caption("Enter at least two characters to search clean foods.")
         else:
             try:
-                data = api_get("/foods/search", params={"query": food_query})
+                canonical_response = api_get(
+                    "/foods/canonical/search",
+                    params={"q": query, "limit": 10},
+                )
             except requests.RequestException as exc:
-                st.error(f"Food search failed: {extract_api_error_message(exc)}")
+                st.session_state[canonical_error_key] = extract_api_error_message(exc)
             else:
-                st.session_state.food_search_results = data.get("foods", [])
-                if not st.session_state.food_search_results:
-                    st.caption("No foods found. Try a simpler search term.")
+                st.session_state[canonical_response_key] = canonical_response
+                st.session_state[canonical_results_key] = (
+                    canonical_response.get("results") or []
+                )
 
-    if st.session_state.food_search_results:
-        food_options = {
-            f"{food['id']} - {food['name']}": food
-            for food in st.session_state.food_search_results
+            if not st.session_state.get(canonical_results_key):
+                try:
+                    fallback_response = api_get(
+                        "/foods/search",
+                        params={"query": query},
+                    )
+                except requests.RequestException:
+                    st.session_state.food_search_results = []
+                else:
+                    st.session_state.food_search_results = (
+                        fallback_response.get("foods") or []
+                    )
+
+    canonical_error = st.session_state.get(canonical_error_key)
+    canonical_results = st.session_state.get(canonical_results_key, [])
+    canonical_response = st.session_state.get(canonical_response_key, {})
+
+    if canonical_error:
+        st.caption(
+            "Clean food search is not available right now. "
+            "Use the existing food database fallback below."
+        )
+        if st.session_state.get("developer_mode", False):
+            with st.expander("Developer details: canonical food search error"):
+                st.write(canonical_error)
+
+    if canonical_results:
+        st.markdown("#### Clean food matches")
+        result_rows = canonical_food_result_rows(canonical_results)
+        if result_rows:
+            st.dataframe(
+                pd.DataFrame(result_rows),
+                width="stretch",
+                hide_index=True,
+            )
+
+        canonical_options = {
+            canonical_food_option_label(food): food
+            for food in canonical_results
+            if food.get("canonical_food_id") is not None
         }
 
-        with st.form("nutrition_log_selected_food_form"):
-            selected_food_label = st.selectbox(
-                "Selected food",
-                list(food_options.keys()),
-                key="nutrition_selected_food",
-            )
-            grams = st.number_input(
-                "Amount in grams",
-                min_value=1.0,
-                value=100.0,
-                step=5.0,
-                key="nutrition_grams",
-            )
-            st.caption(
-                "Meal tagging is not stored yet; keep this log focused on food and amount."
-            )
-            log_food = st.form_submit_button("Save Food Log", type="primary")
+        if canonical_options:
+            with st.form("nutrition_log_canonical_food_form"):
+                selected_food_label = st.selectbox(
+                    "Selected clean food",
+                    list(canonical_options.keys()),
+                    key="nutrition_selected_canonical_food",
+                )
+                selected_food = canonical_options[selected_food_label]
+                default_grams = float(selected_food.get("default_grams") or 100.0)
+                grams = st.number_input(
+                    "Amount in grams",
+                    min_value=1.0,
+                    value=default_grams,
+                    step=5.0,
+                    key="nutrition_canonical_grams",
+                )
+                try:
+                    default_entry_date = datetime.fromisoformat(
+                        selected_nutrition_summary_date_text(user_id)
+                    ).date()
+                except ValueError:
+                    default_entry_date = datetime.now().date()
+                entry_date = st.date_input(
+                    "Log date",
+                    value=default_entry_date,
+                    key=f"nutrition_canonical_log_date_{user_id}",
+                    help=(
+                        "Defaults to the Nutrition Today Summary date when available."
+                    ),
+                )
+                st.caption(
+                    "Nutrition values are estimates from the approved canonical food "
+                    "record. Weights are logged in grams for v1."
+                )
+                log_canonical_food = st.form_submit_button(
+                    "Save Clean Food Log",
+                    type="primary",
+                )
 
-        if log_food:
-            selected_food = food_options[selected_food_label]
-            payload = {
-                "user_id": user_id,
-                "food_id": selected_food["id"],
-                "grams": grams,
-            }
-            try:
-                data = api_post("/nutrition/log", payload)
-            except requests.RequestException as exc:
-                st.error(f"Food logging failed: {extract_api_error_message(exc)}")
-            else:
-                if data.get("success", True):
-                    st.success("Food logged successfully.")
-                    st.session_state.food_search_results = []
-                    st.rerun()
+            if log_canonical_food:
+                payload = {
+                    "canonical_food_id": int(selected_food["canonical_food_id"]),
+                    "grams": grams,
+                    "entry_date": entry_date.isoformat(),
+                }
+                try:
+                    data = api_post(
+                        f"/nutrition/{user_id}/log-canonical",
+                        payload,
+                    )
+                except requests.RequestException as exc:
+                    st.error(
+                        "Food logging failed: " f"{extract_api_error_message(exc)}"
+                    )
                 else:
-                    st.error(data.get("message", "Food logging failed."))
+                    if data.get("success", True):
+                        food_name = selected_food.get("display_name", "Selected food")
+                        st.success(f"Logged {food_name}.")
+                        st.session_state[canonical_results_key] = []
+                        st.session_state[canonical_response_key] = {}
+                        st.session_state[canonical_error_key] = None
+                        st.session_state.food_search_results = []
+                        st.rerun()
+                    else:
+                        st.error(data.get("message", "Food logging failed."))
+
+        developer_details(
+            "Developer details: canonical food search response",
+            canonical_response,
+        )
+    elif search_food and not canonical_error:
+        st.caption("No clean food match found yet. Use existing food database for now.")
+
+    fallback_expanded = bool(
+        st.session_state.get("food_search_results")
+        or (search_food and not canonical_results)
+        or canonical_error
+    )
+
+    with st.expander(
+        "Advanced: existing food database fallback",
+        expanded=fallback_expanded,
+    ):
+        st.caption(
+            "Use this fallback only when a clean canonical food is not available yet. "
+            "These results may include noisier source records."
+        )
+
+        with st.form("nutrition_raw_food_search_form"):
+            fallback_query = st.text_input(
+                "Existing food database search",
+                value=st.session_state.get(raw_fallback_query_key, ""),
+                key="nutrition_raw_food_query",
+                placeholder="Example: chicken breast, rice, banana",
+            )
+            search_raw_food = st.form_submit_button("Search Existing Foods")
+
+        if search_raw_food:
+            if not fallback_query.strip():
+                st.caption("Enter a food search term to look up existing food records.")
+            else:
+                st.session_state[raw_fallback_query_key] = fallback_query.strip()
+                try:
+                    data = api_get(
+                        "/foods/search",
+                        params={"query": fallback_query.strip()},
+                    )
+                except requests.RequestException as exc:
+                    st.error(
+                        "Existing food search failed: "
+                        f"{extract_api_error_message(exc)}"
+                    )
+                else:
+                    st.session_state.food_search_results = data.get("foods", [])
+                    if not st.session_state.food_search_results:
+                        st.caption(
+                            "No existing foods found. Try a simpler search term."
+                        )
+
+        if st.session_state.food_search_results:
+            food_options = {
+                raw_food_option_label(food): food
+                for food in st.session_state.food_search_results
+            }
+
+            with st.form("nutrition_log_raw_food_form"):
+                selected_food_label = st.selectbox(
+                    "Selected existing food",
+                    list(food_options.keys()),
+                    key="nutrition_selected_raw_food",
+                )
+                grams = st.number_input(
+                    "Amount in grams",
+                    min_value=1.0,
+                    value=100.0,
+                    step=5.0,
+                    key="nutrition_raw_grams",
+                )
+                st.caption(
+                    "Existing food logging uses the legacy food ID returned by "
+                    "the existing food database."
+                )
+                log_food = st.form_submit_button("Save Existing Food Log")
+
+            if log_food:
+                selected_food = food_options[selected_food_label]
+                payload = {
+                    "user_id": user_id,
+                    "food_id": selected_food["id"],
+                    "grams": grams,
+                }
+                try:
+                    data = api_post("/nutrition/log", payload)
+                except requests.RequestException as exc:
+                    st.error(
+                        "Food logging failed: " f"{extract_api_error_message(exc)}"
+                    )
+                else:
+                    if data.get("success", True):
+                        st.success("Food logged successfully.")
+                        st.session_state.food_search_results = []
+                        st.rerun()
+                    else:
+                        st.error(data.get("message", "Food logging failed."))
 
     st.divider()
 

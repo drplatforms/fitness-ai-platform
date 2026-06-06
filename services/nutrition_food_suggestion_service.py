@@ -83,6 +83,16 @@ _FORBIDDEN_SUGGESTION_TERMS = {
 }
 
 _SAFE_DEFAULT_LIMITATION = "Food suggestions are limited to approved canonical foods with usable nutrient data."
+_UNSUPPORTED_SUGGESTION_GAP_REASON_CODES = {
+    "calories": "calorie_gap_suggestions_not_enabled_v1",
+    "carbohydrate_g": "carbohydrate_gap_suggestions_not_enabled_v1",
+    "fat_g": "fat_gap_suggestions_not_enabled_v1",
+}
+_UNSUPPORTED_SUGGESTION_GAP_LABELS = {
+    "calories": "calorie",
+    "carbohydrate_g": "carbohydrate",
+    "fat_g": "fat",
+}
 
 
 def _today_iso() -> str:
@@ -476,6 +486,43 @@ def _approved_suggestion_from_candidate(
     )
 
 
+def _is_displayable_macro_gap(gap: NutritionMacroGap) -> bool:
+    return (
+        gap.display_allowed
+        and gap.target_status == TARGET_STATUS_BELOW
+        and gap.gap_value is not None
+        and gap.gap_value > 0
+    )
+
+
+def _unsupported_v1_macro_gaps(
+    macro_gaps: list[NutritionMacroGap],
+) -> list[NutritionMacroGap]:
+    return [
+        gap
+        for gap in macro_gaps
+        if gap.macro_name in _UNSUPPORTED_SUGGESTION_GAP_REASON_CODES
+        and _is_displayable_macro_gap(gap)
+    ]
+
+
+def _unsupported_v1_limitation(
+    unsupported_gaps: list[NutritionMacroGap],
+) -> str:
+    labels = [
+        _UNSUPPORTED_SUGGESTION_GAP_LABELS[gap.macro_name] for gap in unsupported_gaps
+    ]
+    if not labels:
+        return "Only protein food suggestions are enabled in this version."
+    if len(labels) == 1:
+        gap_text = f"{labels[0]} food suggestions are"
+    elif len(labels) == 2:
+        gap_text = f"{labels[0]} and {labels[1]} food suggestions are"
+    else:
+        gap_text = f"{', '.join(labels[:-1])}, and {labels[-1]} food suggestions are"
+    return f"Protein is not below target for this date. {gap_text.capitalize()} not enabled in this version."
+
+
 def approve_food_suggestions(
     *,
     user_id: int,
@@ -502,8 +549,21 @@ def approve_food_suggestions(
             "Protein food suggestions require an approved protein target."
         )
     elif protein_gap.target_status != TARGET_STATUS_BELOW:
-        reason_codes.append("no_macro_gap_detected")
-        limitations.append("No approved protein gap is available for food suggestions.")
+        unsupported_gaps = _unsupported_v1_macro_gaps(macro_gaps)
+        if unsupported_gaps:
+            reason_codes.extend(
+                ["no_supported_suggestion_gap_available", "no_protein_gap_available"]
+            )
+            reason_codes.extend(
+                _UNSUPPORTED_SUGGESTION_GAP_REASON_CODES[gap.macro_name]
+                for gap in unsupported_gaps
+            )
+            limitations.append(_unsupported_v1_limitation(unsupported_gaps))
+        else:
+            reason_codes.append("no_macro_gap_detected")
+            limitations.append(
+                "No approved macro gap is available for food suggestions."
+            )
     elif not approved_suggestions:
         reason_codes.append("no_suitable_canonical_food_found")
         limitations.append(_SAFE_DEFAULT_LIMITATION)

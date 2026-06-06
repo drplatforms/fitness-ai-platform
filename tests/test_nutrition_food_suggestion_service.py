@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import database
+from models.nutrition_food_suggestion_models import NutritionMacroGap
 from models.nutrition_target_models import NutritionTargets
 from models.nutrition_target_vs_actual_models import TARGET_STATUS_UNAVAILABLE
 from services.food_normalization_service import (
@@ -53,6 +54,36 @@ def _approved_targets(
         allow_fat_targets=macros,
         nutrition_display_message="Unit test targets.",
         reason_codes=["unit_test_targets"],
+    )
+
+
+def _macro_gap(
+    macro_name: str,
+    *,
+    target_status: str,
+    display_allowed: bool = True,
+    gap_value: float | None = None,
+    reason_codes: list[str] | None = None,
+    limitations: list[str] | None = None,
+) -> NutritionMacroGap:
+    unit = "kcal" if macro_name == "calories" else "g"
+    return NutritionMacroGap(
+        macro_name=macro_name,
+        target_value=(
+            (100.0 + gap_value)
+            if display_allowed and gap_value
+            else (100.0 if display_allowed else None)
+        ),
+        actual_value=100.0 if display_allowed else None,
+        gap_value=gap_value,
+        unit=unit,
+        target_status=target_status,
+        display_allowed=display_allowed,
+        confidence="Moderate" if display_allowed else "Limited",
+        reason_codes=reason_codes
+        or (["target_not_approved"] if not display_allowed else []),
+        limitations=limitations
+        or (["Target is limited."] if not display_allowed else []),
     )
 
 
@@ -180,6 +211,70 @@ def test_no_macro_gap_produces_no_suggestion_state(tmp_path, monkeypatch):
 
     assert approved.suggestions == []
     assert "no_macro_gap_detected" in approved.reason_codes
+
+
+def test_protein_above_target_with_calorie_gap_uses_supported_gap_semantics():
+    macro_gaps = [
+        _macro_gap("protein_g", target_status="above_target", gap_value=None),
+        _macro_gap(
+            "calories",
+            target_status="below_target",
+            gap_value=400,
+            reason_codes=["calorie_gap_available"],
+        ),
+        _macro_gap(
+            "carbohydrate_g",
+            target_status="near_target",
+            gap_value=None,
+        ),
+        _macro_gap("fat_g", target_status="near_target", gap_value=None),
+    ]
+
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=[],
+        summary_confidence="Moderate",
+    )
+
+    assert approved.suggestions == []
+    assert "no_macro_gap_detected" not in approved.reason_codes
+    assert "no_supported_suggestion_gap_available" in approved.reason_codes
+    assert "no_protein_gap_available" in approved.reason_codes
+    assert "calorie_gap_suggestions_not_enabled_v1" in approved.reason_codes
+    assert any("Protein is not below target" in item for item in approved.limitations)
+
+
+def test_protein_above_target_with_carbohydrate_gap_uses_supported_gap_semantics():
+    macro_gaps = [
+        _macro_gap("protein_g", target_status="above_target", gap_value=None),
+        _macro_gap("calories", target_status="near_target", gap_value=None),
+        _macro_gap(
+            "carbohydrate_g",
+            target_status="below_target",
+            gap_value=75,
+            reason_codes=["carbohydrate_gap_available"],
+        ),
+        _macro_gap("fat_g", target_status="near_target", gap_value=None),
+    ]
+
+    approved = approve_food_suggestions(
+        user_id=1,
+        suggestion_date="2026-06-06",
+        macro_gaps=macro_gaps,
+        candidates=[],
+        summary_confidence="Moderate",
+    )
+
+    assert approved.suggestions == []
+    assert "no_macro_gap_detected" not in approved.reason_codes
+    assert "no_supported_suggestion_gap_available" in approved.reason_codes
+    assert "carbohydrate_gap_suggestions_not_enabled_v1" in approved.reason_codes
+    assert any(
+        "Carbohydrate food suggestions are not enabled" in item
+        for item in approved.limitations
+    )
 
 
 def test_incomplete_logging_adds_cautious_limitations(tmp_path, monkeypatch):

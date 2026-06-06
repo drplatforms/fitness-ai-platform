@@ -4575,6 +4575,19 @@ def target_comparison_value(comparison: dict, keys: list[str]) -> object | None:
     if value is not None:
         return value
 
+    range_fallback_keys = {
+        "target",
+        "target_amount",
+        "target_value",
+        "range",
+        "approved_target",
+        "target_range",
+        "target_display",
+    }
+
+    if not any(key in range_fallback_keys for key in keys):
+        return None
+
     target_min = comparison.get("target_min")
     target_max = comparison.get("target_max")
 
@@ -4648,6 +4661,187 @@ def comparison_is_displayable(comparison: dict) -> bool:
         return False
 
     return True
+
+
+def numeric_nutrition_amount(value: object) -> float | None:
+    """Return a numeric nutrition amount when public response values permit it."""
+
+    amount, _unit = nutrition_amount_parts(value)
+    if amount is None or amount == "":
+        return None
+
+    try:
+        numeric_value = float(amount)
+    except (TypeError, ValueError):
+        return None
+
+    if numeric_value != numeric_value:
+        return None
+
+    return numeric_value
+
+
+def format_nutrition_difference_amount(value: float, unit: str | None) -> str:
+    rounded_value = round(abs(value), 1)
+    if rounded_value.is_integer():
+        rounded_value = int(rounded_value)
+
+    return f"{rounded_value} {unit}".strip() if unit else str(rounded_value)
+
+
+def format_nutrition_difference_range(
+    lower_value: float,
+    upper_value: float,
+    unit: str | None,
+) -> str:
+    lower_value = abs(lower_value)
+    upper_value = abs(upper_value)
+
+    minimum_value = min(lower_value, upper_value)
+    maximum_value = max(lower_value, upper_value)
+
+    if round(minimum_value, 1) == round(maximum_value, 1):
+        return format_nutrition_difference_amount(minimum_value, unit)
+
+    return (
+        f"{format_nutrition_difference_amount(minimum_value, None)}–"
+        f"{format_nutrition_difference_amount(maximum_value, unit)}"
+    )
+
+
+def nutrition_limited_difference_label(comparison: dict) -> str:
+    status = str(
+        comparison.get("target_status")
+        or comparison.get("status")
+        or comparison.get("comparison_status")
+        or ""
+    ).lower()
+    limitations = comparison.get("limitations") or []
+    reason_codes = comparison.get("reason_codes") or []
+    has_limiting_context = any(
+        [
+            limitations,
+            reason_codes,
+            comparison.get("limitation"),
+            comparison.get("reason"),
+            comparison.get("reason_code"),
+        ]
+    )
+
+    if status in {"unavailable", "not_available"} and not has_limiting_context:
+        return "Not available"
+
+    return "Limited"
+
+
+def nutrition_difference_values_from_keys(comparison: dict) -> list[float]:
+    values = []
+    for key in (
+        "delta_min",
+        "delta_max",
+        "delta",
+        "difference",
+        "variance",
+        "remaining",
+    ):
+        numeric_value = numeric_nutrition_amount(comparison.get(key))
+        if numeric_value is not None:
+            values.append(numeric_value)
+
+    return values
+
+
+def nutrition_difference_text(comparison: dict, unit: str | None) -> str:
+    """Return user-facing target-vs-actual difference text.
+
+    The backend remains the source of truth for whether a comparison is displayable.
+    This helper only improves wording for approved range comparisons.
+    """
+
+    status = str(
+        comparison.get("target_status")
+        or comparison.get("status")
+        or comparison.get("comparison_status")
+        or ""
+    ).lower()
+
+    if status in {"blocked", "limited"}:
+        return "Limited"
+
+    if not comparison_is_displayable(comparison):
+        return nutrition_limited_difference_label(comparison)
+
+    actual = target_comparison_value(
+        comparison,
+        ["actual", "actual_amount", "actual_value", "logged", "logged_amount"],
+    )
+    actual_value = numeric_nutrition_amount(actual)
+    target_min = numeric_nutrition_amount(comparison.get("target_min"))
+    target_max = numeric_nutrition_amount(comparison.get("target_max"))
+
+    if actual_value is not None and target_min is not None and target_max is not None:
+        if actual_value < target_min:
+            return (
+                f"{format_nutrition_difference_range(target_min - actual_value, target_max - actual_value, unit)} "
+                "below target"
+            )
+        if actual_value > target_max:
+            return (
+                f"{format_nutrition_difference_amount(actual_value - target_max, unit)} "
+                "above target"
+            )
+        return "within target range"
+
+    target = target_comparison_value(
+        comparison,
+        ["target", "target_amount", "target_value", "approved_target"],
+    )
+    target_value = numeric_nutrition_amount(target)
+
+    if actual_value is not None and target_value is not None:
+        difference = actual_value - target_value
+        if difference < 0:
+            return (
+                f"{format_nutrition_difference_amount(difference, unit)} below target"
+            )
+        if difference > 0:
+            return (
+                f"{format_nutrition_difference_amount(difference, unit)} above target"
+            )
+        return "within target range"
+
+    if status in {"within_target", "within_range", "on_target", "at_target"}:
+        return "within target range"
+
+    difference_values = nutrition_difference_values_from_keys(comparison)
+    if status in {"below_target", "below_range", "under_target"}:
+        if len(difference_values) >= 2:
+            return (
+                f"{format_nutrition_difference_range(difference_values[0], difference_values[1], unit)} "
+                "below target"
+            )
+        if len(difference_values) == 1:
+            return (
+                f"{format_nutrition_difference_amount(difference_values[0], unit)} "
+                "below target"
+            )
+        return "below target"
+
+    if status in {"above_target", "above_range", "over_target"}:
+        if difference_values:
+            return (
+                f"{format_nutrition_difference_amount(difference_values[0], unit)} "
+                "above target"
+            )
+        return "above target"
+
+    if status in {"unavailable", "not_available"}:
+        return nutrition_limited_difference_label(comparison)
+
+    if difference_values:
+        return format_nutrition_difference_amount(difference_values[0], unit)
+
+    return "Not available"
 
 
 def display_nutrition_actuals(actuals: dict, logging_summary: dict) -> None:
@@ -4767,10 +4961,6 @@ def nutrition_comparison_rows_from_summary(summary: dict) -> list[dict]:
                 comparison,
                 ["target", "target_amount", "target_value", "range", "approved_target"],
             )
-            delta = target_comparison_value(
-                comparison,
-                ["delta", "difference", "variance", "remaining"],
-            )
             status = (
                 comparison.get("status")
                 or comparison.get("guidance")
@@ -4779,7 +4969,6 @@ def nutrition_comparison_rows_from_summary(summary: dict) -> list[dict]:
             )
         else:
             target = None
-            delta = None
             limitations = comparison.get("limitations") or []
             reason_codes = comparison.get("reason_codes") or []
             status = (
@@ -4804,11 +4993,7 @@ def nutrition_comparison_rows_from_summary(summary: dict) -> list[dict]:
                     if target is not None
                     else "Limited"
                 ),
-                "Difference": (
-                    format_nutrition_value(delta, unit)
-                    if delta is not None
-                    else "Limited"
-                ),
+                "Difference": nutrition_difference_text(comparison, unit),
                 "Status": status_text,
             }
         )

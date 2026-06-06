@@ -13,6 +13,12 @@ STREAMLIT_HELPER_NAMES = {
     "target_comparison_value",
     "macro_comparison_from_summary",
     "comparison_is_displayable",
+    "nutrition_difference_text",
+    "nutrition_difference_values_from_keys",
+    "nutrition_limited_difference_label",
+    "format_nutrition_difference_range",
+    "format_nutrition_difference_amount",
+    "numeric_nutrition_amount",
     "display_nutrition_actuals",
     "nutrition_comparison_rows_from_summary",
 }
@@ -138,4 +144,90 @@ def test_target_vs_actual_rows_render_from_accepted_api_shape() -> None:
     assert rows[1]["Nutrient"] == "Protein"
     assert rows[1]["Logged"] == "128.8 g"
     assert rows[1]["Target"] == "150–190 g"
+    assert rows[1]["Difference"] == "21.2–61.2 g below target"
     assert rows[1]["Status"] == "Below Target."
+
+
+def test_nutrition_difference_text_for_range_below_target() -> None:
+    helpers = load_streamlit_nutrition_helpers()
+
+    assert (
+        helpers["nutrition_difference_text"](
+            {
+                "actual": 128.8,
+                "target_min": 150.0,
+                "target_max": 185.0,
+                "target_status": "below_target",
+                "comparison_available": True,
+            },
+            "g",
+        )
+        == "21.2–56.2 g below target"
+    )
+
+
+def test_nutrition_difference_text_for_range_within_target() -> None:
+    helpers = load_streamlit_nutrition_helpers()
+
+    assert (
+        helpers["nutrition_difference_text"](
+            {
+                "actual": 165.0,
+                "target_min": 150.0,
+                "target_max": 185.0,
+                "target_status": "within_target",
+                "comparison_available": True,
+            },
+            "g",
+        )
+        == "within target range"
+    )
+
+
+def test_nutrition_difference_text_for_range_above_target() -> None:
+    helpers = load_streamlit_nutrition_helpers()
+
+    assert (
+        helpers["nutrition_difference_text"](
+            {
+                "actual": 197.5,
+                "target_min": 150.0,
+                "target_max": 185.0,
+                "target_status": "above_target",
+                "comparison_available": True,
+            },
+            "g",
+        )
+        == "12.5 g above target"
+    )
+
+
+def test_nutrition_difference_text_for_limited_comparison() -> None:
+    helpers = load_streamlit_nutrition_helpers()
+
+    assert (
+        helpers["nutrition_difference_text"](
+            {
+                "target_status": "limited",
+                "comparison_available": False,
+                "limitations": ["nutrition_targets_limited_by_logging_quality"],
+            },
+            "g",
+        )
+        == "Limited"
+    )
+
+
+def test_nutrition_difference_text_for_unavailable_comparison() -> None:
+    helpers = load_streamlit_nutrition_helpers()
+
+    assert (
+        helpers["nutrition_difference_text"](
+            {
+                "target_status": "unavailable",
+                "comparison_available": False,
+            },
+            "g",
+        )
+        == "Not available"
+    )

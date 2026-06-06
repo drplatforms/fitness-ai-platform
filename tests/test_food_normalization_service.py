@@ -32,7 +32,8 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
 
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name
         FROM sqlite_master
         WHERE type = 'table'
@@ -43,7 +44,8 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
             'canonical_food_nutrients',
             'food_source_links'
           )
-        """)
+        """
+    )
     table_names = {row["name"] for row in cursor.fetchall()}
     conn.close()
 
@@ -250,7 +252,7 @@ def test_starter_canonical_seed_is_expanded_and_idempotent(tmp_path, monkeypatch
 
     assert len(first_seed) == len(STARTER_CANONICAL_FOODS)
     assert len(second_seed) == len(STARTER_CANONICAL_FOODS)
-    assert len(first_seed) >= 50
+    assert len(first_seed) >= 120
 
     conn = database.get_connection()
     cursor = conn.cursor()
@@ -322,6 +324,14 @@ def test_expanded_seed_supports_common_daily_food_aliases(tmp_path, monkeypatch)
         "peanut butter": "Peanut Butter",
         "egg whites": "Egg Whites",
         "cottage cheese": "Cottage Cheese, Low Fat",
+        "ground turkey": "Turkey, Ground 93/7",
+        "deli turkey": "Turkey Breast, Deli",
+        "ribeye": "Ribeye Steak, Cooked",
+        "greek yogurt": "Greek Yogurt, Plain",
+        "tortilla": "Tortilla, Flour",
+        "chickpeas": "Chickpeas, Cooked",
+        "ranch": "Ranch Dressing",
+        "hummus": "Hummus",
     }
 
     for query, expected_name in expected_names_by_query.items():

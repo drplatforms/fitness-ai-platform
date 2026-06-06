@@ -58,6 +58,12 @@ def test_search_endpoint_returns_common_seeded_foods(tmp_path, monkeypatch):
         "beans": "Black Beans, Cooked",
         "protein powder": "Whey Protein Powder, Generic",
         "peanut butter": "Peanut Butter",
+        "ground turkey": "Turkey, Ground 93/7",
+        "tortilla": "Tortilla, Flour",
+        "greek yogurt": "Greek Yogurt, Plain",
+        "egg whites": "Egg Whites",
+        "ranch": "Ranch Dressing",
+        "hummus": "Hummus",
     }
 
     for query, expected_name in expected_by_query.items():

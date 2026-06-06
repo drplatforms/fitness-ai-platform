@@ -276,3 +276,37 @@ def test_canonical_logging_does_not_expose_raw_source_payloads(tmp_path, monkeyp
     payload = response.json()
     assert "source_payload_json" not in payload
     assert "raw_description" not in payload
+
+
+def test_v3_daily_staple_canonical_food_can_be_logged(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+    seed_starter_canonical_foods()
+    search_response = _client().get("/foods/canonical/search?q=ground%20turkey")
+    assert search_response.status_code == 200
+    turkey_id = search_response.json()["results"][0]["canonical_food_id"]
+
+    response = _client().post(
+        "/nutrition/1/log-canonical",
+        json={
+            "canonical_food_id": turkey_id,
+            "grams": 100,
+            "entry_date": "2026-06-05",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["display_name"] == "Turkey, Ground 93/7"
+    assert response.json()["nutrient_summary"] == {
+        "calories": 150.0,
+        "protein_g": 22.0,
+        "carbohydrate_g": 0.0,
+        "fat_g": 7.0,
+    }
+
+    target_response = _client().get("/nutrition/1/target-vs-actual?date=2026-06-05")
+    assert target_response.status_code == 200
+    actuals = target_response.json()["nutrition_actuals"]
+    assert actuals["logged_calories"] == 150.0
+    assert actuals["logged_protein"] == 22.0
+    assert actuals["logged_carbs"] == 0.0
+    assert actuals["logged_fat"] == 7.0

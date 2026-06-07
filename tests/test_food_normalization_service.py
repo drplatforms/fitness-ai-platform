@@ -32,8 +32,7 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
 
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT name
         FROM sqlite_master
         WHERE type = 'table'
@@ -44,8 +43,7 @@ def test_normalization_tables_initialize_safely(tmp_path, monkeypatch):
             'canonical_food_nutrients',
             'food_source_links'
           )
-        """
-    )
+        """)
     table_names = {row["name"] for row in cursor.fetchall()}
     conn.close()
 

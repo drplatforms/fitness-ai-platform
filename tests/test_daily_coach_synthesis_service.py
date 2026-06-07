@@ -6,6 +6,12 @@ from fastapi.testclient import TestClient
 import database
 from api.main import app
 from models.coaching_decision_models import CoachingDecision
+from models.daily_coach_synthesis_models import DailyCoachSynthesis
+from models.nutrition_food_suggestion_models import (
+    ApprovedFoodSuggestion,
+    ApprovedNutritionFoodSuggestions,
+    NutritionMacroGap,
+)
 from models.nutrition_target_models import NutritionTargets
 from models.nutrition_target_vs_actual_models import (
     LOGGING_COMPLETENESS_LIKELY_INCOMPLETE,
@@ -454,6 +460,77 @@ def _nutrition_summary_and_guidance(
         limitations=[],
     )
     return summary, guidance
+
+
+def _food_suggestions(
+    *,
+    primary_gap: str | None = "protein_g",
+    confidence: str = "Moderate",
+    with_suggestions: bool = True,
+    reason_codes: list[str] | None = None,
+    limitations: list[str] | None = None,
+) -> ApprovedNutritionFoodSuggestions:
+    macro_name = primary_gap or "protein_g"
+    unit = "kcal" if macro_name == "calories" else "g"
+    macro_gaps = [
+        NutritionMacroGap(
+            macro_name=macro_name,
+            target_value=2000 if macro_name == "calories" else 150,
+            actual_value=1700 if macro_name == "calories" else 100,
+            gap_value=300 if macro_name == "calories" else 50,
+            unit=unit,
+            target_status=TARGET_STATUS_BELOW,
+            display_allowed=True,
+            confidence=confidence,
+            reason_codes=[f"{macro_name}_gap_available"],
+            limitations=[],
+        )
+    ]
+    suggestions = []
+    if with_suggestions:
+        display_name = {
+            "protein_g": "Chicken Breast, Cooked, Skinless",
+            "carbohydrate_g": "White Rice, Cooked",
+            "calories": "Oats, Dry",
+            "fat_g": "Olive Oil",
+        }.get(macro_name, "Chicken Breast, Cooked, Skinless")
+        suggestions.append(
+            ApprovedFoodSuggestion(
+                canonical_food_id=101,
+                display_name=display_name,
+                suggested_grams=150 if macro_name != "fat_g" else 10,
+                estimated_calories=250,
+                estimated_protein_g=35 if macro_name == "protein_g" else 4,
+                estimated_carbohydrate_g=45 if macro_name == "carbohydrate_g" else 8,
+                estimated_fat_g=10 if macro_name == "fat_g" else 3,
+                macro_gap_addressed=macro_name,
+                suggestion_summary="The Nutrition tab has an approved food option.",
+                confidence=confidence,
+                reason_codes=["canonical_food_nutrients_available"],
+                limitations=[],
+            )
+        )
+
+    return ApprovedNutritionFoodSuggestions(
+        user_id=999,
+        suggestion_date="2026-06-05",
+        primary_gap=primary_gap,
+        macro_gaps=macro_gaps,
+        suggestions=suggestions,
+        confidence=confidence,
+        reason_codes=reason_codes
+        or (
+            ["food_suggestions_available"]
+            if suggestions
+            else ["no_supported_suggestion_gap_available"]
+        ),
+        limitations=limitations
+        or (
+            []
+            if suggestions
+            else ["No approved supported suggestion gap is available."]
+        ),
+    )
 
 
 def _with_nutrition(
@@ -1035,3 +1112,124 @@ def test_daily_coach_synthesis_endpoint_keeps_recommendation_endpoint_shape_stab
     assert debug_response.status_code == 200
     assert "runtime_metadata" in debug_response.json()
     assert "training_execution_summary" in debug_response.json()
+
+
+def test_daily_coach_synthesis_composes_approved_food_suggestion_context():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        protein_status=TARGET_STATUS_BELOW,
+        protein_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+    components["approved_food_suggestions"] = _food_suggestions()
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    violations = validate_daily_coach_synthesis(
+        synthesis,
+        recommendation_context=components["recommendation_context"],
+        approved_workout_plan=components["approved_workout_plan"],
+        training_execution_summary=components["training_execution_summary"],
+        nutrition_target_vs_actual_summary=nutrition_summary,
+        approved_nutrition_guidance=guidance,
+    )
+
+    assert violations == []
+    assert "Nutrition tab" in synthesis.recommended_focus
+    assert "protein-focused" in synthesis.recommended_focus
+    assert "nutrition_food_suggestions_context_available" in synthesis.reason_codes
+    assert "canonical_food_id" not in str(synthesis.to_dict())
+
+
+@pytest.mark.parametrize(
+    ("primary_gap", "expected_phrase"),
+    [
+        ("carbohydrate_g", "Carbohydrate suggestions are available"),
+        ("calories", "approved calorie-support food options"),
+        ("fat_g", "approved fat-support food options"),
+    ],
+)
+def test_daily_coach_synthesis_references_nonprotein_food_suggestions_safely(
+    primary_gap, expected_phrase
+):
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        calories_available=True,
+        macros_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+    components["approved_food_suggestions"] = _food_suggestions(primary_gap=primary_gap)
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert expected_phrase.lower() in synthesis.recommended_focus.lower()
+    assert "canonical_food_id" not in combined
+    assert "suggested_grams" not in combined
+    assert "you must" not in combined
+
+
+def test_low_confidence_food_suggestions_add_cautious_limitation_only():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        protein_status=TARGET_STATUS_BELOW,
+        protein_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+    components["approved_food_suggestions"] = _food_suggestions(
+        confidence="Low",
+        limitations=["Suggestions are limited because logging appears incomplete."],
+    )
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+
+    assert "Food suggestions are limited" in synthesis.recommended_focus
+    assert "Food suggestions are limited" in synthesis.logging_focus
+    assert "approved protein-focused food options" not in synthesis.recommended_focus
+    assert any("Food suggestions are limited" in item for item in synthesis.limitations)
+
+
+def test_no_suggestion_state_does_not_create_negative_or_judgmental_language():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    nutrition_summary, guidance = _nutrition_summary_and_guidance(
+        completeness="complete_enough_for_guidance",
+        confidence="Moderate",
+        calories_available=True,
+        macros_available=True,
+    )
+    components = _with_nutrition(components, nutrition_summary, guidance)
+    components["approved_food_suggestions"] = _food_suggestions(
+        primary_gap=None,
+        with_suggestions=False,
+        reason_codes=["no_supported_suggestion_gap_available"],
+        limitations=["No approved supported suggestion gap is available."],
+    )
+
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    combined = str(synthesis.to_dict()).lower()
+
+    assert "no approved supported gap is available" in combined
+    assert "nutrition_food_suggestions_context_limited" in synthesis.reason_codes
+    assert "failed" not in combined
+    assert "discipline" not in combined
+    assert "must" not in combined
+
+
+def test_daily_coach_synthesis_rejects_food_suggestion_internal_fields():
+    components = _build_components(summary=_summary(completed_execution_count=0))
+    synthesis = build_daily_coach_synthesis_from_components(**components)
+    bad_synthesis = DailyCoachSynthesis(
+        **{
+            **synthesis.to_dict(),
+            "recommended_focus": "Use canonical_food_id 101 and suggested_grams from the food suggestion payload.",
+        }
+    )
+
+    violations = validate_daily_coach_synthesis(bad_synthesis)
+
+    assert any("food suggestion internals" in violation for violation in violations)

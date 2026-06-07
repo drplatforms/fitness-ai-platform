@@ -11,6 +11,9 @@ from api.routes.nutrition import router as nutrition_router
 from api.routes.nutrition_food_suggestions import (
     router as nutrition_food_suggestion_router,
 )
+from api.routes.nutrition_target_calibration import (
+    router as nutrition_target_calibration_router,
+)
 from api.routes.nutrition_target_formula import (
     router as nutrition_target_formula_router,
 )
@@ -37,6 +40,7 @@ app.include_router(report_router)
 app.include_router(recovery_router)
 app.include_router(nutrition_target_vs_actual_router)
 app.include_router(nutrition_target_formula_router)
+app.include_router(nutrition_target_calibration_router)
 app.include_router(nutrition_food_suggestion_router)
 app.include_router(nutrition_trend_router)
 app.include_router(nutrition_router)

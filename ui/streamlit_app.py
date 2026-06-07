@@ -5879,6 +5879,160 @@ def render_nutrition_food_suggestions_card(user_id: int) -> None:
     )
 
 
+def nutrition_explanation_public_text(value: object) -> str:
+    """Humanize public-safe nutrition explanation text without exposing raw codes."""
+    if value is None or value == "":
+        return ""
+
+    if isinstance(value, dict):
+        for key in (
+            "message",
+            "label",
+            "description",
+            "text",
+            "summary",
+            "reason",
+            "code",
+        ):
+            if value.get(key):
+                return nutrition_explanation_public_text(value.get(key))
+        return humanize_label(str(value))
+
+    if isinstance(value, list):
+        parts = [nutrition_explanation_public_text(item) for item in value]
+        return " ".join(part for part in parts if part)
+
+    text_value = str(value).strip()
+    if not text_value:
+        return ""
+
+    explanation_labels = {
+        "incomplete_actual_set_logging_limits_inference": "Workout logging is incomplete, so recent training trends are limited.",
+        "nutrition_targets_limited_by_logging_quality": "Nutrition guidance is limited because recent logging quality is incomplete.",
+        "nutrition_actuals_unavailable": "Logged nutrition actuals are unavailable for this date.",
+        "no_nutrition_logs_today": "No nutrition logs were found for this date.",
+        "no_logs": "No nutrition logs were found for this date.",
+        "no_approved_macro_gap": "No approved macro gap is available for this date.",
+        "target_not_approved": "Some targets are not approved for display yet.",
+        "calibration_not_ready": "Calibration is not ready yet because more consistent logs or weigh-ins are needed.",
+        "calibration_read_only": "Calibration context is read-only and does not change targets.",
+        "trend_context_limited": "Trend context is limited with the current logging window.",
+        "food_suggestions_limited": "Food suggestion context is limited for this date.",
+    }
+
+    if text_value in explanation_labels:
+        return explanation_labels[text_value]
+
+    if " " in text_value and "_" not in text_value:
+        return text_value if text_value.endswith((".", "!", "?")) else f"{text_value}."
+
+    return nutrition_public_text(text_value)
+
+
+def display_nutrition_explanation_context(
+    explanation: dict,
+    field_name: str,
+    label: str,
+) -> None:
+    value = explanation.get(field_name)
+    friendly_value = nutrition_explanation_public_text(value)
+    if friendly_value:
+        st.write(f"**{label}:** {friendly_value}")
+
+
+def render_nutrition_explanation_preview_card(user_id: int) -> None:
+    st.subheader("Nutrition Explanation")
+    st.caption(
+        "Approved explanation for the selected nutrition date. This explains context only; "
+        "it does not change targets or create a meal plan."
+    )
+
+    explanation_date = selected_nutrition_summary_date_text(user_id)
+
+    try:
+        explanation_response = api_get(
+            f"/nutrition/{user_id}/explanation/preview",
+            params={"date": explanation_date},
+        )
+    except requests.RequestException as exc:
+        st.caption(
+            "Nutrition explanation is not available yet. "
+            f"{extract_api_error_message(exc)}"
+        )
+        return
+
+    if not explanation_response.get("success"):
+        st.caption("Nutrition explanation is not available for this date yet.")
+        developer_details(
+            "Developer details: nutrition explanation preview response",
+            explanation_response,
+        )
+        return
+
+    explanation = explanation_response.get("approved_nutrition_explanation") or {}
+    confidence = explanation.get("confidence") or explanation_response.get(
+        "confidence", "Unknown"
+    )
+    response_date = explanation_response.get("explanation_date", explanation_date)
+
+    metric_cols = st.columns(2)
+    metric_cols[0].metric("Date", response_date)
+    metric_cols[1].metric("Confidence", confidence)
+
+    summary = nutrition_explanation_public_text(explanation.get("explanation_summary"))
+    if summary:
+        st.write(summary)
+    else:
+        st.caption("Approved nutrition explanation copy is limited for this date.")
+
+    with st.expander("Explanation context", expanded=True):
+        display_nutrition_explanation_context(
+            explanation,
+            "macro_context",
+            "Macro context",
+        )
+        display_nutrition_explanation_context(
+            explanation,
+            "food_suggestion_context",
+            "Food suggestion context",
+        )
+        display_nutrition_explanation_context(
+            explanation,
+            "trend_context",
+            "Trend context",
+        )
+        display_nutrition_explanation_context(
+            explanation,
+            "calibration_context",
+            "Calibration context",
+        )
+        display_nutrition_explanation_context(
+            explanation,
+            "limitations_context",
+            "Limitations context",
+        )
+
+    limitations = []
+    limitations.extend(explanation.get("limitations") or [])
+    limitations.extend(explanation_response.get("limitations") or [])
+
+    friendly_limitations = []
+    for limitation in limitations:
+        friendly = nutrition_explanation_public_text(limitation)
+        if friendly and friendly not in friendly_limitations:
+            friendly_limitations.append(friendly)
+
+    if friendly_limitations:
+        with st.expander("Nutrition explanation limitations", expanded=False):
+            for limitation in friendly_limitations:
+                st.caption(f"• {limitation}")
+
+    developer_details(
+        "Developer details: nutrition explanation preview response",
+        explanation_response,
+    )
+
+
 TREND_CALIBRATION_LABELS = {
     "not_ready": "Not ready",
     "early_signal": "Early signal",
@@ -6531,6 +6685,8 @@ def render_nutrition_section(user_id: int) -> None:
     render_nutrition_target_vs_actual_card(user_id)
 
     render_nutrition_food_suggestions_card(user_id)
+
+    render_nutrition_explanation_preview_card(user_id)
 
     render_nutrition_formula_target_transparency_card(user_id)
 

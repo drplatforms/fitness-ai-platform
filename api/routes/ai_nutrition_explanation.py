@@ -5,9 +5,13 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-from models.ai_nutrition_explanation_models import ApprovedNutritionExplanation
+from models.ai_nutrition_explanation_models import (
+    ApprovedNutritionExplanation,
+    ApprovedNutritionExplanationResult,
+)
 from services.ai_nutrition_explanation_service import (
     build_configured_approved_nutrition_explanation,
+    build_configured_approved_nutrition_explanation_with_metadata,
 )
 from services.user_service import get_user_profile
 
@@ -47,6 +51,41 @@ def nutrition_explanation_preview_endpoint(
         ) from exc
 
     return _build_public_response(approved_explanation)
+
+
+@router.get("/nutrition/{user_id}/explanation/debug")
+def nutrition_explanation_debug_endpoint(
+    user_id: int,
+    explanation_date: str | None = Query(default=None, alias="date"),
+):
+    """Return developer-safe runtime metadata for nutrition explanation generation."""
+
+    resolved_date = _resolve_explanation_date(explanation_date)
+    _get_user_profile_or_404(user_id)
+
+    try:
+        result = build_configured_approved_nutrition_explanation_with_metadata(
+            user_id=user_id,
+            explanation_date=resolved_date,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "not found" in message.lower() else 400
+        raise HTTPException(
+            status_code=status_code,
+            detail=(
+                "AI nutrition explanation validation failed."
+                if status_code == 400
+                else "User not found."
+            ),
+        ) from exc
+    except Exception as exc:  # pragma: no cover - defensive debug-safe boundary
+        raise HTTPException(
+            status_code=500,
+            detail="AI nutrition explanation generation failed.",
+        ) from exc
+
+    return _build_debug_response(result)
 
 
 def _resolve_explanation_date(explanation_date: str | None) -> str:
@@ -99,4 +138,19 @@ def _approved_explanation_to_public_dict(
         "confidence": approved_explanation.confidence,
         "reason_codes": list(approved_explanation.reason_codes),
         "limitations": list(approved_explanation.limitations),
+    }
+
+
+def _build_debug_response(
+    result: ApprovedNutritionExplanationResult,
+) -> dict[str, Any]:
+    approved_explanation = result.approved_nutrition_explanation
+    return {
+        "success": True,
+        "user_id": approved_explanation.user_id,
+        "explanation_date": approved_explanation.explanation_date,
+        "approved_nutrition_explanation": _approved_explanation_to_public_dict(
+            approved_explanation
+        ),
+        "runtime_metadata": result.runtime_metadata.to_debug_dict(),
     }

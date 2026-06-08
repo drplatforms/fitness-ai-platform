@@ -170,6 +170,7 @@ def _food_suggestions() -> FakePayload:
                     "estimated_carbohydrate_g": 0,
                     "estimated_fat_g": 5.4,
                     "macro_gap_addressed": "protein_g",
+                    "suggestion_summary": "150 g chicken breast can support the protein gap.",
                     "confidence": "Moderate",
                     "reason_codes": ["protein_suggestion_available"],
                     "limitations": [],
@@ -882,6 +883,11 @@ def test_value_aware_provider_context_includes_approved_values(approved_context)
     assert suggestion["suggested_grams"] == 150
     assert suggestion["estimated_protein_g"] == 46.5
     assert suggestion["macro_gap_addressed"] == "protein_g"
+    assert suggestion["macro_support_category"] == "protein_support"
+    assert (
+        suggestion["suggestion_summary"]
+        == "150 g chicken breast can support the protein gap."
+    )
 
 
 def test_value_aware_provider_context_excludes_disallowed_target_values(
@@ -952,6 +958,14 @@ def test_provider_prompt_allows_only_value_aware_approved_values(approved_contex
     )
     assert "You may quote foods only when they appear in value_aware_context" in prompt
     assert "Do not calculate gaps" in prompt
+    assert (
+        "Meal/snack guidance must use only approved_food_suggestion_candidates"
+        in prompt
+    )
+    assert "Frame approved food suggestions as practical options" in prompt
+    assert (
+        "if none are present, say food suggestions are limited or unavailable" in prompt
+    )
     assert value_context["approved_target_ranges"]
     assert value_context["macro_statuses_and_gaps"]
     assert value_context["approved_food_suggestion_candidates"]
@@ -994,6 +1008,78 @@ def test_value_aware_provider_candidate_can_quote_approved_values(
     assert result.approved_nutrition_explanation.source == "ai_validated"
     assert result.runtime_metadata.fallback_used is False
     assert result.runtime_metadata.validation_status == "approved"
+
+
+def test_value_aware_food_suggestion_copy_uses_approved_candidate_only(
+    approved_context,
+):
+    candidate = CandidateNutritionExplanation(
+        explanation_summary=(
+            "Approved nutrition context is available with a useful protein option."
+        ),
+        macro_context="Protein is below target based on logged meals.",
+        food_suggestion_context=(
+            "For a simple snack-style option, chicken breast is approved in the "
+            "Nutrition tab; 150 g would add about 46.5 g protein."
+        ),
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context=(
+            "Use only approved backend values when interpreting today's nutrition."
+        ),
+        confidence="Moderate",
+        reason_codes=["provider_candidate_food_suggestion_copy"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        approved_context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "ai_validated"
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.validation_status == "approved"
+
+
+def test_value_aware_food_suggestion_copy_rejects_unapproved_food(
+    approved_context,
+):
+    candidate = CandidateNutritionExplanation(
+        explanation_summary="Approved nutrition context is available.",
+        macro_context="Protein is below target based on logged meals.",
+        food_suggestion_context=(
+            "Greek yogurt would be a simple snack option for this gap."
+        ),
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context=(
+            "Use only approved backend values when interpreting today's nutrition."
+        ),
+        confidence="Moderate",
+        reason_codes=["provider_candidate_unapproved_food"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        approved_context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "deterministic_fallback"
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "candidate_validation_failure"
+    assert (
+        "unapproved_food_mention_detected" in result.runtime_metadata.validation_errors
+    )
 
 
 def test_provider_prompt_includes_one_compact_valid_json_example(approved_context):

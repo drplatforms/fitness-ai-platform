@@ -566,6 +566,8 @@ Strict output rules:
 - Do not copy keys from the approved context into the output unless they are explicitly listed in the schema.
 - You may quote numbers only when they appear in value_aware_context.
 - You may quote foods only when they appear in value_aware_context.approved_food_suggestion_candidates.
+- Meal/snack guidance must use only approved_food_suggestion_candidates.
+- Do not invent foods, serving sizes, calories, macros, or meal plans.
 - Do not calculate gaps; only restate gap values that appear in value_aware_context.
 
 CandidateNutritionExplanation allowed output schema:
@@ -589,6 +591,8 @@ Approved context JSON:
 Forbidden language and behavior:
 - Do not invent nutrition targets, logged actuals, foods, servings, macros, or nutrient values.
 - Do not quote target ranges, logged actuals, gap values, or food details unless they are present in value_aware_context.
+- For food_suggestion_context, use only approved_food_suggestion_candidates; if none are present, say food suggestions are limited or unavailable.
+- Frame approved food suggestions as practical options, not rigid prescriptions.
 - Do not claim targets changed or calibration was applied.
 - Do not create meal plans. Meal/snack framing must be brief and based only on approved food suggestions.
 - Do not mention raw data, SQL, providers, CrewAI, Ollama, debug metadata, or validation metadata.
@@ -1323,12 +1327,27 @@ def _approved_food_suggestion_candidates_for_provider(
                     suggestion.get("estimated_fat_g")
                 ),
                 "macro_gap_addressed": suggestion.get("macro_gap_addressed"),
+                "macro_support_category": _food_suggestion_support_category(
+                    suggestion.get("macro_gap_addressed")
+                ),
+                "suggestion_summary": suggestion.get("suggestion_summary"),
                 "confidence": suggestion.get("confidence"),
             }
         )
         for suggestion in suggestions[:3]
         if isinstance(suggestion, dict)
     ]
+
+
+def _food_suggestion_support_category(macro_gap_addressed: Any) -> str | None:
+    if not isinstance(macro_gap_addressed, str):
+        return None
+    return {
+        "protein_g": "protein_support",
+        "carbohydrate_g": "carbohydrate_support",
+        "calories": "calorie_support",
+        "fat_g": "fat_support",
+    }.get(macro_gap_addressed)
 
 
 def _logging_summary_for_provider(
@@ -1649,6 +1668,7 @@ def _food_suggestions_projection(food_suggestions: Any) -> dict[str, Any]:
                 "estimated_carbohydrate_g": suggestion.get("estimated_carbohydrate_g"),
                 "estimated_fat_g": suggestion.get("estimated_fat_g"),
                 "macro_gap_addressed": suggestion.get("macro_gap_addressed"),
+                "suggestion_summary": suggestion.get("suggestion_summary"),
                 "confidence": suggestion.get("confidence"),
                 "reason_codes": suggestion.get("reason_codes", []),
                 "limitations": suggestion.get("limitations", []),

@@ -12,6 +12,8 @@ from models.ai_nutrition_explanation_models import (
 from services.ai_nutrition_explanation_service import (
     build_configured_approved_nutrition_explanation,
     build_configured_approved_nutrition_explanation_with_metadata,
+    build_debug_approved_food_suggestion_candidates,
+    build_nutrition_explanation_context,
 )
 from services.user_service import get_user_profile
 
@@ -64,9 +66,14 @@ def nutrition_explanation_debug_endpoint(
     _get_user_profile_or_404(user_id)
 
     try:
+        context = build_nutrition_explanation_context(
+            user_id=user_id,
+            explanation_date=resolved_date,
+        )
         result = build_configured_approved_nutrition_explanation_with_metadata(
             user_id=user_id,
             explanation_date=resolved_date,
+            context=context,
         )
     except ValueError as exc:
         message = str(exc)
@@ -85,7 +92,12 @@ def nutrition_explanation_debug_endpoint(
             detail="AI nutrition explanation generation failed.",
         ) from exc
 
-    return _build_debug_response(result)
+    return _build_debug_response(
+        result,
+        approved_food_suggestion_candidates=(
+            build_debug_approved_food_suggestion_candidates(context)
+        ),
+    )
 
 
 def _resolve_explanation_date(explanation_date: str | None) -> str:
@@ -143,6 +155,8 @@ def _approved_explanation_to_public_dict(
 
 def _build_debug_response(
     result: ApprovedNutritionExplanationResult,
+    *,
+    approved_food_suggestion_candidates: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     approved_explanation = result.approved_nutrition_explanation
     return {
@@ -152,5 +166,7 @@ def _build_debug_response(
         "approved_nutrition_explanation": _approved_explanation_to_public_dict(
             approved_explanation
         ),
+        "approved_food_suggestion_candidates": approved_food_suggestion_candidates
+        or [],
         "runtime_metadata": result.runtime_metadata.to_debug_dict(),
     }

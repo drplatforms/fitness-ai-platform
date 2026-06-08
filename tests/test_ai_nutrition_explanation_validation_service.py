@@ -88,7 +88,8 @@ def _candidate(**overrides: object) -> CandidateNutritionExplanation:
         "explanation_summary": "Based on today’s logged meals, protein is below target.",
         "macro_context": "Protein is below target based on logged meals.",
         "food_suggestion_context": (
-            "The Nutrition tab has approved food suggestions that may help close the gap."
+            "Chicken Breast, Cooked, Skinless is an approved food option; "
+            "150 g is the backend-approved serving context."
         ),
         "trend_context": "Early trend evidence is available, but more data is needed.",
         "calibration_context": "Targets are still formula-derived.",
@@ -112,7 +113,8 @@ def test_safe_target_vs_actual_explanation_passes():
 def test_safe_food_suggestion_explanation_passes():
     candidate = _candidate(
         food_suggestion_context=(
-            "The Nutrition tab has approved food suggestions that may help close the gap."
+            "Chicken Breast, Cooked, Skinless is an approved food option; "
+            "150 g is the backend-approved serving context."
         )
     )
 
@@ -120,20 +122,21 @@ def test_safe_food_suggestion_explanation_passes():
 
     assert approved.source == "ai_validated"
     assert "ai_nutrition_explanation_validated" in approved.reason_codes
-    assert "approved food suggestions" in approved.food_suggestion_context
+    assert "Chicken Breast, Cooked, Skinless" in approved.food_suggestion_context
 
 
 def test_safe_food_suggestion_with_approved_food_serving_and_macro_values_passes():
     candidate = _candidate(
         food_suggestion_context=(
-            "A 150g serving of chicken breast would add about 46.5g protein."
+            "A 150 g serving of Chicken Breast, Cooked, Skinless would add "
+            "about 46.5 g protein."
         )
     )
 
     approved = approve_nutrition_explanation_candidate(_context(), candidate)
 
-    assert "150g" in approved.food_suggestion_context
-    assert "46.5g protein" in approved.food_suggestion_context
+    assert "150 g" in approved.food_suggestion_context
+    assert "46.5 g protein" in approved.food_suggestion_context
 
 
 def test_safe_trend_calibration_readiness_explanation_passes():

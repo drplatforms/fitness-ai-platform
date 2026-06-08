@@ -567,6 +567,8 @@ Strict output rules:
 - You may quote numbers only when they appear in value_aware_context.
 - You may quote foods only when they appear in value_aware_context.approved_food_suggestion_candidates.
 - Meal/snack guidance must use only approved_food_suggestion_candidates.
+- If approved_food_suggestion_candidates are present, food_suggestion_context must mention at least one candidate display_name exactly.
+- Use suggested_grams only when that field is present for the approved candidate.
 - Do not invent foods, serving sizes, calories, macros, or meal plans.
 - Do not calculate gaps; only restate gap values that appear in value_aware_context.
 
@@ -591,10 +593,12 @@ Approved context JSON:
 Forbidden language and behavior:
 - Do not invent nutrition targets, logged actuals, foods, servings, macros, or nutrient values.
 - Do not quote target ranges, logged actuals, gap values, or food details unless they are present in value_aware_context.
-- For food_suggestion_context, use only approved_food_suggestion_candidates; if none are present, say food suggestions are limited or unavailable.
+- For food_suggestion_context, use only approved_food_suggestion_candidates; if candidates are present, mention at least one candidate display_name exactly.
+- If no approved_food_suggestion_candidates are present, say food suggestions are limited or unavailable; if none are present, say food suggestions are limited or unavailable.
+- Use suggested_grams only when the approved candidate includes suggested_grams.
 - Frame approved food suggestions as practical options, not rigid prescriptions.
 - Do not claim targets changed or calibration was applied.
-- Do not create meal plans. Meal/snack framing must be brief and based only on approved food suggestions.
+- Do not create meal plans, recipes, grocery lists, or multi-item menus. Meal/snack framing must be brief and based only on approved food suggestions.
 - Do not mention raw data, SQL, providers, CrewAI, Ollama, debug metadata, or validation metadata.
 - Explain limitations instead of inventing details when context is limited.
 - Keep each field concise.
@@ -1339,6 +1343,39 @@ def _approved_food_suggestion_candidates_for_provider(
     ]
 
 
+def build_debug_approved_food_suggestion_candidates(
+    context: NutritionExplanationContext,
+) -> list[dict[str, Any]]:
+    """Return bounded debug-only approved food suggestion candidate context.
+
+    This projection is intentionally smaller than the provider-facing context. It
+    lets QA verify which food names and serving amounts were approved without
+    exposing raw source payloads, raw nutrient rows, provider internals, or raw
+    model output.
+    """
+
+    value_aware_context = _compressed_value_aware_context(context)
+    candidates = value_aware_context.get("approved_food_suggestion_candidates") or []
+    if not isinstance(candidates, list):
+        return []
+
+    sanitized_candidates: list[dict[str, Any]] = []
+    for candidate in candidates[:3]:
+        if not isinstance(candidate, dict):
+            continue
+        sanitized_candidates.append(
+            _compact_dict(
+                {
+                    "display_name": candidate.get("display_name"),
+                    "suggested_grams": candidate.get("suggested_grams"),
+                    "macro_gap_addressed": candidate.get("macro_gap_addressed"),
+                    "suggestion_summary": candidate.get("suggestion_summary"),
+                }
+            )
+        )
+    return sanitized_candidates
+
+
 def _food_suggestion_support_category(macro_gap_addressed: Any) -> str | None:
     if not isinstance(macro_gap_addressed, str):
         return None
@@ -1791,6 +1828,24 @@ def _candidate_food_suggestion_context(
 ) -> str | None:
     suggestions = context.approved_food_suggestions.get("suggestions")
     if isinstance(suggestions, list) and suggestions:
+        first_suggestion = next(
+            (suggestion for suggestion in suggestions if isinstance(suggestion, dict)),
+            None,
+        )
+        if first_suggestion:
+            display_name = first_suggestion.get("display_name")
+            suggested_grams = first_suggestion.get("suggested_grams")
+            if isinstance(display_name, str) and display_name.strip():
+                if _is_number(suggested_grams):
+                    return (
+                        f"The Nutrition tab has approved options such as "
+                        f"{display_name.strip()} at "
+                        f"{_rounded_nutrition_value(suggested_grams):g} g."
+                    )
+                return (
+                    f"The Nutrition tab has approved options such as "
+                    f"{display_name.strip()}."
+                )
         return "The Nutrition tab has approved food suggestions that may help close the gap."
     reason_codes = context.approved_food_suggestions.get("reason_codes")
     if isinstance(reason_codes, list) and reason_codes:

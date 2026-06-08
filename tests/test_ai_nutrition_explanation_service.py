@@ -424,7 +424,7 @@ def test_explanation_does_not_invent_foods_servings_or_macros(approved_context):
 
     assert "150g" not in public_text
     assert "46.5g" not in public_text
-    assert "chicken breast" not in public_text
+    assert "chicken breast, cooked, skinless" in public_text
     assert "new target" not in public_text
 
 
@@ -466,7 +466,8 @@ def _safe_provider_candidate() -> CandidateNutritionExplanation:
         ),
         macro_context="Based on today’s logged meals, protein is below target.",
         food_suggestion_context=(
-            "The Nutrition tab has approved food suggestions that may help close the gap."
+            "Chicken Breast, Cooked, Skinless is an approved Nutrition tab option; "
+            "150 g is the backend-approved serving context."
         ),
         trend_context="Trend evidence is summarized from deterministic logged data.",
         calibration_context="Targets are still formula-derived.",
@@ -983,8 +984,8 @@ def test_value_aware_provider_candidate_can_quote_approved_values(
             "That leaves about 21.2 g to reach the approved minimum protein target."
         ),
         food_suggestion_context=(
-            "Chicken breast is an approved suggestion; 150 g would add about "
-            "46.5 g protein."
+            "Chicken Breast, Cooked, Skinless is an approved suggestion; "
+            "150 g would add about 46.5 g protein."
         ),
         trend_context="Trend evidence is summarized from deterministic logged data.",
         calibration_context="Targets are still formula-derived.",
@@ -1019,8 +1020,8 @@ def test_value_aware_food_suggestion_copy_uses_approved_candidate_only(
         ),
         macro_context="Protein is below target based on logged meals.",
         food_suggestion_context=(
-            "For a simple snack-style option, chicken breast is approved in the "
-            "Nutrition tab; 150 g would add about 46.5 g protein."
+            "For a simple snack-style option, Chicken Breast, Cooked, Skinless "
+            "is approved in the Nutrition tab; 150 g would add about 46.5 g protein."
         ),
         trend_context="Trend evidence is summarized from deterministic logged data.",
         calibration_context="Targets are still formula-derived.",
@@ -1115,7 +1116,8 @@ def test_provider_output_with_exact_schema_parses_successfully(
         ),
         "macro_context": "Based on today’s logged meals, protein is below target.",
         "food_suggestion_context": (
-            "The Nutrition tab has approved food suggestions that may help close the gap."
+            "Chicken Breast, Cooked, Skinless is an approved Nutrition tab option; "
+            "150 g is the backend-approved serving context."
         ),
         "trend_context": "Trend evidence is summarized from deterministic logged data.",
         "calibration_context": "Targets are still formula-derived.",
@@ -1422,3 +1424,157 @@ def test_configured_direct_ollama_timeout_uses_default_for_invalid_values(monkey
         service._configured_direct_ollama_timeout_seconds()
         == service.NUTRITION_EXPLANATION_DIRECT_OLLAMA_DEFAULT_TIMEOUT_SECONDS
     )
+
+
+def test_provider_context_exposes_sanitized_approved_food_candidates(approved_context):
+    provider_context = service._compressed_provider_context_projection(approved_context)
+    candidates = provider_context["value_aware_context"][
+        "approved_food_suggestion_candidates"
+    ]
+
+    assert candidates == [
+        {
+            "display_name": "Chicken Breast, Cooked, Skinless",
+            "suggested_grams": 150,
+            "estimated_calories": 247.5,
+            "estimated_protein_g": 46.5,
+            "estimated_carbohydrate_g": 0,
+            "estimated_fat_g": 5.4,
+            "macro_gap_addressed": "protein_g",
+            "macro_support_category": "protein_support",
+            "suggestion_summary": "150 g chicken breast can support the protein gap.",
+            "confidence": "Moderate",
+        }
+    ]
+    assert "raw_source_payload" not in str(candidates)
+    assert "canonical_food_id" not in str(candidates)
+
+
+def test_debug_food_candidate_projection_is_sanitized_and_bounded(approved_context):
+    candidates = service.build_debug_approved_food_suggestion_candidates(
+        approved_context
+    )
+
+    assert candidates == [
+        {
+            "display_name": "Chicken Breast, Cooked, Skinless",
+            "suggested_grams": 150,
+            "macro_gap_addressed": "protein_g",
+            "suggestion_summary": "150 g chicken breast can support the protein gap.",
+        }
+    ]
+    assert "raw_source_payload" not in str(candidates)
+    assert "estimated_protein_g" not in str(candidates)
+    assert "canonical_food_id" not in str(candidates)
+
+
+def test_food_suggestion_copy_rejects_generic_contract_text_when_candidates_exist(
+    approved_context,
+):
+    candidate = CandidateNutritionExplanation(
+        explanation_summary="Approved nutrition context is available.",
+        macro_context="Protein is below target based on logged meals.",
+        food_suggestion_context=(
+            "Food suggestions are limited to the approved candidates provided."
+        ),
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context="Use only approved backend values.",
+        confidence="Moderate",
+        reason_codes=["provider_candidate_generic_food_copy"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        approved_context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "deterministic_fallback"
+    assert result.runtime_metadata.fallback_used is True
+    assert "generic_food_suggestion_context_detected" in (
+        result.runtime_metadata.validation_errors
+    )
+    assert "approved_food_suggestion_candidate_required" in (
+        result.runtime_metadata.validation_errors
+    )
+
+
+def test_food_suggestion_copy_rejects_unapproved_serving_size(approved_context):
+    candidate = CandidateNutritionExplanation(
+        explanation_summary="Approved nutrition context is available.",
+        macro_context="Protein is below target based on logged meals.",
+        food_suggestion_context=(
+            "Chicken Breast, Cooked, Skinless is approved, but use 175 g of it."
+        ),
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context="Use only approved backend values.",
+        confidence="Moderate",
+        reason_codes=["provider_candidate_unapproved_serving"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        approved_context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "deterministic_fallback"
+    assert result.runtime_metadata.fallback_used is True
+    assert "unapproved_food_serving_size_detected" in (
+        result.runtime_metadata.validation_errors
+    )
+
+
+def test_no_food_candidates_allow_limited_food_suggestion_copy(approved_context):
+    context_payload = copy.deepcopy(approved_context.to_dict())
+    context_payload["approved_food_suggestions"] = {
+        "user_id": 1,
+        "suggestion_date": "2026-06-07",
+        "primary_gap": None,
+        "macro_gaps": [],
+        "suggestions": [],
+        "confidence": "Low",
+        "reason_codes": ["no_supported_suggestion_gap_available"],
+        "limitations": ["Food suggestions are limited for this date."],
+    }
+    context_payload["value_aware_summary"] = service._value_aware_summary_from_payloads(
+        approved_macro_targets_payload=context_payload["approved_macro_targets"],
+        target_vs_actual_payload=context_payload["target_vs_actual_summary"],
+        food_suggestions_payload=context_payload["approved_food_suggestions"],
+        trend_payload=context_payload["trend_summary"],
+        calibration_payload=context_payload["calibration_summary"],
+    )
+    context = service.NutritionExplanationContext(**context_payload)
+    candidate = CandidateNutritionExplanation(
+        explanation_summary="Approved nutrition context is available.",
+        macro_context="Macro context comes from approved backend values.",
+        food_suggestion_context="Food suggestions are limited or unavailable for this date.",
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context="Use only approved backend values.",
+        confidence="Low",
+        reason_codes=["provider_candidate_no_food_suggestions"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "ai_validated"
+    assert result.runtime_metadata.fallback_used is False

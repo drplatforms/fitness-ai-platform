@@ -28,7 +28,7 @@ The provider may explain only approved context. Provider output remains untruste
 
 The compressed provider context includes `value_aware_context.approved_food_suggestion_candidates` when backend-approved food suggestions are available.
 
-Candidate fields may include:
+Provider-facing candidate fields may include:
 
 - `display_name`
 - `suggested_grams`
@@ -40,20 +40,34 @@ Candidate fields may include:
 - `macro_support_category`
 - `suggestion_summary`
 - `confidence`
-- bounded reason/limitation context
 
 The provider may quote these values only when they are present in `value_aware_context`.
 
-## Allowed Copy
+## Required Meal/Snack Copy Behavior
 
-The provider may use `food_suggestion_context` to write concise copy such as:
+When `approved_food_suggestion_candidates` are present:
 
-- approved food options in the Nutrition tab may help with the current supported gap
-- a listed approved food can be used as a practical option
-- an approved serving amount or macro contribution may be quoted only when present in the approved candidate payload
-- no food suggestions are available or suggestions are limited when no approved candidates exist
+- `food_suggestion_context` must mention at least one approved candidate `display_name` exactly.
+- `food_suggestion_context` may use `suggested_grams` only when that field is present for the approved candidate.
+- Macro/calorie contribution values may be quoted only when present in the approved candidate payload.
+- Copy must stay brief and practical.
+- Copy must frame suggestions as options, not rigid prescriptions.
 
-Suggestions must be framed as practical options, not rigid prescriptions.
+When no approved food suggestion candidates are present:
+
+- the provider may say food suggestions are limited or unavailable.
+- the provider must not invent an alternative food.
+
+## Rejected Vague Contract Copy
+
+When candidates exist, the validator rejects generic contract-style copy such as:
+
+- “Food suggestions are limited to the approved candidates provided.”
+- “Use the approved food suggestions.”
+- “Choose from the listed candidates.”
+- “Food options are available based on your plan.”
+
+This prevents provider-approved output that technically follows the contract but is not useful to the user.
 
 ## Forbidden Copy
 
@@ -82,15 +96,39 @@ The validator continues to reject:
 - medical/supplement/fat-loss claims
 - raw/internal/provider/debug language
 - unapproved food mentions where detectable from current approved candidate structure
+- unapproved serving-size mentions in `food_suggestion_context`
 - unapproved nutrition numbers
+- missing approved food candidate names when candidates exist
+- vague contract-style food suggestion copy when candidates exist
 
 Invalid provider output falls back deterministically.
 
 ## Public/Debug Behavior
 
-Normal preview remains public-safe and does not expose runtime metadata.
+Normal preview remains public-safe and does not expose runtime metadata or debug candidate context.
 
-Debug endpoints may expose runtime metadata, parse status, validation status, fallback reason, and bounded raw output diagnostics.
+The debug endpoint may expose a sanitized candidate projection for QA:
+
+```json
+{
+  "approved_food_suggestion_candidates": [
+    {
+      "display_name": "Chicken Breast, Cooked, Skinless",
+      "suggested_grams": 150,
+      "macro_gap_addressed": "protein_g",
+      "suggestion_summary": "150 g chicken breast can support the protein gap."
+    }
+  ]
+}
+```
+
+The debug projection must not expose:
+
+- raw source payloads
+- raw nutrient rows
+- unbounded metadata
+- provider internals
+- raw model output
 
 ## Non-Goals
 

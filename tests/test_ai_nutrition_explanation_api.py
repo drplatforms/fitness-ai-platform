@@ -114,6 +114,7 @@ def _approved_result(
 def _patch_user_and_result(
     monkeypatch,
     result: ApprovedNutritionExplanationResult,
+    candidates: list[dict[str, object]] | None = None,
 ):
     monkeypatch.setattr(
         explanation_route,
@@ -122,8 +123,21 @@ def _patch_user_and_result(
     )
     monkeypatch.setattr(
         explanation_route,
+        "build_nutrition_explanation_context",
+        lambda user_id, explanation_date: {
+            "user_id": user_id,
+            "date": explanation_date,
+        },
+    )
+    monkeypatch.setattr(
+        explanation_route,
+        "build_debug_approved_food_suggestion_candidates",
+        lambda _context: candidates or [],
+    )
+    monkeypatch.setattr(
+        explanation_route,
         "build_configured_approved_nutrition_explanation_with_metadata",
-        lambda user_id, explanation_date: result,
+        lambda user_id, explanation_date, **_kwargs: result,
     )
 
 
@@ -575,6 +589,44 @@ def test_preview_endpoint_remains_without_runtime_metadata(monkeypatch):
     assert "configured_model" not in payload_text
     assert "selected_model" not in payload_text
     assert "validation_errors" not in payload_text
+
+
+def test_preview_endpoint_does_not_expose_debug_food_candidates(monkeypatch):
+    _patch_user_and_service(monkeypatch, _approved_explanation())
+
+    client = TestClient(app)
+    response = client.get("/nutrition/1/explanation/preview?date=2026-06-07")
+
+    assert response.status_code == 200
+    payload_text = str(response.json()).lower()
+    assert "approved_food_suggestion_candidates" not in payload_text
+    assert "suggested_grams" not in payload_text
+
+
+def test_debug_endpoint_exposes_sanitized_approved_food_candidates(monkeypatch):
+    candidates = [
+        {
+            "display_name": "Chicken Breast, Cooked, Skinless",
+            "suggested_grams": 150,
+            "macro_gap_addressed": "protein_g",
+            "suggestion_summary": "150 g chicken breast can support the protein gap.",
+        }
+    ]
+    _patch_user_and_result(
+        monkeypatch,
+        _approved_result(),
+        candidates=candidates,
+    )
+
+    client = TestClient(app)
+    response = client.get("/nutrition/1/explanation/debug?date=2026-06-07")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["approved_food_suggestion_candidates"] == candidates
+    payload_text = str(payload).lower()
+    assert "raw_source_payload" not in payload_text
+    assert "canonical_food_id" not in payload_text
 
 
 def test_debug_endpoint_raw_output_preview_is_bounded(monkeypatch):

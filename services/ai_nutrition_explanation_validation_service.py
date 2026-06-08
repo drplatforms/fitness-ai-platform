@@ -100,6 +100,15 @@ _EXACT_CERTAINTY_PATTERNS = {
     "exactly your maintenance",
 }
 
+_GENERIC_FOOD_SUGGESTION_CONTEXT_PATTERNS = {
+    "food suggestions are limited to the approved candidates provided",
+    "use the approved food suggestions",
+    "choose from the listed candidates",
+    "food options are available based on your plan",
+    "approved candidates provided",
+    "listed candidates",
+}
+
 _COMMON_CANONICAL_FOOD_TERMS = {
     "chicken",
     "chicken breast",
@@ -200,7 +209,13 @@ def collect_nutrition_explanation_validation_errors(
     _add_errors_for_shame_restriction_language(normalized_combined_text, errors)
     _add_errors_for_medical_supplement_language(normalized_combined_text, errors)
     _add_errors_for_raw_or_internal_language(normalized_combined_text, errors)
+    _add_errors_for_food_suggestion_candidate_requirements(
+        context, candidate.food_suggestion_context, errors
+    )
     _add_errors_for_unapproved_food_mentions(context, normalized_combined_text, errors)
+    _add_errors_for_unapproved_food_serving_sizes(
+        context, candidate.food_suggestion_context, errors
+    )
     _add_errors_for_unapproved_nutrition_numbers(context, combined_text, errors)
 
     return _unique(errors)
@@ -356,6 +371,61 @@ def _add_errors_for_raw_or_internal_language(text: str, errors: list[str]) -> No
         errors.append("raw_or_internal_details_detected")
 
 
+def _add_errors_for_food_suggestion_candidate_requirements(
+    context: NutritionExplanationContext,
+    food_suggestion_context: str | None,
+    errors: list[str],
+) -> None:
+    approved_display_names = _approved_food_candidate_display_names(context)
+    if not approved_display_names:
+        return
+
+    normalized_text = _normalize(food_suggestion_context or "")
+    if not normalized_text:
+        errors.append("approved_food_suggestion_candidate_required")
+        return
+
+    if any(
+        phrase in normalized_text
+        for phrase in _GENERIC_FOOD_SUGGESTION_CONTEXT_PATTERNS
+    ):
+        errors.append("generic_food_suggestion_context_detected")
+
+    if not any(
+        _normalize(display_name) in normalized_text
+        for display_name in approved_display_names
+    ):
+        errors.append("approved_food_suggestion_candidate_required")
+
+
+def _add_errors_for_unapproved_food_serving_sizes(
+    context: NutritionExplanationContext,
+    food_suggestion_context: str | None,
+    errors: list[str],
+) -> None:
+    if not food_suggestion_context:
+        return
+
+    approved_grams = _approved_food_candidate_suggested_grams(context)
+    for serving_size in _food_serving_gram_mentions(food_suggestion_context):
+        if not any(abs(serving_size - approved) <= 0.6 for approved in approved_grams):
+            errors.append("unapproved_food_serving_size_detected")
+            return
+
+
+def _food_serving_gram_mentions(text: str) -> list[float]:
+    patterns = [
+        r"(?<![\w.])(?P<number>\d+(?:\.\d+)?)\s*g\s+(?:serving|portion|of)\b",
+        r"(?<![\w.])(?P<number>\d+(?:\.\d+)?)\s*grams\s+(?:serving|portion|of)\b",
+        r"\b(?:serving|portion)\s+of\s+(?P<number>\d+(?:\.\d+)?)\s*(?:g|grams)\b",
+    ]
+    mentions: list[float] = []
+    for pattern in patterns:
+        for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+            mentions.append(float(match.group("number")))
+    return mentions
+
+
 def _add_errors_for_unapproved_food_mentions(
     context: NutritionExplanationContext,
     text: str,
@@ -381,6 +451,47 @@ def _add_errors_for_unapproved_nutrition_numbers(
         if not _number_is_approved(number, approved_numbers):
             errors.append("unapproved_nutrition_number_detected")
             return
+
+
+def _approved_food_candidate_display_names(
+    context: NutritionExplanationContext,
+) -> list[str]:
+    display_names: list[str] = []
+    for candidate in _approved_food_candidate_payloads(context):
+        display_name = candidate.get("display_name")
+        if isinstance(display_name, str) and display_name.strip():
+            display_names.append(display_name.strip())
+    return _unique(display_names)
+
+
+def _approved_food_candidate_suggested_grams(
+    context: NutritionExplanationContext,
+) -> list[float]:
+    grams: list[float] = []
+    for candidate in _approved_food_candidate_payloads(context):
+        suggested_grams = candidate.get("suggested_grams")
+        if isinstance(suggested_grams, int | float):
+            grams.append(float(suggested_grams))
+    return grams
+
+
+def _approved_food_candidate_payloads(
+    context: NutritionExplanationContext,
+) -> list[dict[str, Any]]:
+    candidates = (
+        context.value_aware_summary.get("approved_food_suggestion_candidates")
+        if isinstance(context.value_aware_summary, dict)
+        else None
+    )
+    if isinstance(candidates, list) and candidates:
+        return [candidate for candidate in candidates if isinstance(candidate, dict)]
+
+    suggestions = context.approved_food_suggestions.get("suggestions")
+    if isinstance(suggestions, list):
+        return [
+            suggestion for suggestion in suggestions if isinstance(suggestion, dict)
+        ]
+    return []
 
 
 def _approved_food_terms(context: NutritionExplanationContext) -> set[str]:
@@ -473,6 +584,23 @@ def _fallback_food_suggestion_context(
 ) -> str | None:
     suggestions = context.approved_food_suggestions.get("suggestions")
     if isinstance(suggestions, list) and suggestions:
+        first_suggestion = next(
+            (suggestion for suggestion in suggestions if isinstance(suggestion, dict)),
+            None,
+        )
+        if first_suggestion:
+            display_name = first_suggestion.get("display_name")
+            suggested_grams = first_suggestion.get("suggested_grams")
+            if isinstance(display_name, str) and display_name.strip():
+                if isinstance(suggested_grams, int | float):
+                    return (
+                        f"The Nutrition tab has approved options such as "
+                        f"{display_name.strip()} at {float(suggested_grams):g} g."
+                    )
+                return (
+                    f"The Nutrition tab has approved options such as "
+                    f"{display_name.strip()}."
+                )
         return "The Nutrition tab has approved food suggestions based on logged macro gaps."
     return None
 

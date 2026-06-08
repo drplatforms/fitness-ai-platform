@@ -153,3 +153,55 @@ Direct Ollama Nutrition Explanation Provider v1
 ```
 
 If direct Ollama structured output fails, pause live local provider work and continue deterministic nutrition explanation enrichment.
+
+## Runtime Results - 2026-06-08
+
+Direct Ollama structured output was tested against the approved nutrition explanation context and existing strict CandidateNutritionExplanation parser/validator path.
+
+All listed runs used:
+
+- Provider: direct_ollama_spike
+- Endpoint style: direct Ollama `/api/generate`
+- Structured output: JSON schema format
+- User ID: 102
+- Explanation date: 2026-06-06
+- Ollama base URL: http://192.168.1.104:11434
+
+| Model | Runtime | Parse Status | Validation Status | Fallback Used | Extra Keys | Markdown Wrapper | Wrapper Object | Final Source |
+|---|---:|---|---|---|---:|---|---|---|
+| ollama/qwen2.5:3b | 36.302s | success | approved | false | 0 | false | false | provider_approved |
+| ollama/gemma3n:e4b | 71.115s | success | approved | false | 0 | false | false | provider_approved |
+| ollama/hermes3:3b | 54.479s | success | approved | false | 0 | false | false | provider_approved |
+| ollama/qwen3:8b | 84.654s | success | approved | false | 0 | false | false | provider_approved |
+
+### Finding
+
+Direct Ollama structured output materially improved exact-schema adherence compared with the prior CrewAI-wrapped nutrition explanation trials.
+
+Previously, CrewAI-wrapped local models repeatedly failed with parse failures, markdown/code fences, wrapper objects, extra fields, malformed JSON, or excessive runtime.
+
+In this spike, multiple local models returned raw JSON that parsed into the exact CandidateNutritionExplanation contract and passed existing validation without fallback.
+
+### Recommendation
+
+Proceed to Architecture / Agent Engineering review for:
+
+Direct Ollama Nutrition Explanation Provider v1
+
+Recommended scope:
+
+- Add a provider option such as `NUTRITION_EXPLANATION_PROVIDER=direct_ollama`.
+- Keep deterministic provider as default.
+- Keep CrewAI available but debug/experimental.
+- Use direct Ollama JSON-schema structured output.
+- Reuse existing approved nutrition explanation context.
+- Reuse existing strict parser/validator/fallback behavior.
+- Keep normal preview endpoint public-safe.
+- Keep provider/model/runtime metadata debug-only.
+- Add mocked tests only; do not call live Ollama in automated tests.
+
+Do not relax parser behavior.
+Do not accept markdown/code-fenced JSON.
+Do not accept wrapper objects.
+Do not accept extra keys.
+Do not expose provider internals publicly.

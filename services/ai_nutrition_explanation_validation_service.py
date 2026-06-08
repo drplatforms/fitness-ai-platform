@@ -403,6 +403,7 @@ def _approved_context_numbers(context: NutritionExplanationContext) -> list[floa
         context.approved_food_suggestions,
         context.trend_summary,
         context.calibration_summary,
+        context.value_aware_summary,
     ):
         numbers.extend(_numbers_from_payload(payload))
     return numbers

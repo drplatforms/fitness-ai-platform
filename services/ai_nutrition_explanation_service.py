@@ -66,6 +66,24 @@ _CONTEXT_LIMITATION = (
     "Nutrition explanation is limited to approved backend nutrition context."
 )
 _CONFIDENCE_RANK = {"Limited": 0, "Low": 1, "Moderate": 2, "High": 3}
+_MACRO_TARGET_KEYS = {
+    "calories": "calorie_target",
+    "protein": "protein_target_g",
+    "carbs": "carbohydrate_target_g",
+    "fat": "fat_target_g",
+}
+_MACRO_ACTUAL_KEYS = {
+    "calories": "logged_calories",
+    "protein": "logged_protein",
+    "carbs": "logged_carbs",
+    "fat": "logged_fat",
+}
+_MACRO_UNITS = {
+    "calories": "kcal",
+    "protein": "g",
+    "carbs": "g",
+    "fat": "g",
+}
 
 FALLBACK_REASON_DETERMINISTIC_SELECTED = "deterministic_provider_selected"
 FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider_config"
@@ -209,6 +227,13 @@ def build_nutrition_explanation_context(
     food_suggestions_payload = _food_suggestions_projection(food_suggestions)
     trend_payload = _trend_window_projection(trend)
     calibration_payload = _calibration_projection(calibration)
+    value_aware_payload = _value_aware_summary_from_payloads(
+        approved_macro_targets_payload=approved_macro_targets_payload,
+        target_vs_actual_payload=target_vs_actual_payload,
+        food_suggestions_payload=food_suggestions_payload,
+        trend_payload=trend_payload,
+        calibration_payload=calibration_payload,
+    )
 
     confidence = _minimum_confidence(
         _payload_confidence(approved_macro_targets_payload),
@@ -252,6 +277,7 @@ def build_nutrition_explanation_context(
         approved_food_suggestions=food_suggestions_payload,
         trend_summary=trend_payload,
         calibration_summary=calibration_payload,
+        value_aware_summary=value_aware_payload,
         confidence=confidence,
         reason_codes=reason_codes,
         limitations=limitations,
@@ -538,6 +564,9 @@ Strict output rules:
 - Do not include validation fields.
 - Do not include debug fields.
 - Do not copy keys from the approved context into the output unless they are explicitly listed in the schema.
+- You may quote numbers only when they appear in value_aware_context.
+- You may quote foods only when they appear in value_aware_context.approved_food_suggestion_candidates.
+- Do not calculate gaps; only restate gap values that appear in value_aware_context.
 
 CandidateNutritionExplanation allowed output schema:
 {{
@@ -559,8 +588,9 @@ Approved context JSON:
 
 Forbidden language and behavior:
 - Do not invent nutrition targets, logged actuals, foods, servings, macros, or nutrient values.
+- Do not quote target ranges, logged actuals, gap values, or food details unless they are present in value_aware_context.
 - Do not claim targets changed or calibration was applied.
-- Do not create meal plans.
+- Do not create meal plans. Meal/snack framing must be brief and based only on approved food suggestions.
 - Do not mention raw data, SQL, providers, CrewAI, Ollama, debug metadata, or validation metadata.
 - Explain limitations instead of inventing details when context is limited.
 - Keep each field concise.
@@ -1041,6 +1071,7 @@ def _compressed_provider_context_projection(
         "trend_context": _compressed_trend_context(context),
         "calibration_context": _compressed_calibration_context(context),
         "limitations_context": _compressed_limitations_context(context),
+        "value_aware_context": _compressed_value_aware_context(context),
     }
 
 
@@ -1121,6 +1152,252 @@ def _compressed_food_suggestion_context(
             "limitations": _bounded_strings(payload.get("limitations", [])),
         }
     )
+
+
+def _compressed_value_aware_context(
+    context: NutritionExplanationContext,
+) -> dict[str, Any]:
+    """Return display-approved values the provider may quote.
+
+    Backend remains the source of truth for targets, actuals, gaps, statuses,
+    confidence, logging quality, and food suggestion candidates. The provider may
+    explain these values, but it must not compute or invent values of its own.
+    """
+
+    if context.value_aware_summary:
+        return _compact_dict(context.value_aware_summary)
+
+    return _value_aware_summary_from_payloads(
+        approved_macro_targets_payload=context.approved_macro_targets,
+        target_vs_actual_payload=context.target_vs_actual_summary,
+        food_suggestions_payload=context.approved_food_suggestions,
+        trend_payload=context.trend_summary,
+        calibration_payload=context.calibration_summary,
+    )
+
+
+def _value_aware_summary_from_payloads(
+    *,
+    approved_macro_targets_payload: dict[str, Any],
+    target_vs_actual_payload: dict[str, Any],
+    food_suggestions_payload: dict[str, Any],
+    trend_payload: dict[str, Any],
+    calibration_payload: dict[str, Any],
+) -> dict[str, Any]:
+    return _compact_dict(
+        {
+            "approved_target_ranges": _approved_target_ranges_for_provider(
+                approved_macro_targets_payload
+            ),
+            "logged_actuals": _logged_actuals_for_provider(target_vs_actual_payload),
+            "macro_statuses_and_gaps": _macro_statuses_and_gaps_for_provider(
+                approved_macro_targets_payload,
+                target_vs_actual_payload,
+            ),
+            "approved_food_suggestion_candidates": (
+                _approved_food_suggestion_candidates_for_provider(
+                    food_suggestions_payload
+                )
+            ),
+            "logging_summary": _logging_summary_for_provider(target_vs_actual_payload),
+            "trend_snapshot": _trend_snapshot_for_provider(trend_payload),
+            "calibration_snapshot": _calibration_snapshot_for_provider(
+                calibration_payload
+            ),
+        }
+    )
+
+
+def _approved_target_ranges_for_provider(
+    targets: dict[str, Any],
+) -> list[dict[str, Any]]:
+    approved_ranges: list[dict[str, Any]] = []
+    for macro, target_key in _MACRO_TARGET_KEYS.items():
+        target = targets.get(target_key)
+        if not _target_value_display_approved(target):
+            continue
+        approved_ranges.append(
+            _compact_dict(
+                {
+                    "macro": macro,
+                    "unit": target.get("unit") or _MACRO_UNITS[macro],
+                    "target_min": _rounded_nutrition_value(target.get("min_value")),
+                    "target_max": _rounded_nutrition_value(target.get("max_value")),
+                    "display_value": target.get("display_value"),
+                    "confidence": target.get("confidence"),
+                }
+            )
+        )
+    return approved_ranges
+
+
+def _logged_actuals_for_provider(
+    target_vs_actual_payload: dict[str, Any],
+) -> dict[str, Any]:
+    actuals = target_vs_actual_payload.get("nutrition_actuals") or {}
+    return _compact_dict(
+        {
+            macro: _compact_dict(
+                {
+                    "actual": _rounded_nutrition_value(actuals.get(actual_key)),
+                    "unit": _MACRO_UNITS[macro],
+                }
+            )
+            for macro, actual_key in _MACRO_ACTUAL_KEYS.items()
+            if _is_number(actuals.get(actual_key))
+        }
+    )
+
+
+def _macro_statuses_and_gaps_for_provider(
+    approved_macro_targets_payload: dict[str, Any],
+    target_vs_actual_payload: dict[str, Any],
+) -> list[dict[str, Any]]:
+    comparisons = target_vs_actual_payload.get("comparisons") or {}
+    statuses: list[dict[str, Any]] = []
+    for macro, target_key in _MACRO_TARGET_KEYS.items():
+        comparison = comparisons.get(macro)
+        if not isinstance(comparison, dict):
+            continue
+        target = approved_macro_targets_payload.get(target_key)
+        target_display_approved = _target_value_display_approved(target)
+        status_payload: dict[str, Any] = {
+            "macro": macro,
+            "target_status": comparison.get("target_status"),
+            "comparison_available": comparison.get("comparison_available"),
+            "confidence": comparison.get("confidence"),
+            "unit": _MACRO_UNITS[macro],
+        }
+        actual = comparison.get("actual") or comparison.get("actual_value")
+        if _is_number(actual):
+            status_payload["actual"] = _rounded_nutrition_value(actual)
+        if target_display_approved:
+            status_payload.update(_approved_gap_values(comparison))
+        statuses.append(_compact_dict(status_payload))
+    return statuses
+
+
+def _approved_gap_values(comparison: dict[str, Any]) -> dict[str, Any]:
+    actual = comparison.get("actual") or comparison.get("actual_value")
+    target_min = comparison.get("target_min")
+    target_max = comparison.get("target_max")
+    status = comparison.get("target_status")
+    payload: dict[str, Any] = {
+        "target_min": _rounded_nutrition_value(target_min),
+        "target_max": _rounded_nutrition_value(target_max),
+    }
+    if status == "below_target" and _is_number(actual) and _is_number(target_min):
+        payload["gap_to_target_min"] = _rounded_nutrition_value(
+            max(float(target_min) - float(actual), 0.0)
+        )
+    elif status == "above_target" and _is_number(actual) and _is_number(target_max):
+        payload["amount_above_target_max"] = _rounded_nutrition_value(
+            max(float(actual) - float(target_max), 0.0)
+        )
+    return _compact_dict(payload)
+
+
+def _approved_food_suggestion_candidates_for_provider(
+    food_suggestions_payload: dict[str, Any],
+) -> list[dict[str, Any]]:
+    suggestions = food_suggestions_payload.get("suggestions") or []
+    if not isinstance(suggestions, list):
+        return []
+    return [
+        _compact_dict(
+            {
+                "display_name": suggestion.get("display_name"),
+                "suggested_grams": _rounded_nutrition_value(
+                    suggestion.get("suggested_grams")
+                ),
+                "estimated_calories": _rounded_nutrition_value(
+                    suggestion.get("estimated_calories")
+                ),
+                "estimated_protein_g": _rounded_nutrition_value(
+                    suggestion.get("estimated_protein_g")
+                ),
+                "estimated_carbohydrate_g": _rounded_nutrition_value(
+                    suggestion.get("estimated_carbohydrate_g")
+                ),
+                "estimated_fat_g": _rounded_nutrition_value(
+                    suggestion.get("estimated_fat_g")
+                ),
+                "macro_gap_addressed": suggestion.get("macro_gap_addressed"),
+                "confidence": suggestion.get("confidence"),
+            }
+        )
+        for suggestion in suggestions[:3]
+        if isinstance(suggestion, dict)
+    ]
+
+
+def _logging_summary_for_provider(
+    target_vs_actual_payload: dict[str, Any],
+) -> dict[str, Any]:
+    logging_summary = target_vs_actual_payload.get("logging_summary") or {}
+    return _compact_dict(
+        {
+            "logging_completeness": target_vs_actual_payload.get("logging_completeness")
+            or logging_summary.get("logging_completeness"),
+            "confidence": logging_summary.get("confidence")
+            or target_vs_actual_payload.get("confidence"),
+            "logged_meal_count": logging_summary.get("logged_meal_count"),
+            "entry_count": logging_summary.get("entry_count"),
+        }
+    )
+
+
+def _trend_snapshot_for_provider(trend: dict[str, Any]) -> dict[str, Any]:
+    intake_summary = trend.get("intake_trend_summary") or {}
+    bodyweight_summary = trend.get("bodyweight_trend_summary") or {}
+    return _compact_dict(
+        {
+            "window_days": trend.get("window_days"),
+            "logged_day_count": trend.get("logged_day_count"),
+            "complete_logging_day_count": trend.get("complete_logging_day_count"),
+            "logging_consistency_status": intake_summary.get(
+                "logging_consistency_status"
+            ),
+            "complete_logging_rate": _rounded_nutrition_value(
+                intake_summary.get("complete_logging_rate")
+            ),
+            "bodyweight_trend_direction": bodyweight_summary.get("trend_direction"),
+            "bodyweight_weekly_rate_lb": _rounded_nutrition_value(
+                bodyweight_summary.get("weekly_rate_lb")
+            ),
+            "confidence": trend.get("confidence"),
+        }
+    )
+
+
+def _calibration_snapshot_for_provider(
+    calibration: dict[str, Any],
+) -> dict[str, Any]:
+    return _compact_dict(
+        {
+            "calibration_allowed": calibration.get("calibration_allowed"),
+            "readiness_level": calibration.get("readiness_level"),
+            "recommended_action": calibration.get("recommended_action"),
+            "confidence": calibration.get("confidence"),
+        }
+    )
+
+
+def _target_value_display_approved(target: Any) -> bool:
+    return isinstance(target, dict) and target.get("display_allowed") is True
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _rounded_nutrition_value(value: Any) -> int | float | None:
+    if not _is_number(value):
+        return None
+    rounded = round(float(value), 1)
+    if rounded.is_integer():
+        return int(rounded)
+    return rounded
 
 
 def _compressed_trend_context(context: NutritionExplanationContext) -> dict[str, Any]:

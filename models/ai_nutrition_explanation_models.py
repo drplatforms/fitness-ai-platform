@@ -79,6 +79,7 @@ class NutritionExplanationContext:
     approved_food_suggestions: dict[str, Any] = field(default_factory=dict)
     trend_summary: dict[str, Any] = field(default_factory=dict)
     calibration_summary: dict[str, Any] = field(default_factory=dict)
+    value_aware_summary: dict[str, Any] = field(default_factory=dict)
     confidence: str = "Limited"
     reason_codes: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
@@ -96,6 +97,7 @@ class NutritionExplanationContext:
         _validate_mapping("approved_food_suggestions", self.approved_food_suggestions)
         _validate_mapping("trend_summary", self.trend_summary)
         _validate_mapping("calibration_summary", self.calibration_summary)
+        _validate_mapping("value_aware_summary", self.value_aware_summary)
         _validate_display_flags(self.display_flags)
         _validate_safe_text_list("reason_codes", self.reason_codes)
         _validate_safe_text_list("limitations", self.limitations)
@@ -107,6 +109,7 @@ class NutritionExplanationContext:
                 "approved_food_suggestions": self.approved_food_suggestions,
                 "trend_summary": self.trend_summary,
                 "calibration_summary": self.calibration_summary,
+                "value_aware_summary": self.value_aware_summary,
             }
         )
 

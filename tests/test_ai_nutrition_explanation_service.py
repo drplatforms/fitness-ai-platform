@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from dataclasses import dataclass
 
@@ -829,11 +830,170 @@ def test_provider_prompt_uses_compressed_context_not_full_context(approved_conte
         "trend_context",
         "calibration_context",
         "limitations_context",
+        "value_aware_context",
     }
     assert "display_flags" not in provider_context_text
     assert "formula_metadata" not in provider_context_text
     assert "reason_codes" not in provider_context_text
     assert "raw_" not in provider_context_text
+
+
+def test_value_aware_provider_context_includes_approved_values(approved_context):
+    provider_context = service._compressed_provider_context_projection(approved_context)
+    value_context = provider_context["value_aware_context"]
+
+    target_ranges = value_context["approved_target_ranges"]
+    assert {
+        "macro": "protein",
+        "unit": "g",
+        "target_min": 150,
+        "target_max": 185,
+        "display_value": "150-185 g",
+        "confidence": "Moderate",
+    } in target_ranges
+    assert {
+        "macro": "calories",
+        "unit": "kcal",
+        "target_min": 2300,
+        "target_max": 2600,
+        "display_value": "2300-2600 kcal",
+        "confidence": "Moderate",
+    } in target_ranges
+
+    assert value_context["logged_actuals"]["protein"] == {"actual": 128.8, "unit": "g"}
+    assert value_context["logged_actuals"]["calories"] == {
+        "actual": 2400,
+        "unit": "kcal",
+    }
+
+    protein_status = next(
+        status
+        for status in value_context["macro_statuses_and_gaps"]
+        if status["macro"] == "protein"
+    )
+    assert protein_status["target_status"] == "below_target"
+    assert protein_status["actual"] == 128.8
+    assert protein_status["target_min"] == 150
+    assert protein_status["target_max"] == 185
+    assert protein_status["gap_to_target_min"] == 21.2
+
+    suggestion = value_context["approved_food_suggestion_candidates"][0]
+    assert suggestion["display_name"] == "Chicken Breast, Cooked, Skinless"
+    assert suggestion["suggested_grams"] == 150
+    assert suggestion["estimated_protein_g"] == 46.5
+    assert suggestion["macro_gap_addressed"] == "protein_g"
+
+
+def test_value_aware_provider_context_excludes_disallowed_target_values(
+    approved_context,
+):
+    context_payload = copy.deepcopy(approved_context.to_dict())
+    context_payload["approved_macro_targets"]["carbohydrate_target_g"] = {
+        "target_type": "carbohydrate_g",
+        "min_value": 250,
+        "max_value": 310,
+        "display_value": "250-310 g",
+        "unit": "g",
+        "confidence": "Moderate",
+        "display_allowed": False,
+        "reason_codes": ["carb_target_not_displayed"],
+        "limitations": [],
+    }
+    context_payload["target_vs_actual_summary"]["comparisons"]["carbs"] = {
+        "nutrient": "carbs",
+        "actual": 200,
+        "target_min": 250,
+        "target_max": 310,
+        "target_status": "below_target",
+        "comparison_available": True,
+        "confidence": "Moderate",
+        "reason_codes": ["logged_carbs_below_target"],
+        "limitations": [],
+    }
+    context_payload["target_vs_actual_summary"]["nutrition_actuals"]["logged_carbs"] = (
+        200
+    )
+    context_payload["value_aware_summary"] = service._value_aware_summary_from_payloads(
+        approved_macro_targets_payload=context_payload["approved_macro_targets"],
+        target_vs_actual_payload=context_payload["target_vs_actual_summary"],
+        food_suggestions_payload=context_payload["approved_food_suggestions"],
+        trend_payload=context_payload["trend_summary"],
+        calibration_payload=context_payload["calibration_summary"],
+    )
+    context = service.NutritionExplanationContext(**context_payload)
+
+    value_context = service._compressed_provider_context_projection(context)[
+        "value_aware_context"
+    ]
+
+    assert not any(
+        target["macro"] == "carbs" for target in value_context["approved_target_ranges"]
+    )
+    carb_status = next(
+        status
+        for status in value_context["macro_statuses_and_gaps"]
+        if status["macro"] == "carbs"
+    )
+    assert carb_status["actual"] == 200
+    assert carb_status["target_status"] == "below_target"
+    assert "target_min" not in carb_status
+    assert "target_max" not in carb_status
+    assert "gap_to_target_min" not in carb_status
+
+
+def test_provider_prompt_allows_only_value_aware_approved_values(approved_context):
+    prompt = service.build_crewai_nutrition_explanation_prompt(approved_context)
+    provider_context = _approved_context_json_from_prompt(prompt)
+    value_context = provider_context["value_aware_context"]
+
+    assert "value_aware_context" in prompt
+    assert (
+        "You may quote numbers only when they appear in value_aware_context" in prompt
+    )
+    assert "You may quote foods only when they appear in value_aware_context" in prompt
+    assert "Do not calculate gaps" in prompt
+    assert value_context["approved_target_ranges"]
+    assert value_context["macro_statuses_and_gaps"]
+    assert value_context["approved_food_suggestion_candidates"]
+
+
+def test_value_aware_provider_candidate_can_quote_approved_values(
+    approved_context,
+):
+    candidate = CandidateNutritionExplanation(
+        explanation_summary=(
+            "Protein is below the approved 150-185 g target range after logging "
+            "128.8 g today."
+        ),
+        macro_context=(
+            "That leaves about 21.2 g to reach the approved minimum protein target."
+        ),
+        food_suggestion_context=(
+            "Chicken breast is an approved suggestion; 150 g would add about "
+            "46.5 g protein."
+        ),
+        trend_context="Trend evidence is summarized from deterministic logged data.",
+        calibration_context="Targets are still formula-derived.",
+        limitations_context=(
+            "Use only approved backend values when interpreting today's nutrition."
+        ),
+        confidence="Moderate",
+        reason_codes=["provider_candidate_value_aware"],
+    )
+
+    result = service.approve_candidate_output_or_fallback_with_metadata(
+        candidate.to_dict(),
+        approved_context,
+        configured_provider="direct_ollama",
+        selected_provider="direct_ollama",
+        configured_model="ollama/qwen2.5:3b",
+        selected_model="qwen2.5:3b",
+        provider_attempted=True,
+    )
+
+    assert result.approved_nutrition_explanation.source == "ai_validated"
+    assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.validation_status == "approved"
 
 
 def test_provider_prompt_includes_one_compact_valid_json_example(approved_context):

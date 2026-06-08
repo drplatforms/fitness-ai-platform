@@ -6,13 +6,22 @@ import os
 import sys
 import time
 from collections.abc import Callable
+from contextlib import redirect_stdout
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
 
 import requests
 
-from models.ai_nutrition_explanation_models import NutritionExplanationContext
-from services import ai_nutrition_explanation_service as explanation_service
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# Some project modules print database diagnostics during import. Keep this CLI
+# machine-readable by sending any import-time noise to stderr.
+with redirect_stdout(sys.stderr):
+    from models.ai_nutrition_explanation_models import NutritionExplanationContext
+    from services import ai_nutrition_explanation_service as explanation_service
 
 DIRECT_OLLAMA_PROVIDER_NAME = "direct_ollama_spike"
 DIRECT_OLLAMA_DEFAULT_BASE_URL = (
@@ -306,13 +315,16 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv or sys.argv[1:])
-    result = run_direct_ollama_nutrition_explanation_spike(
-        model=args.model,
-        user_id=args.user_id,
-        explanation_date=args.explanation_date,
-        ollama_base_url=args.ollama_base_url,
-        timeout_seconds=args.timeout_seconds,
-    )
+    # Keep stdout reserved for the final spike JSON so the CLI can be piped to jq.
+    # Any database/service diagnostics emitted while building context go to stderr.
+    with redirect_stdout(sys.stderr):
+        result = run_direct_ollama_nutrition_explanation_spike(
+            model=args.model,
+            user_id=args.user_id,
+            explanation_date=args.explanation_date,
+            ollama_base_url=args.ollama_base_url,
+            timeout_seconds=args.timeout_seconds,
+        )
     print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
     return 0 if result.success else 1
 

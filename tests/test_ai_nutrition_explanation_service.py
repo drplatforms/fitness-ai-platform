@@ -487,8 +487,11 @@ def test_configured_provider_defaults_to_deterministic(monkeypatch, approved_con
     assert result.approved_nutrition_explanation.source == "deterministic_fallback"
     assert result.runtime_metadata.configured_provider == "deterministic"
     assert result.runtime_metadata.selected_provider == "deterministic"
+    assert result.runtime_metadata.configured_model == "deterministic"
+    assert result.runtime_metadata.selected_model == "deterministic"
     assert result.runtime_metadata.provider_attempted is False
     assert result.runtime_metadata.fallback_used is False
+    assert result.runtime_metadata.candidate_validation_status == "not_attempted"
     assert result.runtime_metadata.final_explanation_source == "deterministic"
 
 
@@ -515,6 +518,7 @@ def test_provider_candidate_that_validates_returns_approved_explanation(
     approved_context,
 ):
     monkeypatch.setenv(service.NUTRITION_EXPLANATION_PROVIDER_ENV, "crewai")
+    monkeypatch.setenv(service.NUTRITION_EXPLANATION_MODEL_ENV, "ollama/qwen-test:3b")
 
     result = service.build_configured_approved_nutrition_explanation_with_metadata(
         1,
@@ -525,9 +529,12 @@ def test_provider_candidate_that_validates_returns_approved_explanation(
     assert result.approved_nutrition_explanation.source == "ai_validated"
     assert result.runtime_metadata.configured_provider == "crewai"
     assert result.runtime_metadata.selected_provider == "crewai"
+    assert result.runtime_metadata.configured_model == "ollama/qwen-test:3b"
+    assert result.runtime_metadata.selected_model == "ollama/qwen-test:3b"
     assert result.runtime_metadata.provider_attempted is True
     assert result.runtime_metadata.fallback_used is False
     assert result.runtime_metadata.candidate_valid is True
+    assert result.runtime_metadata.candidate_validation_status == "success"
     assert result.runtime_metadata.validation_status == "approved"
     assert result.runtime_metadata.final_explanation_source == "provider_approved"
 
@@ -549,6 +556,55 @@ def test_provider_json_candidate_that_validates_returns_approved_explanation(
     assert result.runtime_metadata.fallback_used is False
     assert result.runtime_metadata.raw_output_length is not None
     assert result.runtime_metadata.raw_output_preview_truncated
+
+
+def test_provider_parse_failure_metadata_includes_model_and_markdown_flag(
+    monkeypatch,
+    approved_context,
+):
+    monkeypatch.setenv(service.NUTRITION_EXPLANATION_PROVIDER_ENV, "crewai")
+    monkeypatch.setenv(service.NUTRITION_EXPLANATION_MODEL_ENV, "ollama/gemma-test:4b")
+
+    result = service.build_configured_approved_nutrition_explanation_with_metadata(
+        1,
+        context=approved_context,
+        candidate_provider=lambda _context: '```json\n{"extra": "bad"}\n```',
+    )
+
+    assert result.approved_nutrition_explanation.source == "deterministic_fallback"
+    assert result.runtime_metadata.configured_model == "ollama/gemma-test:4b"
+    assert result.runtime_metadata.selected_model == "ollama/gemma-test:4b"
+    assert result.runtime_metadata.fallback_reason == "candidate_parse_failure"
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+    assert result.runtime_metadata.candidate_validation_status == "not_attempted"
+    assert result.runtime_metadata.markdown_wrapper_detected is True
+
+
+def test_provider_validation_failure_metadata_includes_candidate_validation_status(
+    monkeypatch,
+    approved_context,
+):
+    monkeypatch.setenv(service.NUTRITION_EXPLANATION_PROVIDER_ENV, "crewai")
+    monkeypatch.setenv(
+        service.NUTRITION_EXPLANATION_MODEL_ENV, "ollama/validator-test:7b"
+    )
+
+    result = service.build_configured_approved_nutrition_explanation_with_metadata(
+        1,
+        context=approved_context,
+        candidate_provider=lambda _context: CandidateNutritionExplanation(
+            explanation_summary="Calibration has been applied and targets changed.",
+            confidence="Moderate",
+            reason_codes=["unsafe_provider_candidate"],
+        ),
+    )
+
+    assert result.approved_nutrition_explanation.source == "deterministic_fallback"
+    assert result.runtime_metadata.configured_model == "ollama/validator-test:7b"
+    assert result.runtime_metadata.selected_model == "ollama/validator-test:7b"
+    assert result.runtime_metadata.candidate_parse_status == "success"
+    assert result.runtime_metadata.candidate_validation_status == "failed"
+    assert result.runtime_metadata.validation_status == "rejected"
 
 
 def test_provider_candidate_with_invented_target_is_rejected_and_falls_back(
@@ -639,7 +695,13 @@ def test_provider_unavailable_or_error_falls_back_safely(monkeypatch, approved_c
     assert result.runtime_metadata.validation_errors == ["RuntimeError"]
 
 
-def test_runtime_metadata_remains_debug_only_and_separate(approved_context):
+def test_runtime_metadata_remains_debug_only_and_separate(
+    monkeypatch,
+    approved_context,
+):
+    monkeypatch.delenv(service.NUTRITION_EXPLANATION_PROVIDER_ENV, raising=False)
+    monkeypatch.delenv(service.NUTRITION_EXPLANATION_MODEL_ENV, raising=False)
+
     result = service.build_configured_approved_nutrition_explanation_with_metadata(
         1,
         context=approved_context,
@@ -650,8 +712,12 @@ def test_runtime_metadata_remains_debug_only_and_separate(approved_context):
 
     assert "configured_provider" not in public_payload
     assert "selected_provider" not in public_payload
+    assert "configured_model" not in public_payload
+    assert "selected_model" not in public_payload
     assert "raw_output_preview_truncated" not in public_payload
     assert debug_payload["configured_provider"] == "deterministic"
+    assert debug_payload["configured_model"] == "deterministic"
+    assert debug_payload["selected_model"] == "deterministic"
     assert "raw_output_preview_truncated" in debug_payload
 
 

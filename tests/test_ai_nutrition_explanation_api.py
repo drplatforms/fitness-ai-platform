@@ -75,6 +75,10 @@ def _runtime_metadata(
     final_explanation_source: str = "deterministic",
     raw_output_length: int | None = None,
     raw_output_preview_truncated: str | None = None,
+    configured_model: str | None = "deterministic",
+    selected_model: str | None = "deterministic",
+    candidate_validation_status: str = "not_attempted",
+    markdown_wrapper_detected: bool = False,
 ) -> NutritionExplanationRuntimeMetadata:
     return NutritionExplanationRuntimeMetadata(
         provider=selected_provider,
@@ -85,11 +89,15 @@ def _runtime_metadata(
         raw_output_length=raw_output_length,
         configured_provider=configured_provider,
         selected_provider=selected_provider,
+        configured_model=configured_model,
+        selected_model=selected_model,
         provider_attempted=provider_attempted,
         fallback_reason=fallback_reason,
         candidate_valid=candidate_valid,
         candidate_parse_status=candidate_parse_status,
+        candidate_validation_status=candidate_validation_status,
         final_explanation_source=final_explanation_source,
+        markdown_wrapper_detected=markdown_wrapper_detected,
     )
 
 
@@ -359,8 +367,12 @@ def test_debug_endpoint_returns_deterministic_runtime_metadata(monkeypatch):
     runtime = payload["runtime_metadata"]
     assert runtime["configured_provider"] == "deterministic"
     assert runtime["selected_provider"] == "deterministic"
+    assert runtime["configured_model"] == "deterministic"
+    assert runtime["selected_model"] == "deterministic"
     assert runtime["provider_attempted"] is False
     assert runtime["fallback_used"] is False
+    assert runtime["candidate_validation_status"] == "not_attempted"
+    assert runtime["markdown_wrapper_detected"] is False
     assert runtime["final_explanation_source"] == "deterministic"
 
 
@@ -390,6 +402,8 @@ def test_debug_endpoint_returns_provider_error_fallback_metadata(monkeypatch):
     metadata = _runtime_metadata(
         configured_provider="crewai",
         selected_provider="crewai",
+        configured_model="ollama/test-model:3b",
+        selected_model="ollama/test-model:3b",
         provider_attempted=True,
         fallback_used=True,
         fallback_reason="provider_exception",
@@ -404,6 +418,8 @@ def test_debug_endpoint_returns_provider_error_fallback_metadata(monkeypatch):
 
     assert response.status_code == 200
     runtime = response.json()["runtime_metadata"]
+    assert runtime["configured_model"] == "ollama/test-model:3b"
+    assert runtime["selected_model"] == "ollama/test-model:3b"
     assert runtime["provider_attempted"] is True
     assert runtime["fallback_used"] is True
     assert runtime["fallback_reason"] == "provider_exception"
@@ -424,6 +440,8 @@ def test_debug_endpoint_returns_parse_failure_metadata(monkeypatch):
         final_explanation_source="deterministic_fallback",
         raw_output_length=19,
         raw_output_preview_truncated="not valid json output",
+        configured_model="ollama/parse-test:4b",
+        selected_model="ollama/parse-test:4b",
     )
     _patch_user_and_result(monkeypatch, _approved_result(metadata=metadata))
 
@@ -432,7 +450,10 @@ def test_debug_endpoint_returns_parse_failure_metadata(monkeypatch):
 
     assert response.status_code == 200
     runtime = response.json()["runtime_metadata"]
+    assert runtime["configured_model"] == "ollama/parse-test:4b"
+    assert runtime["selected_model"] == "ollama/parse-test:4b"
     assert runtime["candidate_parse_status"] == "failed"
+    assert runtime["candidate_validation_status"] == "not_attempted"
     assert runtime["fallback_reason"] == "candidate_parse_failure"
     assert runtime["raw_output_preview_truncated"] == "not valid json output"
 
@@ -447,6 +468,7 @@ def test_debug_endpoint_returns_validation_failure_metadata(monkeypatch):
         candidate_valid=False,
         validation_errors=["Forbidden nutrition explanation language detected."],
         candidate_parse_status="success",
+        candidate_validation_status="failed",
         validation_status="rejected",
         final_explanation_source="deterministic_fallback",
     )
@@ -458,6 +480,7 @@ def test_debug_endpoint_returns_validation_failure_metadata(monkeypatch):
     assert response.status_code == 200
     runtime = response.json()["runtime_metadata"]
     assert runtime["candidate_valid"] is False
+    assert runtime["candidate_validation_status"] == "failed"
     assert runtime["validation_status"] == "rejected"
     assert runtime["validation_errors"]
 
@@ -476,6 +499,7 @@ def test_debug_endpoint_returns_provider_approved_metadata(monkeypatch):
         candidate_valid=True,
         validation_errors=[],
         candidate_parse_status="success",
+        candidate_validation_status="success",
         validation_status="approved",
         final_explanation_source="provider_approved",
         raw_output_length=250,
@@ -490,6 +514,7 @@ def test_debug_endpoint_returns_provider_approved_metadata(monkeypatch):
     runtime = response.json()["runtime_metadata"]
     assert runtime["fallback_used"] is False
     assert runtime["candidate_valid"] is True
+    assert runtime["candidate_validation_status"] == "success"
     assert runtime["validation_status"] == "approved"
     assert runtime["final_explanation_source"] == "provider_approved"
 
@@ -502,9 +527,13 @@ def test_preview_endpoint_remains_without_runtime_metadata(monkeypatch):
 
     assert response.status_code == 200
     payload = response.json()
+    payload_text = str(payload).lower()
     assert "runtime_metadata" not in payload
-    assert "configured_provider" not in str(payload).lower()
-    assert "validation_errors" not in str(payload).lower()
+    assert "configured_provider" not in payload_text
+    assert "selected_provider" not in payload_text
+    assert "configured_model" not in payload_text
+    assert "selected_model" not in payload_text
+    assert "validation_errors" not in payload_text
 
 
 def test_debug_endpoint_raw_output_preview_is_bounded(monkeypatch):
@@ -521,6 +550,7 @@ def test_debug_endpoint_raw_output_preview_is_bounded(monkeypatch):
         final_explanation_source="deterministic_fallback",
         raw_output_length=900,
         raw_output_preview_truncated="x" * 500,
+        markdown_wrapper_detected=True,
     )
     _patch_user_and_result(monkeypatch, _approved_result(metadata=metadata))
 
@@ -531,6 +561,7 @@ def test_debug_endpoint_raw_output_preview_is_bounded(monkeypatch):
     runtime = response.json()["runtime_metadata"]
     assert runtime["raw_output_length"] == 900
     assert len(runtime["raw_output_preview_truncated"]) <= 500
+    assert runtime["markdown_wrapper_detected"] is True
 
 
 def test_debug_endpoint_does_not_expose_stack_traces_or_raw_internal_context(

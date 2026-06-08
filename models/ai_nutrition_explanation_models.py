@@ -205,11 +205,15 @@ class NutritionExplanationRuntimeMetadata:
     raw_output_length: int | None = None
     configured_provider: str | None = None
     selected_provider: str | None = None
+    configured_model: str | None = None
+    selected_model: str | None = None
     provider_attempted: bool = False
     fallback_reason: str | None = None
     candidate_valid: bool = False
     candidate_parse_status: str = "not_attempted"
+    candidate_validation_status: str = "not_attempted"
     final_explanation_source: str = "deterministic"
+    markdown_wrapper_detected: bool = False
 
     def __post_init__(self) -> None:
         _validate_required_text("provider", self.provider)
@@ -218,8 +222,13 @@ class NutritionExplanationRuntimeMetadata:
         _validate_optional_non_negative_int("raw_output_length", self.raw_output_length)
         _validate_optional_text("configured_provider", self.configured_provider)
         _validate_optional_text("selected_provider", self.selected_provider)
+        _validate_optional_text("configured_model", self.configured_model)
+        _validate_optional_text("selected_model", self.selected_model)
         _validate_optional_text("fallback_reason", self.fallback_reason)
         _validate_required_text("candidate_parse_status", self.candidate_parse_status)
+        _validate_required_text(
+            "candidate_validation_status", self.candidate_validation_status
+        )
         _validate_required_text(
             "final_explanation_source", self.final_explanation_source
         )

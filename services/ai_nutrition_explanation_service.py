@@ -71,6 +71,10 @@ CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED = "not_attempted"
 CANDIDATE_PARSE_STATUS_SUCCESS = "success"
 CANDIDATE_PARSE_STATUS_FAILED = "failed"
 
+CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED = "not_attempted"
+CANDIDATE_VALIDATION_STATUS_SUCCESS = "success"
+CANDIDATE_VALIDATION_STATUS_FAILED = "failed"
+
 VALIDATION_STATUS_NOT_ATTEMPTED = "not_attempted"
 VALIDATION_STATUS_APPROVED = "approved"
 VALIDATION_STATUS_REJECTED = "rejected"
@@ -263,6 +267,8 @@ def approve_candidate_output_or_fallback_with_metadata(
     *,
     configured_provider: str = NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
     selected_provider: str = NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+    configured_model: str | None = None,
+    selected_model: str | None = None,
     provider_attempted: bool = False,
 ) -> ApprovedNutritionExplanationResult:
     """Approve a provider candidate or fall back to deterministic output.
@@ -280,6 +286,10 @@ def approve_candidate_output_or_fallback_with_metadata(
         metadata = _runtime_metadata(
             configured_provider=configured_provider,
             selected_provider=selected_provider,
+            configured_model=_resolved_metadata_model(
+                configured_model, configured_provider
+            ),
+            selected_model=_resolved_metadata_model(selected_model, selected_provider),
             provider_attempted=provider_attempted,
             fallback_used=True,
             fallback_reason=FALLBACK_REASON_CANDIDATE_PARSE_FAILURE,
@@ -288,6 +298,7 @@ def approve_candidate_output_or_fallback_with_metadata(
                 parse_error or "Provider candidate could not be parsed."
             ],
             candidate_parse_status=CANDIDATE_PARSE_STATUS_FAILED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
             validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
             **raw_diagnostics,
@@ -302,12 +313,17 @@ def approve_candidate_output_or_fallback_with_metadata(
         metadata = _runtime_metadata(
             configured_provider=configured_provider,
             selected_provider=selected_provider,
+            configured_model=_resolved_metadata_model(
+                configured_model, configured_provider
+            ),
+            selected_model=_resolved_metadata_model(selected_model, selected_provider),
             provider_attempted=provider_attempted,
             fallback_used=True,
             fallback_reason=FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE,
             candidate_valid=False,
             validation_errors=validation_errors,
             candidate_parse_status=CANDIDATE_PARSE_STATUS_SUCCESS,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_FAILED,
             validation_status=VALIDATION_STATUS_REJECTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
             **raw_diagnostics,
@@ -318,12 +334,17 @@ def approve_candidate_output_or_fallback_with_metadata(
     metadata = _runtime_metadata(
         configured_provider=configured_provider,
         selected_provider=selected_provider,
+        configured_model=_resolved_metadata_model(
+            configured_model, configured_provider
+        ),
+        selected_model=_resolved_metadata_model(selected_model, selected_provider),
         provider_attempted=provider_attempted,
         fallback_used=False,
         fallback_reason=None,
         candidate_valid=True,
         validation_errors=[],
         candidate_parse_status=CANDIDATE_PARSE_STATUS_SUCCESS,
+        candidate_validation_status=CANDIDATE_VALIDATION_STATUS_SUCCESS,
         validation_status=VALIDATION_STATUS_APPROVED,
         final_explanation_source=FINAL_EXPLANATION_SOURCE_PROVIDER_APPROVED,
         **raw_diagnostics,
@@ -342,6 +363,8 @@ def approve_candidate_provider_or_fallback_with_metadata(
     *,
     configured_provider: str = NUTRITION_EXPLANATION_PROVIDER_CREWAI,
     selected_provider: str = NUTRITION_EXPLANATION_PROVIDER_CREWAI,
+    configured_model: str | None = None,
+    selected_model: str | None = None,
 ) -> ApprovedNutritionExplanationResult:
     """Run a provider and safely fall back if it is unavailable or invalid."""
 
@@ -351,12 +374,17 @@ def approve_candidate_provider_or_fallback_with_metadata(
         metadata = _runtime_metadata(
             configured_provider=configured_provider,
             selected_provider=selected_provider,
+            configured_model=_resolved_metadata_model(
+                configured_model, configured_provider
+            ),
+            selected_model=_resolved_metadata_model(selected_model, selected_provider),
             provider_attempted=True,
             fallback_used=True,
             fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
             candidate_valid=False,
             validation_errors=[type(exc).__name__],
             candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
             validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
         )
@@ -369,6 +397,10 @@ def approve_candidate_provider_or_fallback_with_metadata(
         metadata = _runtime_metadata(
             configured_provider=configured_provider,
             selected_provider=selected_provider,
+            configured_model=_resolved_metadata_model(
+                configured_model, configured_provider
+            ),
+            selected_model=_resolved_metadata_model(selected_model, selected_provider),
             provider_attempted=True,
             fallback_used=True,
             fallback_reason=FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT,
@@ -377,6 +409,7 @@ def approve_candidate_provider_or_fallback_with_metadata(
                 "Nutrition explanation provider returned unsupported output."
             ],
             candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
             validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
         )
@@ -387,6 +420,10 @@ def approve_candidate_provider_or_fallback_with_metadata(
         context,
         configured_provider=configured_provider,
         selected_provider=selected_provider,
+        configured_model=_resolved_metadata_model(
+            configured_model, configured_provider
+        ),
+        selected_model=_resolved_metadata_model(selected_model, selected_provider),
         provider_attempted=True,
     )
 
@@ -532,12 +569,15 @@ def build_configured_approved_nutrition_explanation_with_metadata(
         metadata = _runtime_metadata(
             configured_provider=configured_provider,
             selected_provider=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+            configured_model=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+            selected_model=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
             provider_attempted=False,
             fallback_used=False,
             fallback_reason=FALLBACK_REASON_DETERMINISTIC_SELECTED,
             candidate_valid=True,
             validation_errors=[],
             candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+            candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
             validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC,
         )
@@ -549,17 +589,22 @@ def build_configured_approved_nutrition_explanation_with_metadata(
             resolved_context,
             configured_provider=configured_provider,
             selected_provider=NUTRITION_EXPLANATION_PROVIDER_CREWAI,
+            configured_model=_configured_nutrition_explanation_model(),
+            selected_model=_configured_nutrition_explanation_model(),
         )
 
     metadata = _runtime_metadata(
         configured_provider=configured_provider,
         selected_provider=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+        configured_model=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+        selected_model=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
         provider_attempted=False,
         fallback_used=True,
         fallback_reason=FALLBACK_REASON_INVALID_PROVIDER,
         candidate_valid=True,
         validation_errors=[f"Unsupported provider: {configured_provider}"],
         candidate_parse_status=CANDIDATE_PARSE_STATUS_NOT_ATTEMPTED,
+        candidate_validation_status=CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
         validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
         final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
     )
@@ -596,12 +641,15 @@ def _deterministic_result(
         metadata = _runtime_metadata(
             configured_provider=metadata.configured_provider or metadata.provider,
             selected_provider=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
+            configured_model=metadata.configured_model,
+            selected_model=NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC,
             provider_attempted=metadata.provider_attempted,
             fallback_used=True,
             fallback_reason=FALLBACK_REASON_DETERMINISTIC_VALIDATION_FAILURE,
             candidate_valid=False,
             validation_errors=["Deterministic explanation validation failed."],
             candidate_parse_status=metadata.candidate_parse_status,
+            candidate_validation_status=metadata.candidate_validation_status,
             validation_status=VALIDATION_STATUS_REJECTED,
             final_explanation_source=FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK,
         )
@@ -617,16 +665,20 @@ def _runtime_metadata(
     *,
     configured_provider: str,
     selected_provider: str,
+    configured_model: str | None = None,
+    selected_model: str | None = None,
     provider_attempted: bool,
     fallback_used: bool,
     fallback_reason: str | None,
     candidate_valid: bool,
     validation_errors: list[str],
     candidate_parse_status: str,
+    candidate_validation_status: str = CANDIDATE_VALIDATION_STATUS_NOT_ATTEMPTED,
     validation_status: str,
     final_explanation_source: str,
     raw_output_length: int | None = None,
     raw_output_preview_truncated: str | None = None,
+    markdown_wrapper_detected: bool = False,
 ) -> NutritionExplanationRuntimeMetadata:
     return NutritionExplanationRuntimeMetadata(
         provider=selected_provider,
@@ -637,11 +689,17 @@ def _runtime_metadata(
         raw_output_length=raw_output_length,
         configured_provider=configured_provider,
         selected_provider=selected_provider,
+        configured_model=_resolved_metadata_model(
+            configured_model, configured_provider
+        ),
+        selected_model=_resolved_metadata_model(selected_model, selected_provider),
         provider_attempted=provider_attempted,
         fallback_reason=fallback_reason,
         candidate_valid=candidate_valid,
         candidate_parse_status=candidate_parse_status,
+        candidate_validation_status=candidate_validation_status,
         final_explanation_source=final_explanation_source,
+        markdown_wrapper_detected=markdown_wrapper_detected,
     )
 
 
@@ -654,6 +712,21 @@ def _configured_nutrition_explanation_provider() -> str:
         .strip()
         .lower()
     )
+
+
+def _configured_nutrition_explanation_model() -> str:
+    return os.getenv(
+        NUTRITION_EXPLANATION_MODEL_ENV,
+        NUTRITION_EXPLANATION_DEFAULT_MODEL,
+    ).strip()
+
+
+def _resolved_metadata_model(model: str | None, provider: str | None) -> str:
+    if model:
+        return model
+    if provider == NUTRITION_EXPLANATION_PROVIDER_CREWAI:
+        return _configured_nutrition_explanation_model()
+    return NUTRITION_EXPLANATION_PROVIDER_DETERMINISTIC
 
 
 def _parse_provider_candidate(
@@ -858,9 +931,22 @@ def _bounded_strings(values: Any, *, limit: int = 5) -> list[str]:
     return [value for value in values if isinstance(value, str) and value][:limit]
 
 
+def _markdown_wrapper_detected(raw_output: str) -> bool:
+    stripped = raw_output.strip()
+    return bool(
+        stripped.startswith("```")
+        or stripped.endswith("```")
+        or re.fullmatch(r"```(?:json)?\s*.*?\s*```", stripped, flags=re.DOTALL)
+    )
+
+
 def _raw_output_diagnostics(provider_output: Any) -> dict[str, Any]:
     if provider_output is None:
-        return {"raw_output_length": 0, "raw_output_preview_truncated": None}
+        return {
+            "raw_output_length": 0,
+            "raw_output_preview_truncated": None,
+            "markdown_wrapper_detected": False,
+        }
     if isinstance(provider_output, str):
         raw = provider_output
     elif isinstance(provider_output, CandidateNutritionExplanation):
@@ -871,6 +957,7 @@ def _raw_output_diagnostics(provider_output: Any) -> dict[str, Any]:
     return {
         "raw_output_length": len(raw),
         "raw_output_preview_truncated": stripped[:RAW_OUTPUT_PREVIEW_LIMIT] or None,
+        "markdown_wrapper_detected": _markdown_wrapper_detected(stripped),
     }
 
 

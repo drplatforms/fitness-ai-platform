@@ -217,11 +217,20 @@ def test_runtime_metadata_is_debug_only_and_separate_from_approved_output():
         validation_errors=[],
         raw_output_preview_truncated=None,
         raw_output_length=0,
+        configured_model="deterministic",
+        selected_model="deterministic",
+        candidate_validation_status="not_attempted",
+        markdown_wrapper_detected=False,
     )
     approved = _approved_explanation()
     approved_payload = approved.to_dict()
 
-    assert metadata.to_debug_dict()["provider"] == "deterministic"
+    debug_payload = metadata.to_debug_dict()
+    assert debug_payload["provider"] == "deterministic"
+    assert debug_payload["configured_model"] == "deterministic"
+    assert debug_payload["selected_model"] == "deterministic"
+    assert debug_payload["candidate_validation_status"] == "not_attempted"
+    assert debug_payload["markdown_wrapper_detected"] is False
     assert "provider" not in approved_payload
     assert "raw_output_preview_truncated" not in approved_payload
 

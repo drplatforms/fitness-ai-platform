@@ -150,6 +150,21 @@ class ApprovedTrainingQuoteContext:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class TrainingReportSectionModelQuoteContext:
+    required_quote_name: str | None
+    approved_workout_names: list[str]
+    approved_exercise_names: list[str]
+    approved_training_numbers: list[int | float]
+    approved_quote_facts: list[str]
+    coaching_intent: str
+    tone_guidance: str
+    section_contract_reminder: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 @dataclass
 class DirectOllamaTrainingReportSectionSpikeResult:
     success: bool
@@ -177,6 +192,7 @@ class DirectOllamaTrainingReportSectionSpikeResult:
     extra_keys_detected: list[str] = field(default_factory=list)
     wrapper_object_detected: bool = False
     approved_training_quote_context: dict[str, Any] = field(default_factory=dict)
+    model_facing_quote_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -456,40 +472,102 @@ def build_approved_training_quote_context(
     )
 
 
+def build_training_report_section_model_quote_context(
+    approved_context: dict[str, Any],
+) -> TrainingReportSectionModelQuoteContext:
+    """Build the isolated quote-only payload sent to the model."""
+
+    quote_context = _approved_training_quote_context_from_context(approved_context)
+    approved_workout_names = _string_list(
+        quote_context.get("approved_workout_names", [])
+    )[:8]
+    approved_exercise_names = _string_list(
+        quote_context.get("approved_exercise_names", [])
+    )[:20]
+    approved_quote_facts = _string_list(
+        quote_context.get("approved_training_summary_facts", [])
+    )[:24]
+    approved_training_numbers = _approved_numbers_for_model_quote_context(
+        quote_context,
+        approved_quote_facts=approved_quote_facts,
+    )[:80]
+    required_quote_name = _required_training_quote_name(
+        {
+            "approved_workout_names": approved_workout_names,
+            "approved_exercise_names": approved_exercise_names,
+        }
+    )
+
+    return TrainingReportSectionModelQuoteContext(
+        required_quote_name=required_quote_name,
+        approved_workout_names=approved_workout_names,
+        approved_exercise_names=approved_exercise_names,
+        approved_training_numbers=approved_training_numbers,
+        approved_quote_facts=approved_quote_facts,
+        coaching_intent=(
+            "Explain what the approved training facts suggest about performance, "
+            "effort, and the next training focus without inventing additional facts."
+        ),
+        tone_guidance=(
+            "Sound like a personal coach and technical performance analyst. Be "
+            "specific, practical, and encouraging. Do not sound like a debug report."
+        ),
+        section_contract_reminder=(
+            "Return one CandidateTrainingReportSection JSON object using only the "
+            "approved quote facts, names, and numbers in this payload."
+        ),
+    )
+
+
 def build_direct_ollama_training_report_section_prompt(
     approved_context: dict[str, Any],
 ) -> str:
-    """Build the strict direct Ollama prompt for one training report section."""
+    """Build the strict quote-only direct Ollama prompt for one training section."""
 
-    quote_context = _approved_training_quote_context_from_context(approved_context)
-    approved_workout_names = [
-        name
-        for name in quote_context.get("approved_workout_names", [])
-        if isinstance(name, str) and name.strip()
-    ]
-    approved_exercise_names = [
-        name
-        for name in quote_context.get("approved_exercise_names", [])
-        if isinstance(name, str) and name.strip()
-    ]
-    required_quote_name = _required_training_quote_name(quote_context)
-    approved_context_json = json.dumps(approved_context, sort_keys=True, default=str)
-    valid_example_json = json.dumps(_candidate_training_report_section_example())
+    model_quote_context = build_training_report_section_model_quote_context(
+        approved_context
+    ).to_dict()
+    approved_workout_names = model_quote_context["approved_workout_names"]
+    approved_exercise_names = model_quote_context["approved_exercise_names"]
+    approved_quote_facts = model_quote_context["approved_quote_facts"]
+    required_quote_name = model_quote_context["required_quote_name"]
+    model_quote_context_json = json.dumps(
+        model_quote_context,
+        sort_keys=True,
+        default=str,
+    )
+    valid_example_json = json.dumps(
+        _candidate_training_report_section_example(required_quote_name)
+    )
+    approved_style_examples = _approved_style_examples_for_prompt(approved_quote_facts)
     return f"""
 /no_think
-Task: write one concise training report section from approved backend quote facts.
+Task: write one concise training report section for a fitness coaching app.
 
-Quote-first rule:
+Source of truth:
+- Use only the quote-only model-facing context below.
+- Do not use or mention backend/debug/runtime metadata.
+- Every factual claim must be supported by approved_quote_facts, approved names, or approved numbers.
+
+Required quote:
 - You must quote at least one exact approved workout or exercise name.
-- Required exact approved name to include at least once: {required_quote_name or "None available"}
+- You must include this exact approved name at least once: {required_quote_name or "None available"}
 - If approved names are available, every narrative field should mention an exact approved workout or exercise name.
-- Use approved_training_summary_facts as your source text.
 
 Approved workout names you may quote:
 {json.dumps(approved_workout_names)}
 
 Approved exercise names you may quote:
 {json.dumps(approved_exercise_names)}
+
+Approved quote facts you may explain:
+{json.dumps(approved_quote_facts)}
+
+Coaching-language requirement:
+- Do not merely repeat the approved facts as a list.
+- Use the approved facts to write concise coaching interpretation.
+- The section should feel personal, practical, and specific while staying fully grounded.
+- You may prioritize, phrase, and connect approved facts naturally.
 
 Strict output rules:
 - Return JSON only: one raw JSON object and nothing else.
@@ -500,15 +578,13 @@ Strict output rules:
 - The first character must be {{ and the last character must be }}.
 - Include exactly these top-level keys and no others.
 - Do not include provider fields, runtime fields, debug fields, validation fields, or raw context keys.
-- Do not copy backend context keys into the output unless they are explicitly listed in the schema.
-- Use only approved_training_quote_context for exact names, numbers, and training facts.
 - Quote only workout names from approved_workout_names.
 - Quote only exercise names from approved_exercise_names.
-- Quote only numbers from approved_training_numbers or approved_training_summary_facts.
-- You may restate facts from approved_training_summary_facts.
-- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact fact is listed in approved_training_summary_facts.
-- Do not summarize adherence, trends, skipped exercises, completion counts, progression, fatigue, or recovery status unless the exact claim is listed in approved_training_summary_facts.
-- Do not mention user_id, user number, user metadata, report date, provider metadata, or runtime metadata unless the exact wording appears in approved_training_summary_facts.
+- Quote only numbers from approved_training_numbers or approved_quote_facts.
+- You may restate or explain facts from approved_quote_facts.
+- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact fact is listed in approved_quote_facts.
+- Do not summarize adherence, trends, skipped exercises, completion counts, progression, fatigue, or recovery status unless the exact claim is listed in approved_quote_facts.
+- Do not mention user_id, user number, user metadata, report date, provider metadata, or runtime metadata unless the exact wording appears in approved_quote_facts.
 - Do not invent workouts, exercises, sets, reps, loads, weights, RIR, progression, fatigue, recovery status, or health metrics.
 - Do not prescribe a new workout plan or mutate backend recommendations.
 - If detailed execution data is limited, say that training detail is limited using an approved workout or exercise name.
@@ -530,25 +606,22 @@ One valid JSON example:
 
 Model-facing anti-patterns:
 Bad:
-- "Training Execution Summary for User 102"
-- "4 out of 5 workouts were completed"
+- "Training Execution Summary for User <number>"
+- "Several workouts were completed as planned"
 - "training is progressing well"
 - "adherence is high"
 - "one exercise was skipped"
 - "there was a trend toward lower effort"
 
 Good when these exact facts are approved:
-- "Romanian Deadlift was logged at 135 lb for 7, 7, 7 reps."
-- "The final Dumbbell Floor Press set was logged at 0 RIR."
-- "Gradual Progression Strength Session was completed."
-- "One-Arm Dumbbell Row was logged at 78 lb for 7, 7 reps."
+{approved_style_examples}
 
-Approved context JSON:
-{approved_context_json}
+Quote-only model-facing context JSON:
+{model_quote_context_json}
 
 Forbidden language and behavior:
 - Do not make medical, disease, diagnosis, treatment, cure, or injury claims.
-- Do not invent progression claims or say performance improved unless approved_training_summary_facts supports it.
+- Do not invent progression claims or say performance improved unless approved_quote_facts supports it.
 - Do not invent exact workout, exercise, set, rep, load, weight, or RIR values.
 - Do not use phrases such as "source of truth", "validator", "fallback", "debug", "provider", "Ollama", or "CrewAI".
 - Keep the section concise and user-facing.
@@ -690,6 +763,9 @@ def run_direct_ollama_training_report_section_spike(
         approved_training_quote_context=_approved_training_quote_context_from_context(
             resolved_context
         ),
+        model_facing_quote_context=build_training_report_section_model_quote_context(
+            resolved_context
+        ).to_dict(),
         **diagnostics,
     )
 
@@ -782,6 +858,12 @@ def validate_candidate_training_report_section(
                 "Training report section must not create unsupported progression or workout prescriptions."
             )
             break
+
+    required_quote_name = _required_quote_name_from_approved_context(approved_context)
+    if required_quote_name and required_quote_name.lower() not in combined_text.lower():
+        errors.append(
+            "Training report section must include the required approved quote name exactly."
+        )
 
     approved_names = _approved_training_names_from_context(approved_context)
     if approved_names:
@@ -1103,6 +1185,9 @@ def _fallback_result(
         approved_training_quote_context=_approved_training_quote_context_from_context(
             approved_context
         ),
+        model_facing_quote_context=build_training_report_section_model_quote_context(
+            approved_context or {}
+        ).to_dict(),
         **diagnostics,
     )
 
@@ -1137,21 +1222,31 @@ def _deterministic_fallback_section() -> CandidateTrainingReportSection:
     )
 
 
-def _candidate_training_report_section_example() -> dict[str, Any]:
+def _approved_style_examples_for_prompt(approved_quote_facts: list[str]) -> str:
+    examples = [fact for fact in approved_quote_facts if fact.strip()][:4]
+    if not examples:
+        return '- "Use only the exact approved quote facts provided in this payload."'
+    return "\n".join(f'- "{example}"' for example in examples)
+
+
+def _candidate_training_report_section_example(
+    required_quote_name: str | None = None,
+) -> dict[str, Any]:
+    quote_name = required_quote_name or "Approved Exercise"
     return {
-        "section_summary": "Recent training execution has enough logged detail for cautious review.",
+        "section_summary": f"{quote_name} has approved logged detail for cautious review.",
         "key_observations": [
-            "Completed planned workout data can support a bounded training summary.",
-            "Effort and completion should be interpreted only from approved execution details.",
+            f"{quote_name} should be interpreted only from approved quote facts.",
+            f"{quote_name} context can support a bounded training summary.",
         ],
         "performance_interpretation": (
-            "The main training signal is consistency rather than a dramatic change."
+            f"{quote_name} is the clearest approved training signal in this section."
         ),
         "fatigue_recovery_interpretation": (
-            "Recovery context should be considered before changing training difficulty."
+            f"{quote_name} recovery interpretation should stay limited to approved quote facts."
         ),
-        "suggested_focus": "Review approved planned-vs-actual execution details before adjusting training.",
-        "limitations_context": "This section only uses approved backend training context.",
+        "suggested_focus": f"Use {quote_name} logging details before adjusting training direction.",
+        "limitations_context": f"{quote_name} context only uses approved backend training facts.",
         "confidence": "Moderate",
         "reason_codes": ["direct_ollama_training_report_section_candidate"],
     }
@@ -1183,6 +1278,41 @@ def _approved_training_names_from_context(approved_context: dict[str, Any]) -> s
 def _text_mentions_any_approved_name(text: str, approved_names: set[str]) -> bool:
     normalized_text = _normalize_name(text)
     return any(name in normalized_text for name in approved_names)
+
+
+def _model_quote_context_from_context(
+    approved_context: dict[str, Any],
+) -> dict[str, Any]:
+    return build_training_report_section_model_quote_context(approved_context).to_dict()
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    strings: list[str] = []
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            strings.append(item.strip())
+    return strings
+
+
+def _approved_numbers_for_model_quote_context(
+    quote_context: dict[str, Any],
+    *,
+    approved_quote_facts: list[str],
+) -> list[int | float]:
+    approved_numbers: list[int | float] = []
+    for value in quote_context.get("approved_training_numbers", []):
+        _append_unique_number(approved_numbers, value)
+    # Keep numbers that are embedded in explicitly approved facts even if the numeric
+    # list was trimmed or produced by a different backend layer.
+    for token in _number_tokens_from_object(approved_quote_facts):
+        try:
+            number = float(token)
+        except ValueError:
+            continue
+        _append_unique_number(approved_numbers, number)
+    return approved_numbers
 
 
 def _required_training_quote_name(quote_context: dict[str, Any]) -> str | None:
@@ -1274,16 +1404,27 @@ def _unapproved_known_training_names(
     return unapproved
 
 
+def _required_quote_name_from_approved_context(
+    approved_context: dict[str, Any],
+) -> str | None:
+    quote_context = _approved_training_quote_context_from_context(approved_context)
+    return _required_training_quote_name(quote_context)
+
+
+def _approved_quote_facts_text(quote_context: dict[str, Any]) -> str:
+    facts = quote_context.get("approved_quote_facts")
+    if not isinstance(facts, list):
+        facts = quote_context.get("approved_training_summary_facts", [])
+    return "\n".join(str(fact).lower() for fact in facts)
+
+
 def _unsupported_metadata_leakage_errors(
     lowered_text: str,
     *,
     approved_context: dict[str, Any],
 ) -> list[str]:
     quote_context = _approved_training_quote_context_from_context(approved_context)
-    approved_facts_text = "\n".join(
-        str(fact).lower()
-        for fact in quote_context.get("approved_training_summary_facts", [])
-    )
+    approved_facts_text = _approved_quote_facts_text(quote_context)
     metadata_patterns = [
         r"\buser[_\s-]?id\b",
         r"\buser\s+#?\d+\b",
@@ -1309,10 +1450,7 @@ def _unsupported_training_claim_errors(
     approved_context: dict[str, Any],
 ) -> list[str]:
     quote_context = _approved_training_quote_context_from_context(approved_context)
-    approved_facts_text = "\n".join(
-        str(fact).lower()
-        for fact in quote_context.get("approved_training_summary_facts", [])
-    )
+    approved_facts_text = _approved_quote_facts_text(quote_context)
     errors: list[str] = []
 
     unsupported_claim_groups = [
@@ -1414,6 +1552,7 @@ def _unapproved_numbers_in_candidate(
             "approved_training_summary_facts": quote_context.get(
                 "approved_training_summary_facts", []
             ),
+            "approved_quote_facts": quote_context.get("approved_quote_facts", []),
         }
     )
     found_numbers = _number_tokens_from_object(candidate_payload)

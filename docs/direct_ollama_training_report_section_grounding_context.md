@@ -191,3 +191,9 @@ Rejected examples included:
 - `adherence at High level`
 
 This result routed the next milestone to `Direct Ollama Training Report Section Prompt Tightening v2`.
+
+## Follow-up: Quote-Only Context Isolation v3
+
+Prompt Tightening v2 improved rejection quality but did not change `qwen2.5:3b` output behavior. The model still summarized broader context when the full backend approved context was serialized into the prompt.
+
+Quote-Only Context Isolation v3 keeps the richer backend/debug context available, but sends only a derived quote-only payload to the model. This payload contains approved names, approved numbers, approved quote facts, a required quote name, and coaching/tone guidance. It excludes user IDs, report dates, raw execution rows, raw summaries, runtime metadata, and other broad context that could invite unsupported summarization.

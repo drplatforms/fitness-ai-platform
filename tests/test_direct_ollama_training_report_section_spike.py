@@ -4,6 +4,7 @@ from scripts.spike_direct_ollama_training_report_section import (
     CANDIDATE_TRAINING_REPORT_SECTION_JSON_SCHEMA,
     build_approved_training_quote_context,
     build_direct_ollama_training_report_section_prompt,
+    build_training_report_section_model_quote_context,
     detect_direct_ollama_training_section_output_diagnostics,
     normalize_ollama_model_name,
     run_direct_ollama_training_report_section_spike,
@@ -132,12 +133,14 @@ def test_prompt_contains_strict_json_and_training_grounding_rules():
 
     assert "Return JSON only" in prompt
     assert "CandidateTrainingReportSection allowed output schema" in prompt
-    assert "Approved context JSON" in prompt
+    assert "Quote-only model-facing context JSON" in prompt
+    assert "Approved context JSON" not in prompt
     assert "Approved workout names you may quote" in prompt
     assert "Approved exercise names you may quote" in prompt
-    assert "Required exact approved name" in prompt
+    assert "Approved quote facts you may explain" in prompt
+    assert "Required quote" in prompt
     assert "Do not mention user_id" in prompt
-    assert "Use only approved_training_quote_context" in prompt
+    assert "Use only the quote-only model-facing context" in prompt
     assert (
         "You must quote at least one exact approved workout or exercise name" in prompt
     )
@@ -372,6 +375,101 @@ def test_approved_training_quote_context_builder_exposes_bounded_quoteable_value
     assert "raw_notes" not in str(quote_context).lower()
 
 
+def test_model_facing_quote_only_payload_excludes_broad_context_and_metadata():
+    payload = build_training_report_section_model_quote_context(
+        APPROVED_CONTEXT
+    ).to_dict()
+
+    assert payload["required_quote_name"] == "Upper Body Strength"
+    assert payload["approved_workout_names"] == ["Upper Body Strength"]
+    assert payload["approved_exercise_names"] == ["Dumbbell Bench Press"]
+    assert (
+        "Dumbbell Bench Press was logged at 50 lb for 10 reps."
+        in payload["approved_quote_facts"]
+    )
+    assert 50 in payload["approved_training_numbers"]
+    assert "coaching_intent" in payload
+    assert "tone_guidance" in payload
+
+    serialized = str(payload).lower()
+    assert "user_id" not in serialized
+    assert "report_date" not in serialized
+    assert "training_state" not in serialized
+    assert "training_execution_summary" not in serialized
+    assert "recent_training_executions" not in serialized
+    assert "actual_sets" not in serialized
+    assert "completed_at" not in serialized
+    assert "provider" not in serialized
+    assert "runtime" not in serialized
+
+
+def test_prompt_uses_quote_only_payload_not_full_backend_context():
+    captured: dict[str, object] = {}
+
+    def fake_generate(_base_url, _selected_model, prompt, _schema, _timeout_seconds):
+        captured["prompt"] = prompt
+        return _valid_raw_section()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    prompt = str(captured["prompt"])
+    assert "Quote-only model-facing context JSON" in prompt
+    assert "Approved context JSON" not in prompt
+    assert '"training_state"' not in prompt
+    assert '"training_execution_summary"' not in prompt
+    assert '"recent_training_executions"' not in prompt
+    assert '"user_id"' not in prompt
+    assert '"report_date"' not in prompt
+
+
+def test_prompt_preserves_natural_coach_language_instruction():
+    prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
+
+    assert "Do not merely repeat the approved facts as a list" in prompt
+    assert "personal, practical, and specific" in prompt
+    assert "prioritize, phrase, and connect approved facts naturally" in prompt
+
+
+def test_direct_ollama_training_section_spike_grounded_coach_like_output_approves():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength gives a narrow but useful signal because Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 1 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the clearest approved performance detail, so the review should stay focused on that logged set.",
+  "fatigue_recovery_interpretation": "Dumbbell Bench Press reached 1 RIR on the final logged set, so effort should be interpreted cautiously without adding recovery claims.",
+  "suggested_focus": "Use Dumbbell Bench Press logging quality as the next focus before changing training direction.",
+  "limitations_context": "Upper Body Strength has limited approved execution detail, so this section avoids broader claims.",
+  "confidence": "Low",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    assert result.fallback_used is False
+    assert result.model_facing_quote_context["required_quote_name"] == (
+        "Upper Body Strength"
+    )
+
+
 def test_direct_ollama_training_section_spike_generic_moderate_load_claim_fails():
     def fake_generate(*_args, **_kwargs):
         return """
@@ -468,17 +566,22 @@ def test_diagnostics_detect_wrapper_and_extra_keys():
     assert diagnostics["extra_keys_detected"] == ["extra", "response"]
 
 
-def test_prompt_places_approved_names_before_broader_context():
+def test_prompt_places_approved_names_before_quote_only_payload():
     prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
 
     assert prompt.index("Approved workout names you may quote") < prompt.index(
-        "Approved context JSON"
+        "Quote-only model-facing context JSON"
     )
     assert prompt.index("Approved exercise names you may quote") < prompt.index(
-        "Approved context JSON"
+        "Quote-only model-facing context JSON"
     )
     assert "Upper Body Strength" in prompt
     assert "Dumbbell Bench Press" in prompt
+    assert '"training_state"' not in prompt
+    assert '"training_execution_summary"' not in prompt
+    assert '"recent_training_executions"' not in prompt
+    assert '"user_id"' not in prompt
+    assert '"report_date"' not in prompt
 
 
 def test_direct_ollama_training_section_spike_user_metadata_fails_validation():

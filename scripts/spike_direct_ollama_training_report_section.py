@@ -159,6 +159,7 @@ class TrainingReportSectionModelQuoteContext:
     approved_exercise_names: list[str]
     approved_training_numbers: list[int | float]
     supporting_training_details: list[str]
+    approved_interpretation_claims: list[str]
     coaching_intent: str
     tone_guidance: str
     section_contract_reminder: str
@@ -198,6 +199,7 @@ class DirectOllamaTrainingReportSectionSpikeResult:
     matched_required_fact_anchors: list[str] = field(default_factory=list)
     required_anchor_count: int = 0
     missing_required_anchor_count: int = 0
+    matched_approved_interpretation_claims: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -506,6 +508,11 @@ def build_training_report_section_model_quote_context(
         required_quote_name=required_quote_name,
         approved_quote_facts=approved_quote_facts,
     )
+    approved_interpretation_claims = _approved_training_interpretation_claims(
+        required_quote_name=required_quote_name,
+        required_fact_anchors=required_fact_anchors,
+        approved_quote_facts=approved_quote_facts,
+    )
 
     return TrainingReportSectionModelQuoteContext(
         required_quote_name=required_quote_name,
@@ -515,6 +522,7 @@ def build_training_report_section_model_quote_context(
         approved_exercise_names=approved_exercise_names,
         approved_training_numbers=approved_training_numbers,
         supporting_training_details=approved_quote_facts,
+        approved_interpretation_claims=approved_interpretation_claims,
         coaching_intent=(
             "Explain what the exact training details suggest about performance, "
             "effort, and the next training focus without inventing additional facts."
@@ -542,6 +550,9 @@ def build_direct_ollama_training_report_section_prompt(
     approved_exercise_names = model_quote_context["approved_exercise_names"]
     approved_training_numbers = model_quote_context["approved_training_numbers"]
     supporting_training_details = model_quote_context["supporting_training_details"]
+    approved_interpretation_claims = model_quote_context[
+        "approved_interpretation_claims"
+    ]
     required_quote_name = model_quote_context["required_quote_name"]
     required_anchor_count = model_quote_context["required_anchor_count"]
     required_fact_anchors = model_quote_context["required_fact_anchors"]
@@ -569,6 +580,14 @@ Required detail placement:
 - Use at least {required_anchor_count} exact required training detail(s) somewhere in the full response.
 - Exact means character-for-character; do not paraphrase required training details when satisfying this requirement.
 - After placing the exact observations, use the other fields to explain the details naturally like a coach.
+
+Allowed interpretation claims:
+{_numbered_lines(approved_interpretation_claims)}
+
+Interpretation rules:
+- Interpretation fields may only explain or rephrase the allowed interpretation claims.
+- Do not create new conclusions from the exact training details.
+- Do not claim consistency, progression, form quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears in the allowed interpretation claims.
 
 Required quote:
 - Include this exact name at least once: {required_quote_name or "None available"}
@@ -605,7 +624,8 @@ Strict output rules:
 - Quote only exercise names from the allowed exercise names list.
 - Quote only numbers from the allowed numbers list or allowed supporting training details.
 - You may restate or explain allowed supporting training details.
-- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact detail is listed above.
+- You may explain or rephrase allowed interpretation claims, but do not add new conclusions.
+- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact detail or allowed interpretation is listed above.
 - Do not summarize adherence, trends, skipped exercises, completion counts, progression, fatigue, or recovery status unless the exact claim is listed above.
 - Do not talk about these instructions, the payload, the backend, validation, or why the wording is restricted.
 - Do not mention user ID, user number, user metadata, report date, provider metadata, or runtime metadata unless the exact wording is listed above.
@@ -760,8 +780,13 @@ def run_direct_ollama_training_report_section_spike(
             diagnostics=diagnostics,
         )
 
+    combined_candidate_text = _combined_candidate_text(candidate)
     anchor_diagnostics = _required_fact_anchor_diagnostics(
-        _combined_candidate_text(candidate),
+        combined_candidate_text,
+        approved_context=resolved_context,
+    )
+    matched_interpretation_claims = _matched_approved_interpretation_claims(
+        combined_candidate_text,
         approved_context=resolved_context,
     )
 
@@ -798,6 +823,7 @@ def run_direct_ollama_training_report_section_spike(
         missing_required_anchor_count=anchor_diagnostics[
             "missing_required_anchor_count"
         ],
+        matched_approved_interpretation_claims=matched_interpretation_claims,
         **diagnostics,
     )
 
@@ -908,6 +934,12 @@ def validate_candidate_training_report_section(
         approved_context=approved_context,
     )
     errors.extend(meta_copy_errors)
+
+    interpretation_claim_errors = _unsupported_interpretation_claim_errors(
+        lowered,
+        approved_context=approved_context,
+    )
+    errors.extend(interpretation_claim_errors)
 
     approved_names = _approved_training_names_from_context(approved_context)
     if approved_names:
@@ -1206,8 +1238,13 @@ def _fallback_result(
             }
         )
 
+    raw_text = raw_output or ""
     anchor_diagnostics = _required_fact_anchor_diagnostics(
-        raw_output or "",
+        raw_text,
+        approved_context=approved_context or {},
+    )
+    matched_interpretation_claims = _matched_approved_interpretation_claims(
+        raw_text,
         approved_context=approved_context or {},
     )
 
@@ -1244,6 +1281,7 @@ def _fallback_result(
         missing_required_anchor_count=anchor_diagnostics[
             "missing_required_anchor_count"
         ],
+        matched_approved_interpretation_claims=matched_interpretation_claims,
         **diagnostics,
     )
 
@@ -1447,6 +1485,59 @@ def _required_training_fact_anchors(
         _append_unique_string(anchors, fact)
 
     return anchors[:max_anchors]
+
+
+def _approved_training_interpretation_claims(
+    *,
+    required_quote_name: str | None,
+    required_fact_anchors: list[str],
+    approved_quote_facts: list[str],
+) -> list[str]:
+    """Build backend-authored interpretation claims allowed for model phrasing."""
+
+    claims: list[str] = []
+    quote_name = required_quote_name or "Training details"
+    concrete_anchors = [
+        anchor
+        for anchor in required_fact_anchors
+        if _is_concrete_logged_performance_fact(anchor)
+    ]
+    final_rir_facts = [
+        fact for fact in approved_quote_facts if _is_final_rir_fact(fact)
+    ]
+
+    if concrete_anchors:
+        _append_unique_string(
+            claims,
+            f"{quote_name} has exact logged performance details for bounded review.",
+        )
+    if final_rir_facts:
+        _append_unique_string(
+            claims,
+            "The session included high-effort work because at least one final set was logged at 0-1 RIR.",
+        )
+        _append_unique_string(
+            claims,
+            "The next training focus should stay controlled rather than adding more intensity immediately.",
+        )
+    else:
+        _append_unique_string(
+            claims,
+            "The next training focus should be to keep logging sets, reps, load, and RIR consistently.",
+        )
+    _append_unique_string(
+        claims,
+        "Recovery interpretation should remain limited because this section only has bounded workout execution facts.",
+    )
+    _append_unique_string(
+        claims,
+        "No conclusion about form quality should be made from the available facts.",
+    )
+    _append_unique_string(
+        claims,
+        "No conclusion about planned-work alignment should be made unless planned-versus-actual status is explicitly approved.",
+    )
+    return claims[:8]
 
 
 def _required_anchor_count(required_fact_anchors: list[str]) -> int:
@@ -1680,6 +1771,114 @@ def _unsupported_meta_copy_errors(
     ]
 
 
+def _approved_interpretation_claims_text(approved_context: dict[str, Any]) -> str:
+    model_quote_context = _model_quote_context_from_context(approved_context)
+    claims = _string_list(model_quote_context.get("approved_interpretation_claims", []))
+    return "\n".join(claim.lower() for claim in claims)
+
+
+def _matched_approved_interpretation_claims(
+    text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> list[str]:
+    model_quote_context = _model_quote_context_from_context(approved_context)
+    claims = _string_list(model_quote_context.get("approved_interpretation_claims", []))
+    lowered_text = text.lower()
+    return [claim for claim in claims if claim.lower() in lowered_text]
+
+
+def _unsupported_interpretation_claim_errors(
+    lowered_text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> list[str]:
+    approved_claims_text = _approved_interpretation_claims_text(approved_context)
+    errors: list[str] = []
+    claim_groups = [
+        (
+            "Training report section must not make unsupported effort or consistency claims.",
+            [
+                "consistent effort",
+                "steady effort",
+                "controlled effort",
+                "effort was balanced",
+                "effort was moderate",
+                "consistent rep",
+                "consistent reps",
+            ],
+        ),
+        (
+            "Training report section must not make unsupported progression claims.",
+            [
+                "progression",
+                "progressed",
+                "progressing",
+                "weight progression",
+                "strength is improving",
+                "performance improved",
+                "load increased",
+                "volume increased",
+            ],
+        ),
+        (
+            "Training report section must not make unsupported form or control claims.",
+            [
+                "strong control",
+                "good control",
+                "controlled form",
+                "strong form",
+                "form quality",
+                "technique was solid",
+                "movement quality was good",
+                "control and form",
+            ],
+        ),
+        (
+            "Training report section must not make unsupported fatigue or recovery claims.",
+            [
+                "no indication of fatigue",
+                "no indication of recovery",
+                "no fatigue issue",
+                "no recovery issue",
+                "recovery appears fine",
+                "recovery is fine",
+                "fatigue is low",
+                "fatigue is accumulating",
+                "recovery is improving",
+                "excessive fatigue",
+                "recovery status",
+                "fatigue status",
+            ],
+        ),
+        (
+            "Training report section must not make unsupported planned-work alignment claims.",
+            [
+                "aligned with planned",
+                "aligns with planned",
+                "aligns with the planned",
+                "matched the plan",
+                "completed as planned",
+                "followed the plan",
+                "plan alignment",
+                "planned-work alignment",
+                "planned work alignment",
+                "on track with the plan",
+            ],
+        ),
+    ]
+    for message, phrases in claim_groups:
+        matched_phrases = [phrase for phrase in phrases if phrase in lowered_text]
+        if not matched_phrases:
+            continue
+        unapproved_phrases = [
+            phrase for phrase in matched_phrases if phrase not in approved_claims_text
+        ]
+        if unapproved_phrases:
+            errors.append(message)
+    return errors
+
+
 def _unsupported_metadata_leakage_errors(
     lowered_text: str,
     *,
@@ -1815,6 +2014,9 @@ def _unapproved_numbers_in_candidate(
                 "approved_training_summary_facts", []
             ),
             "approved_quote_facts": quote_context.get("approved_quote_facts", []),
+            "approved_interpretation_claims": _model_quote_context_from_context(
+                approved_context
+            ).get("approved_interpretation_claims", []),
         }
     )
     found_numbers = _number_tokens_from_object(candidate_payload)

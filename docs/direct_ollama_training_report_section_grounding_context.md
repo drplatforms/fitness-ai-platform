@@ -209,3 +209,11 @@ Fact-Anchored Output v4 made the anchor mechanism active, but live qwen2.5 and h
 Anchor-First Payload v4.1 keeps quote-only isolation and required fact anchors, but makes the required anchors the dominant prompt block. The actual prompt no longer dumps the full model-facing JSON payload and no longer exposes `forbidden_meta_terms` to the model. Forbidden/meta terms remain backend-side validation concerns only.
 
 v4.1 also requires the first two key observations to be exact, different required training details when at least two anchors are available, and the spike output exposes matched-anchor diagnostics for runtime QA.
+
+## Claim-Safe Interpretation v4.2 follow-up
+
+Anchor-First Payload v4.1 solved required anchor placement in at least one live qwen2.5 run, but repeated qwen2.5 and qwen3:8b runs showed provider approval was not stable. Models could place the exact required anchors and then invent unsupported interpretation around them.
+
+Claim-Safe Interpretation v4.2 keeps quote-only context and anchor-first observations, then adds backend-approved interpretation claims plus conservative validation for unsupported consistency, progression, form/control, fatigue/recovery, planned-alignment, adherence, and completion claims.
+
+Exact anchors are now necessary but not sufficient. The interpretation fields must stay within backend-approved claim boundaries or fall back deterministically.

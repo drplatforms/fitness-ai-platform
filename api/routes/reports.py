@@ -8,9 +8,12 @@ import uuid
 from dataclasses import asdict
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from services.coordinator_service import generate_health_report
+from services.health_report_section_service import (
+    build_configured_nutrition_health_report_section_with_metadata,
+)
 from services.report_service import get_health_report_history, get_latest_health_report
 from services.user_state_service import build_user_health_state
 
@@ -175,6 +178,64 @@ def generate_report(user_id: int):
     thread.start()
 
     return {"success": True, "job_id": job_id, "status": "running"}
+
+
+# =====================================
+# Nutrition Report Section Debug Endpoint
+# =====================================
+
+
+@router.get("/reports/sections/nutrition/{user_id}/debug")
+def nutrition_report_section_debug(
+    user_id: int,
+    report_date: str | None = Query(default=None, alias="date"),
+):
+    resolved_date = _resolve_report_section_date(report_date)
+
+    try:
+        result = build_configured_nutrition_health_report_section_with_metadata(
+            user_id=user_id,
+            report_date=resolved_date,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "not found" in message.lower() else 400
+        raise HTTPException(
+            status_code=status_code,
+            detail=(
+                "Health report section validation failed."
+                if status_code == 400
+                else "User not found."
+            ),
+        ) from exc
+    except Exception as exc:  # pragma: no cover - defensive debug-safe boundary
+        raise HTTPException(
+            status_code=500,
+            detail="Health report section generation failed.",
+        ) from exc
+
+    approved_section = result.approved_section
+    return {
+        "success": True,
+        "user_id": user_id,
+        "section": approved_section.section,
+        "report_date": resolved_date,
+        "approved_section": approved_section.to_dict(),
+        "runtime_metadata": result.runtime_metadata.to_debug_dict(),
+    }
+
+
+def _resolve_report_section_date(report_date: str | None) -> str:
+    if report_date is None:
+        return datetime.now().date().isoformat()
+
+    try:
+        return datetime.fromisoformat(report_date).date().isoformat()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="date must use YYYY-MM-DD format.",
+        ) from exc
 
 
 # =====================================

@@ -599,8 +599,9 @@ Interpretation and style rules:
 - Interpretation fields may only explain or rephrase the allowed interpretation claims and approved coaching frames.
 - Do not create new conclusions from the exact training details.
 - Do not claim consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
-- Sound like a coach speaking to the user, not a debug report or validation summary.
-- Do not use internal wording such as data for review, exact training details, provided details, allowed names, payload, contract, report section, validator, or debug.
+- Sound like a coach speaking directly to the user, not a debug report, validation summary, or execution summary.
+- Prefer practical coaching language over stiff diagnostic phrasing.
+- Do not use internal or stiff wording such as concrete checkpoint, logged session, centered on the logged lifts, concrete load and rep detail, data for review, exact training details, provided details, allowed names, payload, contract, report section, validator, or debug.
 
 Required quote:
 - Include this exact name at least once: {required_quote_name or "None available"}
@@ -622,6 +623,8 @@ Coaching-language requirement:
 - Do not merely list details in every field.
 - Use the required observations, allowed interpretations, and approved coaching frames to write concise coaching interpretation.
 - The section should feel personal, practical, and specific while staying fully grounded.
+- Prefer clear coach-language such as “use these lifts as reference points” or “keep the next session measured.”
+- Avoid safe-but-stiff phrases such as concrete checkpoint, logged session, centered on the logged lifts, and concrete load and rep detail.
 - suggested_focus must give the user a practical next step, not tell them to review data or interpret details.
 - You may prioritize, phrase, and connect exact details naturally.
 
@@ -670,6 +673,8 @@ Bad examples:
 - "one exercise was skipped"
 - "there was a trend toward lower effort"
 - "execution data for review"
+- "concrete checkpoint from the logged session"
+- "centered on the logged lifts with concrete load and rep detail"
 - "controlled execution"
 
 Good when these exact details are available:
@@ -1362,20 +1367,21 @@ def _candidate_training_report_section_example(
     second_observation = anchors[2] if len(anchors) > 2 else first_observation
     if second_observation == first_observation:
         second_observation = quote_name
+    signal_names = _joined_training_signal_names(anchors) or quote_name
     return {
-        "section_summary": f"{quote_name} gives you a concrete checkpoint from the logged session.",
+        "section_summary": f"{signal_names} give {quote_name} its clearest training signal.",
         "key_observations": [
             first_observation,
             second_observation,
         ],
         "performance_interpretation": (
-            f"{quote_name} should stay centered on the logged lifts with concrete load and rep detail."
+            f"Use {signal_names} as reference lifts before changing training direction."
         ),
         "fatigue_recovery_interpretation": (
-            f"{quote_name} does not provide enough recovery context for broad fatigue conclusions."
+            f"{quote_name} gives enough signal for the next training choice, but not broad recovery claims."
         ),
-        "suggested_focus": f"Use {quote_name} as a reference point and keep the next session measured.",
-        "limitations_context": f"{quote_name} supports a narrow training review, not broad recovery or progression claims.",
+        "suggested_focus": f"Keep the next session measured and use {signal_names} before increasing intensity.",
+        "limitations_context": f"{quote_name} is useful for the next training choice, not a full recovery picture.",
         "confidence": "Moderate",
         "reason_codes": ["direct_ollama_training_report_section_candidate"],
     }
@@ -1531,7 +1537,7 @@ def _approved_training_interpretation_claims(
     if concrete_anchors:
         _append_unique_string(
             claims,
-            f"{quote_name} has logged performance anchors with concrete load and rep detail.",
+            f"{quote_name} has its clearest training signal in lifts with recorded loads and reps.",
         )
     if final_rir_facts:
         _append_unique_string(
@@ -1549,7 +1555,7 @@ def _approved_training_interpretation_claims(
         )
     _append_unique_string(
         claims,
-        "Recovery and fatigue conclusions should stay conservative because available facts are limited to workout execution details.",
+        "This is enough to guide the next training choice, but not enough to make broad claims about recovery or progression.",
     )
     _append_unique_string(
         claims,
@@ -1581,24 +1587,32 @@ def _approved_training_coaching_frames(
         fact for fact in approved_quote_facts if _is_final_rir_fact(fact)
     ]
 
-    if concrete_anchors:
+    signal_names = _joined_training_signal_names(required_fact_anchors)
+
+    if concrete_anchors and signal_names:
         _append_unique_string(
             frames,
-            "The clearest training signals are the logged lifts with concrete load and rep detail.",
+            f"{signal_names} give {quote_name} its clearest training signal.",
         )
         _append_unique_string(
             frames,
-            "Use these logged lifts as reference points before increasing intensity.",
+            f"Use {signal_names} as reference lifts before increasing intensity.",
+        )
+    elif concrete_anchors:
+        _append_unique_string(
+            frames,
+            f"{quote_name} has useful lifting signal from recorded loads and reps.",
         )
     if final_rir_facts:
         _append_unique_string(
             frames,
             "Keep the next session measured and continue logging load, reps, and RIR.",
         )
-        _append_unique_string(
-            frames,
-            "Avoid chasing more intensity immediately; use the logged lifts as checkpoints first.",
-        )
+        if signal_names:
+            _append_unique_string(
+                frames,
+                f"Use {signal_names} as checkpoints before chasing more intensity.",
+            )
     else:
         _append_unique_string(
             frames,
@@ -1606,7 +1620,7 @@ def _approved_training_coaching_frames(
         )
     _append_unique_string(
         frames,
-        f"{quote_name} can guide the next training choice, but not broad claims about recovery or progression.",
+        f"{quote_name} gives enough signal to guide the next training choice, but not enough for broad recovery or progression conclusions.",
     )
     return frames[:6]
 
@@ -1627,6 +1641,29 @@ def _is_concrete_logged_performance_fact(fact: str) -> bool:
 def _is_final_rir_fact(fact: str) -> bool:
     lowered = fact.lower()
     return lowered.startswith("the final ") and " rir" in lowered
+
+
+def _exercise_name_from_logged_performance_fact(fact: str) -> str | None:
+    marker = " was logged at "
+    if marker not in fact:
+        return None
+    exercise_name = fact.split(marker, 1)[0].strip()
+    return exercise_name or None
+
+
+def _joined_training_signal_names(required_fact_anchors: list[str]) -> str | None:
+    names: list[str] = []
+    for anchor in required_fact_anchors:
+        name = _exercise_name_from_logged_performance_fact(anchor)
+        if name:
+            _append_unique_string(names, name)
+        if len(names) >= 2:
+            break
+    if not names:
+        return None
+    if len(names) == 1:
+        return names[0]
+    return f"{names[0]} and {names[1]}"
 
 
 def _forbidden_training_report_meta_terms() -> list[str]:
@@ -1846,6 +1883,10 @@ def _unsupported_meta_copy_errors(
 
 def _forbidden_user_facing_copy_terms() -> list[str]:
     return [
+        "concrete checkpoint",
+        "logged session",
+        "centered on the logged lifts",
+        "concrete load and rep detail",
         "execution data",
         "data for review",
         "details are provided",
@@ -1887,6 +1928,7 @@ def _suggested_focus_quality_errors(suggested_focus: str) -> list[str]:
     lowered_focus = suggested_focus.lower()
     weak_patterns = [
         "review the execution data",
+        "review the logged session",
         "interpret the details cautiously",
         "use the exact details for guidance",
         "continue reviewing the provided details",

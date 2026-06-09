@@ -48,15 +48,15 @@ APPROVED_CONTEXT = {
 def _valid_raw_section() -> str:
     return """
 {
-  "section_summary": "Upper Body Strength gives you a concrete checkpoint from the logged session.",
+  "section_summary": "Dumbbell Bench Press gives Upper Body Strength its clearest training signal.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Upper Body Strength should stay centered on the logged lifts with concrete load and rep detail.",
+  "performance_interpretation": "Use Dumbbell Bench Press as the reference lift before changing Upper Body Strength direction.",
   "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
-  "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
-  "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery conclusions.",
+  "suggested_focus": "Keep the next session measured and use Dumbbell Bench Press before increasing intensity.",
+  "limitations_context": "Upper Body Strength is useful for the next training choice, not a full recovery picture.",
   "confidence": "Moderate",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -141,7 +141,7 @@ def test_training_report_section_direct_ollama_valid_output_approves(monkeypatch
     )
 
     assert result.approved_section.source == FINAL_SECTION_SOURCE_DIRECT_OLLAMA_APPROVED
-    assert result.approved_section.section_summary.startswith("Upper Body Strength")
+    assert "Upper Body Strength" in result.approved_section.section_summary
     assert result.runtime_metadata.configured_provider == "direct_ollama"
     assert result.runtime_metadata.selected_provider == "direct_ollama"
     assert result.runtime_metadata.configured_model == "ollama/qwen2.5:3b"

@@ -160,6 +160,9 @@ class TrainingReportSectionModelQuoteContext:
     approved_training_numbers: list[int | float]
     supporting_training_details: list[str]
     approved_interpretation_claims: list[str]
+    approved_coaching_moves: dict[str, dict[str, Any]]
+    # Kept for metadata compatibility only. Product voice autonomy uses
+    # semantic coaching moves as the primary model-facing style source.
     approved_coaching_frames: list[str]
     coaching_intent: str
     tone_guidance: str
@@ -514,7 +517,7 @@ def build_training_report_section_model_quote_context(
         required_fact_anchors=required_fact_anchors,
         approved_quote_facts=approved_quote_facts,
     )
-    approved_coaching_frames = _approved_training_coaching_frames(
+    approved_coaching_moves = _approved_training_coaching_moves(
         required_quote_name=required_quote_name,
         required_fact_anchors=required_fact_anchors,
         approved_quote_facts=approved_quote_facts,
@@ -529,7 +532,8 @@ def build_training_report_section_model_quote_context(
         approved_training_numbers=approved_training_numbers,
         supporting_training_details=approved_quote_facts,
         approved_interpretation_claims=approved_interpretation_claims,
-        approved_coaching_frames=approved_coaching_frames,
+        approved_coaching_moves=approved_coaching_moves,
+        approved_coaching_frames=[],
         coaching_intent=(
             "Explain what the exact training details suggest about performance, "
             "effort, and the next training focus without inventing additional facts."
@@ -560,7 +564,7 @@ def build_direct_ollama_training_report_section_prompt(
     approved_interpretation_claims = model_quote_context[
         "approved_interpretation_claims"
     ]
-    approved_coaching_frames = model_quote_context["approved_coaching_frames"]
+    approved_coaching_moves = model_quote_context["approved_coaching_moves"]
     required_quote_name = model_quote_context["required_quote_name"]
     required_anchor_count = model_quote_context["required_anchor_count"]
     required_fact_anchors = model_quote_context["required_fact_anchors"]
@@ -592,11 +596,12 @@ Required detail placement:
 Allowed interpretation claims:
 {_numbered_lines(approved_interpretation_claims)}
 
-Approved coaching frames:
-{_numbered_lines(approved_coaching_frames)}
+Approved semantic coaching moves:
+{json.dumps(approved_coaching_moves, indent=2, sort_keys=True)}
 
 Interpretation and style rules:
-- Interpretation fields may only explain or rephrase the allowed interpretation claims and approved coaching frames.
+- Interpretation fields may only express the allowed interpretation claims and approved semantic coaching moves.
+- Treat allowed_meaning values as meaning constraints, not finished copy. Do not copy allowed_meaning wording directly.
 - Do not create new conclusions from the exact training details.
 - Do not claim consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
 - Sound like a coach speaking directly to the user, not a debug report, validation summary, or execution summary.
@@ -621,9 +626,9 @@ Allowed numbers:
 
 Coaching-language requirement:
 - Do not merely list details in every field.
-- Use the required observations, allowed interpretations, and approved coaching frames to write concise coaching interpretation.
+- Use the required observations, allowed interpretations, and approved semantic coaching moves to write concise coaching interpretation in your own words.
 - The section should feel personal, practical, and specific while staying fully grounded.
-- Prefer clear coach-language such as “use these lifts as reference points” or “keep the next session measured.”
+- Use the coaching moves as ingredients; do not repeat them like templates.
 - Avoid safe-but-stiff phrases such as concrete checkpoint, logged session, centered on the logged lifts, and concrete load and rep detail.
 - suggested_focus must give the user a practical next step, not tell them to review data or interpret details.
 - You may prioritize, phrase, and connect exact details naturally.
@@ -662,7 +667,7 @@ CandidateTrainingReportSection allowed output schema:
   "reason_codes": ["string"]
 }}
 
-One valid JSON example:
+Shape-only JSON example. Do not copy this wording:
 {valid_example_json}
 
 Bad examples:
@@ -967,6 +972,12 @@ def validate_candidate_training_report_section(
 
     suggested_focus_errors = _suggested_focus_quality_errors(candidate.suggested_focus)
     errors.extend(suggested_focus_errors)
+
+    coach_voice_errors = _coach_voice_autonomy_errors(
+        candidate,
+        approved_context=approved_context,
+    )
+    errors.extend(coach_voice_errors)
 
     approved_names = _approved_training_names_from_context(approved_context)
     if approved_names:
@@ -1369,19 +1380,19 @@ def _candidate_training_report_section_example(
         second_observation = quote_name
     signal_names = _joined_training_signal_names(anchors) or quote_name
     return {
-        "section_summary": f"{signal_names} give {quote_name} its clearest training signal.",
+        "section_summary": f"{signal_names} are the lifts worth paying attention to in {quote_name}.",
         "key_observations": [
             first_observation,
             second_observation,
         ],
         "performance_interpretation": (
-            f"Use {signal_names} as reference lifts before changing training direction."
+            f"Use {signal_names} to make the next {quote_name} choice more deliberate."
         ),
         "fatigue_recovery_interpretation": (
-            f"{quote_name} gives enough signal for the next training choice, but not broad recovery claims."
+            f"{quote_name} can guide the next session, but it does not prove a recovery or fatigue pattern."
         ),
-        "suggested_focus": f"Keep the next session measured and use {signal_names} before increasing intensity.",
-        "limitations_context": f"{quote_name} is useful for the next training choice, not a full recovery picture.",
+        "suggested_focus": f"Keep {signal_names} as reference points and keep logging load, reps, and RIR.",
+        "limitations_context": f"{quote_name} is useful signal from one workout, not a full trend picture.",
         "confidence": "Moderate",
         "reason_codes": ["direct_ollama_training_report_section_candidate"],
     }
@@ -1568,13 +1579,140 @@ def _approved_training_interpretation_claims(
     return claims[:8]
 
 
-def _approved_training_coaching_frames(
+def _approved_training_coaching_moves(
+    *,
+    required_quote_name: str | None,
+    required_fact_anchors: list[str],
+    approved_quote_facts: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Build semantic coaching ingredients instead of finished copy."""
+
+    quote_name = required_quote_name or "Training details"
+    concrete_anchors = [
+        anchor
+        for anchor in required_fact_anchors
+        if _is_concrete_logged_performance_fact(anchor)
+    ]
+    final_rir_facts = [
+        fact for fact in approved_quote_facts if _is_final_rir_fact(fact)
+    ]
+    signal_names = _training_signal_name_list(required_fact_anchors)
+    if not signal_names and required_quote_name:
+        signal_names = [required_quote_name]
+
+    forbidden_claims = [
+        "progression",
+        "consistency",
+        "form",
+        "control",
+        "recovery",
+        "fatigue",
+        "plan alignment",
+        "adherence",
+        "completion rate",
+    ]
+    moves: dict[str, dict[str, Any]] = {}
+
+    if concrete_anchors:
+        moves["primary_signal"] = {
+            "allowed_meaning": (
+                "The most useful training signal comes from the concrete logged lifts."
+            ),
+            "required_names": signal_names,
+            "allowed_terms": [
+                "signal",
+                "reference",
+                "training choice",
+                "next session",
+            ],
+            "forbidden_claims": forbidden_claims,
+        }
+    else:
+        moves["primary_signal"] = {
+            "allowed_meaning": (
+                "The available training details are useful but limited."
+            ),
+            "required_names": signal_names,
+            "allowed_terms": ["useful", "limited", "training choice"],
+            "forbidden_claims": forbidden_claims,
+        }
+
+    moves["next_focus"] = {
+        "allowed_meaning": (
+            "Use the named lifts or workout as reference points before increasing intensity."
+        ),
+        "required_names": signal_names,
+        "allowed_terms": [
+            "reference",
+            "measured",
+            "next session",
+            "intensity",
+        ],
+        "forbidden_claims": forbidden_claims,
+    }
+
+    if final_rir_facts:
+        moves["logging_focus"] = {
+            "allowed_meaning": (
+                "Keep logging load, reps, and RIR so later adjustments can be based on a pattern."
+            ),
+            "required_terms": ["load", "reps", "RIR"],
+            "allowed_terms": ["pattern", "adjustment", "logging", "reference"],
+            "forbidden_claims": [
+                "trend already exists",
+                "progression confirmed",
+                "consistency confirmed",
+            ],
+        }
+    else:
+        moves["logging_focus"] = {
+            "allowed_meaning": (
+                "Keep logging sets, reps, load, and RIR so the next choice has clearer support."
+            ),
+            "required_terms": ["sets", "reps", "load", "RIR"],
+            "allowed_terms": ["logging", "clearer", "support", "training choice"],
+            "forbidden_claims": [
+                "trend already exists",
+                "progression confirmed",
+                "consistency confirmed",
+            ],
+        }
+
+    moves["scope_limit"] = {
+        "allowed_meaning": (
+            "This session can guide the next training choice but cannot support broad recovery or progression conclusions."
+        ),
+        "required_names": [quote_name] if quote_name else [],
+        "allowed_terms": [
+            "guide",
+            "next training choice",
+            "not enough",
+            "cannot support",
+            "one workout",
+            "pattern",
+            "trend",
+            "recovery",
+            "fatigue",
+            "progression",
+        ],
+        "forbidden_claims": [
+            "recovered",
+            "fatigued",
+            "progressing",
+            "consistent",
+            "completed as planned",
+        ],
+    }
+    return moves
+
+
+def _legacy_finished_coaching_frames(
     *,
     required_quote_name: str | None,
     required_fact_anchors: list[str],
     approved_quote_facts: list[str],
 ) -> list[str]:
-    """Build backend-authored coach-like frames that are safe to use."""
+    """Return old finished-copy frames for direct-copy rejection only."""
 
     frames: list[str] = []
     quote_name = required_quote_name or "Training details"
@@ -1586,7 +1724,6 @@ def _approved_training_coaching_frames(
     final_rir_facts = [
         fact for fact in approved_quote_facts if _is_final_rir_fact(fact)
     ]
-
     signal_names = _joined_training_signal_names(required_fact_anchors)
 
     if concrete_anchors and signal_names:
@@ -1652,18 +1789,25 @@ def _exercise_name_from_logged_performance_fact(fact: str) -> str | None:
 
 
 def _joined_training_signal_names(required_fact_anchors: list[str]) -> str | None:
-    names: list[str] = []
-    for anchor in required_fact_anchors:
-        name = _exercise_name_from_logged_performance_fact(anchor)
-        if name:
-            _append_unique_string(names, name)
-        if len(names) >= 2:
-            break
+    names = _training_signal_name_list(required_fact_anchors)
     if not names:
         return None
     if len(names) == 1:
         return names[0]
     return f"{names[0]} and {names[1]}"
+
+
+def _training_signal_name_list(required_fact_anchors: list[str]) -> list[str]:
+    names: list[str] = []
+    for anchor in required_fact_anchors:
+        if not _is_concrete_logged_performance_fact(anchor):
+            continue
+        name = _exercise_name_from_logged_performance_fact(anchor)
+        if name:
+            _append_unique_string(names, name)
+        if len(names) >= 2:
+            break
+    return names
 
 
 def _forbidden_training_report_meta_terms() -> list[str]:
@@ -1728,6 +1872,10 @@ def _contains_generic_training_copy(lowered_text: str) -> bool:
         "training load is moderate",
         "balanced approach",
         "high level",
+        "use the logged details for guidance",
+        "review training details carefully",
+        "this provides useful information",
+        "continue monitoring the data",
     ]
     return any(phrase in lowered_text for phrase in generic_phrases)
 
@@ -1934,6 +2082,9 @@ def _suggested_focus_quality_errors(suggested_focus: str) -> list[str]:
         "continue reviewing the provided details",
         "use the available data for review",
         "review the provided details",
+        "use the logged details for guidance",
+        "review the training details",
+        "continue monitoring the data",
     ]
     if any(pattern in lowered_focus for pattern in weak_patterns):
         return [
@@ -1952,9 +2103,210 @@ def _approved_training_style_text(approved_context: dict[str, Any]) -> str:
     model_quote_context = _model_quote_context_from_context(approved_context)
     values = [
         *_string_list(model_quote_context.get("approved_interpretation_claims", [])),
+        *_coaching_move_text_values(
+            model_quote_context.get("approved_coaching_moves", {})
+        ),
         *_string_list(model_quote_context.get("approved_coaching_frames", [])),
     ]
     return "\n".join(value.lower() for value in values)
+
+
+def _coaching_move_text_values(value: Any) -> list[str]:
+    texts: list[str] = []
+    if not isinstance(value, dict):
+        return texts
+    for move in value.values():
+        if not isinstance(move, dict):
+            continue
+        for key in ("allowed_meaning",):
+            item = move.get(key)
+            if isinstance(item, str) and item.strip():
+                texts.append(item.strip())
+        for key in (
+            "required_names",
+            "required_terms",
+            "allowed_terms",
+            "forbidden_claims",
+        ):
+            items = move.get(key)
+            if isinstance(items, list):
+                texts.extend(
+                    item.strip()
+                    for item in items
+                    if isinstance(item, str) and item.strip()
+                )
+    return texts
+
+
+def _coaching_moves_from_context(
+    approved_context: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    value = _model_quote_context_from_context(approved_context).get(
+        "approved_coaching_moves", {}
+    )
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
+def _coach_voice_autonomy_errors(
+    candidate: CandidateTrainingReportSection,
+    *,
+    approved_context: dict[str, Any],
+) -> list[str]:
+    moves = _coaching_moves_from_context(approved_context)
+    if not moves:
+        return []
+
+    errors: list[str] = []
+    errors.extend(
+        _coaching_move_direct_copy_errors(
+            candidate, moves=moves, approved_context=approved_context
+        )
+    )
+
+    primary_signal = moves.get("primary_signal", {})
+    next_focus = moves.get("next_focus", {})
+    logging_focus = moves.get("logging_focus", {})
+    scope_limit = moves.get("scope_limit", {})
+
+    primary_names = _string_list(primary_signal.get("required_names", []))
+    if primary_names and not _field_mentions_required_name(
+        candidate.section_summary,
+        required_names=primary_names,
+    ):
+        errors.append(
+            "Training report section section_summary must satisfy the primary_signal coaching move."
+        )
+
+    focus_names = _string_list(next_focus.get("required_names", []))
+    logging_terms = _string_list(logging_focus.get("required_terms", []))
+    if focus_names and not _field_mentions_required_name(
+        candidate.suggested_focus,
+        required_names=focus_names,
+    ):
+        # Allow a logging-focused next step if it contains the required logging terms.
+        if not _field_contains_required_terms(
+            candidate.suggested_focus,
+            required_terms=logging_terms,
+            minimum_required=min(2, len(logging_terms)) if logging_terms else 0,
+        ):
+            errors.append(
+                "Training report section suggested_focus must satisfy a next_focus or logging_focus coaching move."
+            )
+
+    if scope_limit:
+        for field_name, value in [
+            (
+                "fatigue_recovery_interpretation",
+                candidate.fatigue_recovery_interpretation,
+            ),
+            ("limitations_context", candidate.limitations_context),
+        ]:
+            if not _field_has_scope_limit_language(value):
+                errors.append(
+                    f"Training report section {field_name} must satisfy the scope_limit coaching move."
+                )
+
+    return errors
+
+
+def _coaching_move_direct_copy_errors(
+    candidate: CandidateTrainingReportSection,
+    *,
+    moves: dict[str, dict[str, Any]],
+    approved_context: dict[str, Any],
+) -> list[str]:
+    protected_texts = [
+        text for text in _coaching_move_text_values(moves) if len(text.split()) >= 5
+    ]
+    quote_context = _approved_training_quote_context_from_context(approved_context)
+    model_quote_context = _model_quote_context_from_context(approved_context)
+    protected_texts.extend(
+        _legacy_finished_coaching_frames(
+            required_quote_name=model_quote_context.get("required_quote_name"),
+            required_fact_anchors=_string_list(
+                model_quote_context.get("required_fact_anchors", [])
+            ),
+            approved_quote_facts=_string_list(
+                quote_context.get("approved_training_summary_facts", [])
+            ),
+        )
+    )
+
+    errors: list[str] = []
+    for field_name, value in [
+        ("section_summary", candidate.section_summary),
+        ("performance_interpretation", candidate.performance_interpretation),
+        ("fatigue_recovery_interpretation", candidate.fatigue_recovery_interpretation),
+        ("suggested_focus", candidate.suggested_focus),
+        ("limitations_context", candidate.limitations_context),
+    ]:
+        normalized_value = _normalize_copy_similarity_text(value)
+        for protected_text in protected_texts:
+            normalized_protected = _normalize_copy_similarity_text(protected_text)
+            if len(normalized_protected.split()) < 5:
+                continue
+            if normalized_value == normalized_protected:
+                errors.append(
+                    f"Training report section {field_name} copies backend coaching guidance too directly."
+                )
+                break
+            if (
+                normalized_protected in normalized_value
+                and len(normalized_protected) >= 55
+            ):
+                errors.append(
+                    f"Training report section {field_name} copies backend coaching guidance too directly."
+                )
+                break
+    return errors
+
+
+def _field_mentions_required_name(text: str, *, required_names: list[str]) -> bool:
+    normalized_text = _normalize_name(text)
+    return any(_normalize_name(name) in normalized_text for name in required_names)
+
+
+def _field_contains_required_terms(
+    text: str,
+    *,
+    required_terms: list[str],
+    minimum_required: int,
+) -> bool:
+    if minimum_required <= 0:
+        return False
+    lowered = text.lower()
+    matches = sum(1 for term in required_terms if term.lower() in lowered)
+    return matches >= minimum_required
+
+
+def _field_has_scope_limit_language(text: str) -> bool:
+    lowered = text.lower()
+    scope_markers = [
+        "not enough",
+        "not a full",
+        "cannot support",
+        "does not prove",
+        "does not show",
+        "does not confirm",
+        "limited",
+        "one workout",
+        "one session",
+        "not broad",
+        "broader recovery",
+        "without adding",
+        "without proving",
+        "without making broad",
+        "not a broader",
+        "not a trend",
+        "not a pattern",
+    ]
+    return any(marker in lowered for marker in scope_markers)
+
+
+def _normalize_copy_similarity_text(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
 def _matched_approved_interpretation_claims(
@@ -2215,6 +2567,9 @@ def _unapproved_numbers_in_candidate(
             "approved_interpretation_claims": _model_quote_context_from_context(
                 approved_context
             ).get("approved_interpretation_claims", []),
+            "approved_coaching_moves": _model_quote_context_from_context(
+                approved_context
+            ).get("approved_coaching_moves", {}),
             "approved_coaching_frames": _model_quote_context_from_context(
                 approved_context
             ).get("approved_coaching_frames", []),

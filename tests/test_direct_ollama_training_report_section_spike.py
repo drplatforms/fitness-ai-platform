@@ -97,15 +97,15 @@ APPROVED_CONTEXT = {
 def _valid_raw_section() -> str:
     return """
 {
-  "section_summary": "Upper Body Strength has one approved completed execution for review.",
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from Upper Body Strength.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Upper Body Strength keeps the focus on the Dumbbell Bench Press logged set.",
-  "fatigue_recovery_interpretation": "Dumbbell Bench Press effort review should stay limited to the logged 1 RIR set.",
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Dumbbell Bench Press can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
-  "limitations_context": "Upper Body Strength review uses only Dumbbell Bench Press planned-vs-actual details.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -666,7 +666,7 @@ def test_direct_ollama_training_section_spike_completion_count_fails_validation(
     )
 
     assert result.success is False
-    assert any("completion-count" in error for error in result.validation_errors)
+    assert any("planned-work alignment" in error for error in result.validation_errors)
 
 
 def test_direct_ollama_training_section_spike_adherence_claim_fails_validation():
@@ -960,7 +960,7 @@ def test_direct_ollama_training_section_spike_completed_as_planned_fails_with_an
     )
 
     assert result.success is False
-    assert any("completion-count" in error for error in result.validation_errors)
+    assert any("planned-work alignment" in error for error in result.validation_errors)
 
 
 def test_direct_ollama_training_section_spike_approved_anchors_and_coach_interpretation_passes():
@@ -974,7 +974,7 @@ def test_direct_ollama_training_section_spike_approved_anchors_and_coach_interpr
   ],
   "performance_interpretation": "Dumbbell Bench Press is the clearest performance anchor from Upper Body Strength, so the review should stay focused on that logged work.",
   "fatigue_recovery_interpretation": "Dumbbell Bench Press reached 1 RIR on the final logged set, so effort should be reviewed without adding recovery claims.",
-  "suggested_focus": "Use Upper Body Strength logging quality as the next focus before changing training direction.",
+  "suggested_focus": "Use Dumbbell Bench Press as the next reference point before changing training direction.",
   "limitations_context": "Upper Body Strength has limited Dumbbell Bench Press detail, so broader recovery claims are avoided.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
@@ -1109,16 +1109,16 @@ def test_prompt_separates_required_details_from_allowed_interpretation_claims():
 
     assert "Required training details" in prompt
     assert "Allowed interpretation claims" in prompt
-    assert "Approved coaching frames" in prompt
-    assert "Interpretation fields may only explain or rephrase" in prompt
+    assert "Approved semantic coaching moves" in prompt
+    assert "Interpretation fields may only express" in prompt
     assert "Do not create new conclusions" in prompt
     assert prompt.index("Required training details") < prompt.index(
         "Allowed interpretation claims"
     )
     assert prompt.index("Allowed interpretation claims") < prompt.index(
-        "Approved coaching frames"
+        "Approved semantic coaching moves"
     )
-    assert prompt.index("Approved coaching frames") < prompt.index(
+    assert prompt.index("Approved semantic coaching moves") < prompt.index(
         "Allowed supporting training details"
     )
 
@@ -1127,15 +1127,15 @@ def test_direct_ollama_training_section_spike_approved_interpretation_claim_pass
     def fake_generate(*_args, **_kwargs):
         return """
 {
-  "section_summary": "Dumbbell Bench Press gives Upper Body Strength its clearest training signal.",
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from Upper Body Strength.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Upper Body Strength has its clearest training signal in lifts with recorded loads and reps.",
   "fatigue_recovery_interpretation": "Upper Body Strength note: This is enough to guide the next training choice, but not enough to make broad claims about recovery or progression.",
-  "suggested_focus": "Upper Body Strength next focus: The next training focus should stay measured rather than adding more intensity immediately.",
-  "limitations_context": "Dumbbell Bench Press limitation: No conclusion about form quality should be made from the available facts.",
+  "suggested_focus": "Dumbbell Bench Press next focus: keep the next training choice measured rather than adding more intensity immediately.",
+  "limitations_context": "Dumbbell Bench Press limitation: one workout is not enough for a full form, recovery, or trend picture.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -1303,25 +1303,22 @@ def test_direct_ollama_training_section_spike_planned_alignment_claim_fails_with
     assert any("planned-work alignment" in error for error in result.validation_errors)
 
 
-def test_model_facing_payload_includes_approved_coaching_frames():
+def test_model_facing_payload_includes_approved_coaching_moves():
     payload = build_training_report_section_model_quote_context(
         APPROVED_CONTEXT
     ).to_dict()
 
-    assert "approved_coaching_frames" in payload
-    assert any(
-        "clearest training signal" in frame
-        for frame in payload["approved_coaching_frames"]
-    )
-    assert all(
-        "execution data" not in frame for frame in payload["approved_coaching_frames"]
-    )
+    assert "approved_coaching_moves" in payload
+    assert "primary_signal" in payload["approved_coaching_moves"]
+    assert "next_focus" in payload["approved_coaching_moves"]
+    assert "allowed_meaning" in payload["approved_coaching_moves"]["primary_signal"]
+    assert payload["approved_coaching_frames"] == []
 
 
-def test_prompt_includes_coaching_frames_and_user_facing_focus_rule():
+def test_prompt_includes_semantic_coaching_moves_and_user_facing_focus_rule():
     prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
 
-    assert "Approved coaching frames" in prompt
+    assert "Approved semantic coaching moves" in prompt
     assert "suggested_focus must give the user a practical next step" in prompt
     assert "Sound like a coach speaking directly to the user" in prompt
 
@@ -1336,7 +1333,7 @@ def test_direct_ollama_training_section_spike_controlled_execution_fails():
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Dumbbell Bench Press showed controlled execution in Upper Body Strength.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
   "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery claims.",
   "confidence": "Low",
@@ -1366,7 +1363,7 @@ def test_direct_ollama_training_section_spike_debug_style_copy_fails():
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Dumbbell Bench Press is the main Upper Body Strength detail.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
   "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery claims.",
   "confidence": "Low",
@@ -1396,7 +1393,7 @@ def test_direct_ollama_training_section_spike_exact_detail_internal_copy_fails()
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Dumbbell Bench Press should be interpreted from the exact logged training details.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
   "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery claims.",
   "confidence": "Low",
@@ -1426,7 +1423,7 @@ def test_direct_ollama_training_section_spike_weak_suggested_focus_fails():
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Dumbbell Bench Press is the main Upper Body Strength detail.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Review the execution data for Dumbbell Bench Press.",
   "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery claims.",
   "confidence": "Low",
@@ -1450,15 +1447,15 @@ def test_direct_ollama_training_section_spike_style_safe_coach_copy_passes():
     def fake_generate(*_args, **_kwargs):
         return """
 {
-  "section_summary": "Dumbbell Bench Press gives Upper Body Strength its clearest training signal.",
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from Upper Body Strength.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Use Dumbbell Bench Press as the reference lift before changing Upper Body Strength direction.",
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
   "fatigue_recovery_interpretation": "Upper Body Strength gives enough signal for the next training choice, but not broad recovery claims.",
-  "suggested_focus": "Keep the next session measured and use Dumbbell Bench Press before increasing intensity.",
-  "limitations_context": "Upper Body Strength is useful for the next training choice, not a full recovery picture.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -1486,7 +1483,7 @@ def test_direct_ollama_training_section_spike_coaching_frame_does_not_bypass_con
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
   "performance_interpretation": "Dumbbell Bench Press gives the clearest training signal with controlled execution.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
   "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep the next session measured.",
   "limitations_context": "Upper Body Strength supports a narrow training review, not broad recovery claims.",
   "confidence": "Low",
@@ -1506,17 +1503,17 @@ def test_direct_ollama_training_section_spike_coaching_frame_does_not_bypass_con
     assert any("form or control" in error for error in result.validation_errors)
 
 
-def test_model_facing_payload_uses_product_voice_coaching_frames():
+def test_model_facing_payload_uses_semantic_coaching_moves_not_finished_frames():
     payload = build_training_report_section_model_quote_context(
         APPROVED_CONTEXT
     ).to_dict()
-    frames = payload["approved_coaching_frames"]
+    moves = payload["approved_coaching_moves"]
 
-    assert any("clearest training signal" in frame for frame in frames)
-    assert any("reference" in frame for frame in frames)
-    assert all("concrete checkpoint" not in frame for frame in frames)
-    assert all("logged session" not in frame for frame in frames)
-    assert all("concrete load and rep detail" not in frame for frame in frames)
+    assert "primary_signal" in moves
+    assert "next_focus" in moves
+    assert "allowed_meaning" in moves["primary_signal"]
+    assert moves["primary_signal"]["required_names"] == ["Dumbbell Bench Press"]
+    assert payload["approved_coaching_frames"] == []
 
 
 def test_prompt_discourages_stiff_product_copy():
@@ -1538,10 +1535,10 @@ def test_direct_ollama_training_section_spike_stiff_checkpoint_copy_fails():
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Use Dumbbell Bench Press as the reference lift before changing Upper Body Strength direction.",
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
   "fatigue_recovery_interpretation": "Upper Body Strength gives enough signal for the next training choice, but not broad recovery claims.",
-  "suggested_focus": "Keep the next session measured and use Dumbbell Bench Press before increasing intensity.",
-  "limitations_context": "Upper Body Strength is useful for the next training choice, not a full recovery picture.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -1563,15 +1560,15 @@ def test_direct_ollama_training_section_spike_product_voice_copy_passes():
     def fake_generate(*_args, **_kwargs):
         return """
 {
-  "section_summary": "Dumbbell Bench Press gives Upper Body Strength its clearest training signal.",
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from Upper Body Strength.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Use Dumbbell Bench Press as the reference lift before changing Upper Body Strength direction.",
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
   "fatigue_recovery_interpretation": "Upper Body Strength gives enough signal for the next training choice, but not broad recovery claims.",
-  "suggested_focus": "Keep the next session measured and use Dumbbell Bench Press before increasing intensity.",
-  "limitations_context": "Upper Body Strength is useful for the next training choice, not a full recovery picture.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
   "confidence": "Low",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
@@ -1587,3 +1584,36 @@ def test_direct_ollama_training_section_spike_product_voice_copy_passes():
 
     assert result.success is True
     assert result.validation_errors == []
+
+
+def test_direct_ollama_training_section_spike_finished_coaching_frame_copy_fails():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Dumbbell Bench Press give Upper Body Strength its clearest training signal.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 1 RIR."
+  ],
+  "performance_interpretation": "Use Dumbbell Bench Press as reference lifts before increasing intensity.",
+  "fatigue_recovery_interpretation": "Upper Body Strength gives enough signal to guide the next training choice, but not enough for broad recovery or progression conclusions.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
+  "confidence": "Low",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "copies backend coaching guidance" in error
+        for error in result.validation_errors
+    )

@@ -48,15 +48,15 @@ APPROVED_CONTEXT = {
 def _valid_raw_section() -> str:
     return """
 {
-  "section_summary": "Dumbbell Bench Press gives Upper Body Strength its clearest training signal.",
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from Upper Body Strength.",
   "key_observations": [
     "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
     "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "Use Dumbbell Bench Press as the reference lift before changing Upper Body Strength direction.",
-  "fatigue_recovery_interpretation": "Upper Body Strength does not provide enough recovery context for broad fatigue conclusions.",
-  "suggested_focus": "Keep the next session measured and use Dumbbell Bench Press before increasing intensity.",
-  "limitations_context": "Upper Body Strength is useful for the next training choice, not a full recovery picture.",
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
   "confidence": "Moderate",
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }

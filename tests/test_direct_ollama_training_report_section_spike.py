@@ -133,17 +133,19 @@ def test_prompt_contains_strict_json_and_training_grounding_rules():
 
     assert "Return JSON only" in prompt
     assert "CandidateTrainingReportSection allowed output schema" in prompt
-    assert "Quote-only model-facing context JSON" in prompt
+    assert "Use these exact training details first" in prompt
+    assert "Required training details" in prompt
     assert "Approved context JSON" not in prompt
-    assert "Approved workout names you may quote" in prompt
-    assert "Approved exercise names you may quote" in prompt
-    assert "Approved quote facts you may explain" in prompt
+    assert "Quote-only model-facing context JSON" not in prompt
+    assert "Allowed workout names" in prompt
+    assert "Allowed exercise names" in prompt
+    assert "Allowed supporting training details" in prompt
     assert "Required quote" in prompt
-    assert "Do not mention user_id" in prompt
-    assert "Use only the quote-only model-facing context" in prompt
-    assert (
-        "You must quote at least one exact approved workout or exercise name" in prompt
-    )
+    assert "Do not mention user ID" in prompt
+    assert "key_observations[0] must be exactly one required training detail" in prompt
+    assert "approved quote facts" not in prompt
+    assert "approved facts" not in prompt
+    assert "bounded training summary" not in prompt
     assert "Do not calculate or infer volume load" in prompt
     assert "Do not invent workouts" in prompt
     assert (
@@ -385,7 +387,7 @@ def test_model_facing_quote_only_payload_excludes_broad_context_and_metadata():
     assert payload["approved_exercise_names"] == ["Dumbbell Bench Press"]
     assert (
         "Dumbbell Bench Press was logged at 50 lb for 10 reps."
-        in payload["approved_quote_facts"]
+        in payload["supporting_training_details"]
     )
     assert 50 in payload["approved_training_numbers"]
     assert "coaching_intent" in payload
@@ -420,7 +422,9 @@ def test_prompt_uses_quote_only_payload_not_full_backend_context():
 
     assert result.success is True
     prompt = str(captured["prompt"])
-    assert "Quote-only model-facing context JSON" in prompt
+    assert "Required training details" in prompt
+    assert "Allowed supporting training details" in prompt
+    assert "Quote-only model-facing context JSON" not in prompt
     assert "Approved context JSON" not in prompt
     assert '"training_state"' not in prompt
     assert '"training_execution_summary"' not in prompt
@@ -432,9 +436,9 @@ def test_prompt_uses_quote_only_payload_not_full_backend_context():
 def test_prompt_preserves_natural_coach_language_instruction():
     prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
 
-    assert "Do not merely repeat the approved facts as a list" in prompt
+    assert "Do not merely list details in every field" in prompt
     assert "personal, practical, and specific" in prompt
-    assert "prioritize, phrase, and connect approved facts naturally" in prompt
+    assert "prioritize, phrase, and connect exact details naturally" in prompt
 
 
 def test_direct_ollama_training_section_spike_grounded_coach_like_output_approves():
@@ -566,14 +570,14 @@ def test_diagnostics_detect_wrapper_and_extra_keys():
     assert diagnostics["extra_keys_detected"] == ["extra", "response"]
 
 
-def test_prompt_places_approved_names_before_quote_only_payload():
+def test_prompt_places_required_training_details_before_supporting_details():
     prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
 
-    assert prompt.index("Approved workout names you may quote") < prompt.index(
-        "Quote-only model-facing context JSON"
+    assert prompt.index("Required training details") < prompt.index(
+        "Allowed supporting training details"
     )
-    assert prompt.index("Approved exercise names you may quote") < prompt.index(
-        "Quote-only model-facing context JSON"
+    assert prompt.index("Allowed workout names") < prompt.index(
+        "Allowed supporting training details"
     )
     assert "Upper Body Strength" in prompt
     assert "Dumbbell Bench Press" in prompt
@@ -785,7 +789,7 @@ def test_model_facing_quote_payload_includes_required_fact_anchors_and_count():
         "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
         "The final Dumbbell Bench Press set was logged at 1 RIR.",
     ]
-    assert "forbidden_meta_terms" in payload
+    assert "forbidden_meta_terms" not in payload
 
 
 def test_required_fact_anchors_prefer_concrete_facts_over_completion_fact():
@@ -828,15 +832,17 @@ def test_required_anchor_count_is_one_when_one_anchor_exists():
     assert payload["required_anchor_count"] == 1
 
 
-def test_prompt_includes_required_fact_anchors_and_anchor_count():
+def test_prompt_includes_required_training_details_and_anchor_count():
     prompt = build_direct_ollama_training_report_section_prompt(APPROVED_CONTEXT)
 
-    assert "Required fact anchors" in prompt
-    assert "at least 2 exact fact anchor" in prompt
+    assert "Required training details" in prompt
+    assert "at least 2 exact required training detail" in prompt
     assert "Dumbbell Bench Press was logged at 50 lb for 10 reps." in prompt
     assert "The final Dumbbell Bench Press set was logged at 1 RIR." in prompt
-    assert "Forbidden meta-language" in prompt
-    assert "approved quote facts" in prompt
+    assert "Forbidden meta-language" not in prompt
+    assert "approved quote facts" not in prompt
+    assert "approved facts" not in prompt
+    assert "bounded training summary" not in prompt
 
 
 def test_direct_ollama_training_section_spike_one_anchor_fails_when_two_required():
@@ -985,3 +991,94 @@ def test_direct_ollama_training_section_spike_approved_anchors_and_coach_interpr
 
     assert result.success is True
     assert result.candidate_validation_status == "success"
+
+
+def test_direct_ollama_training_section_spike_two_anchors_not_in_required_observations_fail():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength includes Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+  "key_observations": [
+    "Upper Body Strength should be reviewed from logged details.",
+    "Dumbbell Bench Press should stay grounded in logged details."
+  ],
+  "performance_interpretation": "The final Dumbbell Bench Press set was logged at 1 RIR, so Upper Body Strength should be interpreted cautiously.",
+  "fatigue_recovery_interpretation": "Dumbbell Bench Press effort should be discussed without adding recovery claims.",
+  "suggested_focus": "Use Upper Body Strength logging detail before changing training direction.",
+  "limitations_context": "Upper Body Strength has limited Dumbbell Bench Press execution detail, so broader claims are avoided.",
+  "confidence": "Low",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("key_observations[0]" in error for error in result.validation_errors)
+    assert any("key_observations[1]" in error for error in result.validation_errors)
+    assert len(result.matched_required_fact_anchors) >= 2
+    assert result.missing_required_anchor_count == 0
+
+
+def test_direct_ollama_training_section_spike_planned_facts_do_not_satisfy_required_anchors():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength has planned Dumbbell Bench Press detail for review.",
+  "key_observations": [
+    "Dumbbell Bench Press was planned in Upper Body Strength for 3 sets, 8-10 reps, RIR 2-3.",
+    "Upper Body Strength"
+  ],
+  "performance_interpretation": "Dumbbell Bench Press planning detail should not replace logged performance detail.",
+  "fatigue_recovery_interpretation": "Dumbbell Bench Press effort should be discussed without adding recovery claims.",
+  "suggested_focus": "Use Upper Body Strength logging detail before changing training direction.",
+  "limitations_context": "Upper Body Strength has limited Dumbbell Bench Press execution detail, so broader claims are avoided.",
+  "confidence": "Low",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "exact required fact anchor" in error or "key_observations" in error
+        for error in result.validation_errors
+    )
+    assert result.matched_required_fact_anchors == ["Upper Body Strength"]
+    assert result.missing_required_anchor_count == 1
+
+
+def test_direct_ollama_training_section_spike_exposes_matched_anchor_diagnostics_on_success():
+    def fake_generate(*_args, **_kwargs):
+        return _valid_raw_section()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    assert result.required_anchor_count == 2
+    assert result.missing_required_anchor_count == 0
+    assert "Dumbbell Bench Press was logged at 50 lb for 10 reps." in (
+        result.matched_required_fact_anchors
+    )
+    assert "The final Dumbbell Bench Press set was logged at 1 RIR." in (
+        result.matched_required_fact_anchors
+    )

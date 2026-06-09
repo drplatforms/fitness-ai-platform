@@ -201,3 +201,11 @@ Quote-Only Context Isolation v3 keeps the richer backend/debug context available
 ## Follow-up: Fact-Anchored Output v4
 
 Quote-Only Context Isolation v3 removed contaminated model input and improved qwen2.5 behavior, but runtime QA still showed under-anchored copy and unsupported phrasing such as "completed as planned." Fact-Anchored Output v4 keeps quote-only isolation and adds prioritized `required_fact_anchors`, `required_anchor_count`, exact-anchor validation, and meta-copy rejection.
+
+## Follow-up: Anchor-First Payload v4.1
+
+Fact-Anchored Output v4 made the anchor mechanism active, but live qwen2.5 and hermes3 runs still failed provider approval. The models used the approved workout name and stayed in the training domain, but they either selected optional/planned facts instead of required logged-performance anchors or echoed meta-copy such as "approved facts."
+
+Anchor-First Payload v4.1 keeps quote-only isolation and required fact anchors, but makes the required anchors the dominant prompt block. The actual prompt no longer dumps the full model-facing JSON payload and no longer exposes `forbidden_meta_terms` to the model. Forbidden/meta terms remain backend-side validation concerns only.
+
+v4.1 also requires the first two key observations to be exact, different required training details when at least two anchors are available, and the spike output exposes matched-anchor diagnostics for runtime QA.

@@ -158,8 +158,7 @@ class TrainingReportSectionModelQuoteContext:
     approved_workout_names: list[str]
     approved_exercise_names: list[str]
     approved_training_numbers: list[int | float]
-    approved_quote_facts: list[str]
-    forbidden_meta_terms: list[str]
+    supporting_training_details: list[str]
     coaching_intent: str
     tone_guidance: str
     section_contract_reminder: str
@@ -196,6 +195,9 @@ class DirectOllamaTrainingReportSectionSpikeResult:
     wrapper_object_detected: bool = False
     approved_training_quote_context: dict[str, Any] = field(default_factory=dict)
     model_facing_quote_context: dict[str, Any] = field(default_factory=dict)
+    matched_required_fact_anchors: list[str] = field(default_factory=list)
+    required_anchor_count: int = 0
+    missing_required_anchor_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -512,10 +514,9 @@ def build_training_report_section_model_quote_context(
         approved_workout_names=approved_workout_names,
         approved_exercise_names=approved_exercise_names,
         approved_training_numbers=approved_training_numbers,
-        approved_quote_facts=approved_quote_facts,
-        forbidden_meta_terms=_forbidden_training_report_meta_terms(),
+        supporting_training_details=approved_quote_facts,
         coaching_intent=(
-            "Explain what the approved training facts suggest about performance, "
+            "Explain what the exact training details suggest about performance, "
             "effort, and the next training focus without inventing additional facts."
         ),
         tone_guidance=(
@@ -524,7 +525,7 @@ def build_training_report_section_model_quote_context(
         ),
         section_contract_reminder=(
             "Return one CandidateTrainingReportSection JSON object using only the "
-            "approved quote facts, names, and numbers in this payload."
+            "exact training details, allowed names, and allowed numbers in this payload."
         ),
     )
 
@@ -532,64 +533,64 @@ def build_training_report_section_model_quote_context(
 def build_direct_ollama_training_report_section_prompt(
     approved_context: dict[str, Any],
 ) -> str:
-    """Build the strict quote-only direct Ollama prompt for one training section."""
+    """Build the strict anchor-first direct Ollama prompt for one training section."""
 
     model_quote_context = build_training_report_section_model_quote_context(
         approved_context
     ).to_dict()
     approved_workout_names = model_quote_context["approved_workout_names"]
     approved_exercise_names = model_quote_context["approved_exercise_names"]
-    approved_quote_facts = model_quote_context["approved_quote_facts"]
+    approved_training_numbers = model_quote_context["approved_training_numbers"]
+    supporting_training_details = model_quote_context["supporting_training_details"]
     required_quote_name = model_quote_context["required_quote_name"]
     required_anchor_count = model_quote_context["required_anchor_count"]
     required_fact_anchors = model_quote_context["required_fact_anchors"]
-    forbidden_meta_terms = model_quote_context["forbidden_meta_terms"]
-    model_quote_context_json = json.dumps(
-        model_quote_context,
-        sort_keys=True,
-        default=str,
-    )
     valid_example_json = json.dumps(
-        _candidate_training_report_section_example(required_quote_name)
+        _candidate_training_report_section_example(
+            required_quote_name,
+            required_fact_anchors=required_fact_anchors,
+        )
     )
-    approved_style_examples = _approved_style_examples_for_prompt(approved_quote_facts)
+    training_detail_examples = _approved_style_examples_for_prompt(
+        supporting_training_details
+    )
     return f"""
 /no_think
 Task: write one concise training report section for a fitness coaching app.
 
-Source of truth:
-- Use only the quote-only model-facing context below.
-- Do not use or mention backend/debug/runtime metadata.
-- Every factual claim must be supported by approved_quote_facts, approved names, or approved numbers.
+Use these exact training details first.
+
+Required training details:
+{_numbered_lines(required_fact_anchors)}
+
+Required detail placement:
+- key_observations[0] must be exactly one required training detail.
+- key_observations[1] must be exactly one different required training detail when at least two are available.
+- Use at least {required_anchor_count} exact required training detail(s) somewhere in the full response.
+- Exact means character-for-character; do not paraphrase required training details when satisfying this requirement.
+- After placing the exact observations, use the other fields to explain the details naturally like a coach.
 
 Required quote:
-- You must quote at least one exact approved workout or exercise name.
-- You must include this exact approved name at least once: {required_quote_name or "None available"}
-- If approved names are available, every narrative field should mention an exact approved workout or exercise name.
+- Include this exact name at least once: {required_quote_name or "None available"}
+- If names are available, every narrative field should mention an allowed workout or exercise name.
 
-Required fact anchors:
-- You must include at least {required_anchor_count} exact fact anchor(s) from required_fact_anchors.
-- Exact means character-for-character; do not paraphrase anchors when satisfying this requirement.
-- Do not merely list the anchors; use them to write natural coaching interpretation.
-{json.dumps(required_fact_anchors)}
-
-Approved workout names you may quote:
+Allowed workout names:
 {json.dumps(approved_workout_names)}
 
-Approved exercise names you may quote:
+Allowed exercise names:
 {json.dumps(approved_exercise_names)}
 
-Approved quote facts you may explain:
-{json.dumps(approved_quote_facts)}
+Allowed supporting training details:
+{json.dumps(supporting_training_details)}
 
-Forbidden meta-language:
-{json.dumps(forbidden_meta_terms)}
+Allowed numbers:
+{json.dumps(approved_training_numbers)}
 
 Coaching-language requirement:
-- Do not merely repeat the approved facts as a list.
-- Use the approved facts to write concise coaching interpretation.
+- Do not merely list details in every field.
+- Use the exact details to write concise coaching interpretation.
 - The section should feel personal, practical, and specific while staying fully grounded.
-- You may prioritize, phrase, and connect approved facts naturally.
+- You may prioritize, phrase, and connect exact details naturally.
 
 Strict output rules:
 - Return JSON only: one raw JSON object and nothing else.
@@ -600,17 +601,17 @@ Strict output rules:
 - The first character must be {{ and the last character must be }}.
 - Include exactly these top-level keys and no others.
 - Do not include provider fields, runtime fields, debug fields, validation fields, or raw context keys.
-- Quote only workout names from approved_workout_names.
-- Quote only exercise names from approved_exercise_names.
-- Quote only numbers from approved_training_numbers or approved_quote_facts.
-- You may restate or explain facts from approved_quote_facts.
-- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact fact is listed in approved_quote_facts.
-- Do not summarize adherence, trends, skipped exercises, completion counts, progression, fatigue, or recovery status unless the exact claim is listed in approved_quote_facts.
-- Do not use meta-language such as approved quote facts, approved facts, bounded training summary, quote context, source facts, provided facts, context provided, or based on the provided facts.
-- Do not mention user_id, user number, user metadata, report date, provider metadata, or runtime metadata unless the exact wording appears in approved_quote_facts.
+- Quote only workout names from the allowed workout names list.
+- Quote only exercise names from the allowed exercise names list.
+- Quote only numbers from the allowed numbers list or allowed supporting training details.
+- You may restate or explain allowed supporting training details.
+- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact detail is listed above.
+- Do not summarize adherence, trends, skipped exercises, completion counts, progression, fatigue, or recovery status unless the exact claim is listed above.
+- Do not talk about these instructions, the payload, the backend, validation, or why the wording is restricted.
+- Do not mention user ID, user number, user metadata, report date, provider metadata, or runtime metadata unless the exact wording is listed above.
 - Do not invent workouts, exercises, sets, reps, loads, weights, RIR, progression, fatigue, recovery status, or health metrics.
 - Do not prescribe a new workout plan or mutate backend recommendations.
-- If detailed execution data is limited, say that training detail is limited using an approved workout or exercise name.
+- If detailed execution data is limited, say that training detail is limited using an allowed workout or exercise name.
 
 CandidateTrainingReportSection allowed output schema:
 {{
@@ -627,8 +628,7 @@ CandidateTrainingReportSection allowed output schema:
 One valid JSON example:
 {valid_example_json}
 
-Model-facing anti-patterns:
-Bad:
+Bad examples:
 - "Training Execution Summary for User <number>"
 - "Several workouts were completed as planned"
 - "training is progressing well"
@@ -636,15 +636,12 @@ Bad:
 - "one exercise was skipped"
 - "there was a trend toward lower effort"
 
-Good when these exact facts are approved:
-{approved_style_examples}
+Good when these exact details are available:
+{training_detail_examples}
 
-Quote-only model-facing context JSON:
-{model_quote_context_json}
-
-Forbidden language and behavior:
+Additional restrictions:
 - Do not make medical, disease, diagnosis, treatment, cure, or injury claims.
-- Do not invent progression claims or say performance improved unless approved_quote_facts supports it.
+- Do not invent progression claims or say performance improved unless an exact detail supports it.
 - Do not invent exact workout, exercise, set, rep, load, weight, or RIR values.
 - Do not use phrases such as "source of truth", "validator", "fallback", "debug", "provider", "Ollama", or "CrewAI".
 - Keep the section concise and user-facing.
@@ -763,6 +760,11 @@ def run_direct_ollama_training_report_section_spike(
             diagnostics=diagnostics,
         )
 
+    anchor_diagnostics = _required_fact_anchor_diagnostics(
+        _combined_candidate_text(candidate),
+        approved_context=resolved_context,
+    )
+
     return DirectOllamaTrainingReportSectionSpikeResult(
         success=True,
         provider=DIRECT_OLLAMA_TRAINING_REPORT_SECTION_PROVIDER_NAME,
@@ -789,6 +791,13 @@ def run_direct_ollama_training_report_section_spike(
         model_facing_quote_context=build_training_report_section_model_quote_context(
             resolved_context
         ).to_dict(),
+        matched_required_fact_anchors=anchor_diagnostics[
+            "matched_required_fact_anchors"
+        ],
+        required_anchor_count=anchor_diagnostics["required_anchor_count"],
+        missing_required_anchor_count=anchor_diagnostics[
+            "missing_required_anchor_count"
+        ],
         **diagnostics,
     )
 
@@ -889,7 +898,7 @@ def validate_candidate_training_report_section(
         )
 
     anchor_errors = _required_fact_anchor_errors(
-        combined_text,
+        candidate,
         approved_context=approved_context,
     )
     errors.extend(anchor_errors)
@@ -1197,6 +1206,11 @@ def _fallback_result(
             }
         )
 
+    anchor_diagnostics = _required_fact_anchor_diagnostics(
+        raw_output or "",
+        approved_context=approved_context or {},
+    )
+
     return DirectOllamaTrainingReportSectionSpikeResult(
         success=False,
         provider=DIRECT_OLLAMA_TRAINING_REPORT_SECTION_PROVIDER_NAME,
@@ -1223,6 +1237,13 @@ def _fallback_result(
         model_facing_quote_context=build_training_report_section_model_quote_context(
             approved_context or {}
         ).to_dict(),
+        matched_required_fact_anchors=anchor_diagnostics[
+            "matched_required_fact_anchors"
+        ],
+        required_anchor_count=anchor_diagnostics["required_anchor_count"],
+        missing_required_anchor_count=anchor_diagnostics[
+            "missing_required_anchor_count"
+        ],
         **diagnostics,
     )
 
@@ -1257,31 +1278,44 @@ def _deterministic_fallback_section() -> CandidateTrainingReportSection:
     )
 
 
+def _numbered_lines(values: list[str]) -> str:
+    if not values:
+        return "- None available"
+    return "\n".join(f"{index}. {value}" for index, value in enumerate(values, start=1))
+
+
 def _approved_style_examples_for_prompt(approved_quote_facts: list[str]) -> str:
     examples = [fact for fact in approved_quote_facts if fact.strip()][:4]
     if not examples:
-        return '- "Use only the exact approved quote facts provided in this payload."'
+        return '- "Use only the exact training details listed above."'
     return "\n".join(f'- "{example}"' for example in examples)
 
 
 def _candidate_training_report_section_example(
     required_quote_name: str | None = None,
+    *,
+    required_fact_anchors: list[str] | None = None,
 ) -> dict[str, Any]:
-    quote_name = required_quote_name or "Approved Exercise"
+    quote_name = required_quote_name or "Training Detail"
+    anchors = [anchor for anchor in required_fact_anchors or [] if anchor.strip()]
+    first_observation = anchors[1] if len(anchors) > 1 else quote_name
+    second_observation = anchors[2] if len(anchors) > 2 else first_observation
+    if second_observation == first_observation:
+        second_observation = quote_name
     return {
-        "section_summary": f"{quote_name} has approved logged detail for cautious review.",
+        "section_summary": f"{quote_name} gives a specific training signal for review.",
         "key_observations": [
-            f"{quote_name} should be interpreted only from approved quote facts.",
-            f"{quote_name} context can support a bounded training summary.",
+            first_observation,
+            second_observation,
         ],
         "performance_interpretation": (
-            f"{quote_name} is the clearest approved training signal in this section."
+            f"{quote_name} should be interpreted from the exact logged training details."
         ),
         "fatigue_recovery_interpretation": (
-            f"{quote_name} recovery interpretation should stay limited to approved quote facts."
+            f"{quote_name} effort should be discussed without adding recovery claims."
         ),
-        "suggested_focus": f"Use {quote_name} logging details before adjusting training direction.",
-        "limitations_context": f"{quote_name} context only uses approved backend training facts.",
+        "suggested_focus": f"Use {quote_name} logging detail before changing training direction.",
+        "limitations_context": f"{quote_name} has limited execution detail, so broader claims are avoided.",
         "confidence": "Moderate",
         "reason_codes": ["direct_ollama_training_report_section_candidate"],
     }
@@ -1296,6 +1330,10 @@ def _candidate_text_fields(candidate: CandidateTrainingReportSection) -> list[st
         candidate.suggested_focus,
         candidate.limitations_context,
     ]
+
+
+def _combined_candidate_text(candidate: CandidateTrainingReportSection) -> str:
+    return "\n".join(_candidate_text_fields(candidate))
 
 
 def _approved_training_names_from_context(approved_context: dict[str, Any]) -> set[str]:
@@ -1395,13 +1433,15 @@ def _required_training_fact_anchors(
         and fact not in planned_facts
     ]
 
-    for fact in [
+    candidate_fact_anchors = [
         *concrete_logged_facts,
         *final_rir_facts,
         *other_logged_facts,
-        *planned_facts,
-        *generic_facts,
-    ]:
+    ]
+    if not candidate_fact_anchors:
+        candidate_fact_anchors = [*planned_facts, *generic_facts]
+
+    for fact in candidate_fact_anchors:
         if len(anchors) >= max_anchors:
             break
         _append_unique_string(anchors, fact)
@@ -1537,7 +1577,7 @@ def _approved_quote_facts_text(quote_context: dict[str, Any]) -> str:
 
 
 def _required_fact_anchor_errors(
-    combined_text: str,
+    candidate: CandidateTrainingReportSection,
     *,
     approved_context: dict[str, Any],
 ) -> list[str]:
@@ -1551,18 +1591,67 @@ def _required_fact_anchor_errors(
     if not required_fact_anchors or required_anchor_count <= 0:
         return []
 
-    matched_anchors = [
-        anchor for anchor in required_fact_anchors if anchor in combined_text
-    ]
-    if len(matched_anchors) >= required_anchor_count:
-        return []
+    errors: list[str] = []
+    combined_text = _combined_candidate_text(candidate)
+    anchor_diagnostics = _required_fact_anchor_diagnostics(
+        combined_text,
+        approved_context=approved_context,
+    )
+    matched_anchors = anchor_diagnostics["matched_required_fact_anchors"]
+    if len(matched_anchors) < required_anchor_count:
+        errors.append(
+            "Training report section must include at least "
+            f"{required_anchor_count} exact required fact anchor"
+            f"{'s' if required_anchor_count != 1 else ''}; "
+            f"matched {len(matched_anchors)}."
+        )
 
-    return [
-        "Training report section must include at least "
-        f"{required_anchor_count} exact required fact anchor"
-        f"{'s' if required_anchor_count != 1 else ''}; "
-        f"matched {len(matched_anchors)}."
-    ]
+    if required_anchor_count >= 1:
+        if not candidate.key_observations:
+            errors.append(
+                "Training report section key_observations[0] must exactly match one required training detail."
+            )
+        elif candidate.key_observations[0] not in required_fact_anchors:
+            errors.append(
+                "Training report section key_observations[0] must exactly match one required training detail."
+            )
+
+    if required_anchor_count >= 2:
+        if len(candidate.key_observations) < 2:
+            errors.append(
+                "Training report section key_observations[1] must exactly match a different required training detail."
+            )
+        elif candidate.key_observations[1] not in required_fact_anchors:
+            errors.append(
+                "Training report section key_observations[1] must exactly match a different required training detail."
+            )
+        elif candidate.key_observations[1] == candidate.key_observations[0]:
+            errors.append(
+                "Training report section key_observations[1] must exactly match a different required training detail."
+            )
+
+    return errors
+
+
+def _required_fact_anchor_diagnostics(
+    text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> dict[str, Any]:
+    model_quote_context = _model_quote_context_from_context(approved_context)
+    required_fact_anchors = _string_list(
+        model_quote_context.get("required_fact_anchors", [])
+    )
+    required_anchor_count = model_quote_context.get("required_anchor_count", 0)
+    if not isinstance(required_anchor_count, int):
+        required_anchor_count = 0
+    matched_anchors = [anchor for anchor in required_fact_anchors if anchor in text]
+    missing_count = max(required_anchor_count - len(matched_anchors), 0)
+    return {
+        "matched_required_fact_anchors": matched_anchors,
+        "required_anchor_count": required_anchor_count,
+        "missing_required_anchor_count": missing_count,
+    }
 
 
 def _unsupported_meta_copy_errors(
@@ -1570,10 +1659,7 @@ def _unsupported_meta_copy_errors(
     *,
     approved_context: dict[str, Any],
 ) -> list[str]:
-    model_quote_context = _model_quote_context_from_context(approved_context)
-    forbidden_terms = _string_list(model_quote_context.get("forbidden_meta_terms", []))
-    if not forbidden_terms:
-        forbidden_terms = _forbidden_training_report_meta_terms()
+    forbidden_terms = _forbidden_training_report_meta_terms()
 
     matched_terms = [term for term in forbidden_terms if term.lower() in lowered_text]
     if not matched_terms:

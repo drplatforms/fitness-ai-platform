@@ -4,6 +4,8 @@
 
 Implemented as an isolated spike.
 
+Updated by `Direct Ollama Training Report Section Grounding Context v1` to expose explicit approved quote context for runtime QA and stricter grounding validation.
+
 This does not change production health report behavior, report persistence, Streamlit, or full report assembly.
 
 ## Goal
@@ -92,15 +94,20 @@ The context may include bounded public-safe fields such as:
 
 The context intentionally does not include raw provider output, raw model metadata, unbounded source payloads, or production report internals.
 
+The spike also exposes a sanitized `approved_training_quote_context` for direct provider grounding and QA inspection. It includes approved workout names, exercise names, bounded quoteable numbers, set/rep/load/RIR values, and backend-authored summary facts. It does not include raw notes, raw database rows, or unbounded execution history.
+
 ## Prompt rules
 
 The prompt instructs the model to:
 
 - return JSON only
 - include exactly the allowed keys
-- mention workout names only when present in approved context
-- mention exercise names only when present in approved context
-- quote set, rep, load, weight, and RIR values only when exact values appear in approved context
+- use `approved_training_quote_context` for exact names, numbers, and facts
+- mention at least one exact approved workout or exercise name when names are available
+- quote only workout names from `approved_workout_names`
+- quote only exercise names from `approved_exercise_names`
+- quote only numbers from `approved_training_numbers` or approved summary facts
+- avoid calculating volume load, average RIR, percentages, progression, fatigue, or recovery status unless the exact fact is approved
 - avoid inventing workouts, exercises, sets, reps, loads, weights, RIR, progression, fatigue, recovery status, or health metrics
 - avoid medical claims
 - avoid workout-plan creation or recommendation mutation
@@ -134,9 +141,10 @@ The validator enforces:
 - no medical claims
 - no unsupported progression or workout prescriptions
 - no unapproved numbers
-- candidate text mentions at least one approved workout/exercise name when detailed training context exists
-- vague training copy is rejected when detailed training context exists
+- candidate text mentions at least one approved workout/exercise name when quoteable details exist
+- vague training copy is rejected when quoteable details exist
 - known unapproved training names are rejected where feasible
+- invented volume-load, average-RIR, percentage/progression, fatigue, and recovery conclusions are rejected unless backed by approved summary facts
 
 Invalid candidates return deterministic fallback.
 
@@ -159,6 +167,7 @@ The spike records:
 - markdown_wrapper_detected
 - extra_keys_detected
 - wrapper_object_detected
+- approved_training_quote_context
 
 ## Manual runtime command
 

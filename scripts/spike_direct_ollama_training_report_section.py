@@ -138,6 +138,18 @@ class CandidateTrainingReportSection:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ApprovedTrainingQuoteContext:
+    approved_workout_names: list[str]
+    approved_exercise_names: list[str]
+    approved_training_numbers: list[int | float]
+    approved_set_rep_load_rir_values: list[dict[str, Any]]
+    approved_training_summary_facts: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 @dataclass
 class DirectOllamaTrainingReportSectionSpikeResult:
     success: bool
@@ -164,6 +176,7 @@ class DirectOllamaTrainingReportSectionSpikeResult:
     markdown_wrapper_detected: bool = False
     extra_keys_detected: list[str] = field(default_factory=list)
     wrapper_object_detected: bool = False
+    approved_training_quote_context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -184,6 +197,10 @@ def build_training_report_section_context(
             user_id=user_id,
             limit=recent_execution_limit,
         )
+    quote_context = build_approved_training_quote_context(
+        recent_training_executions=recent_executions,
+        training_execution_summary=execution_summary.to_dict(),
+    )
 
     return _compact_dict(
         {
@@ -269,7 +286,173 @@ def build_training_report_section_context(
             ),
             "training_execution_summary": execution_summary.to_dict(),
             "recent_training_executions": recent_executions,
+            "approved_training_quote_context": quote_context.to_dict(),
         }
+    )
+
+
+def build_approved_training_quote_context(
+    *,
+    recent_training_executions: list[dict[str, Any]],
+    training_execution_summary: dict[str, Any] | None = None,
+) -> ApprovedTrainingQuoteContext:
+    """Build bounded quoteable training context from approved backend data."""
+
+    workout_names: list[str] = []
+    exercise_names: list[str] = []
+    approved_numbers: list[int | float] = []
+    set_rep_load_rir_values: list[dict[str, Any]] = []
+    summary_facts: list[str] = []
+
+    for execution in recent_training_executions:
+        workout_name = _safe_nonempty_string(execution.get("workout_title"))
+        if workout_name:
+            _append_unique_string(workout_names, workout_name)
+            summary_facts.append(f"{workout_name} was completed.")
+
+        planned_by_name: dict[str, dict[str, Any]] = {}
+        for planned in execution.get("planned_exercises", []):
+            if not isinstance(planned, dict):
+                continue
+            exercise_name = _safe_nonempty_string(planned.get("exercise_name"))
+            if not exercise_name:
+                continue
+            _append_unique_string(exercise_names, exercise_name)
+            planned_by_name[_normalize_name(exercise_name)] = planned
+            _extend_approved_numbers(
+                approved_numbers,
+                [
+                    planned.get("planned_sets"),
+                    planned.get("planned_reps_min"),
+                    planned.get("planned_reps_max"),
+                    planned.get("planned_rir_min"),
+                    planned.get("planned_rir_max"),
+                ],
+            )
+            planned_sets = planned.get("planned_sets")
+            reps_text = _format_range(
+                planned.get("planned_reps_min"), planned.get("planned_reps_max")
+            )
+            rir_text = _format_range(
+                planned.get("planned_rir_min"), planned.get("planned_rir_max")
+            )
+            fact_parts: list[str] = []
+            if planned_sets is not None:
+                fact_parts.append(f"{planned_sets} sets")
+            if reps_text:
+                fact_parts.append(f"{reps_text} reps")
+            if rir_text:
+                fact_parts.append(f"RIR {rir_text}")
+            if workout_name and fact_parts:
+                summary_facts.append(
+                    f"{exercise_name} was planned in {workout_name} for "
+                    + ", ".join(fact_parts)
+                    + "."
+                )
+
+        actual_sets_by_exercise: dict[str, list[dict[str, Any]]] = {}
+        for actual in execution.get("actual_sets", []):
+            if not isinstance(actual, dict):
+                continue
+            exercise_name = _safe_nonempty_string(actual.get("exercise_name"))
+            if not exercise_name:
+                continue
+            _append_unique_string(exercise_names, exercise_name)
+            normalized_exercise_name = _normalize_name(exercise_name)
+            actual_sets_by_exercise.setdefault(normalized_exercise_name, []).append(
+                actual
+            )
+            _extend_approved_numbers(
+                approved_numbers,
+                [
+                    actual.get("set_number"),
+                    actual.get("planned_reps_min"),
+                    actual.get("planned_reps_max"),
+                    actual.get("planned_rir_min"),
+                    actual.get("planned_rir_max"),
+                    actual.get("actual_reps"),
+                    actual.get("actual_weight"),
+                    actual.get("actual_rir"),
+                ],
+            )
+
+        for normalized_exercise_name, actual_sets in actual_sets_by_exercise.items():
+            if not actual_sets:
+                continue
+            exercise_name = _safe_nonempty_string(actual_sets[0].get("exercise_name"))
+            planned = planned_by_name.get(normalized_exercise_name, {})
+            rep_values = [
+                actual.get("actual_reps")
+                for actual in actual_sets
+                if actual.get("actual_reps") is not None
+            ]
+            load_values = [
+                actual.get("actual_weight")
+                for actual in actual_sets
+                if actual.get("actual_weight") is not None
+            ]
+            rir_values = [
+                actual.get("actual_rir")
+                for actual in actual_sets
+                if actual.get("actual_rir") is not None
+            ]
+            actual_sets_count = len(actual_sets)
+            _append_unique_number(approved_numbers, actual_sets_count)
+            value_payload = _compact_dict(
+                {
+                    "workout_name": workout_name,
+                    "exercise_name": exercise_name,
+                    "planned_sets": planned.get("planned_sets"),
+                    "planned_reps": _format_range(
+                        planned.get("planned_reps_min"), planned.get("planned_reps_max")
+                    ),
+                    "planned_rir": _format_range(
+                        planned.get("planned_rir_min"), planned.get("planned_rir_max")
+                    ),
+                    "actual_sets": actual_sets_count,
+                    "actual_reps": rep_values,
+                    "actual_load_lb": _single_distinct_number(load_values),
+                    "actual_rir": rir_values,
+                }
+            )
+            if value_payload:
+                set_rep_load_rir_values.append(value_payload)
+            if workout_name and exercise_name:
+                summary_facts.append(
+                    f"{exercise_name} was logged in {workout_name} for {actual_sets_count} set"
+                    f"{'s' if actual_sets_count != 1 else ''}."
+                )
+            if exercise_name and rep_values and load_values:
+                load_text = _format_number(_single_distinct_number(load_values))
+                reps_text = ", ".join(_format_number(value) for value in rep_values)
+                if load_text:
+                    summary_facts.append(
+                        f"{exercise_name} was logged at {load_text} lb for {reps_text} reps."
+                    )
+            if exercise_name and rir_values:
+                final_rir = rir_values[-1]
+                summary_facts.append(
+                    f"The final {exercise_name} set was logged at {_format_number(final_rir)} RIR."
+                )
+
+    if training_execution_summary:
+        for key in [
+            "completed_execution_count",
+            "average_completion_percentage",
+            "average_planned_rir",
+            "average_actual_rir",
+            "average_rir_deviation",
+        ]:
+            value = training_execution_summary.get(key)
+            if value is not None:
+                _append_unique_number(approved_numbers, value)
+
+    return ApprovedTrainingQuoteContext(
+        approved_workout_names=workout_names[:8],
+        approved_exercise_names=exercise_names[:20],
+        approved_training_numbers=approved_numbers[:80],
+        approved_set_rep_load_rir_values=set_rep_load_rir_values[:12],
+        approved_training_summary_facts=_unique(summary_facts)[:24],
     )
 
 
@@ -294,9 +477,13 @@ Strict output rules:
 - Include exactly these top-level keys and no others.
 - Do not include provider fields, runtime fields, debug fields, validation fields, or raw context keys.
 - Do not copy backend context keys into the output unless they are explicitly listed in the schema.
-- Mention workout names only when they appear in approved recent_training_executions.
-- Mention exercise names only when they appear in approved planned_exercises or actual_sets.
-- Quote set, rep, load, weight, and RIR values only when those exact values appear in the approved context.
+- Use only approved_training_quote_context for exact names, numbers, and training facts.
+- If approved workout or exercise names exist, mention at least one exact approved name.
+- Quote only workout names from approved_workout_names.
+- Quote only exercise names from approved_exercise_names.
+- Quote only numbers from approved_training_numbers or approved_training_summary_facts.
+- You may restate facts from approved_training_summary_facts.
+- Do not calculate or infer volume load, average RIR, percentages, week-over-week change, progression, fatigue, or recovery status unless the exact fact is listed in approved_training_summary_facts.
 - Do not invent workouts, exercises, sets, reps, loads, weights, RIR, progression, fatigue, recovery status, or health metrics.
 - Do not prescribe a new workout plan or mutate backend recommendations.
 - If detailed execution data is limited, say that training detail is limited.
@@ -321,7 +508,7 @@ Approved context JSON:
 
 Forbidden language and behavior:
 - Do not make medical, disease, diagnosis, treatment, cure, or injury claims.
-- Do not invent progression claims or say performance improved unless approved context supports it.
+- Do not invent progression claims or say performance improved unless approved_training_summary_facts supports it.
 - Do not invent exact workout, exercise, set, rep, load, weight, or RIR values.
 - Do not use phrases such as "source of truth", "validator", "fallback", "debug", "provider", "Ollama", or "CrewAI".
 - Keep the section concise and user-facing.
@@ -381,6 +568,7 @@ def run_direct_ollama_training_report_section_spike(
             elapsed_seconds=elapsed_seconds,
             fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
             validation_errors=[provider_error],
+            approved_context=resolved_context,
         )
 
     if not isinstance(raw_output, str):
@@ -393,6 +581,7 @@ def run_direct_ollama_training_report_section_spike(
             elapsed_seconds=elapsed_seconds,
             fallback_reason=FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT,
             validation_errors=["Provider returned a non-string response."],
+            approved_context=resolved_context,
         )
 
     diagnostics = detect_direct_ollama_training_section_output_diagnostics(raw_output)
@@ -409,6 +598,7 @@ def run_direct_ollama_training_report_section_spike(
             elapsed_seconds=elapsed_seconds,
             fallback_reason=FALLBACK_REASON_CANDIDATE_PARSE_FAILURE,
             validation_errors=[str(exc)],
+            approved_context=resolved_context,
             raw_output=raw_output,
             candidate_parse_status=TRAINING_SECTION_PARSE_STATUS_FAILED,
             diagnostics=diagnostics,
@@ -429,6 +619,7 @@ def run_direct_ollama_training_report_section_spike(
             elapsed_seconds=elapsed_seconds,
             fallback_reason=FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE,
             validation_errors=validation_errors,
+            approved_context=resolved_context,
             raw_output=raw_output,
             candidate_parse_status=TRAINING_SECTION_PARSE_STATUS_SUCCESS,
             candidate_validation_status=TRAINING_SECTION_VALIDATION_STATUS_FAILED,
@@ -456,6 +647,9 @@ def run_direct_ollama_training_report_section_spike(
         final_section_source=FINAL_SECTION_SOURCE_PROVIDER_APPROVED,
         approved_section=candidate.to_dict(),
         validation_errors=[],
+        approved_training_quote_context=_approved_training_quote_context_from_context(
+            resolved_context
+        ),
         **diagnostics,
     )
 
@@ -570,6 +764,11 @@ def validate_candidate_training_report_section(
                 "Training report section mentions unapproved workout or exercise names: "
                 + ", ".join(sorted(unapproved_known_names))
             )
+
+    unsupported_claims = _unsupported_training_claim_errors(
+        lowered, approved_context=approved_context
+    )
+    errors.extend(unsupported_claims)
 
     unapproved_numbers = _unapproved_numbers_in_candidate(
         candidate_payload,
@@ -695,7 +894,7 @@ def _load_recent_training_execution_details(
         plan_instance_id = int(row["id"])
         planned_rows = cursor.execute(
             """
-            SELECT name, sets, reps_min, reps_max, rir_min, rir_max, notes
+            SELECT name, sets, reps_min, reps_max, rir_min, rir_max
             FROM planned_workout_exercises
             WHERE workout_plan_instance_id = ?
             ORDER BY exercise_order, id
@@ -747,7 +946,6 @@ def _load_recent_training_execution_details(
                                 "planned_reps_max": planned_row["reps_max"],
                                 "planned_rir_min": planned_row["rir_min"],
                                 "planned_rir_max": planned_row["rir_max"],
-                                "notes": planned_row["notes"],
                             }
                         )
                         for planned_row in planned_rows
@@ -807,6 +1005,7 @@ def _fallback_result(
     elapsed_seconds: float,
     fallback_reason: str,
     validation_errors: list[str],
+    approved_context: dict[str, Any] | None = None,
     raw_output: str | None = None,
     candidate_parse_status: str = TRAINING_SECTION_PARSE_STATUS_NOT_ATTEMPTED,
     candidate_validation_status: str = TRAINING_SECTION_VALIDATION_STATUS_NOT_ATTEMPTED,
@@ -846,8 +1045,20 @@ def _fallback_result(
         final_section_source=FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK,
         approved_section=_deterministic_fallback_section().to_dict(),
         validation_errors=validation_errors,
+        approved_training_quote_context=_approved_training_quote_context_from_context(
+            approved_context
+        ),
         **diagnostics,
     )
+
+
+def _approved_training_quote_context_from_context(
+    approved_context: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(approved_context, dict):
+        return {}
+    quote_context = approved_context.get("approved_training_quote_context")
+    return quote_context if isinstance(quote_context, dict) else {}
 
 
 def _deterministic_fallback_section() -> CandidateTrainingReportSection:
@@ -903,12 +1114,14 @@ def _candidate_text_fields(candidate: CandidateTrainingReportSection) -> list[st
 
 
 def _approved_training_names_from_context(approved_context: dict[str, Any]) -> set[str]:
+    quote_context = _approved_training_quote_context_from_context(approved_context)
     names: set[str] = set()
-    for key, value in _walk_key_values(approved_context):
-        if key in {"workout_title", "exercise_name"} and isinstance(value, str):
-            normalized = _normalize_name(value)
-            if normalized:
-                names.add(normalized)
+    for key in ("approved_workout_names", "approved_exercise_names"):
+        for value in quote_context.get(key, []):
+            if isinstance(value, str):
+                normalized = _normalize_name(value)
+                if normalized:
+                    names.add(normalized)
     return names
 
 
@@ -926,6 +1139,12 @@ def _contains_generic_training_copy(lowered_text: str) -> bool:
         "training details are available",
         "workout details are available",
         "review the approved training context",
+        "training load remains moderate",
+        "training has been consistent",
+        "volume appears balanced",
+        "performance is stable",
+        "continue gradual progression",
+        "consistent volume",
     ]
     return any(phrase in lowered_text for phrase in generic_phrases)
 
@@ -961,12 +1180,79 @@ def _unapproved_known_training_names(
     return unapproved
 
 
+def _unsupported_training_claim_errors(
+    lowered_text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> list[str]:
+    quote_context = _approved_training_quote_context_from_context(approved_context)
+    approved_facts_text = "\n".join(
+        str(fact).lower()
+        for fact in quote_context.get("approved_training_summary_facts", [])
+    )
+    errors: list[str] = []
+
+    unsupported_claim_groups = [
+        (
+            "Training report section must not invent volume-load claims.",
+            ["volume load", "total volume", "training volume increased"],
+        ),
+        (
+            "Training report section must not invent average RIR claims.",
+            ["average rir", "avg rir", "average effort was rir"],
+        ),
+        (
+            "Training report section must not invent percentage/progression claims.",
+            [
+                "%",
+                " percent",
+                "progression is trending",
+                "strength is improving",
+                "load increased",
+                "week over week",
+                "performance improved",
+            ],
+        ),
+        (
+            "Training report section must not invent fatigue or recovery conclusions.",
+            [
+                "fatigue is accumulating",
+                "recovery is compromised",
+                "training stress is excessive",
+                "high fatigue",
+                "low fatigue risk",
+                "high readiness",
+            ],
+        ),
+    ]
+    for message, phrases in unsupported_claim_groups:
+        if any(phrase in lowered_text for phrase in phrases) and not any(
+            phrase in approved_facts_text for phrase in phrases
+        ):
+            errors.append(message)
+
+    return errors
+
+
 def _unapproved_numbers_in_candidate(
     candidate_payload: dict[str, Any],
     *,
     approved_context: dict[str, Any],
 ) -> set[str]:
-    allowed_numbers = _number_tokens_from_object(approved_context)
+    quote_context = _approved_training_quote_context_from_context(approved_context)
+    allowed_numbers = _number_tokens_from_object(
+        {
+            "approved_training_numbers": quote_context.get(
+                "approved_training_numbers", []
+            ),
+            "approved_set_rep_load_rir_values": quote_context.get(
+                "approved_set_rep_load_rir_values", []
+            ),
+            "approved_training_summary_facts": quote_context.get(
+                "approved_training_summary_facts", []
+            ),
+        }
+    )
     found_numbers = _number_tokens_from_object(candidate_payload)
     return {number for number in found_numbers if number not in allowed_numbers}
 
@@ -1018,6 +1304,66 @@ def _walk_key_values(value: Any):
 
 def _normalize_name(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _safe_nonempty_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _append_unique_string(values: list[str], value: str) -> None:
+    if value not in values:
+        values.append(value)
+
+
+def _append_unique_number(values: list[int | float], value: Any) -> None:
+    if isinstance(value, bool):
+        return
+    if not isinstance(value, int | float):
+        return
+    number: int | float = int(value) if float(value).is_integer() else float(value)
+    if number not in values:
+        values.append(number)
+
+
+def _extend_approved_numbers(values: list[int | float], candidates: list[Any]) -> None:
+    for candidate in candidates:
+        _append_unique_number(values, candidate)
+
+
+def _format_range(min_value: Any, max_value: Any) -> str | None:
+    if min_value is None and max_value is None:
+        return None
+    if min_value is None:
+        return _format_number(max_value)
+    if max_value is None or min_value == max_value:
+        return _format_number(min_value)
+    return f"{_format_number(min_value)}-{_format_number(max_value)}"
+
+
+def _single_distinct_number(values: list[Any]) -> int | float | None:
+    normalized: list[int | float] = []
+    for value in values:
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            continue
+        number: int | float = int(value) if float(value).is_integer() else float(value)
+        if number not in normalized:
+            normalized.append(number)
+    if len(normalized) == 1:
+        return normalized[0]
+    return None
+
+
+def _format_number(value: Any) -> str:
+    if isinstance(value, bool) or value is None:
+        return ""
+    if isinstance(value, int | float) and float(value).is_integer():
+        return str(int(value))
+    if isinstance(value, float):
+        return f"{value:.2f}".rstrip("0").rstrip(".")
+    return str(value)
 
 
 def _compact_dict(payload: dict[str, Any]) -> dict[str, Any]:

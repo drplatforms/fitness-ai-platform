@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from scripts.spike_direct_ollama_training_report_section import (
     CANDIDATE_TRAINING_REPORT_SECTION_JSON_SCHEMA,
+    build_approved_training_quote_context,
     build_direct_ollama_training_report_section_prompt,
     detect_direct_ollama_training_section_output_diagnostics,
     normalize_ollama_model_name,
@@ -64,6 +65,31 @@ APPROVED_CONTEXT = {
             ],
         }
     ],
+    "approved_training_quote_context": {
+        "approved_workout_names": ["Upper Body Strength"],
+        "approved_exercise_names": ["Dumbbell Bench Press"],
+        "approved_training_numbers": [1, 2, 3, 8, 10, 50],
+        "approved_set_rep_load_rir_values": [
+            {
+                "workout_name": "Upper Body Strength",
+                "exercise_name": "Dumbbell Bench Press",
+                "planned_sets": 3,
+                "planned_reps": "8-10",
+                "planned_rir": "2-3",
+                "actual_sets": 1,
+                "actual_reps": [10],
+                "actual_load_lb": 50,
+                "actual_rir": [1],
+            }
+        ],
+        "approved_training_summary_facts": [
+            "Upper Body Strength was completed.",
+            "Dumbbell Bench Press was planned in Upper Body Strength for 3 sets, 8-10 reps, RIR 2-3.",
+            "Dumbbell Bench Press was logged in Upper Body Strength for 1 set.",
+            "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+            "The final Dumbbell Bench Press set was logged at 1 RIR.",
+        ],
+    },
 }
 
 
@@ -72,11 +98,11 @@ def _valid_raw_section() -> str:
 {
   "section_summary": "Upper Body Strength has one approved completed execution for review.",
   "key_observations": [
-    "Dumbbell Bench Press was logged with 10 reps at 50 weight on set 1.",
-    "Average actual RIR was 1 compared with the approved planned RIR context."
+    "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 1 RIR."
   ],
-  "performance_interpretation": "The approved data points to harder-than-planned effort in a limited training sample.",
-  "fatigue_recovery_interpretation": "Low fatigue risk and High readiness support cautious continuation without adding unapproved work.",
+  "performance_interpretation": "Upper Body Strength has one approved Dumbbell Bench Press set for cautious review.",
+  "fatigue_recovery_interpretation": "Recovery interpretation should stay limited to the approved training quote context.",
   "suggested_focus": "Keep logging Upper Body Strength details so the next review has more than 1 completed execution.",
   "limitations_context": "This section only uses approved planned-vs-actual training context.",
   "confidence": "Low",
@@ -107,8 +133,9 @@ def test_prompt_contains_strict_json_and_training_grounding_rules():
     assert "Return JSON only" in prompt
     assert "CandidateTrainingReportSection allowed output schema" in prompt
     assert "Approved context JSON" in prompt
-    assert "Mention workout names only when they appear" in prompt
-    assert "Mention exercise names only when they appear" in prompt
+    assert "Use only approved_training_quote_context" in prompt
+    assert "mention at least one exact approved name" in prompt
+    assert "Do not calculate or infer volume load" in prompt
     assert "Do not invent workouts" in prompt
     assert (
         "Do not invent exact workout, exercise, set, rep, load, weight, or RIR"
@@ -153,6 +180,9 @@ def test_direct_ollama_training_section_spike_valid_output_approves():
     assert result.final_section_source == "provider_approved"
     assert result.extra_keys_detected == []
     assert result.wrapper_object_detected is False
+    assert result.approved_training_quote_context["approved_workout_names"] == [
+        "Upper Body Strength"
+    ]
     assert captured["selected_model"] == "qwen2.5:3b"
     assert captured["schema"] == CANDIDATE_TRAINING_REPORT_SECTION_JSON_SCHEMA
 
@@ -316,6 +346,106 @@ def test_direct_ollama_training_section_spike_provider_exception_falls_back():
     assert result.candidate_parse_status == "not_attempted"
     assert result.fallback_reason == "provider_exception"
     assert result.validation_errors == ["RuntimeError: provider unavailable"]
+
+
+def test_approved_training_quote_context_builder_exposes_bounded_quoteable_values():
+    quote_context = build_approved_training_quote_context(
+        recent_training_executions=APPROVED_CONTEXT["recent_training_executions"],
+        training_execution_summary=APPROVED_CONTEXT["training_execution_summary"],
+    ).to_dict()
+
+    assert quote_context["approved_workout_names"] == ["Upper Body Strength"]
+    assert quote_context["approved_exercise_names"] == ["Dumbbell Bench Press"]
+    assert 50 in quote_context["approved_training_numbers"]
+    assert 10 in quote_context["approved_training_numbers"]
+    assert quote_context["approved_set_rep_load_rir_values"][0]["actual_load_lb"] == 50
+    assert any(
+        "Dumbbell Bench Press was logged at 50 lb for 10 reps" in fact
+        for fact in quote_context["approved_training_summary_facts"]
+    )
+    assert "raw_notes" not in str(quote_context).lower()
+
+
+def test_direct_ollama_training_section_spike_generic_moderate_load_claim_fails():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Training load remains moderate with consistent volume.",
+  "key_observations": ["Performance is stable across recent training."],
+  "performance_interpretation": "Continue gradual progression.",
+  "fatigue_recovery_interpretation": "Recovery interpretation is limited.",
+  "suggested_focus": "Keep training consistent.",
+  "limitations_context": "Training details are available.",
+  "confidence": "Low",
+  "reason_codes": ["generic_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("vague training copy" in error for error in result.validation_errors)
+    assert any("must mention" in error for error in result.validation_errors)
+
+
+def test_direct_ollama_training_section_spike_invented_average_rir_fails():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength was reviewed.",
+  "key_observations": ["Dumbbell Bench Press was logged."],
+  "performance_interpretation": "Average RIR was 3 across the workout.",
+  "fatigue_recovery_interpretation": "Recovery interpretation is limited.",
+  "suggested_focus": "Keep logging approved training details.",
+  "limitations_context": "Approved quote context only.",
+  "confidence": "Low",
+  "reason_codes": ["unsafe_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("average RIR" in error for error in result.validation_errors)
+
+
+def test_direct_ollama_training_section_spike_invented_progression_fails():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength was reviewed.",
+  "key_observations": ["Dumbbell Bench Press was logged."],
+  "performance_interpretation": "Strength is improving and volume increased by 10%.",
+  "fatigue_recovery_interpretation": "Recovery interpretation is limited.",
+  "suggested_focus": "Keep logging approved training details.",
+  "limitations_context": "Approved quote context only.",
+  "confidence": "Low",
+  "reason_codes": ["unsafe_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("progression" in error for error in result.validation_errors)
 
 
 def test_normalize_model_name_reuses_direct_ollama_helper():

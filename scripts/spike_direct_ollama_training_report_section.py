@@ -616,7 +616,8 @@ Interpretation and style rules:
 - Interpretation fields may only express the allowed interpretation claims, approved bounded training claims, and approved semantic coaching moves.
 - Treat allowed_meaning values as meaning constraints, not finished copy. Do not copy allowed_meaning wording directly.
 - You may explain approved single-session observations naturally, but do not turn them into trends.
-- Same-rep or effort language is allowed only when it is explicitly supported by an approved bounded training claim and stays scoped to this workout/session.
+- Same-rep language may only describe the same rep count across logged sets inside this workout/session. Do not translate same-rep language into consistent effort, consistent performance, or focused work.
+- Effort language may only describe logged RIR inside this workout/session. Do not translate RIR into execution quality, focus, recovery, or effort consistency.
 - Do not create new conclusions from the exact training details.
 - Do not claim broad consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
 - Sound like a coach speaking directly to the user, not a debug report, validation summary, or execution summary.
@@ -626,6 +627,7 @@ Interpretation and style rules:
 Required quote:
 - Include this exact name at least once: {required_quote_name or "None available"}
 - If names are available, every narrative field should mention an allowed workout or exercise name.
+- limitations_context must mention the required workout name or at least one approved exercise name while explaining the single-session limit.
 
 Allowed workout names:
 {json.dumps(approved_workout_names)}
@@ -647,7 +649,7 @@ Coaching-language requirement:
 - The section should feel personal, practical, and specific while staying fully grounded.
 - Use the coaching moves as ingredients; do not repeat them like templates.
 - Avoid safe-but-stiff phrases such as concrete checkpoint, logged session, centered on the logged lifts, and concrete load and rep detail.
-- Avoid unsupported quality judgments such as strong execution, solid execution, good execution, strong performance, quality work, or well-executed.
+- Avoid unsupported quality judgments such as strong execution, solid execution, good execution, strong performance, quality work, well-executed, focused work, or consistent effort.
 - suggested_focus must give the user a practical next step, not tell them to review data or interpret details.
 - You may prioritize, phrase, and connect exact details naturally.
 
@@ -702,6 +704,8 @@ Bad examples:
 - "strong execution"
 - "strong performance"
 - "quality work"
+- "focused work"
+- "consistent effort across multiple lifts"
 
 Good when these exact details are available:
 {training_detail_examples}

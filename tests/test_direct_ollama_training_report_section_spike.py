@@ -1750,6 +1750,9 @@ def test_prompt_exposes_bounded_training_claims_without_making_them_broad_trends
     assert "do not turn them into trends" in prompt
     assert "same rep count" in prompt
     assert "effort was high within this logged session" in prompt
+    assert "limitations_context must mention" in prompt
+    assert "Do not translate same-rep language into consistent effort" in prompt
+    assert "Do not translate RIR into execution quality" in prompt
 
 
 def test_direct_ollama_training_section_spike_bounded_single_session_claims_pass():
@@ -1780,6 +1783,39 @@ def test_direct_ollama_training_section_spike_bounded_single_session_claims_pass
 
     assert result.success is True
     assert result.validation_errors == []
+
+
+def test_direct_ollama_training_section_spike_qwen3_style_consistent_effort_still_fails_with_bounded_claims():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength focused on consistent effort across multiple lifts, with notable attention to Dumbbell Bench Press.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press held the same rep count across the logged sets and finished close to failure based on the 0 RIR log.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a single-session reference point and keep logging load, reps, and RIR before making a bigger adjustment.",
+  "limitations_context": "Upper Body Strength is one workout, not enough to call it a trend.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen3:8b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "effort or consistency" in error or "trend or consistency" in error
+        for error in result.validation_errors
+    )
 
 
 def test_direct_ollama_training_section_spike_broad_consistency_still_fails_with_bounded_claims():

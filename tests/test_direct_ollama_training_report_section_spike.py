@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from scripts.spike_direct_ollama_training_report_section import (
     CANDIDATE_TRAINING_REPORT_SECTION_JSON_SCHEMA,
     build_approved_training_quote_context,
@@ -110,6 +112,33 @@ def _valid_raw_section() -> str:
   "reason_codes": ["direct_ollama_training_report_section_candidate"]
 }
 """.strip()
+
+
+def _bounded_claims_context() -> dict:
+    context = deepcopy(APPROVED_CONTEXT)
+    actual_sets = []
+    for set_number, rir in [(1, 2), (2, 1), (3, 0)]:
+        actual_sets.append(
+            {
+                "exercise_name": "Dumbbell Bench Press",
+                "set_number": set_number,
+                "planned_reps_min": 8,
+                "planned_reps_max": 10,
+                "planned_rir_min": 2,
+                "planned_rir_max": 3,
+                "actual_reps": 10,
+                "actual_weight": 50,
+                "actual_rir": rir,
+                "completed": True,
+                "skipped": False,
+            }
+        )
+    context["recent_training_executions"][0]["actual_sets"] = actual_sets
+    context["approved_training_quote_context"] = build_approved_training_quote_context(
+        recent_training_executions=context["recent_training_executions"],
+        training_execution_summary=context["training_execution_summary"],
+    ).to_dict()
+    return context
 
 
 def test_json_schema_defines_exact_training_section_contract():
@@ -1691,5 +1720,96 @@ def test_direct_ollama_training_section_spike_unsupported_execution_quality_fail
     assert result.success is False
     assert any(
         "form or control" in error or "quality" in error
+        for error in result.validation_errors
+    )
+
+
+def test_model_facing_payload_includes_backend_derived_bounded_claims():
+    payload = build_training_report_section_model_quote_context(
+        _bounded_claims_context()
+    ).to_dict()
+
+    claims = payload["approved_bounded_training_claims"]
+    claim_types = {claim["claim_type"] for claim in claims}
+
+    assert "single_session_rep_pattern" in claim_types
+    assert "single_session_effort" in claim_types
+    assert "complete_reference_lift" in claim_types
+    assert "scope_limit" in claim_types
+    assert any("same rep count" in claim["approved_meaning"] for claim in claims)
+    assert any("0 RIR" in claim["approved_meaning"] for claim in claims)
+
+
+def test_prompt_exposes_bounded_training_claims_without_making_them_broad_trends():
+    prompt = build_direct_ollama_training_report_section_prompt(
+        _bounded_claims_context()
+    )
+
+    assert "Approved bounded training claims" in prompt
+    assert "approved single-session observations" in prompt
+    assert "do not turn them into trends" in prompt
+    assert "same rep count" in prompt
+    assert "effort was high within this logged session" in prompt
+
+
+def test_direct_ollama_training_section_spike_bounded_single_session_claims_pass():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength gives a narrow Dumbbell Bench Press signal.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press held the same rep count across the logged sets and finished close to failure based on the 0 RIR log.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a single-session reference point and keep logging load, reps, and RIR before making a bigger adjustment.",
+  "limitations_context": "Upper Body Strength is one workout, not enough to call it a trend.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen3:8b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    assert result.validation_errors == []
+
+
+def test_direct_ollama_training_section_spike_broad_consistency_still_fails_with_bounded_claims():
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength gives a narrow Dumbbell Bench Press signal.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press shows consistent performance over time.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a single-session reference point and keep logging load, reps, and RIR before making a bigger adjustment.",
+  "limitations_context": "Upper Body Strength is one workout, not enough to call it a trend.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen3:8b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "trend or consistency" in error or "effort or consistency" in error
         for error in result.validation_errors
     )

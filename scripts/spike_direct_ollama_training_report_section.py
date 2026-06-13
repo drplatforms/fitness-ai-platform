@@ -161,6 +161,7 @@ class TrainingReportSectionModelQuoteContext:
     supporting_training_details: list[str]
     approved_interpretation_claims: list[str]
     approved_coaching_moves: dict[str, dict[str, Any]]
+    approved_bounded_training_claims: list[dict[str, Any]]
     # Kept for metadata compatibility only. Product voice autonomy uses
     # semantic coaching moves as the primary model-facing style source.
     approved_coaching_frames: list[str]
@@ -522,6 +523,11 @@ def build_training_report_section_model_quote_context(
         required_fact_anchors=required_fact_anchors,
         approved_quote_facts=approved_quote_facts,
     )
+    approved_bounded_training_claims = _approved_bounded_training_claims(
+        quote_context=quote_context,
+        required_quote_name=required_quote_name,
+        required_fact_anchors=required_fact_anchors,
+    )
 
     return TrainingReportSectionModelQuoteContext(
         required_quote_name=required_quote_name,
@@ -533,6 +539,7 @@ def build_training_report_section_model_quote_context(
         supporting_training_details=approved_quote_facts,
         approved_interpretation_claims=approved_interpretation_claims,
         approved_coaching_moves=approved_coaching_moves,
+        approved_bounded_training_claims=approved_bounded_training_claims,
         approved_coaching_frames=[],
         coaching_intent=(
             "Explain what the exact training details suggest about performance, "
@@ -565,6 +572,9 @@ def build_direct_ollama_training_report_section_prompt(
         "approved_interpretation_claims"
     ]
     approved_coaching_moves = model_quote_context["approved_coaching_moves"]
+    approved_bounded_training_claims = model_quote_context[
+        "approved_bounded_training_claims"
+    ]
     required_quote_name = model_quote_context["required_quote_name"]
     required_anchor_count = model_quote_context["required_anchor_count"]
     required_fact_anchors = model_quote_context["required_fact_anchors"]
@@ -599,11 +609,16 @@ Allowed interpretation claims:
 Approved semantic coaching moves:
 {json.dumps(approved_coaching_moves, indent=2, sort_keys=True)}
 
+Approved bounded training claims:
+{json.dumps(approved_bounded_training_claims, indent=2, sort_keys=True)}
+
 Interpretation and style rules:
-- Interpretation fields may only express the allowed interpretation claims and approved semantic coaching moves.
+- Interpretation fields may only express the allowed interpretation claims, approved bounded training claims, and approved semantic coaching moves.
 - Treat allowed_meaning values as meaning constraints, not finished copy. Do not copy allowed_meaning wording directly.
+- You may explain approved single-session observations naturally, but do not turn them into trends.
+- Same-rep or effort language is allowed only when it is explicitly supported by an approved bounded training claim and stays scoped to this workout/session.
 - Do not create new conclusions from the exact training details.
-- Do not claim consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
+- Do not claim broad consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
 - Sound like a coach speaking directly to the user, not a debug report, validation summary, or execution summary.
 - Prefer practical coaching language over stiff diagnostic phrasing.
 - Do not use internal or stiff wording such as concrete checkpoint, logged session, centered on the logged lifts, concrete load and rep detail, data for review, exact training details, provided details, allowed names, payload, contract, report section, validator, or debug.
@@ -1718,6 +1733,215 @@ def _approved_training_coaching_moves(
     return moves
 
 
+def _approved_bounded_training_claims(
+    *,
+    quote_context: dict[str, Any],
+    required_quote_name: str | None,
+    required_fact_anchors: list[str],
+) -> list[dict[str, Any]]:
+    """Derive narrow, single-session coaching claims from backend-approved facts."""
+
+    claims: list[dict[str, Any]] = []
+    set_payloads = [
+        payload
+        for payload in quote_context.get("approved_set_rep_load_rir_values", [])
+        if isinstance(payload, dict)
+    ]
+    signal_names = _training_signal_name_list(required_fact_anchors)
+
+    for payload in set_payloads:
+        exercise_name = _safe_nonempty_string(payload.get("exercise_name"))
+        if not exercise_name:
+            continue
+
+        reps = [
+            value
+            for value in payload.get("actual_reps", [])
+            if isinstance(value, int | float)
+        ]
+        rir_values = [
+            value
+            for value in payload.get("actual_rir", [])
+            if isinstance(value, int | float)
+        ]
+
+        if len(reps) >= 2 and len(set(reps)) == 1:
+            claims.append(
+                {
+                    "claim_id": f"same_rep_pattern_{_claim_id_slug(exercise_name)}",
+                    "claim_type": "single_session_rep_pattern",
+                    "approved_meaning": (
+                        f"{exercise_name} used the same rep count across all logged sets in this session."
+                    ),
+                    "required_names": [exercise_name],
+                    "required_terms": ["this session"],
+                    "allowed_terms": [
+                        "same rep count",
+                        "steady reps",
+                        "consistent rep counts",
+                        "logged sets",
+                        "this session",
+                    ],
+                    "forbidden_scope": [
+                        "trend",
+                        "progression",
+                        "consistency over time",
+                        "consistent performance",
+                    ],
+                }
+            )
+
+        if rir_values and rir_values[-1] <= 1:
+            final_rir = _format_number(rir_values[-1])
+            claims.append(
+                {
+                    "claim_id": f"high_effort_from_rir_{_claim_id_slug(exercise_name)}",
+                    "claim_type": "single_session_effort",
+                    "approved_meaning": (
+                        f"{exercise_name} finished with a final set at {final_rir} RIR, so effort was high within this logged session."
+                    ),
+                    "required_names": [exercise_name],
+                    "required_terms": ["RIR", "this session"],
+                    "allowed_terms": [
+                        "close to failure",
+                        "high effort",
+                        "effort context",
+                        "logged RIR",
+                        "this session",
+                    ],
+                    "forbidden_scope": [
+                        "recovery",
+                        "fatigue pattern",
+                        "overall effort trend",
+                        "consistent effort",
+                    ],
+                }
+            )
+
+    complete_reference_names = _complete_reference_lift_names(
+        set_payloads,
+        preferred_names=signal_names,
+    )
+    if complete_reference_names:
+        joined_names = _join_name_list(complete_reference_names)
+        claims.append(
+            {
+                "claim_id": "complete_reference_lifts",
+                "claim_type": "complete_reference_lift",
+                "approved_meaning": (
+                    f"{joined_names} are the strongest reference lifts in this session because they have complete logged training details."
+                ),
+                "required_names": complete_reference_names,
+                "allowed_terms": [
+                    "reference lifts",
+                    "clearest signal",
+                    "training decision",
+                    "complete logged training details",
+                ],
+                "forbidden_scope": [
+                    "progression",
+                    "plan worked",
+                    "recovery is good",
+                    "form is strong",
+                ],
+            }
+        )
+
+    quote_name = required_quote_name or _first_workout_name_from_set_payloads(
+        set_payloads
+    )
+    if quote_name:
+        claims.append(
+            {
+                "claim_id": "single_session_scope",
+                "claim_type": "scope_limit",
+                "approved_meaning": (
+                    f"{quote_name} is a single-session observation and should not be treated as a trend."
+                ),
+                "required_names": [quote_name],
+                "required_terms": ["single-session", "trend"],
+                "allowed_terms": [
+                    "reference point",
+                    "not enough to prove",
+                    "one workout",
+                    "single-session",
+                    "not a trend",
+                ],
+                "forbidden_scope": [
+                    "progression confirmed",
+                    "recovery pattern",
+                    "fatigue pattern",
+                ],
+            }
+        )
+
+    return claims[:12]
+
+
+def _complete_reference_lift_names(
+    set_payloads: list[dict[str, Any]],
+    *,
+    preferred_names: list[str],
+    limit: int = 2,
+) -> list[str]:
+    complete_names: list[str] = []
+    preferred_normalized = [_normalize_name(name) for name in preferred_names]
+    payloads_by_name = {
+        _normalize_name(str(payload.get("exercise_name", ""))): payload
+        for payload in set_payloads
+    }
+    for normalized_name in preferred_normalized:
+        payload = payloads_by_name.get(normalized_name)
+        if payload and _has_complete_logged_training_details(payload):
+            _append_unique_string(complete_names, str(payload.get("exercise_name")))
+        if len(complete_names) >= limit:
+            return complete_names
+
+    for payload in set_payloads:
+        if not _has_complete_logged_training_details(payload):
+            continue
+        exercise_name = _safe_nonempty_string(payload.get("exercise_name"))
+        if exercise_name:
+            _append_unique_string(complete_names, exercise_name)
+        if len(complete_names) >= limit:
+            break
+    return complete_names
+
+
+def _has_complete_logged_training_details(payload: dict[str, Any]) -> bool:
+    return bool(
+        _safe_nonempty_string(payload.get("exercise_name"))
+        and payload.get("actual_sets") is not None
+        and payload.get("actual_load_lb") is not None
+        and isinstance(payload.get("actual_reps"), list)
+        and payload.get("actual_reps")
+        and isinstance(payload.get("actual_rir"), list)
+        and payload.get("actual_rir")
+    )
+
+
+def _first_workout_name_from_set_payloads(
+    set_payloads: list[dict[str, Any]],
+) -> str | None:
+    for payload in set_payloads:
+        workout_name = _safe_nonempty_string(payload.get("workout_name"))
+        if workout_name:
+            return workout_name
+    return None
+
+
+def _join_name_list(names: list[str]) -> str:
+    if not names:
+        return "Training details"
+    if len(names) == 1:
+        return names[0]
+    return f"{', '.join(names[:-1])} and {names[-1]}"
+
+
+def _claim_id_slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_") or "training_detail"
+
+
 def _legacy_finished_coaching_frames(
     *,
     required_quote_name: str | None,
@@ -2125,12 +2349,112 @@ def _approved_interpretation_claims_text(approved_context: dict[str, Any]) -> st
     return "\n".join(claim.lower() for claim in claims)
 
 
+def _bounded_training_claims_from_context(
+    approved_context: dict[str, Any],
+) -> list[dict[str, Any]]:
+    value = _model_quote_context_from_context(approved_context).get(
+        "approved_bounded_training_claims", []
+    )
+    if not isinstance(value, list):
+        return []
+    return [claim for claim in value if isinstance(claim, dict)]
+
+
+def _bounded_training_claim_text_values(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    texts: list[str] = []
+    for claim in value:
+        if not isinstance(claim, dict):
+            continue
+        for key in (
+            "approved_meaning",
+            "required_names",
+            "required_terms",
+            "allowed_terms",
+        ):
+            item = claim.get(key)
+            if isinstance(item, str) and item.strip():
+                texts.append(item.strip())
+            elif isinstance(item, list):
+                texts.extend(
+                    entry.strip()
+                    for entry in item
+                    if isinstance(entry, str) and entry.strip()
+                )
+    return texts
+
+
+def _approved_bounded_training_claims_text(approved_context: dict[str, Any]) -> str:
+    claims = _bounded_training_claims_from_context(approved_context)
+    return "\n".join(
+        text.lower() for text in _bounded_training_claim_text_values(claims)
+    )
+
+
+def _has_bounded_claim_type(
+    approved_context: dict[str, Any],
+    claim_type: str,
+) -> bool:
+    return any(
+        claim.get("claim_type") == claim_type
+        for claim in _bounded_training_claims_from_context(approved_context)
+    )
+
+
+def _has_allowed_bounded_consistency_language(
+    lowered_text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> bool:
+    if not _has_bounded_claim_type(approved_context, "single_session_rep_pattern"):
+        return False
+    allowed_patterns = [
+        r"\bconsistent rep counts?\b",
+        r"\bsame rep counts?\b",
+        r"\bsteady reps\b",
+        r"\bsame reps\b",
+    ]
+    if not any(re.search(pattern, lowered_text) for pattern in allowed_patterns):
+        return False
+    forbidden_broad_patterns = [
+        r"\byou (?:are|were) consistent\b",
+        r"\bconsistent performance\b",
+        r"\bconsistent effort\b",
+        r"\bconsistency (?:trend|is improving|over time)\b",
+        r"\bconsistent improvement\b",
+        r"\bconsistent over time\b",
+    ]
+    return not any(
+        re.search(pattern, lowered_text) for pattern in forbidden_broad_patterns
+    )
+
+
+def _is_allowed_bounded_training_claim_phrase(
+    phrase: str,
+    lowered_text: str,
+    *,
+    approved_context: dict[str, Any],
+) -> bool:
+    if phrase in {"consistent", "consistency", "consistent rep", "consistent reps"}:
+        return _has_allowed_bounded_consistency_language(
+            lowered_text,
+            approved_context=approved_context,
+        )
+    if phrase in {"trend", "trending"}:
+        return _field_has_scope_limit_language(lowered_text)
+    return False
+
+
 def _approved_training_style_text(approved_context: dict[str, Any]) -> str:
     model_quote_context = _model_quote_context_from_context(approved_context)
     values = [
         *_string_list(model_quote_context.get("approved_interpretation_claims", [])),
         *_coaching_move_text_values(
             model_quote_context.get("approved_coaching_moves", {})
+        ),
+        *_bounded_training_claim_text_values(
+            model_quote_context.get("approved_bounded_training_claims", [])
         ),
         *_string_list(model_quote_context.get("approved_coaching_frames", [])),
     ]
@@ -2351,7 +2675,11 @@ def _unsupported_interpretation_claim_errors(
     *,
     approved_context: dict[str, Any],
 ) -> list[str]:
-    approved_claims_text = _approved_interpretation_claims_text(approved_context)
+    approved_claims_text = (
+        _approved_interpretation_claims_text(approved_context)
+        + "\n"
+        + _approved_bounded_training_claims_text(approved_context)
+    )
     errors: list[str] = []
     claim_groups = [
         (
@@ -2450,9 +2778,24 @@ def _unsupported_interpretation_claim_errors(
         matched_phrases = [phrase for phrase in phrases if phrase in lowered_text]
         if not matched_phrases:
             continue
-        unapproved_phrases = [
-            phrase for phrase in matched_phrases if phrase not in approved_claims_text
-        ]
+        unapproved_phrases: list[str] = []
+        for phrase in matched_phrases:
+            if phrase in {
+                "consistent",
+                "consistency",
+                "trend",
+                "trending",
+                "consistent rep",
+                "consistent reps",
+            }:
+                if _is_allowed_bounded_training_claim_phrase(
+                    phrase, lowered_text, approved_context=approved_context
+                ):
+                    continue
+                unapproved_phrases.append(phrase)
+                continue
+            if phrase not in approved_claims_text:
+                unapproved_phrases.append(phrase)
         if unapproved_phrases:
             errors.append(message)
     return errors
@@ -2572,9 +2915,24 @@ def _unsupported_training_claim_errors(
         matched_phrases = [phrase for phrase in phrases if phrase in lowered_text]
         if not matched_phrases:
             continue
-        unapproved_phrases = [
-            phrase for phrase in matched_phrases if phrase not in approved_claims_text
-        ]
+        unapproved_phrases: list[str] = []
+        for phrase in matched_phrases:
+            if phrase in {
+                "consistent",
+                "consistency",
+                "trend",
+                "trending",
+                "consistent rep",
+                "consistent reps",
+            }:
+                if _is_allowed_bounded_training_claim_phrase(
+                    phrase, lowered_text, approved_context=approved_context
+                ):
+                    continue
+                unapproved_phrases.append(phrase)
+                continue
+            if phrase not in approved_claims_text:
+                unapproved_phrases.append(phrase)
         if unapproved_phrases:
             errors.append(message)
 
@@ -2605,6 +2963,9 @@ def _unapproved_numbers_in_candidate(
             "approved_coaching_moves": _model_quote_context_from_context(
                 approved_context
             ).get("approved_coaching_moves", {}),
+            "approved_bounded_training_claims": _model_quote_context_from_context(
+                approved_context
+            ).get("approved_bounded_training_claims", []),
             "approved_coaching_frames": _model_quote_context_from_context(
                 approved_context
             ).get("approved_coaching_frames", []),

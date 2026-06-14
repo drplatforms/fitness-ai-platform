@@ -600,12 +600,17 @@ Use these exact training details first.
 Required training details:
 {_numbered_lines(required_fact_anchors)}
 
-Required detail placement:
-- key_observations[0] must be exactly one required training detail.
-- key_observations[1] must be exactly one different required training detail when at least two are available.
+Exact key_observation copy gate:
+- key_observations[0] must be exactly one required training detail; copy it character-for-character from the numbered list above.
+- key_observations[1] must be exactly one different required training detail when at least two are available; copy it character-for-character from the numbered list above.
+- Do not paraphrase, summarize, combine, reorder words inside, or convert required training details when filling key_observations.
+- Do not use planned-only details in key_observations unless that exact planned detail appears in the required training details list.
 - Use at least {required_anchor_count} exact required training detail(s) somewhere in the full response.
 - Exact means character-for-character; do not paraphrase required training details when satisfying this requirement.
-- After placing the exact observations, use the other fields to explain the details naturally like a coach.
+- Satisfy key_observations before using any bounded claims, interpretation claims, or coaching moves.
+
+Approved bounded training claims:
+{json.dumps(approved_bounded_training_claims, indent=2, sort_keys=True)}
 
 Allowed interpretation claims:
 {_numbered_lines(approved_interpretation_claims)}
@@ -613,16 +618,14 @@ Allowed interpretation claims:
 Approved semantic coaching moves:
 {json.dumps(approved_coaching_moves, indent=2, sort_keys=True)}
 
-Approved bounded training claims:
-{json.dumps(approved_bounded_training_claims, indent=2, sort_keys=True)}
-
 Interpretation and style rules:
-- Interpretation fields may only express the allowed interpretation claims, approved bounded training claims, and approved semantic coaching moves.
+- Interpretation fields may only express the exact required training details, approved bounded training claims, allowed interpretation claims, and approved semantic coaching moves.
 - Treat allowed_meaning values as meaning constraints, not finished copy. Do not copy allowed_meaning wording directly.
 - You may explain approved single-session observations naturally, but do not turn them into trends.
 - Same-rep language may only describe the same rep count across logged sets inside this workout/session. Do not translate same-rep language into consistent effort, consistent performance, or focused work.
 - Effort language may only describe logged RIR inside this workout/session. Do not translate RIR into execution quality, focus, recovery, or effort consistency.
 - Do not create new conclusions from the exact training details.
+- Do not say progression, progression in load and reps, load progression, rep progression, improved, or improving unless that exact positive progression claim is explicitly approved above.
 - Do not claim broad consistency, progression, form quality, control quality, recovery status, fatigue status, planned-work alignment, or adherence unless that exact interpretation appears above.
 - Sound like a coach speaking directly to the user, not a debug report, validation summary, or execution summary.
 - Prefer practical coaching language over stiff diagnostic phrasing.
@@ -698,6 +701,7 @@ Bad examples:
 - "Training Execution Summary for User <number>"
 - "Several workouts were completed as planned"
 - "training is progressing well"
+- "progression in load and reps"
 - "adherence is high"
 - "one exercise was skipped"
 - "there was a trend toward lower effort"
@@ -716,7 +720,7 @@ Good when these exact details are available:
 
 Additional restrictions:
 - Do not make medical, disease, diagnosis, treatment, cure, or injury claims.
-- Do not invent progression claims or say performance improved unless an exact detail supports it.
+- Do not invent progression claims, progression in load and reps, load progression, rep progression, or say performance improved unless an exact approved claim supports it.
 - Do not invent exact workout, exercise, set, rep, load, weight, or RIR values.
 - Do not use phrases such as "source of truth", "validator", "fallback", "debug", "provider", "Ollama", or "CrewAI".
 - Keep the section concise and user-facing.
@@ -2585,6 +2589,11 @@ def _unsupported_interpretation_claim_errors(
                 "progressed",
                 "progressing",
                 "weight progression",
+                "progression in load",
+                "progression in reps",
+                "progression in load and reps",
+                "load progression",
+                "rep progression",
                 "strength is improving",
                 "performance improved",
                 "load increased",
@@ -2737,6 +2746,11 @@ def _unsupported_training_claim_errors(
                 "%",
                 " percent",
                 "progression is trending",
+                "progression in load",
+                "progression in reps",
+                "progression in load and reps",
+                "load progression",
+                "rep progression",
                 "strength is improving",
                 "load increased",
                 "week over week",

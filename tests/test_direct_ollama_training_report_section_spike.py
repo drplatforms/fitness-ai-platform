@@ -1818,6 +1818,91 @@ def test_direct_ollama_training_section_spike_qwen3_style_consistent_effort_stil
     )
 
 
+def test_prompt_prioritizes_exact_anchor_copy_before_bounded_claims() -> None:
+    prompt = build_direct_ollama_training_report_section_prompt(
+        _bounded_claims_context()
+    )
+
+    assert "Exact key_observation copy gate" in prompt
+    assert "Satisfy key_observations before using any bounded claims" in prompt
+    assert "Do not use planned-only details in key_observations" in prompt
+    assert "Do not say progression, progression in load and reps" in prompt
+    assert prompt.index("Required training details") < prompt.index(
+        "Exact key_observation copy gate"
+    )
+    assert prompt.index("Exact key_observation copy gate") < prompt.index(
+        "Approved bounded training claims"
+    )
+    assert prompt.index("Approved bounded training claims") < prompt.index(
+        "Approved semantic coaching moves"
+    )
+
+
+def test_direct_ollama_training_section_spike_progression_in_load_and_reps_fails() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength shows progression in load and reps for Dumbbell Bench Press.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press shows progression in load and reps from this workout.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a single-session reference point and keep logging load, reps, and RIR before making a bigger adjustment.",
+  "limitations_context": "Upper Body Strength is one workout, not enough to call it a trend.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("progression" in error for error in result.validation_errors)
+
+
+def test_direct_ollama_training_section_spike_paraphrased_key_observations_fail() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength has useful Dumbbell Bench Press signal.",
+  "key_observations": [
+    "Dumbbell Bench Press was planned for 3 sets, 8-10 reps with RIR 2-3.",
+    "Dumbbell Bench Press was logged for three sets at 50 lb for 10 reps."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a single-session reference point and keep logging load, reps, and RIR before making a bigger adjustment.",
+  "limitations_context": "Upper Body Strength is one workout, not enough to call it a trend.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("key_observations[0]" in error for error in result.validation_errors)
+    assert any("key_observations[1]" in error for error in result.validation_errors)
+
+
 def test_direct_ollama_training_section_spike_broad_consistency_still_fails_with_bounded_claims():
     def fake_generate(*_args, **_kwargs):
         return """

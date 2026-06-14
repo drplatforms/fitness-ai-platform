@@ -229,3 +229,28 @@ Recommended follow-up sequence:
 3. Connect `TrainingExecutionSummary` as the long-term source of training execution truth.
 4. Only then consider full report training-section integration.
 5. Revisit product voice after the evidence layer is stable.
+
+
+## Anchor-preservation rule
+
+`ApprovedTrainingClaim[]` enriches the model-facing context, but it must not replace the exact required fact anchors.
+
+Provider prompt/payload construction must keep this order of authority:
+
+1. exact required training details
+2. `key_observations` exact-copy rules
+3. approved bounded training claims
+4. interpretation claims and semantic coaching moves
+5. forbidden claim boundaries
+6. JSON output contract
+
+`key_observations[0]` and `key_observations[1]` must copy exact required training details character-for-character when anchors are available.
+
+The provider should continue rejecting:
+
+- paraphrased anchors
+- planned-only details used as required observations when not listed as required anchors
+- unsupported progression claims such as “progression in load and reps”
+- broad consistency, recovery, fatigue, form, control, plan-success, or adherence claims
+
+The claim service exists to make approved evidence reusable, not to make the model less accountable to exact anchors.

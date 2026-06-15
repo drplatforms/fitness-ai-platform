@@ -1378,7 +1378,14 @@ def _approved_context_missing_training_evidence_errors(
 
 
 def _contains_placeholder_training_context(lowered_text: str) -> bool:
-    return any(term in lowered_text for term in PLACEHOLDER_TRAINING_CONTEXT_TERMS)
+    return any(
+        re.search(pattern, lowered_text)
+        for pattern in [
+            r"<\s*none available\s*>",
+            r"\bnone available\b",
+            r"\btraining detail\b",
+        ]
+    )
 
 
 def _fallback_result(

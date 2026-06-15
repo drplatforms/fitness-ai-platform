@@ -1903,6 +1903,72 @@ def test_direct_ollama_training_section_spike_paraphrased_key_observations_fail(
     assert any("key_observations[1]" in error for error in result.validation_errors)
 
 
+def test_direct_ollama_training_section_spike_allows_logged_training_details_copy() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength included Dumbbell Bench Press with clear load and rep details.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the strongest reference lift in this session because it has complete logged training details.",
+  "fatigue_recovery_interpretation": "Upper Body Strength shows high-effort work from logged RIR, but it does not prove a broader fatigue or recovery pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is useful signal from one workout, not a full trend picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen3:8b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    assert result.validation_errors == []
+
+
+def test_direct_ollama_training_section_spike_still_rejects_exact_training_detail_placeholder() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Training Detail is available for Upper Body Strength.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press as a reference point and keep logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen3:8b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "placeholder training context" in error for error in result.validation_errors
+    )
+
+
 def test_direct_ollama_training_section_spike_broad_consistency_still_fails_with_bounded_claims():
     def fake_generate(*_args, **_kwargs):
         return """

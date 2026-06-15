@@ -664,8 +664,8 @@ Coaching-language requirement:
 - Do not merely list details in every field.
 - section_summary should synthesize the main training signal; do not restate exact load, rep, set, or RIR values there. Save exact numbers for key_observations.
 - fatigue_recovery_interpretation must name the required quote and clearly say the session does not prove a recovery or fatigue pattern.
-- Example fatigue/recovery shape: "Upper Body Strength shows high-effort work from logged RIR, but it does not prove a broader fatigue or recovery pattern."
-- Example limitation shape: "Upper Body Strength can guide the next training choice, but one workout should not be read as a trend."
+- Example fatigue/recovery shape: "{required_quote_display} shows high-effort work from logged RIR, but it does not prove a broader fatigue or recovery pattern."
+- Example limitation shape: "{required_quote_display} can guide the next training choice, but one workout should not be read as a trend."
 - Use the required observations, allowed interpretations, and approved semantic coaching moves to write concise coaching interpretation in your own words.
 - The section should feel personal, practical, and specific while staying fully grounded.
 - Use the coaching moves as ingredients; do not repeat them like templates.
@@ -997,9 +997,29 @@ def validate_candidate_training_report_section(
             "Training report section must not include angle-bracket template artifacts."
         )
 
+    model_context = _model_quote_context_from_context(approved_context)
+    approved_training_names = {
+        name.lower()
+        for name in [
+            *_string_list(model_context.get("approved_workout_names")),
+            *_string_list(model_context.get("approved_exercise_names")),
+        ]
+    }
+    for prompt_example_name in ["Upper Body Strength"]:
+        if (
+            prompt_example_name.lower() in lowered
+            and prompt_example_name.lower() not in approved_training_names
+        ):
+            errors.append(
+                "Training report section must not include unapproved training name: "
+                f"{prompt_example_name}."
+            )
+
     medical_patterns = [
         r"\bdiagnos(?:e|is|ed)\b",
-        r"\btreat(?:s|ment|ed)?\b",
+        r"\btreatment\b",
+        r"\btreat(?:s|ed|ing)?\s+(?:an?\s+)?(?:injury|disease|condition|pain|symptom|diagnosis|medical\s+issue)\b",
+        r"\b(?:injury|disease|condition|pain|symptom|diagnosis|medical\s+issue)\s+(?:treatment|treat(?:s|ed|ing)?)\b",
         r"\bcure(?:s|d)?\b",
         r"\bmedical\s+advice\b",
         r"\bdisease\b",
@@ -2608,6 +2628,10 @@ def _field_has_scope_limit_language(text: str) -> bool:
         "limited",
         "one workout",
         "one session",
+        "single-session",
+        "single session",
+        "should not be treated as a trend",
+        "not be treated as a trend",
         "not broad",
         "broader recovery",
         "without adding",

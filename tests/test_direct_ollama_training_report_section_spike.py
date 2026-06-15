@@ -2015,6 +2015,113 @@ def test_direct_ollama_training_section_spike_rejects_angle_bracket_template_art
     )
 
 
+def test_direct_ollama_training_section_spike_allows_treated_as_trend_scope_language() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength gives a useful Dumbbell Bench Press signal without turning one workout into a trend.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Use Dumbbell Bench Press as the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength is a single-session observation and should not be treated as a trend for recovery or fatigue patterns.",
+  "suggested_focus": "Keep Dumbbell Bench Press as a reference point and keep logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength provides useful signal but does not prove broader recovery or fatigue trends.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:7b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is True
+    assert result.validation_errors == []
+
+
+def test_direct_ollama_training_section_spike_still_rejects_medical_treatment_claims() -> (
+    None
+):
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Upper Body Strength gives a useful Dumbbell Bench Press signal without turning one workout into a trend.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Use Dumbbell Bench Press as the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Use Dumbbell Bench Press for medical treatment decisions.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:7b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=_bounded_claims_context(),
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any("medical claims" in error for error in result.validation_errors)
+
+
+def test_direct_ollama_training_section_spike_rejects_unapproved_prompt_example_workout_name() -> (
+    None
+):
+    context = _bounded_claims_context()
+    context["recent_training_executions"][0]["workout_title"] = (
+        "Gradual Progression Strength Session"
+    )
+    context["approved_training_quote_context"] = build_approved_training_quote_context(
+        recent_training_executions=context["recent_training_executions"],
+        training_execution_summary=context["training_execution_summary"],
+    ).to_dict()
+
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Gradual Progression Strength Session gives a useful Dumbbell Bench Press signal, but Upper Body Strength should not appear here.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10, 10, 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 0 RIR."
+  ],
+  "performance_interpretation": "Use Dumbbell Bench Press as the reference point for the next Gradual Progression Strength Session choice.",
+  "fatigue_recovery_interpretation": "Gradual Progression Strength Session can guide the next session, but it does not prove a recovery or fatigue pattern.",
+  "suggested_focus": "Keep Dumbbell Bench Press as a reference point and keep logging load, reps, and RIR.",
+  "limitations_context": "Gradual Progression Strength Session is one workout, not a full trend or recovery picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = run_direct_ollama_training_report_section_spike(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=context,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert any(
+        "unapproved training name" in error for error in result.validation_errors
+    )
+
+
 def test_direct_ollama_training_section_spike_qwen3_broad_recovery_trend_still_fails() -> (
     None
 ):

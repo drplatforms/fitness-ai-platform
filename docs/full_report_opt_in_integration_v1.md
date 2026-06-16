@@ -135,3 +135,48 @@ Expected:
 ## Acceptance Position
 
 This milestone should be accepted only after runtime full-report opt-in QA passes across users 101-105.
+
+## Runtime Acceptance Addendum — Full Report Opt-In Integration v1
+
+Runtime date: 2026-06-16
+
+Runtime QA was executed through the full-report opt-in integration path.
+
+Environment:
+
+- `AI_HEALTH_REPORT_TRAINING_SECTION_PROVIDER_ENABLED=true`
+- `TRAINING_REPORT_SECTION_PROVIDER=direct_ollama`
+- `TRAINING_REPORT_SECTION_MODEL=ollama/qwen2.5:3b`
+- `TRAINING_REPORT_SECTION_DIRECT_OLLAMA_TIMEOUT_SECONDS=300`
+- report date: `2026-06-14`
+- users: `101, 102, 103, 104, 105`
+
+Results:
+
+| User | Report Date | Source | Provider | Model | Attempted | Fallback | Validation | Errors | Anchors | Latency ms | Angle Brackets | Forbidden Terms | Debug Terms Rendered |
+|---:|---|---|---|---|---:|---:|---|---|---:|---:|---:|---:|---|
+| 101 | 2026-06-14 | direct_ollama_approved | direct_ollama | qwen2.5:3b | true | false | approved | none | 3 / 2 | 117949 | false | false | none |
+| 102 | 2026-06-14 | direct_ollama_approved | direct_ollama | qwen2.5:3b | true | false | approved | none | 3 / 2 | 119631 | false | false | none |
+| 103 | 2026-06-14 | direct_ollama_approved | direct_ollama | qwen2.5:3b | true | false | approved | none | 3 / 2 | 121174 | false | false | none |
+| 104 | 2026-06-14 | direct_ollama_approved | direct_ollama | qwen2.5:3b | true | false | approved | none | 3 / 2 | 123021 | false | false | none |
+| 105 | 2026-06-14 | direct_ollama_approved | direct_ollama | qwen2.5:3b | true | false | approved | none | 3 / 2 | 91702 | false | false | none |
+
+Runtime acceptance decision:
+
+`Full Report Opt-In Integration v1` is runtime accepted.
+
+Accepted because:
+
+- deterministic remains default
+- direct_ollama remains opt-in only
+- qwen2.5:3b remains the practical supported candidate
+- qwen3 remains experimental only
+- full report consumes only approved training section content
+- public rendered report contains no raw/debug provider terms
+- strict validation remains intact
+- qwen2.5:3b approved users 101–105 through full-report opt-in path
+- no angle-bracket artifacts appeared
+- no forbidden QA/Seeded/Test/Placeholder terms appeared
+- provider failure/fallback behavior remains covered by tests
+
+No validator loosening is recommended.

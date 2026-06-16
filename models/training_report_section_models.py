@@ -62,6 +62,7 @@ class TrainingReportSectionRuntimeMetadata:
     extra_keys_detected: list[str] = field(default_factory=list)
     wrapper_object_detected: bool = False
     elapsed_seconds: float | None = None
+    provider_latency_ms: int | None = None
     required_anchor_count: int = 0
     matched_required_fact_anchors: list[str] = field(default_factory=list)
     missing_required_anchor_count: int = 0

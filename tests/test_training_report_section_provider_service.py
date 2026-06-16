@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from services.training_report_section_provider_service import (
+    FALLBACK_REASON_APPROVED_CONTEXT_MISSING_TRAINING_EVIDENCE,
     FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE,
     FALLBACK_REASON_DETERMINISTIC_SELECTED,
     FALLBACK_REASON_INVALID_PROVIDER,
@@ -41,6 +42,16 @@ APPROVED_CONTEXT = {
             "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
             "The final Dumbbell Bench Press set was logged at 1 RIR.",
         ],
+    },
+}
+
+
+EMPTY_EVIDENCE_CONTEXT = {
+    "section": "training",
+    "approved_training_quote_context": {
+        "approved_workout_names": [],
+        "approved_exercise_names": [],
+        "approved_training_summary_facts": [],
     },
 }
 
@@ -235,3 +246,185 @@ def test_training_report_section_direct_ollama_exception_falls_back(monkeypatch)
     assert result.runtime_metadata.fallback_reason == FALLBACK_REASON_PROVIDER_EXCEPTION
     assert result.runtime_metadata.provider_attempted is True
     assert result.runtime_metadata.candidate_valid is False
+
+
+def test_training_report_section_provider_name_is_case_insensitive(monkeypatch):
+    monkeypatch.setenv(TRAINING_REPORT_SECTION_PROVIDER_ENV, "DIRECT_OLLAMA")
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        direct_ollama_generate=lambda *_args, **_kwargs: _valid_raw_section(),
+    )
+
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DIRECT_OLLAMA_APPROVED
+    assert result.runtime_metadata.configured_provider == "direct_ollama"
+
+
+def test_training_report_section_direct_ollama_empty_evidence_does_not_call_provider(
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        TRAINING_REPORT_SECTION_PROVIDER_ENV,
+        TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+    provider_calls = {"count": 0}
+
+    def fake_generate(*_args, **_kwargs):
+        provider_calls["count"] += 1
+        raise AssertionError("provider should not be called without approved evidence")
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=105,
+        report_date="2026-06-06",
+        approved_context=EMPTY_EVIDENCE_CONTEXT,
+        direct_ollama_generate=fake_generate,
+    )
+
+    assert provider_calls["count"] == 0
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK
+    assert result.runtime_metadata.provider_attempted is False
+    assert result.runtime_metadata.fallback_used is True
+    assert (
+        result.runtime_metadata.fallback_reason
+        == FALLBACK_REASON_APPROVED_CONTEXT_MISSING_TRAINING_EVIDENCE
+    )
+    assert result.runtime_metadata.candidate_parse_status == "not_attempted"
+    assert result.runtime_metadata.candidate_validation_status == "failed"
+    assert result.runtime_metadata.validation_status == "rejected"
+
+
+def test_training_report_section_direct_ollama_parse_failure_falls_back(monkeypatch):
+    monkeypatch.setenv(
+        TRAINING_REPORT_SECTION_PROVIDER_ENV,
+        TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        direct_ollama_generate=lambda *_args, **_kwargs: "not json",
+    )
+
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK
+    assert result.runtime_metadata.provider_attempted is True
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "candidate_parse_failure"
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+    assert result.runtime_metadata.candidate_validation_status == "not_attempted"
+    assert result.runtime_metadata.raw_output_length == len("not json")
+
+
+def test_training_report_section_direct_ollama_placeholder_output_falls_back(
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        TRAINING_REPORT_SECTION_PROVIDER_ENV,
+        TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Training Detail is available for Upper Body Strength.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 1 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        direct_ollama_generate=fake_generate,
+    )
+
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK
+    assert result.runtime_metadata.fallback_used is True
+    assert (
+        result.runtime_metadata.fallback_reason
+        == FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE
+    )
+    assert any(
+        "placeholder training context" in error
+        for error in result.runtime_metadata.validation_errors
+    )
+
+
+def test_training_report_section_direct_ollama_angle_bracket_output_falls_back(
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        TRAINING_REPORT_SECTION_PROVIDER_ENV,
+        TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+
+    def fake_generate(*_args, **_kwargs):
+        return """
+{
+  "section_summary": "Dumbbell Bench Press is the lift worth paying attention to from <Upper Body Strength>.",
+  "key_observations": [
+    "Dumbbell Bench Press was logged at 50 lb for 10 reps.",
+    "The final Dumbbell Bench Press set was logged at 1 RIR."
+  ],
+  "performance_interpretation": "Dumbbell Bench Press is the reference point for the next Upper Body Strength choice.",
+  "fatigue_recovery_interpretation": "Upper Body Strength can guide the next session without proving a recovery or fatigue pattern.",
+  "suggested_focus": "Keep Dumbbell Bench Press as the reference point and continue logging load, reps, and RIR.",
+  "limitations_context": "Upper Body Strength is one workout, not a full trend or recovery picture.",
+  "confidence": "Moderate",
+  "reason_codes": ["direct_ollama_training_report_section_candidate"]
+}
+""".strip()
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        direct_ollama_generate=fake_generate,
+    )
+
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK
+    assert result.runtime_metadata.fallback_used is True
+    assert (
+        result.runtime_metadata.fallback_reason
+        == FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE
+    )
+    assert any(
+        "angle-bracket template artifacts" in error
+        for error in result.runtime_metadata.validation_errors
+    )
+
+
+def test_training_report_section_public_section_does_not_include_raw_output(
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        TRAINING_REPORT_SECTION_PROVIDER_ENV,
+        TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+
+    result = build_configured_training_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-06",
+        approved_context=APPROVED_CONTEXT,
+        direct_ollama_generate=lambda *_args, **_kwargs: _valid_raw_section(),
+    )
+
+    public_payload = result.approved_section.to_dict()
+
+    assert result.approved_section.source == FINAL_SECTION_SOURCE_DIRECT_OLLAMA_APPROVED
+    assert "raw_output_length" not in public_payload
+    assert "raw_output_preview_truncated" not in public_payload
+    assert "model_facing_quote_context" not in public_payload
+    assert result.runtime_metadata.raw_output_length is not None
+    assert result.runtime_metadata.provider_latency_ms is not None

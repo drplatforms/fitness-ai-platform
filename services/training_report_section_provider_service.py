@@ -34,6 +34,9 @@ FALLBACK_REASON_DETERMINISTIC_SELECTED = "deterministic_provider_selected"
 FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider"
 FALLBACK_REASON_PROVIDER_EXCEPTION = "provider_exception"
 FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE = "candidate_validation_failure"
+FALLBACK_REASON_APPROVED_CONTEXT_MISSING_TRAINING_EVIDENCE = (
+    "approved_context_missing_training_evidence"
+)
 
 TRAINING_SECTION_PARSE_STATUS_NOT_ATTEMPTED = "not_attempted"
 TRAINING_SECTION_VALIDATION_STATUS_NOT_ATTEMPTED = "not_attempted"
@@ -161,10 +164,14 @@ def build_direct_ollama_training_report_section_or_fallback(
 
 
 def _configured_training_report_section_provider() -> str:
-    return os.getenv(
-        TRAINING_REPORT_SECTION_PROVIDER_ENV,
-        TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
-    ).strip()
+    return (
+        os.getenv(
+            TRAINING_REPORT_SECTION_PROVIDER_ENV,
+            TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
+        )
+        .strip()
+        .lower()
+    )
 
 
 def _configured_training_report_section_model() -> str:
@@ -212,6 +219,7 @@ def _metadata_from_spike_result(
         extra_keys_detected=list(spike_result.extra_keys_detected),
         wrapper_object_detected=spike_result.wrapper_object_detected,
         elapsed_seconds=spike_result.elapsed_seconds,
+        provider_latency_ms=_provider_latency_ms(spike_result.elapsed_seconds),
         required_anchor_count=spike_result.required_anchor_count,
         matched_required_fact_anchors=list(spike_result.matched_required_fact_anchors),
         missing_required_anchor_count=spike_result.missing_required_anchor_count,
@@ -223,6 +231,12 @@ def _metadata_from_spike_result(
             spike_result.approved_training_quote_context
         ),
     )
+
+
+def _provider_latency_ms(elapsed_seconds: float | None) -> int | None:
+    if elapsed_seconds is None:
+        return None
+    return int(round(elapsed_seconds * 1000))
 
 
 def _runtime_metadata(**kwargs: Any) -> TrainingReportSectionRuntimeMetadata:

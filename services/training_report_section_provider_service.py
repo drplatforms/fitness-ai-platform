@@ -31,6 +31,9 @@ FINAL_SECTION_SOURCE_DIRECT_OLLAMA_APPROVED = "direct_ollama_approved"
 FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallback"
 
 FALLBACK_REASON_DETERMINISTIC_SELECTED = "deterministic_provider_selected"
+FALLBACK_REASON_FULL_REPORT_PROVIDER_DISABLED = (
+    "full_report_training_section_provider_disabled"
+)
 FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider"
 FALLBACK_REASON_PROVIDER_EXCEPTION = "provider_exception"
 FALLBACK_REASON_CANDIDATE_VALIDATION_FAILURE = "candidate_validation_failure"
@@ -64,27 +67,13 @@ def build_configured_training_report_section_with_metadata(
     )
 
     if configured_provider == TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC:
-        metadata = _runtime_metadata(
+        return build_deterministic_training_report_section_with_metadata(
             user_id=user_id,
             report_date=report_date,
             configured_provider=configured_provider,
-            selected_provider=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
-            configured_model=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
-            selected_model=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
-            provider_attempted=False,
             fallback_used=False,
             fallback_reason=FALLBACK_REASON_DETERMINISTIC_SELECTED,
-            candidate_valid=True,
-            validation_errors=[],
-            candidate_parse_status=TRAINING_SECTION_PARSE_STATUS_NOT_ATTEMPTED,
-            candidate_validation_status=TRAINING_SECTION_VALIDATION_STATUS_NOT_ATTEMPTED,
-            validation_status=TRAINING_SECTION_STATUS_NOT_ATTEMPTED,
             final_section_source=FINAL_SECTION_SOURCE_DETERMINISTIC,
-        )
-        return _result_from_section_payload(
-            _deterministic_training_report_section_payload(),
-            metadata=metadata,
-            source=FINAL_SECTION_SOURCE_DETERMINISTIC,
         )
 
     if configured_provider == TRAINING_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA:
@@ -116,6 +105,47 @@ def build_configured_training_report_section_with_metadata(
         _deterministic_training_report_section_payload(),
         metadata=metadata,
         source=FINAL_SECTION_SOURCE_DETERMINISTIC_FALLBACK,
+    )
+
+
+def build_deterministic_training_report_section_with_metadata(
+    *,
+    user_id: int,
+    report_date: str,
+    configured_provider: str = TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
+    fallback_used: bool = False,
+    fallback_reason: str | None = FALLBACK_REASON_DETERMINISTIC_SELECTED,
+    final_section_source: str = FINAL_SECTION_SOURCE_DETERMINISTIC,
+) -> ApprovedTrainingReportSectionResult:
+    """Build the deterministic training section without reading provider config.
+
+    This is used by full-report integration when its higher-level opt-in gate is
+    disabled. It prevents a globally configured direct_ollama training provider
+    from being attempted inside full report generation unless the full-report gate
+    is explicitly enabled.
+    """
+
+    metadata = _runtime_metadata(
+        user_id=user_id,
+        report_date=report_date,
+        configured_provider=configured_provider,
+        selected_provider=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
+        configured_model=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
+        selected_model=TRAINING_REPORT_SECTION_PROVIDER_DETERMINISTIC,
+        provider_attempted=False,
+        fallback_used=fallback_used,
+        fallback_reason=fallback_reason,
+        candidate_valid=True,
+        validation_errors=[],
+        candidate_parse_status=TRAINING_SECTION_PARSE_STATUS_NOT_ATTEMPTED,
+        candidate_validation_status=TRAINING_SECTION_VALIDATION_STATUS_NOT_ATTEMPTED,
+        validation_status=TRAINING_SECTION_STATUS_NOT_ATTEMPTED,
+        final_section_source=final_section_source,
+    )
+    return _result_from_section_payload(
+        _deterministic_training_report_section_payload(),
+        metadata=metadata,
+        source=final_section_source,
     )
 
 

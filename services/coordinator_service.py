@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 
@@ -16,11 +17,26 @@ from services.recommendation_engine_service import (
     render_approved_action_plan,
 )
 from services.report_service import save_health_report
+from services.training_report_section_direct_ollama_provider import (
+    DirectOllamaGenerateCallable,
+)
+from services.training_report_section_provider_service import (
+    FALLBACK_REASON_FULL_REPORT_PROVIDER_DISABLED,
+    FINAL_SECTION_SOURCE_DETERMINISTIC,
+    build_configured_training_report_section_with_metadata,
+    build_deterministic_training_report_section_with_metadata,
+)
 from services.user_state_service import (
     build_user_health_state,
 )
 
 load_dotenv()
+
+AI_HEALTH_REPORT_TRAINING_SECTION_PROVIDER_ENABLED_ENV = (
+    "AI_HEALTH_REPORT_TRAINING_SECTION_PROVIDER_ENABLED"
+)
+
+_TRUTHY_ENV_VALUES = {"1", "true", "yes", "on", "enabled"}
 
 _FORBIDDEN_REPORT_PATTERNS = [
     (
@@ -687,12 +703,73 @@ def _render_grounded_recommendation_section(
     )
 
 
+def _full_report_training_section_provider_enabled() -> bool:
+    return (
+        os.getenv(AI_HEALTH_REPORT_TRAINING_SECTION_PROVIDER_ENABLED_ENV, "")
+        .strip()
+        .lower()
+        in _TRUTHY_ENV_VALUES
+    )
+
+
+def build_full_report_training_section_result(
+    *,
+    user_id: int,
+    report_date: str,
+    approved_context: dict | None = None,
+    direct_ollama_generate: DirectOllamaGenerateCallable | None = None,
+):
+    """Build the training section used by full report rendering.
+
+    The full report has its own explicit opt-in gate. When disabled, it returns a
+    deterministic training section without attempting direct Ollama even if the
+    lower-level training section provider env is set to direct_ollama.
+    """
+
+    if not _full_report_training_section_provider_enabled():
+        return build_deterministic_training_report_section_with_metadata(
+            user_id=user_id,
+            report_date=report_date,
+            configured_provider="full_report_disabled",
+            fallback_used=False,
+            fallback_reason=FALLBACK_REASON_FULL_REPORT_PROVIDER_DISABLED,
+            final_section_source=FINAL_SECTION_SOURCE_DETERMINISTIC,
+        )
+
+    return build_configured_training_report_section_with_metadata(
+        user_id=user_id,
+        report_date=report_date,
+        approved_context=approved_context,
+        direct_ollama_generate=direct_ollama_generate,
+    )
+
+
+def _render_training_report_section(training_report_section_result) -> str:
+    section = training_report_section_result.approved_section
+    observations = "\n".join(
+        f"- {observation}" for observation in section.key_observations
+    )
+    if not observations:
+        observations = "- No approved training observations are available."
+
+    return (
+        "**Training Report Section:**\n"
+        f"**Summary:** {section.section_summary}\n"
+        f"**Key Observations:**\n{observations}\n"
+        f"**Performance Interpretation:** {section.performance_interpretation}\n"
+        f"**Fatigue / Recovery Interpretation:** {section.fatigue_recovery_interpretation}\n"
+        f"**Next Training Focus:** {section.suggested_focus}\n"
+        f"**Limitations:** {section.limitations_context}"
+    )
+
+
 def render_unified_health_report(
     report: UnifiedHealthReport,
     timestamp: str | None = None,
     health_state=None,
     coaching_decision: CoachingDecision | None = None,
     approved_action_plan=None,
+    training_report_section_result=None,
 ) -> str:
     generated_line = f"Generated: {timestamp}\n\n" if timestamp else ""
 
@@ -711,12 +788,19 @@ def render_unified_health_report(
             approved_action_plan=approved_action_plan,
         )
 
+    training_section = ""
+    if training_report_section_result is not None:
+        training_section = "\n\n" + _render_training_report_section(
+            training_report_section_result
+        )
+
     return (
         f"{generated_line}"
         "**Unified Health Report**\n\n"
         f"**Overall Score:** {report.overall_score}/100"
         f"{profile_context}"
-        f"{grounded_recommendation}\n\n"
+        f"{grounded_recommendation}"
+        f"{training_section}\n\n"
         f"**1. Biggest Issue:** {report.biggest_issue}\n\n"
         f"**2. Likely Cause:** {report.likely_cause}\n\n"
         f"**3. Highest Priority Action:** {report.priority_action}\n\n"
@@ -724,12 +808,22 @@ def render_unified_health_report(
     )
 
 
-def generate_health_report(user_id):
+def generate_health_report(
+    user_id,
+    report_date: str | None = None,
+    direct_ollama_generate=None,
+):
     from crewai import LLM, Agent, Crew, Task
 
+    resolved_report_date = report_date or datetime.now().date().isoformat()
     health_state = build_user_health_state(user_id)
     coaching_decision = build_coaching_decision(health_state)
     approved_action_plan = build_configured_approved_action_plan(health_state)
+    training_report_section_result = build_full_report_training_section_result(
+        user_id=user_id,
+        report_date=resolved_report_date,
+        direct_ollama_generate=direct_ollama_generate,
+    )
 
     # -----------------------------
     # Nutrition Summary
@@ -1084,6 +1178,7 @@ def generate_health_report(user_id):
             health_state=health_state,
             coaching_decision=coaching_decision,
             approved_action_plan=approved_action_plan,
+            training_report_section_result=training_report_section_result,
         )
 
         language_violations = validate_report_language(

@@ -52,6 +52,26 @@ class FullHealthReportGenerationResult:
     training_report_section_result: object | None = None
 
 
+@dataclass(frozen=True)
+class FullReportCompositionResult:
+    report: UnifiedHealthReport
+    full_report_composer_source: str
+    coordinator_fallback_used: bool
+    coordinator_fallback_reason: str | None = None
+
+
+FULL_REPORT_COMPOSER_SOURCE_CREWAI_STRUCTURED = "crewai_coordinator_structured"
+FULL_REPORT_COMPOSER_SOURCE_DETERMINISTIC_INVALID_COORDINATOR_OUTPUT = (
+    "deterministic_fallback_after_invalid_coordinator_output"
+)
+FULL_REPORT_COMPOSER_SOURCE_DETERMINISTIC_COORDINATOR_ERROR = (
+    "deterministic_fallback_after_crewai_error"
+)
+
+COORDINATOR_FALLBACK_REASON_INVALID_OUTPUT = "invalid_coordinator_output"
+COORDINATOR_FALLBACK_REASON_COORDINATOR_ERROR = "crewai_coordinator_error"
+
+
 _FORBIDDEN_REPORT_PATTERNS = [
     (
         re.compile(
@@ -623,12 +643,19 @@ def _parse_unified_report(
     return candidate
 
 
-def build_final_report_from_coordinator_output(
+def compose_full_report_from_coordinator_output(
     raw_text: str,
     health_state,
     coaching_decision: CoachingDecision | None = None,
-) -> UnifiedHealthReport:
-    """Use valid structured coordinator output, otherwise fall back deterministically."""
+) -> FullReportCompositionResult:
+    """Compose from valid coordinator fields or deterministic section-safe fallback.
+
+    The coordinator may help shape final report voice, but it does not own public
+    report truth. If the structured coordinator fields are missing or fail
+    validation, the full report falls back to deterministic composition while
+    preserving already-approved sections such as the training report section.
+    """
+
     if coaching_decision is None:
         coaching_decision = build_coaching_decision(health_state)
 
@@ -637,9 +664,34 @@ def build_final_report_from_coordinator_output(
         coaching_decision=coaching_decision,
     )
     if parsed_report is not None:
-        return parsed_report
+        return FullReportCompositionResult(
+            report=parsed_report,
+            full_report_composer_source=FULL_REPORT_COMPOSER_SOURCE_CREWAI_STRUCTURED,
+            coordinator_fallback_used=False,
+        )
 
-    return _build_fallback_unified_report(health_state, coaching_decision)
+    return FullReportCompositionResult(
+        report=_build_fallback_unified_report(health_state, coaching_decision),
+        full_report_composer_source=(
+            FULL_REPORT_COMPOSER_SOURCE_DETERMINISTIC_INVALID_COORDINATOR_OUTPUT
+        ),
+        coordinator_fallback_used=True,
+        coordinator_fallback_reason=COORDINATOR_FALLBACK_REASON_INVALID_OUTPUT,
+    )
+
+
+def build_final_report_from_coordinator_output(
+    raw_text: str,
+    health_state,
+    coaching_decision: CoachingDecision | None = None,
+) -> UnifiedHealthReport:
+    """Use valid structured coordinator output, otherwise fall back deterministically."""
+
+    return compose_full_report_from_coordinator_output(
+        raw_text,
+        health_state,
+        coaching_decision=coaching_decision,
+    ).report
 
 
 def _format_target_range(minimum, maximum, unit: str) -> str | None:
@@ -850,6 +902,10 @@ def _persist_final_health_report(
     provider_enabled: bool,
     model_summary: str = "ollama/qwen3:8b",
     report_status: str = "completed",
+    full_report_composer_source: str = FULL_REPORT_COMPOSER_SOURCE_CREWAI_STRUCTURED,
+    coordinator_attempted: bool = True,
+    coordinator_fallback_used: bool = False,
+    coordinator_fallback_reason: str | None = None,
 ) -> None:
     save_health_report(
         user_id=user_id,
@@ -863,6 +919,10 @@ def _persist_final_health_report(
             report_generation_mode=_report_generation_mode(
                 allow_training_section_provider
             ),
+            full_report_composer_source=full_report_composer_source,
+            coordinator_attempted=coordinator_attempted,
+            coordinator_fallback_used=coordinator_fallback_used,
+            coordinator_fallback_reason=coordinator_fallback_reason,
             async_job_used=allow_training_section_provider,
             provider_enabled=provider_enabled,
         ),
@@ -1252,13 +1312,13 @@ def generate_health_report(
         print("\ncrew.kickoff() completed.\n")
 
         timestamp = datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
-        structured_report = build_final_report_from_coordinator_output(
+        composition_result = compose_full_report_from_coordinator_output(
             raw_text=result.raw,
             health_state=health_state,
             coaching_decision=coaching_decision,
         )
         final_report = render_unified_health_report(
-            report=structured_report,
+            report=composition_result.report,
             timestamp=timestamp,
             health_state=health_state,
             coaching_decision=coaching_decision,
@@ -1285,6 +1345,10 @@ def generate_health_report(
             report_job_id=report_job_id,
             allow_training_section_provider=allow_training_section_provider,
             provider_enabled=provider_enabled,
+            full_report_composer_source=composition_result.full_report_composer_source,
+            coordinator_attempted=True,
+            coordinator_fallback_used=composition_result.coordinator_fallback_used,
+            coordinator_fallback_reason=composition_result.coordinator_fallback_reason,
         )
 
         if return_training_section_result:
@@ -1320,6 +1384,12 @@ def generate_health_report(
             provider_enabled=provider_enabled,
             model_summary="deterministic_fallback_after_crewai_error",
             report_status="completed_with_full_report_fallback",
+            full_report_composer_source=(
+                FULL_REPORT_COMPOSER_SOURCE_DETERMINISTIC_COORDINATOR_ERROR
+            ),
+            coordinator_attempted=True,
+            coordinator_fallback_used=True,
+            coordinator_fallback_reason=COORDINATOR_FALLBACK_REASON_COORDINATOR_ERROR,
         )
 
         if return_training_section_result:
@@ -1337,6 +1407,10 @@ def build_health_report_persistence_metadata(
     report_job_id: str | None = None,
     report_status: str = "completed",
     report_generation_mode: str = "synchronous",
+    full_report_composer_source: str | None = None,
+    coordinator_attempted: bool | None = None,
+    coordinator_fallback_used: bool | None = None,
+    coordinator_fallback_reason: str | None = None,
     async_job_used: bool = False,
     provider_enabled: bool | None = None,
 ) -> dict:
@@ -1356,6 +1430,10 @@ def build_health_report_persistence_metadata(
         {
             "report_status": report_status,
             "report_generation_mode": report_generation_mode,
+            "full_report_composer_source": full_report_composer_source,
+            "coordinator_attempted": coordinator_attempted,
+            "coordinator_fallback_used": coordinator_fallback_used,
+            "coordinator_fallback_reason": coordinator_fallback_reason,
             "async_job_used": async_job_used,
         }
     )

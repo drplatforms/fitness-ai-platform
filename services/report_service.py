@@ -39,6 +39,10 @@ _SAFE_REPORT_METADATA_FIELDS = {
     "validation_status",
     "validation_errors_count",
     "report_generation_mode",
+    "full_report_composer_source",
+    "coordinator_attempted",
+    "coordinator_fallback_used",
+    "coordinator_fallback_reason",
     "async_job_used",
 }
 

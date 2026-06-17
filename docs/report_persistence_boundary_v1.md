@@ -269,7 +269,7 @@ No changes were made to:
 
 ## Final Position
 
-Report Persistence Boundary v1 is implemented and ready for local validation plus runtime persistence QA.
+Report Persistence Boundary v1 is accepted after local validation and runtime persistence QA.
 
 The system now separates:
 
@@ -280,3 +280,37 @@ forbidden raw/debug provider content
 ```
 
 Raw provider output is not persisted as user-facing report content.
+
+
+## Final Runtime Acceptance Addendum
+
+Runtime QA accepted Report Persistence Boundary v1 after the follow-up fallback persistence wiring fix.
+
+Final accepted result:
+
+- async provider-backed full report jobs passed for users `101-105`
+- persisted `health_reports` rows exist for users `101-105`
+- `report_date` persisted as `2026-06-14`
+- safe provider metadata persisted correctly
+- public report text contained no raw/debug/provider payload fields
+- persisted metadata contained only allowlisted safe fields
+- `raw_output` was absent
+- `raw_output_preview_truncated` was absent
+- `model_facing_quote_context` was absent
+- `approved_training_quote_context` was absent
+- `candidate_parse_status` was absent
+- raw `validation_errors` lists were absent
+- `validation_errors_count` appeared only as safe summary metadata
+- no angle-bracket artifacts were detected
+- no forbidden QA/Seeded/Test/Placeholder/Dummy/Synthetic terms were detected
+- persisted-history inspection returned `OVERALL: PASS`
+
+Accepted runtime observation:
+
+```text
+model_summary=deterministic_fallback_after_crewai_error
+```
+
+This is correct safety behavior for v1. It means the direct-Ollama training section provider succeeded, the approved provider-backed training section was retained, the older CrewAI full-report coordinator failed, and the system persisted a safe deterministic fallback full report without exposing raw CrewAI error text.
+
+Next accepted milestone: Full Report Composition Boundary v1.

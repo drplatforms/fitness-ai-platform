@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 from models.coaching_decision_models import CoachingDecision
 from models.coordinator_models import UnifiedHealthReport
 from services.coaching_decision_service import build_coaching_decision
+from services.full_report_section_registry_service import (
+    get_full_report_section_registry_metadata,
+)
 from services.nutrition_target_service import (
     build_nutrition_targets,
     nutrition_targets_to_user_dict,
@@ -1426,6 +1429,7 @@ def build_health_report_persistence_metadata(
         report_job_id=report_job_id,
         provider_enabled=provider_enabled,
     )
+    metadata.update(get_full_report_section_registry_metadata())
     metadata.update(
         {
             "report_status": report_status,

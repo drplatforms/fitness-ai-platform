@@ -145,6 +145,48 @@ NUTRITION_PROVIDER_PLACEHOLDER_LANGUAGE = {
     "null",
 }
 
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE = (
+    "unsupported_numeric_value"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION = (
+    "unsupported_food_suggestion"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY = (
+    "unsupported_food_suggestion_availability_claim"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SERVING_SIZE = (
+    "unsupported_serving_size"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEAL_PLAN = "unsupported_meal_plan"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEDICAL_CLAIM = (
+    "unsupported_medical_claim"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM = (
+    "unsupported_supplement_claim"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_GUARANTEE_CLAIM = (
+    "unsupported_guarantee_claim"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SHAME_LANGUAGE = (
+    "unsupported_compliance_or_shame_language"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_FIELD_CLAIM_NOT_APPROVED = (
+    "field_claim_not_approved"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING = (
+    "confidence_ceiling_violation"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_MISSING_REQUIRED_FIELD = "missing_required_field"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY = "extra_key_detected"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_ENUM = "invalid_enum_value"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_EMPTY_OR_PLACEHOLDER = (
+    "empty_or_placeholder_text"
+)
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_WRAPPER_OBJECT = "wrapper_object_detected"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_JSON = "invalid_json"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_TYPE_MISMATCH = "type_mismatch"
+NUTRITION_PROVIDER_VALIDATION_CATEGORY_VALIDATION_FAILURE = "validation_failure"
+
 NUTRITION_PROVIDER_SAFE_METADATA_ALLOWLIST = {
     "nutrition_provider_contract_version",
     "nutrition_provider_context_schema_version",
@@ -241,6 +283,8 @@ class NutritionProviderCandidateValidationResult:
     valid: bool
     validation_status: str
     validation_errors: list[str] = field(default_factory=list)
+    validation_error_categories: list[str] = field(default_factory=list)
+    validation_error_fields: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         expected_status = (
@@ -251,6 +295,26 @@ class NutritionProviderCandidateValidationResult:
         if self.validation_status != expected_status:
             raise ValueError("validation_status does not match valid flag")
         _validate_text_list("validation_errors", self.validation_errors)
+        _validate_text_list(
+            "validation_error_categories", self.validation_error_categories
+        )
+        _validate_text_list("validation_error_fields", self.validation_error_fields)
+
+    @property
+    def validation_error_count(self) -> int:
+        return len(self.validation_errors)
+
+    @property
+    def first_validation_error_category(self) -> str | None:
+        return (
+            self.validation_error_categories[0]
+            if self.validation_error_categories
+            else None
+        )
+
+    @property
+    def first_validation_error_field(self) -> str | None:
+        return self.validation_error_fields[0] if self.validation_error_fields else None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

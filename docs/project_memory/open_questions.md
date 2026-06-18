@@ -9,11 +9,12 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Does Nutrition Provider Matrix Retry Runtime QA v1 improve approval quality for users 101, 103, 104, and 105 after unavailable-food-suggestion handling?
-- If qwen2.5 still fails validation for matrix users, what exact safe validation category should be addressed next?
+- Which safe validation diagnostic categories repeat across users 101-105 during Nutrition Provider Diagnostic Matrix QA v1?
+- Which diagnostic category should be addressed first if qwen2.5 still fails validation for matrix users?
 - What additional runtime cases are needed before Architecture considers Level 5 promotion?
 - What additional negative validator cases are required after observing real qwen2.5 output in matrix runtime QA?
 - When should Nutrition provider metadata be allowed into persisted full-report history, and at what level of detail?
+- Should debug/QA-only Nutrition validation diagnostic categories ever appear in non-debug APIs, or should they stay debug/runtime-QA only permanently?
 
 ## Recovery
 

@@ -12,21 +12,21 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Nutrition Full Report Runtime QA Matrix v1`
+`Nutrition Provider Matrix Retry Runtime QA v1`
 
-Runtime QA result: `PASS_MATRIX_WITH_SAFE_FALLBACKS`.
+Runtime QA result: `PASS_MATRIX_WITH_SAFE_FALLBACKS`. Approval quality did not improve: all five users safely fell back after validation rejection.
 
 ## Current provisional milestone
 
-`Nutrition Provider Matrix Rejection Analysis v1` is implemented and pending Architecture review.
+`Nutrition Provider Rejection Diagnostics v1` is implemented and pending Architecture review.
 
-## Next recommended milestone after Nutrition Provider Matrix Rejection Analysis v1
+## Next recommended milestone after Nutrition Provider Rejection Diagnostics v1
 
-If Architecture accepts this analysis, the next recommended milestone is:
+If Architecture accepts this diagnostics milestone, the next recommended milestone is:
 
-`Nutrition Provider Matrix Retry Runtime QA v1`
+`Nutrition Provider Diagnostic Matrix QA v1`
 
-This should rerun users 101-105 through the opt-in Nutrition full-report runtime matrix with qwen2.5:3b. It should not run qwen3 and should not promote Nutrition to Level 5.
+This should rerun users 101-105 through the opt-in Nutrition full-report runtime matrix with qwen2.5:3b and capture safe diagnostic categories/fields for rejected candidates. It should not run qwen3 and should not promote Nutrition to Level 5.
 
 ## Current model/provider status
 
@@ -35,6 +35,7 @@ This should rerun users 101-105 through the opt-in Nutrition full-report runtime
 - Nutrition section-only opt-in runtime QA passed with `qwen2.5:3b`.
 - Nutrition full-report opt-in runtime QA passed as `PASS_WITH_SAFE_FALLBACK`: provider parsed, validator rejected one candidate, deterministic fallback completed and persisted safely.
 - Nutrition full-report runtime matrix passed as `PASS_MATRIX_WITH_SAFE_FALLBACKS`: user 102 provider-approved, users 101/103/104/105 safe-fallback, no failures.
+- Nutrition full-report retry matrix passed as `PASS_MATRIX_WITH_SAFE_FALLBACKS`: all seeded users safely fell back; approval quality did not improve.
 - Full-report provider execution is async/background only.
 - `qwen3` remains experimental only and is not promoted.
 - The old CrewAI full-report coordinator can fail; deterministic fallback composition protects public report output.
@@ -45,7 +46,7 @@ This should rerun users 101-105 through the opt-in Nutrition full-report runtime
 |---|---|---|
 | training | Provider-integrated full-report section, opt-in direct_ollama/qwen2.5 path | Level 5 |
 | nutrition_target_display | Backend-approved target display contract; input to Nutrition Report Section | Level 2 |
-| nutrition_report_section | Backend-owned evidence/claims/fallback boundary plus isolated opt-in provider implementation; section-only runtime QA accepted; full-report runtime matrix accepted with safe fallbacks; matrix rejection analysis adds safe unavailable-food-suggestion handling; not Level 5 | Level 4 |
+| nutrition_report_section | Backend-owned evidence/claims/fallback boundary plus isolated opt-in provider implementation; full-report runtime matrix/retry matrix accepted with safe fallbacks; rejection diagnostics add safe category/field telemetry for debug/QA triage; not Level 5 | Level 4 |
 | grounded_recommendation | Strong approved contract but cross-domain; not next provider voice section | Level 3 |
 | overall_score | Deterministic/coordinator-structured | Level 1 |
 | profile_context | Deterministic/coordinator-structured | Level 1 |
@@ -58,10 +59,11 @@ Provider-integrated report sections: `training` only.
 
 ## What is safe to build next
 
-- Nutrition Provider Matrix Retry Runtime QA v1.
+- Nutrition Provider Diagnostic Matrix QA v1.
 - Rerun users 101-105 full opt-in Nutrition full-report runtime matrix with qwen2.5:3b.
-- Verify whether numeric allowlist plus unavailable-food-suggestion prompt/validator improvements improve approval rate while preserving fallback safety.
-- Additional negative parser/validator tests after observing real qwen2.5 output.
+- Capture safe validation diagnostic categories/fields for rejected candidates.
+- Verify diagnostics do not leak into public report text or persisted report history.
+- Use diagnostic categories to choose the next smallest safe provider-quality improvement.
 
 ## What must not be changed casually
 
@@ -71,7 +73,7 @@ Provider-integrated report sections: `training` only.
 - Report persistence safety boundary.
 - Full-report composition fallback boundary.
 - Training evidence/claim validator rules.
-- Nutrition boundary rule that provider execution is isolated/config-gated and not full-report integrated yet.
+- Nutrition boundary rule that provider execution and full-report integration remain explicitly config-gated.
 - The rule that Training is the only provider-integrated full-report section.
 - The debug endpoint clarification: `validation_errors=[]` and `raw_output_preview_truncated=null` are acceptable only in explicit debug endpoint metadata and remain forbidden in public/user-facing/persisted output.
 

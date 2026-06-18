@@ -12,6 +12,25 @@ from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_FALLBACK_SOURCE,
     NUTRITION_PROVIDER_SECTION_ID,
     NUTRITION_PROVIDER_UNSUPPORTED_LANGUAGE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_EMPTY_OR_PLACEHOLDER,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_FIELD_CLAIM_NOT_APPROVED,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_ENUM,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_JSON,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_MISSING_REQUIRED_FIELD,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_TYPE_MISMATCH,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_GUARANTEE_CLAIM,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEAL_PLAN,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEDICAL_CLAIM,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SERVING_SIZE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SHAME_LANGUAGE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_VALIDATION_FAILURE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_WRAPPER_OBJECT,
     NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED,
     NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED,
     NutritionProviderCandidateParseResult,
@@ -117,15 +136,21 @@ def validate_candidate_nutrition_report_section(
     errors.extend(_numeric_value_errors(text, safe_context))
     errors.extend(_food_suggestion_errors(candidate.practical_food_focus, safe_context))
 
+    unique_errors = _unique(errors)
     status = (
         NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
-        if errors
+        if unique_errors
         else NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED
     )
     return NutritionProviderCandidateValidationResult(
-        valid=not errors,
+        valid=not unique_errors,
         validation_status=status,
-        validation_errors=_unique(errors),
+        validation_errors=unique_errors,
+        validation_error_categories=_validation_error_categories(unique_errors),
+        validation_error_fields=_validation_error_fields(
+            unique_errors,
+            candidate=candidate,
+        ),
     )
 
 
@@ -448,6 +473,192 @@ def _is_safe_food_suggestion_unavailable_language(lowered_text: str) -> bool:
     return any(pattern in lowered_text for pattern in unavailable_patterns) and not any(
         pattern in lowered_text for pattern in recommendation_patterns
     )
+
+
+def validation_error_categories_from_errors(errors: list[str]) -> list[str]:
+    """Return safe category names for raw validation or parse error strings.
+
+    This is intended for explicit debug/QA surfaces only. Public/persisted report
+    metadata should keep using validation_errors_count and status fields instead
+    of these more detailed diagnostics.
+    """
+
+    return _validation_error_categories(errors)
+
+
+def validation_error_fields_from_errors(
+    errors: list[str],
+    *,
+    candidate: CandidateNutritionReportSection | None = None,
+) -> list[str]:
+    return _validation_error_fields(errors, candidate=candidate)
+
+
+def _validation_error_categories(errors: list[str]) -> list[str]:
+    return _unique([_category_for_error(error) for error in errors])
+
+
+def _category_for_error(error: str) -> str:
+    lowered = error.lower()
+    if lowered.startswith("numeric_value_not_approved_by_evidence"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE
+    if "serving" in lowered or "grams" in lowered or " g" in lowered:
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SERVING_SIZE
+    if lowered.startswith(
+        "food_suggestion_language_requires_approved_food_suggestion_claim"
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY
+    if "food_suggestion" in lowered:
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION
+    if lowered.startswith("field_claim_requires_approved_claim"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_FIELD_CLAIM_NOT_APPROVED
+    if lowered.startswith("candidate_confidence_exceeds_backend_confidence_ceiling"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING
+    if lowered.startswith("missing_keys"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_MISSING_REQUIRED_FIELD
+    if lowered.startswith("extra_keys_detected") or lowered.startswith(
+        "disallowed_keys_detected"
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY
+    if lowered.startswith("invalid_enum_value"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_ENUM
+    if lowered.startswith("empty_content") or lowered.startswith("placeholder_content"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_EMPTY_OR_PLACEHOLDER
+    if lowered.startswith("type_mismatch"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_TYPE_MISMATCH
+    if lowered.startswith("wrapper_object_detected"):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_WRAPPER_OBJECT
+    if (
+        lowered.startswith("invalid_json")
+        or "must be exactly one json object" in lowered
+        or "must be a json object" in lowered
+        or "candidate output is empty" in lowered
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_INVALID_JSON
+    if lowered.startswith("unsupported_nutrition_language"):
+        return _unsupported_language_category(lowered)
+    return NUTRITION_PROVIDER_VALIDATION_CATEGORY_VALIDATION_FAILURE
+
+
+def _unsupported_language_category(lowered_error: str) -> str:
+    if "supplement" in lowered_error:
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM
+    if any(
+        term in lowered_error
+        for term in [
+            "deficiency",
+            "deficient",
+            "medical advice",
+            "diagnose",
+            "disease",
+            "fatigue",
+            "metabolism",
+        ]
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEDICAL_CLAIM
+    if any(term in lowered_error for term in ["guaranteed", "will cause weight loss"]):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_GUARANTEE_CLAIM
+    if any(
+        term in lowered_error
+        for term in [
+            "noncompliant",
+            "non-compliant",
+            "compliant",
+            "you failed",
+            "diet is bad",
+            "bad diet",
+        ]
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SHAME_LANGUAGE
+    if any(
+        term in lowered_error
+        for term in [
+            "meal",
+            "keto",
+            "intermittent fasting",
+            "skip meals",
+            "compensate tomorrow",
+            "burn this off",
+            "you must eat",
+        ]
+    ):
+        return NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_MEAL_PLAN
+    return NUTRITION_PROVIDER_VALIDATION_CATEGORY_VALIDATION_FAILURE
+
+
+def _validation_error_fields(
+    errors: list[str],
+    *,
+    candidate: CandidateNutritionReportSection | None = None,
+) -> list[str]:
+    fields: list[str] = []
+    for error in errors:
+        fields.extend(_fields_for_error(error, candidate=candidate))
+    return _unique(fields)
+
+
+def _fields_for_error(
+    error: str,
+    *,
+    candidate: CandidateNutritionReportSection | None,
+) -> list[str]:
+    lowered = error.lower()
+    if lowered.startswith("candidate_confidence_exceeds"):
+        return ["confidence"]
+    if "food_suggestion" in lowered:
+        return ["practical_food_focus"]
+    if lowered.startswith("field_claim_requires_approved_claim"):
+        phrase = lowered.split(":", 1)[-1].split("->", 1)[0].strip()
+        return _candidate_fields_containing(candidate, phrase) or ["target_alignment"]
+    if lowered.startswith("numeric_value_not_approved_by_evidence"):
+        number = lowered.split(":", 1)[-1].strip() if ":" in lowered else ""
+        return _candidate_fields_containing(candidate, number) or ["candidate_text"]
+    if lowered.startswith("unsupported_nutrition_language"):
+        term = lowered.split(":", 1)[-1].strip() if ":" in lowered else ""
+        return _candidate_fields_containing(candidate, term) or ["candidate_text"]
+    if any(
+        lowered.startswith(prefix)
+        for prefix in [
+            "missing_keys",
+            "extra_keys_detected",
+            "disallowed_keys_detected",
+        ]
+    ):
+        return ["candidate_schema"]
+    if lowered.startswith("invalid_enum_value"):
+        return ["confidence"]
+    if lowered.startswith("empty_content") or lowered.startswith("placeholder_content"):
+        return [lowered.split(":", 1)[-1].strip()]
+    if lowered.startswith("type_mismatch"):
+        return [lowered.split(":", 1)[-1].split("must", 1)[0].strip()]
+    if lowered.startswith("wrapper_object_detected"):
+        return ["candidate_wrapper"]
+    return ["candidate_text"]
+
+
+def _candidate_fields_containing(
+    candidate: CandidateNutritionReportSection | None,
+    term: str,
+) -> list[str]:
+    if candidate is None or not term:
+        return []
+    fields = []
+    for field_name, value in _candidate_field_text(candidate).items():
+        if term in value.lower():
+            fields.append(field_name)
+    return fields
+
+
+def _candidate_field_text(candidate: CandidateNutritionReportSection) -> dict[str, str]:
+    return {
+        "section_summary": candidate.section_summary,
+        "intake_snapshot": candidate.intake_snapshot,
+        "target_alignment": candidate.target_alignment,
+        "logging_quality": candidate.logging_quality,
+        "practical_food_focus": candidate.practical_food_focus,
+        "next_nutrition_action": candidate.next_nutrition_action,
+        "limitations_context": candidate.limitations_context,
+    }
 
 
 def _unique(values: list[str]) -> list[str]:

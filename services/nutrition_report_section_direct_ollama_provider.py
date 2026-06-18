@@ -27,6 +27,8 @@ from services.nutrition_provider_validation_service import (
     build_nutrition_provider_safe_context,
     build_nutrition_provider_safe_metadata,
     validate_candidate_nutrition_report_section,
+    validation_error_categories_from_errors,
+    validation_error_fields_from_errors,
 )
 from services.nutrition_report_section_service import (
     build_deterministic_nutrition_report_section,
@@ -98,11 +100,29 @@ class DirectOllamaNutritionReportSectionProviderResult:
     approved_section: ApprovedNutritionReportSection
     safe_metadata: dict[str, Any]
     validation_errors: list[str] = field(default_factory=list)
+    validation_error_categories: list[str] = field(default_factory=list)
+    validation_error_fields: list[str] = field(default_factory=list)
+
+    @property
+    def first_validation_error_category(self) -> str | None:
+        return (
+            self.validation_error_categories[0]
+            if self.validation_error_categories
+            else None
+        )
+
+    @property
+    def first_validation_error_field(self) -> str | None:
+        return self.validation_error_fields[0] if self.validation_error_fields else None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["approved_section"] = self.approved_section.to_dict()
         payload["safe_metadata"] = dict(self.safe_metadata)
+        payload["first_validation_error_category"] = (
+            self.first_validation_error_category
+        )
+        payload["first_validation_error_field"] = self.first_validation_error_field
         return payload
 
 
@@ -282,6 +302,8 @@ def run_direct_ollama_nutrition_report_section_provider(
         approved_section=approved_section,
         safe_metadata=safe_metadata,
         validation_errors=[],
+        validation_error_categories=[],
+        validation_error_fields=[],
     )
 
 
@@ -340,7 +362,42 @@ def _fallback_result(
         approved_section=section,
         safe_metadata=safe_metadata,
         validation_errors=list(validation_errors),
+        validation_error_categories=_fallback_validation_error_categories(
+            validation_errors,
+            validation_result=validation_result,
+        ),
+        validation_error_fields=_fallback_validation_error_fields(
+            validation_errors,
+            parse_result=parse_result,
+            validation_result=validation_result,
+        ),
     )
+
+
+def _fallback_validation_error_categories(
+    validation_errors: list[str],
+    *,
+    validation_result: Any | None,
+) -> list[str]:
+    if validation_result is not None and getattr(
+        validation_result, "validation_error_categories", None
+    ):
+        return list(validation_result.validation_error_categories)
+    return validation_error_categories_from_errors(validation_errors)
+
+
+def _fallback_validation_error_fields(
+    validation_errors: list[str],
+    *,
+    parse_result: Any | None,
+    validation_result: Any | None,
+) -> list[str]:
+    if validation_result is not None and getattr(
+        validation_result, "validation_error_fields", None
+    ):
+        return list(validation_result.validation_error_fields)
+    candidate = getattr(parse_result, "candidate", None)
+    return validation_error_fields_from_errors(validation_errors, candidate=candidate)
 
 
 def _latency_ms(elapsed_seconds: float) -> int:

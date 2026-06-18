@@ -6,6 +6,8 @@ from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_TIMEOUT,
     NUTRITION_PROVIDER_FALLBACK_REASON_VALIDATION_FAILED,
     NUTRITION_PROVIDER_PARSE_STATUS_SUCCESS,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE,
 )
 from services.nutrition_report_section_direct_ollama_provider import (
     CANDIDATE_NUTRITION_REPORT_SECTION_JSON_SCHEMA,
@@ -165,3 +167,59 @@ def test_direct_ollama_provider_timeout_and_exception_fall_back_safely():
         == NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_EXCEPTION
     )
     assert "secret provider payload" not in str(exception_result.safe_metadata)
+
+
+def test_direct_ollama_provider_exposes_debug_only_validation_diagnostics():
+    evidence = build_complete_nutrition_provider_evidence()
+
+    def fake_generate(*_args, **_kwargs):
+        return valid_provider_candidate_json(
+            target_alignment="Protein appears below the approved target with a 40 g gap."
+        )
+
+    result = run_direct_ollama_nutrition_report_section_provider(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=evidence,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert (
+        result.fallback_reason == NUTRITION_PROVIDER_FALLBACK_REASON_VALIDATION_FAILED
+    )
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE
+        in result.validation_error_categories
+    )
+    assert "target_alignment" in result.validation_error_fields
+    assert result.first_validation_error_category is not None
+    assert result.first_validation_error_field is not None
+    assert "validation_error_categories" not in result.safe_metadata
+    assert "validation_error_fields" not in result.safe_metadata
+    assert "validation_errors" not in result.safe_metadata
+
+
+def test_direct_ollama_parse_failure_exposes_safe_parse_diagnostic_category_only():
+    evidence = build_complete_nutrition_provider_evidence()
+
+    def fake_generate(*_args, **_kwargs):
+        return valid_provider_candidate_json(raw_output="debug leak")
+
+    result = run_direct_ollama_nutrition_report_section_provider(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=evidence,
+        generate=fake_generate,
+    )
+
+    assert result.success is False
+    assert result.fallback_reason == NUTRITION_PROVIDER_FALLBACK_REASON_PARSE_FAILED
+    assert NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY in (
+        result.validation_error_categories
+    )
+    assert "candidate_schema" in result.validation_error_fields
+    assert "raw_output" not in str(result.safe_metadata)
+    assert "validation_error_categories" not in result.safe_metadata

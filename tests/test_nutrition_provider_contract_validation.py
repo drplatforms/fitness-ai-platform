@@ -6,6 +6,10 @@ from models.nutrition_food_suggestion_models import (
     NutritionMacroGap,
 )
 from models.nutrition_provider_contract_models import (
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM,
     NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED,
     NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED,
 )
@@ -20,6 +24,7 @@ from models.nutrition_target_vs_actual_models import (
 from services.nutrition_provider_validation_service import (
     build_nutrition_provider_safe_context,
     validate_candidate_nutrition_report_section,
+    validation_error_categories_from_errors,
 )
 from services.nutrition_report_section_service import NutritionReportEvidenceContext
 
@@ -393,3 +398,77 @@ def test_validator_still_rejects_invented_food_suggestion_without_claim():
         "food_suggestion_language_requires" in error
         for error in result.validation_errors
     )
+
+
+def test_validation_result_exposes_safe_numeric_diagnostic_categories_and_fields():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        section_summary="Nutrition logging is complete enough for cautious target comparison.",
+        intake_snapshot="Logged intake includes 1850 calories and 80 g protein.",
+        target_alignment="Protein appears below the approved target with a 40 g gap.",
+        logging_quality="Nutrition logging is complete enough for cautious guidance.",
+        practical_food_focus="Chicken Breast, Cooked, Skinless at 150 g can help close the approved protein gap.",
+        next_nutrition_action="Use the approved food suggestion or keep logging complete meals.",
+        limitations_context="This section stays tied to approved comparisons and canonical food suggestions.",
+        confidence="High",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE
+        in result.validation_error_categories
+    )
+    assert result.first_validation_error_category is not None
+    assert "target_alignment" in result.validation_error_fields
+    assert result.first_validation_error_field is not None
+
+
+def test_validation_result_exposes_food_suggestion_diagnostic_category():
+    context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
+    candidate = _candidate(
+        practical_food_focus="A Greek yogurt suggestion can help close the protein gap.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY
+        in result.validation_error_categories
+    )
+    assert result.validation_error_fields == ["practical_food_focus"]
+
+
+def test_validation_category_helper_sanitizes_unsupported_language_errors():
+    categories = validation_error_categories_from_errors(
+        ["unsupported_nutrition_language: supplement"]
+    )
+
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM
+        in categories
+    )
+
+
+def test_validation_result_exposes_confidence_ceiling_diagnostic_category():
+    context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
+    candidate = _candidate(confidence="High")
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING
+        in result.validation_error_categories
+    )
+    assert "confidence" in result.validation_error_fields

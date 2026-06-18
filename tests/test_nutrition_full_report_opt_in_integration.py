@@ -192,6 +192,10 @@ def test_full_report_persistence_stores_nutrition_prefixed_safe_metadata(
     )
     metadata["raw_output"] = "do not persist"
     metadata["validation_errors"] = ["debug only"]
+    metadata["nutrition_validation_error_categories"] = ["unsupported_numeric_value"]
+    metadata["nutrition_validation_error_fields"] = ["target_alignment"]
+    metadata["nutrition_first_validation_error_category"] = "unsupported_numeric_value"
+    metadata["nutrition_first_validation_error_field"] = "target_alignment"
 
     report_service.save_health_report(
         user_id=102,
@@ -213,6 +217,10 @@ def test_full_report_persistence_stores_nutrition_prefixed_safe_metadata(
     assert persisted["provider_integrated_report_sections"] == "training"
     assert "raw_output" not in metadata_json
     assert '"validation_errors"' not in metadata_json
+    assert "nutrition_validation_error_categories" not in metadata_json
+    assert "nutrition_validation_error_fields" not in metadata_json
+    assert "nutrition_first_validation_error_category" not in metadata_json
+    assert "nutrition_first_validation_error_field" not in metadata_json
 
 
 def test_approved_nutrition_section_survives_crewai_coordinator_failure(

@@ -1,6 +1,6 @@
 # Nutrition Forced-Fallback Runtime QA Plan v1
 
-Status: READY FOR QA
+Status: SUPERSEDED BY ACCEPTED RUNTIME QA
 
 ## Purpose
 
@@ -58,3 +58,9 @@ The debug endpoint may expose safe diagnostic category/field names only.
 - Do not make `direct_ollama` default.
 - Do not remove fallback or provider gates.
 - Do not change public positioning until QA result is accepted.
+
+## Result
+
+Superseded by `docs/project_memory/runtime_qa/nutrition_level_5_forced_fallback_runtime_qa_v1.md`.
+
+Nutrition Level 5 Forced-Fallback Runtime QA v1 passed with `PASS_FORCED_FALLBACK_RUNTIME_QA` and final status `NUTRITION_LEVEL_5_RUNTIME_SEMANTICS_COMPLETE`.

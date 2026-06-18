@@ -12,20 +12,20 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`QA-Only Forced Invalid Provider Mode v1`
+`Nutrition Level 5 Forced-Fallback Runtime QA v1`
 
-Implementation status: `QA_ONLY_FORCED_INVALID_PROVIDER_MODE_IMPLEMENTED_PENDING_RUNTIME_QA`. A disabled-by-default QA flag now lets runtime QA force a parseable-but-invalid Nutrition provider candidate without calling the live model so Level 5 fallback metadata semantics can be tested directly.
+Final status: `NUTRITION_LEVEL_5_RUNTIME_SEMANTICS_COMPLETE`. The QA-only forced-invalid Nutrition provider mode was runtime-tested and accepted. Forced-invalid users 101-105 all fell back deterministically without live model calls, and control user 102 still followed the normal provider-approved path when forced-invalid mode was disabled.
 
 ## Current provisional milestone
 
-Recommended next milestone: `Nutrition Level 5 Forced-Fallback Runtime QA v1`.
+Recommended next milestone: choose between `Demo / Deployment Packaging Design v1`, `Nutrition Explanation Value-Aware Copy v1`, or a separate product/portfolio polish pass.
 
 ## Next recommended milestone options
 
+- Demo / Deployment Packaging Design v1.
+- Nutrition Explanation Value-Aware Copy v1.
 - UI polish / screenshot capture pass.
 - GitHub README / portfolio update pass.
-- Nutrition Level 5 Forced-Fallback Runtime QA v1.
-- Next provider-quality section milestone.
 
 ## Current model/provider status
 
@@ -41,7 +41,9 @@ Recommended next milestone: `Nutrition Level 5 Forced-Fallback Runtime QA v1`.
 - Nutrition approved suggestion runtime QA passed with `PASS_PROVIDER_APPROVED_MATRIX`: users 101-105 were all provider-approved, practical_food_focus failures dropped to 0, fallback false for all users, and public/persisted leakage checks remained clean.
 - Nutrition Provider Level 5 Promotion v1 promoted `nutrition_report_section` to Level 5 provider-integrated status while preserving opt-in gates, deterministic fallback, strict validation, and public/persisted sanitizer boundaries.
 - Nutrition Level 5 Promotion Runtime QA v1 passed with users 101-105 all provider-approved at Level 5, `provider_integrated_report_sections=training,nutrition_report_section` on approved provider output, disabled-gate semantics preserved for user 101, and safety/leakage checks clean.
-- Fallback runtime semantics were not tested during Level 5 promotion QA because no safe QA-only forced-invalid provider mode was used; this is accepted as an honest coverage note. QA-Only Forced Invalid Provider Mode v1 now implements a safe disabled-by-default flag for the next runtime QA pass, but the forced-fallback runtime QA result is still pending.
+- Nutrition Level 5 Forced-Fallback Runtime QA v1 passed with `PASS_FORCED_FALLBACK_RUNTIME_QA`: users 101-105 forced invalid provider output, validation rejected, deterministic fallback rendered, live model was not called, `provider_integrated_report_sections=training`, leakage checks were clean, and qwen3 was not used.
+- Control user 102 passed the normal provider-approved path with forced-invalid mode disabled: `nutrition_section_source=direct_ollama_approved` and `provider_integrated_report_sections=training,nutrition_report_section`.
+- Nutrition Level 5 runtime semantics are complete across provider-approved, disabled-gate deterministic, and forced-invalid deterministic fallback paths.
 - Full-report provider execution is async/background only.
 - `qwen3` remains experimental only and is not promoted.
 - The old CrewAI full-report coordinator can fail; deterministic fallback composition protects public report output.
@@ -65,10 +67,11 @@ Provider-integrated section maturity: `training` and `nutrition_report_section`.
 
 ## What is safe to build next
 
-- Nutrition Level 5 Forced-Fallback Runtime QA v1 using the QA-only forced-invalid provider flag.
+- Demo / Deployment Packaging Design v1.
+- Nutrition Explanation Value-Aware Copy v1.
 - UI polish / screenshot capture pass.
 - GitHub README / portfolio update pass.
-- Post-QA public claims cleanup only if forced-fallback runtime QA changes the honest limitation note.
+- Public claims can now say Nutrition fallback semantics are runtime-validated through a QA-only forced-invalid provider mode, while still clarifying that this mode is not normal user behavior.
 - Next provider-quality section milestone.
 - Keep deterministic fallback, provider gates, strict parser/validator behavior, and public/persisted sanitizer boundaries unchanged.
 - Preserve the distinction between `nutrition_target_display` and `nutrition_report_section`.
@@ -109,7 +112,7 @@ For code/tooling changes:
 2. Accidentally treating qwen3 as promoted or default.
 3. Accidentally expanding provider ownership beyond Training and Nutrition Report Section.
 4. Nutrition Level 5 runtime validation being mistaken for direct_ollama default approval.
-5. Fallback runtime semantics being overstated before Nutrition Level 5 Forced-Fallback Runtime QA v1 runs against the new QA-only forced-invalid provider flag.
+5. Future public-facing wording overstating the QA-only forced-invalid mode as normal production behavior.
 6. Future changes accidentally marking fallback or disabled-gate Nutrition reports as provider-approved.
 7. Legacy CrewAI coordinator being mistaken for the future full-report voice layer.
 8. Generic coaching language degrading product quality even when technically safe.

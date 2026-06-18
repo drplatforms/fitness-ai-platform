@@ -12,17 +12,17 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Nutrition Provider Contract Design v1`
+`Nutrition Provider Contract Scaffolding v1`
 
 ## Current provisional milestone
 
-`Nutrition Provider Contract Scaffolding v1` is implemented locally and pending Architecture review.
+`Nutrition Provider Implementation Design Review v1` is implemented as docs-only design review and pending Architecture review.
 
-## Next recommended milestone after Nutrition Provider Contract Scaffolding v1
+## Next recommended milestone after Nutrition Provider Implementation Design Review v1
 
-Architecture should review whether the parser/validator/fallback scaffolding is strict enough to approve a future Nutrition provider implementation milestone.
+If Architecture accepts this review, the next recommended milestone is `Nutrition Provider Implementation v1` / `Nutrition Provider Opt-In Implementation v1`.
 
-Do not implement nutrition provider execution until Architecture explicitly approves it.
+Do not implement nutrition provider execution until Architecture explicitly approves that implementation milestone.
 
 ## Current model/provider status
 
@@ -51,10 +51,10 @@ Provider-integrated report sections: `training` only.
 
 ## What is safe to build next
 
-- Nutrition Provider Contract Scaffolding v1 review and hardening.
-- Additional parser/validator negative tests.
-- Provider implementation design review that does not call a provider yet.
-- Safe metadata review for a future Nutrition provider attempt.
+- Architecture review of Nutrition Provider Implementation Design Review v1.
+- A future opt-in Nutrition provider implementation milestone if explicitly approved.
+- Additional fake-provider parser/validator/fallback tests.
+- Safe runtime QA planning for Nutrition provider opt-in behavior.
 
 ## What must not be changed casually
 
@@ -64,7 +64,7 @@ Provider-integrated report sections: `training` only.
 - Report persistence safety boundary.
 - Full-report composition fallback boundary.
 - Training evidence/claim validator rules.
-- Nutrition boundary rule that parser/validator scaffolding exists but provider execution does not exist yet.
+- Nutrition boundary rule that parser/validator/fallback scaffolding exists but provider execution does not exist yet.
 - The rule that Training is the only provider-integrated full-report section.
 
 ## Expected validation/tests
@@ -87,7 +87,7 @@ For code/tooling changes:
 1. Context loss across long chat sessions.
 2. Accidentally treating qwen3 as promoted or default.
 3. Accidentally expanding provider ownership beyond Training.
-4. Nutrition provider execution moving too fast before parser/validator scaffolding is accepted.
+4. Nutrition provider execution moving too fast before explicit implementation approval and runtime QA.
 5. Legacy CrewAI coordinator being mistaken for the future full-report voice layer.
 6. Generic coaching language degrading product quality even when technically safe.
 

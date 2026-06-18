@@ -9,11 +9,11 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Is Nutrition Provider Contract Scaffolding v1 strict enough to approve a future provider implementation milestone?
-- What additional negative validator cases are required before provider execution?
-- How should food suggestions be validated without becoming meal planning?
-- Should nutrition provider metadata use section-prefixed fields only, and which fields should be persisted once provider execution exists?
-- What runtime QA cases are required before Nutrition can become opt-in provider-integrated?
+- Should Architecture approve `Nutrition Provider Implementation v1` / `Nutrition Provider Opt-In Implementation v1` next?
+- Should the future implementation add both `nutrition_report_section_direct_ollama_provider.py` and `nutrition_report_section_provider_service.py` in one milestone or split them?
+- Should Nutrition provider execution be tested first as section-only runtime QA before any full-report integration?
+- What exact runtime QA matrix is required before Nutrition can move from Level 3 to Level 4?
+- What additional negative validator cases are required after observing real qwen2.5 output?
 
 ## Recovery
 

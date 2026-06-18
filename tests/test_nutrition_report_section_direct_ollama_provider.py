@@ -30,13 +30,26 @@ def test_prompt_uses_provider_safe_context_and_exact_json_contract():
     assert "approved_numeric_values" in prompt
     assert "Do not calculate" in prompt
     assert "practical_food_focus rules" in prompt
-    assert "approved food suggestions" in prompt
-    assert "specific food suggestion" in prompt
+    assert "approved_practical_food_focus_options" in prompt
+    assert "copy exactly one sentence" in prompt
+    assert "backend-approved option lists" in prompt
     assert "section_summary" in prompt
     assert "NutritionProvider" not in prompt
     assert "raw_output" not in prompt
     assert "traceback" not in prompt
     assert "Chicken Breast, Cooked, Skinless" in prompt
+
+
+def test_prompt_includes_backend_approved_practical_food_focus_sentence():
+    evidence = build_complete_nutrition_provider_evidence()
+
+    prompt = build_direct_ollama_nutrition_report_section_prompt(evidence)
+
+    assert (
+        "Use approved food suggestion: Chicken Breast, Cooked, Skinless at 150 g."
+        in prompt
+    )
+    assert "approved_practical_food_focus_unavailable_options" in prompt
 
 
 def test_direct_ollama_provider_approves_valid_fake_candidate():

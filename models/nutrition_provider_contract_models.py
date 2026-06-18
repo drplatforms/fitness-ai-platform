@@ -223,6 +223,10 @@ class NutritionProviderSafeContext:
     approved_guidance: dict[str, Any]
     approved_claims: list[dict[str, Any]]
     approved_food_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    approved_practical_food_focus_options: list[str] = field(default_factory=list)
+    approved_practical_food_focus_unavailable_options: list[str] = field(
+        default_factory=list
+    )
     approved_numeric_values: list[float] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     reason_codes: list[str] = field(default_factory=list)
@@ -245,6 +249,14 @@ class NutritionProviderSafeContext:
         _validate_list_of_dicts("approved_claims", self.approved_claims)
         _validate_list_of_dicts(
             "approved_food_suggestions", self.approved_food_suggestions
+        )
+        _validate_text_list(
+            "approved_practical_food_focus_options",
+            self.approved_practical_food_focus_options,
+        )
+        _validate_text_list(
+            "approved_practical_food_focus_unavailable_options",
+            self.approved_practical_food_focus_unavailable_options,
         )
         _validate_number_list("approved_numeric_values", self.approved_numeric_values)
         _validate_text_list("limitations", self.limitations)

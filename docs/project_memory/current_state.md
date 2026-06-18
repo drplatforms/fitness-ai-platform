@@ -37,8 +37,9 @@ This should rerun users 101-105 through the opt-in Nutrition full-report runtime
 - Nutrition full-report runtime matrix passed as `PASS_MATRIX_WITH_SAFE_FALLBACKS`: user 102 provider-approved, users 101/103/104/105 safe-fallback, no failures.
 - Nutrition full-report retry matrix passed as `PASS_MATRIX_WITH_SAFE_FALLBACKS`: all seeded users safely fell back; approval quality did not improve.
 - Nutrition diagnostic matrix retry passed with `PASS_DIAGNOSTICS_WITH_SAFE_FALLBACKS`; diagnostic propagation is working.
-- Repeated diagnostics now identify `practical_food_focus` as the provider bottleneck: users 101-104 hit `unsupported_food_suggestion`, and user 105 hit `unsupported_food_suggestion_availability_claim`.
-- Nutrition practical food focus contract fix now makes approved-suggestion and no-suggestion wording explicit while preserving strict rejection for invented foods, unapproved quantities, substitutions, supplements, and meal plans.
+- Nutrition practical food focus runtime QA passed with `PASS_WITH_IMPROVED_DIAGNOSTICS`: user 105 is now provider-approved and the no-approved-suggestion path appears fixed.
+- Remaining repeated diagnostics are limited to users 101-104 on the approved-suggestion-present path: `unsupported_food_suggestion` on `practical_food_focus` with approved food suggestions available.
+- Nutrition approved suggestion context inspection/tuning now adds backend-approved `practical_food_focus` option lists and requires direct-Ollama to copy one exact backend-approved option sentence.
 - Full-report provider execution is async/background only.
 - `qwen3` remains experimental only and is not promoted.
 - The old CrewAI full-report coordinator can fail; deterministic fallback composition protects public report output.
@@ -49,7 +50,7 @@ This should rerun users 101-105 through the opt-in Nutrition full-report runtime
 |---|---|---|
 | training | Provider-integrated full-report section, opt-in direct_ollama/qwen2.5 path | Level 5 |
 | nutrition_target_display | Backend-approved target display contract; input to Nutrition Report Section | Level 2 |
-| nutrition_report_section | Backend-owned evidence/claims/fallback boundary plus isolated opt-in provider implementation; full-report runtime matrix/retry matrix accepted with safe fallbacks; diagnostic QA retry passed; practical_food_focus contract fix implemented for approved/no-approved food suggestion cases; not Level 5 | Level 4 |
+| nutrition_report_section | Backend-owned evidence/claims/fallback boundary plus isolated opt-in provider implementation; full-report runtime matrix/retry matrix accepted with safe fallbacks; diagnostic QA retry passed; no-approved-suggestion practical_food_focus path improved; approved-suggestion context tuning implemented; not Level 5 | Level 4 |
 | grounded_recommendation | Strong approved contract but cross-domain; not next provider voice section | Level 3 |
 | overall_score | Deterministic/coordinator-structured | Level 1 |
 | profile_context | Deterministic/coordinator-structured | Level 1 |
@@ -62,10 +63,11 @@ Provider-integrated report sections: `training` only.
 
 ## What is safe to build next
 
-- Nutrition Provider Practical Food Focus Runtime QA v1.
+- Nutrition Provider Approved Suggestion Runtime QA v1.
 - Rerun users 101-105 full opt-in Nutrition full-report runtime matrix with qwen2.5:3b.
 - Capture safe validation diagnostic categories/fields from `/reports/status/{job_id}/debug`.
-- Verify `practical_food_focus` failures are reduced or changed.
+- Verify users 101-104 approved-suggestion-present `practical_food_focus` failures reduce or resolve.
+- Verify user 105 remains approved or safely falls back without no-suggestion availability regression.
 - Verify diagnostics do not leak into normal `/reports/status/{job_id}`, public report text, or persisted report history.
 - Use diagnostic categories to choose the next smallest safe provider-quality improvement.
 

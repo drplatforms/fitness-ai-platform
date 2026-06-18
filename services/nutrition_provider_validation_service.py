@@ -110,6 +110,12 @@ def build_nutrition_provider_safe_context(
         },
         approved_claims=[claim.to_dict() for claim in approved_claims],
         approved_food_suggestions=_safe_food_suggestions(suggestions),
+        approved_practical_food_focus_options=(
+            _approved_practical_food_focus_options(suggestions)
+        ),
+        approved_practical_food_focus_unavailable_options=(
+            _approved_practical_food_focus_unavailable_options()
+        ),
         approved_numeric_values=_approved_numeric_values(
             actuals=actuals,
             comparisons=comparisons,
@@ -277,6 +283,45 @@ def _safe_food_suggestions(suggestions: dict[str, Any]) -> list[dict[str, Any]]:
     return safe_suggestions
 
 
+def _approved_practical_food_focus_options(
+    suggestions: dict[str, Any],
+) -> list[str]:
+    options: list[str] = []
+    for suggestion in _safe_food_suggestions(suggestions):
+        display_name = str(suggestion.get("display_name") or "").strip()
+        if not display_name:
+            continue
+        grams = suggestion.get("suggested_grams")
+        if isinstance(grams, int | float):
+            options.append(
+                "Use approved food suggestion: "
+                f"{display_name} at {_format_provider_number(grams)} g."
+            )
+        else:
+            options.append(f"Use approved food suggestion: {display_name}.")
+    if options:
+        options.append(
+            "Choose from the approved food suggestions in this context; "
+            "do not add other foods or serving sizes."
+        )
+    return options
+
+
+def _approved_practical_food_focus_unavailable_options() -> list[str]:
+    return [
+        "No approved food suggestion is available from the current evidence.",
+        "The current evidence does not support a specific food suggestion yet.",
+        "Improve logging completeness first so the backend can suggest foods safely.",
+    ]
+
+
+def _format_provider_number(value: int | float) -> str:
+    numeric_value = float(value)
+    if numeric_value.is_integer():
+        return str(int(numeric_value))
+    return f"{numeric_value:g}"
+
+
 def _candidate_text(candidate: CandidateNutritionReportSection) -> str:
     return "\n".join(
         [
@@ -416,6 +461,9 @@ def _food_suggestion_errors(
     approved_suggestions_available = bool(approved_food_names)
     claim_types = _approved_claim_types(safe_context)
 
+    if _is_exact_backend_approved_food_focus_option(lowered, safe_context):
+        return []
+
     if not _food_suggestion_language_present(lowered):
         return []
 
@@ -434,6 +482,17 @@ def _food_suggestion_errors(
         return ["food_suggestion_mentions_no_approved_canonical_food"]
 
     return []
+
+
+def _is_exact_backend_approved_food_focus_option(
+    lowered_text: str,
+    safe_context: NutritionProviderSafeContext,
+) -> bool:
+    approved_options = [
+        *safe_context.approved_practical_food_focus_options,
+        *safe_context.approved_practical_food_focus_unavailable_options,
+    ]
+    return lowered_text in {option.lower() for option in approved_options}
 
 
 def _food_suggestion_language_present(lowered_text: str) -> bool:

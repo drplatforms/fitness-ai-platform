@@ -9,8 +9,9 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Does Nutrition Provider Practical Food Focus Runtime QA v1 reduce or change `practical_food_focus` failures for users 101-105?
-- If qwen2.5 still fails after the practical food focus contract fix, what is the next repeated diagnostic category/field?
+- Does Nutrition Provider Approved Suggestion Runtime QA v1 reduce or resolve users 101-104 approved-suggestion-present `practical_food_focus` failures?
+- Does user 105 remain provider-approved, or safely fallback, without no-approved-suggestion availability regression?
+- If qwen2.5 still fails after approved suggestion context tuning, what exact provider wording or diagnostic category remains?
 - What additional runtime cases are needed before Architecture considers Level 5 promotion?
 - What additional negative validator cases are required after observing real qwen2.5 output in matrix runtime QA?
 - When should Nutrition provider metadata be allowed into persisted full-report history, and at what level of detail?

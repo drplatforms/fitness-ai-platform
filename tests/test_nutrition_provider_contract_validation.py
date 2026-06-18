@@ -381,6 +381,90 @@ def test_validator_rejects_unapproved_food_even_when_suggestions_exist():
     assert result.validation_error_fields == ["practical_food_focus"]
 
 
+def test_provider_safe_context_includes_backend_approved_food_focus_options():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+
+    assert context.approved_practical_food_focus_options
+    assert (
+        "Use approved food suggestion: Chicken Breast, Cooked, Skinless at 150 g."
+        in context.approved_practical_food_focus_options
+    )
+    assert any(
+        "Choose from the approved food suggestions" in option
+        for option in context.approved_practical_food_focus_options
+    )
+
+
+def test_validator_accepts_exact_backend_approved_food_focus_option():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        section_summary="Nutrition logging is complete enough for cautious target comparison.",
+        intake_snapshot="Logged intake includes 1850 calories and 80 g protein.",
+        target_alignment="Protein appears below the approved target based on logged entries.",
+        logging_quality="Nutrition logging is complete enough for cautious nutrition guidance.",
+        practical_food_focus=(
+            "Use approved food suggestion: Chicken Breast, Cooked, Skinless at 150 g."
+        ),
+        next_nutrition_action="Use the approved food suggestion or keep logging complete meals.",
+        limitations_context="This section stays tied to approved comparisons and canonical food suggestions.",
+        confidence="High",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED
+    assert result.valid is True
+
+
+def test_validator_rejects_provider_paraphrased_food_name_even_with_approved_grams():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        confidence="High",
+        practical_food_focus="Use approved food suggestion: grilled chicken at 150 g.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert "food_suggestion_mentions_no_approved_canonical_food" in (
+        result.validation_errors
+    )
+    assert result.validation_error_fields == ["practical_food_focus"]
+
+
+def test_validator_rejects_unapproved_gram_value_with_approved_food_name():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        confidence="High",
+        practical_food_focus=(
+            "Use approved food suggestion: Chicken Breast, Cooked, Skinless at 200 g."
+        ),
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert any(
+        "numeric_value_not_approved_by_evidence: 200" in error
+        for error in result.validation_errors
+    )
+    assert "practical_food_focus" in result.validation_error_fields
+
+
 def test_provider_safe_context_lists_only_exact_approved_numeric_values():
     context = build_nutrition_provider_safe_context(
         _evidence(_summary_protein_gap(), with_suggestion=True)

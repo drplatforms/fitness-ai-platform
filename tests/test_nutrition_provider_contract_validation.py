@@ -7,6 +7,7 @@ from models.nutrition_food_suggestion_models import (
 )
 from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_CONFIDENCE_CEILING,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION,
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION_AVAILABILITY,
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE,
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_SUPPLEMENT_CLAIM,
@@ -329,6 +330,57 @@ def test_validator_accepts_candidate_tied_to_approved_claims_and_food_suggestion
     assert result.valid is True
 
 
+def test_validator_allows_approved_food_suggestion_list_language_without_new_foods():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        section_summary="Nutrition logging is complete enough for cautious target comparison.",
+        intake_snapshot="Logged intake includes 1850 calories and 80 g protein.",
+        target_alignment="Protein appears below the approved target based on logged entries.",
+        logging_quality="Nutrition logging is complete enough for cautious nutrition guidance.",
+        practical_food_focus=(
+            "The practical food focus is to choose from the approved food "
+            "suggestions and keep logging complete enough to compare against targets."
+        ),
+        next_nutrition_action="Use the approved food suggestion or keep logging complete meals.",
+        limitations_context="This section stays tied to approved comparisons and canonical food suggestions.",
+        confidence="High",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED
+    assert result.valid is True
+
+
+def test_validator_rejects_unapproved_food_even_when_suggestions_exist():
+    context = build_nutrition_provider_safe_context(
+        _evidence(_summary_protein_gap(), with_suggestion=True)
+    )
+    candidate = _candidate(
+        confidence="High",
+        practical_food_focus="Greek yogurt can help close the approved protein gap.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert result.valid is False
+    assert "food_suggestion_mentions_no_approved_canonical_food" in (
+        result.validation_errors
+    )
+    assert (
+        NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION
+        in result.validation_error_categories
+    )
+    assert result.validation_error_fields == ["practical_food_focus"]
+
+
 def test_provider_safe_context_lists_only_exact_approved_numeric_values():
     context = build_nutrition_provider_safe_context(
         _evidence(_summary_protein_gap(), with_suggestion=True)
@@ -372,6 +424,23 @@ def test_validator_allows_safe_food_suggestion_unavailable_language_without_clai
     context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
     candidate = _candidate(
         practical_food_focus="No approved food suggestion is available from the current evidence.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED
+    assert result.valid is True
+
+
+def test_validator_allows_safe_specific_food_suggestion_limitation_when_none_exist():
+    context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
+    candidate = _candidate(
+        practical_food_focus=(
+            "The current evidence does not support a specific food suggestion yet. "
+            "Improve logging completeness first so the backend can suggest foods safely."
+        ),
     )
 
     result = validate_candidate_nutrition_report_section(

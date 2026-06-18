@@ -9,8 +9,8 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Which safe validation diagnostic categories repeat across users 101-105 during Nutrition Provider Diagnostic Matrix QA Retry v1?
-- Which diagnostic category should be addressed first if qwen2.5 still fails validation for matrix users after diagnostic propagation is confirmed?
+- Does Nutrition Provider Practical Food Focus Runtime QA v1 reduce or change `practical_food_focus` failures for users 101-105?
+- If qwen2.5 still fails after the practical food focus contract fix, what is the next repeated diagnostic category/field?
 - What additional runtime cases are needed before Architecture considers Level 5 promotion?
 - What additional negative validator cases are required after observing real qwen2.5 output in matrix runtime QA?
 - When should Nutrition provider metadata be allowed into persisted full-report history, and at what level of detail?

@@ -413,30 +413,22 @@ def _food_suggestion_errors(
         for suggestion in safe_context.approved_food_suggestions
         if suggestion.get("display_name")
     }
+    approved_suggestions_available = bool(approved_food_names)
     claim_types = _approved_claim_types(safe_context)
 
-    if _is_safe_food_suggestion_unavailable_language(lowered):
+    if not _food_suggestion_language_present(lowered):
         return []
 
-    food_language_present = any(
-        phrase in lowered
-        for phrase in [
-            "can help close",
-            "suggestion",
-            "serving",
-            "grams",
-            " g",
-        ]
-    )
-
-    if not food_language_present:
-        return []
+    if not approved_suggestions_available:
+        if _is_safe_food_suggestion_unavailable_language(lowered):
+            return []
+        return ["food_suggestion_language_requires_approved_food_suggestion_claim"]
 
     if CLAIM_FOOD_SUGGESTION_AVAILABLE not in claim_types:
         return ["food_suggestion_language_requires_approved_food_suggestion_claim"]
 
-    if not approved_food_names:
-        return ["food_suggestion_language_requires_approved_canonical_food"]
+    if _is_safe_approved_food_suggestion_list_language(lowered):
+        return []
 
     if not any(food_name in lowered for food_name in approved_food_names):
         return ["food_suggestion_mentions_no_approved_canonical_food"]
@@ -444,11 +436,74 @@ def _food_suggestion_errors(
     return []
 
 
-def _is_safe_food_suggestion_unavailable_language(lowered_text: str) -> bool:
-    """Allow negative food-suggestion limitation language without an approved suggestion.
+def _food_suggestion_language_present(lowered_text: str) -> bool:
+    return any(
+        phrase in lowered_text
+        for phrase in [
+            "approved food",
+            "approved option",
+            "backend list",
+            "can help close",
+            "food suggestion",
+            "suggestion",
+            "serving",
+            "grams",
+            " g",
+            "specific food",
+        ]
+    )
 
-    The provider may safely say that no approved food suggestion is available.
-    It may not turn that into a serving recommendation or invented food.
+
+def _is_safe_approved_food_suggestion_list_language(lowered_text: str) -> bool:
+    """Allow generic approved-list language when suggestions exist.
+
+    This lets the provider safely say to choose only from the backend-approved
+    suggestions without requiring it to copy every food name. It still may not
+    name a new food, add serving sizes, suggest substitutions, or imply a meal
+    plan.
+    """
+
+    approved_list_patterns = [
+        "choose from the approved food suggestions",
+        "choose only from the approved food suggestions",
+        "choose from approved food suggestions",
+        "choose only from approved food suggestions",
+        "use only the approved food suggestions",
+        "approved food suggestions from the backend list",
+        "approved suggestions from the backend list",
+        "approved option listed in the food suggestion context",
+        "approved options listed in the food suggestion context",
+    ]
+    forbidden_action_patterns = [
+        "add ",
+        "eat ",
+        "try ",
+        "such as",
+        "like ",
+        "include ",
+        "includes ",
+        "swap ",
+        "substitute",
+        "instead of",
+        "replace ",
+        "serving",
+        "grams",
+        " g",
+        "meal plan",
+        "supplement",
+    ]
+    return any(
+        pattern in lowered_text for pattern in approved_list_patterns
+    ) and not any(pattern in lowered_text for pattern in forbidden_action_patterns)
+
+
+def _is_safe_food_suggestion_unavailable_language(lowered_text: str) -> bool:
+    """Allow negative food-suggestion limitation language without suggestions.
+
+    The provider may safely say that no approved food suggestion is available,
+    that evidence is not enough for a specific suggestion, or that logging
+    should improve first. It may not turn that limitation into a concrete food,
+    serving, substitution, supplement, or meal-plan recommendation.
     """
 
     unavailable_patterns = [
@@ -459,19 +514,30 @@ def _is_safe_food_suggestion_unavailable_language(lowered_text: str) -> bool:
         "no canonical food suggestion is available",
         "approved food suggestion is not available",
         "canonical food suggestion is not available",
+        "evidence does not support a specific food suggestion",
+        "evidence is not enough for a specific food suggestion",
+        "not enough for a specific food suggestion",
+        "logging completeness first",
+        "improve logging completeness",
+        "improving logging completeness",
     ]
-    recommendation_patterns = [
+    forbidden_action_patterns = [
         "can help close",
         "add ",
         "eat ",
-        "use ",
         "try ",
+        "swap ",
+        "substitute",
+        "instead of",
+        "replace ",
         "serving",
         "grams",
         " g",
+        "meal plan",
+        "supplement",
     ]
     return any(pattern in lowered_text for pattern in unavailable_patterns) and not any(
-        pattern in lowered_text for pattern in recommendation_patterns
+        pattern in lowered_text for pattern in forbidden_action_patterns
     )
 
 

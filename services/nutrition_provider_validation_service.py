@@ -312,8 +312,6 @@ def _field_level_claim_errors(
         ("calories are near", CLAIM_CALORIES_NEAR_TARGET),
         ("calories appear above", CLAIM_CALORIES_ABOVE_TARGET),
         ("calories are above", CLAIM_CALORIES_ABOVE_TARGET),
-        ("canonical food suggestion", CLAIM_FOOD_SUGGESTION_AVAILABLE),
-        ("approved food suggestion", CLAIM_FOOD_SUGGESTION_AVAILABLE),
     ]
     for phrase, claim_type in required_claim_patterns:
         if phrase in lowered_text and claim_type not in claim_types:
@@ -391,6 +389,10 @@ def _food_suggestion_errors(
         if suggestion.get("display_name")
     }
     claim_types = _approved_claim_types(safe_context)
+
+    if _is_safe_food_suggestion_unavailable_language(lowered):
+        return []
+
     food_language_present = any(
         phrase in lowered
         for phrase in [
@@ -415,6 +417,37 @@ def _food_suggestion_errors(
         return ["food_suggestion_mentions_no_approved_canonical_food"]
 
     return []
+
+
+def _is_safe_food_suggestion_unavailable_language(lowered_text: str) -> bool:
+    """Allow negative food-suggestion limitation language without an approved suggestion.
+
+    The provider may safely say that no approved food suggestion is available.
+    It may not turn that into a serving recommendation or invented food.
+    """
+
+    unavailable_patterns = [
+        "no approved canonical food suggestion",
+        "no approved food suggestion",
+        "no approved suggestion",
+        "no food suggestion is available",
+        "no canonical food suggestion is available",
+        "approved food suggestion is not available",
+        "canonical food suggestion is not available",
+    ]
+    recommendation_patterns = [
+        "can help close",
+        "add ",
+        "eat ",
+        "use ",
+        "try ",
+        "serving",
+        "grams",
+        " g",
+    ]
+    return any(pattern in lowered_text for pattern in unavailable_patterns) and not any(
+        pattern in lowered_text for pattern in recommendation_patterns
+    )
 
 
 def _unique(values: list[str]) -> list[str]:

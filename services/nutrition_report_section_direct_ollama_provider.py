@@ -122,6 +122,8 @@ def build_direct_ollama_nutrition_report_section_prompt(
         "or infer gaps, deltas, percentages, serving sizes, or targets that are not "
         "explicitly listed there. If a useful number is not listed, describe the "
         "relationship qualitatively without a number.\n"
+        "If approved_food_suggestions is empty, say that no approved food suggestion "
+        "is available; do not suggest foods, servings, grams, or substitutions.\n"
         "Return exactly these keys and no others: section_summary, intake_snapshot, "
         "target_alignment, logging_quality, practical_food_focus, "
         "next_nutrition_action, limitations_context, confidence, reason_codes.\n"

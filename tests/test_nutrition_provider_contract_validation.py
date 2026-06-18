@@ -361,3 +361,35 @@ def test_validator_rejects_model_inferred_numeric_gap_not_explicitly_approved():
         "numeric_value_not_approved_by_evidence: 40" in error
         for error in result.validation_errors
     )
+
+
+def test_validator_allows_safe_food_suggestion_unavailable_language_without_claim():
+    context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
+    candidate = _candidate(
+        practical_food_focus="No approved food suggestion is available from the current evidence.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_APPROVED
+    assert result.valid is True
+
+
+def test_validator_still_rejects_invented_food_suggestion_without_claim():
+    context = build_nutrition_provider_safe_context(_evidence(_summary_partial()))
+    candidate = _candidate(
+        practical_food_focus="A Greek yogurt suggestion can help close the protein gap.",
+    )
+
+    result = validate_candidate_nutrition_report_section(
+        candidate, safe_context=context
+    )
+
+    assert result.validation_status == NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED
+    assert result.valid is False
+    assert any(
+        "food_suggestion_language_requires" in error
+        for error in result.validation_errors
+    )

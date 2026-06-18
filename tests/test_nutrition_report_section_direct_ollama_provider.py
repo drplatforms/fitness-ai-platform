@@ -27,6 +27,8 @@ def test_prompt_uses_provider_safe_context_and_exact_json_contract():
     assert "Return JSON only" in prompt
     assert "approved_numeric_values" in prompt
     assert "Do not calculate" in prompt
+    assert "If approved_food_suggestions is empty" in prompt
+    assert "do not suggest foods" in prompt
     assert "section_summary" in prompt
     assert "NutritionProvider" not in prompt
     assert "raw_output" not in prompt

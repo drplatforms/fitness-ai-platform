@@ -5,6 +5,7 @@
 from fastapi import APIRouter
 
 from api.models.workout_models import WorkoutRequest
+from services.exercise_catalog_service import get_exercise_catalog_dicts
 from services.workout_service import (
     add_workout_set,
     create_workout_session,
@@ -39,6 +40,21 @@ def recent_workouts(user_id: int):
 @router.get("/exercises")
 def get_exercises():
     exercises = get_all_exercises()
+
+    return {
+        "success": True,
+        "exercises": exercises,
+    }
+
+
+# =====================================
+# Exercise Catalog Endpoint
+# =====================================
+
+
+@router.get("/exercise-catalog")
+def exercise_catalog():
+    exercises = get_exercise_catalog_dicts()
 
     return {
         "success": True,

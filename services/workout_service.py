@@ -12,6 +12,9 @@ from database import get_connection
 
 
 def get_exercises():
+    from services.exercise_catalog_service import seed_exercise_catalog
+
+    seed_exercise_catalog()
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -34,6 +37,9 @@ def get_exercises():
 
 
 def search_exercises(search_term, limit=10):
+    from services.exercise_catalog_service import seed_exercise_catalog
+
+    seed_exercise_catalog()
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -190,11 +196,13 @@ def get_recent_workouts(user_id, limit=5):
 
 
 def get_all_exercises():
+    from services.exercise_catalog_service import seed_exercise_catalog
+
+    seed_exercise_catalog()
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT
             id,
             name,
@@ -202,8 +210,7 @@ def get_all_exercises():
             equipment
         FROM exercises
         ORDER BY name
-        """
-    )
+        """)
 
     exercises = cursor.fetchall()
 

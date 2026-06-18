@@ -109,11 +109,10 @@ def test_bad_coordinator_output_falls_back_to_deterministic_report():
     rendered = render_unified_health_report(structured_report)
 
     assert "low-RIR/high-effort work at RIR 0-1" in rendered
-    assert "move from RIR 0-1 toward RIR 2-3" in rendered
+    assert "keep most working sets around RIR 2-3 instead of RIR 0-1" in rendered
     assert "approximately 5.3 hours/night" in rendered
-    assert (
-        "may reflect logging, database, unit, or supplementation artifacts" in rendered
-    )
+    assert "may reflect logging, database, or unit artifacts" in rendered
+    assert "supplementation artifacts" not in rendered
     assert validate_report_language(rendered) == []
 
 

@@ -66,3 +66,5 @@ dist/
 
 # Local files
 local_settings.py
+
+handoffs/

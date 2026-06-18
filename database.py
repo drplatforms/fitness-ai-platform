@@ -304,6 +304,158 @@ def initialize_database():
     """)
 
     # -----------------------------
+    # User Equipment Profiles
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_equipment_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user_id INTEGER NOT NULL UNIQUE,
+
+        training_environment TEXT NOT NULL,
+        available_equipment_json TEXT NOT NULL,
+        unavailable_equipment_json TEXT NOT NULL,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    """)
+
+    # -----------------------------
+    # Workout Plan Instances
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_plan_instances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user_id INTEGER NOT NULL,
+
+        status TEXT NOT NULL,
+        scenario TEXT NOT NULL,
+        confidence TEXT NOT NULL,
+        title TEXT NOT NULL,
+        approved_workout_plan_json TEXT NOT NULL,
+
+        selected_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    """)
+
+    # -----------------------------
+    # Planned Workout Exercises
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS planned_workout_exercises (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        workout_plan_instance_id INTEGER NOT NULL,
+
+        exercise_order INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        sets INTEGER NOT NULL,
+        reps_min INTEGER NOT NULL,
+        reps_max INTEGER NOT NULL,
+        rir_min INTEGER NOT NULL,
+        rir_max INTEGER NOT NULL,
+        notes TEXT NOT NULL,
+        equipment_required_json TEXT NOT NULL,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (workout_plan_instance_id)
+            REFERENCES workout_plan_instances(id)
+    )
+    """)
+
+    # -----------------------------
+    # Workout Execution Sessions
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_execution_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        workout_plan_instance_id INTEGER NOT NULL UNIQUE,
+        user_id INTEGER NOT NULL,
+
+        status TEXT NOT NULL,
+        workout_session_id INTEGER,
+
+        started_at TEXT,
+        completed_at TEXT,
+        abandoned_at TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (workout_plan_instance_id)
+            REFERENCES workout_plan_instances(id),
+
+        FOREIGN KEY (user_id) REFERENCES users(id),
+
+        FOREIGN KEY (workout_session_id)
+            REFERENCES workout_sessions(id)
+    )
+    """)
+
+    # -----------------------------
+    # Workout Execution Set Actuals
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_execution_set_actuals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        workout_execution_session_id INTEGER NOT NULL,
+        planned_workout_exercise_id INTEGER,
+        workout_session_id INTEGER,
+        workout_set_id INTEGER,
+
+        exercise_name TEXT NOT NULL,
+        set_number INTEGER NOT NULL,
+
+        planned_reps_min INTEGER,
+        planned_reps_max INTEGER,
+        planned_rir_min INTEGER,
+        planned_rir_max INTEGER,
+
+        actual_reps INTEGER,
+        actual_weight REAL,
+        actual_rir INTEGER,
+
+        completed INTEGER NOT NULL DEFAULT 0,
+        skipped INTEGER NOT NULL DEFAULT 0,
+        substitution_for_planned_exercise_id INTEGER,
+        notes TEXT,
+
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (workout_execution_session_id)
+            REFERENCES workout_execution_sessions(id),
+
+        FOREIGN KEY (planned_workout_exercise_id)
+            REFERENCES planned_workout_exercises(id),
+
+        FOREIGN KEY (workout_session_id)
+            REFERENCES workout_sessions(id),
+
+        FOREIGN KEY (workout_set_id)
+            REFERENCES workout_sets(id),
+
+        FOREIGN KEY (substitution_for_planned_exercise_id)
+            REFERENCES planned_workout_exercises(id)
+    )
+    """)
+
+    # -----------------------------
     # Seed Exercises
     # -----------------------------
 
@@ -437,6 +589,8 @@ def initialize_database():
 
         report_text TEXT NOT NULL,
         model_summary TEXT,
+        report_date TEXT,
+        report_metadata_json TEXT,
 
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 

@@ -20,6 +20,13 @@ from services.workout_service import (
 UNKNOWN_NUTRITION_VALUE = "Unknown"
 
 
+def _profile_value(user_profile, key: str, default=None):
+    try:
+        return user_profile[key]
+    except (KeyError, IndexError):
+        return default
+
+
 def _get_nutrient_amount(
     nutrition_data: dict, possible_names: list[str]
 ) -> float | None:
@@ -148,6 +155,16 @@ def build_user_health_state(user_id: int) -> UserHealthState:
     recovery_data = get_recent_recovery_metrics(user_id=user_id)
     nutrition_data = get_nutrition_analysis(user_id)
     workouts = get_recent_workouts(user_id)
+
+    # ---------------------------------
+    # User Profile Context
+    # ---------------------------------
+
+    starting_weight = _profile_value(user_profile, "starting_weight")
+    latest_body_weight = starting_weight
+
+    if recovery_data and recovery_data.get("latest_weight") is not None:
+        latest_body_weight = recovery_data.get("latest_weight")
 
     # ---------------------------------
     # Recovery State
@@ -295,9 +312,7 @@ def build_user_health_state(user_id: int) -> UserHealthState:
 
         for nutrient_name, nutrient_data in nutrition_data.items():
             nutrition_summary += (
-                f"{nutrient_name}: "
-                f"{nutrient_data['amount']} "
-                f"{nutrient_data['unit']}\n"
+                f"{nutrient_name}: {nutrient_data['amount']} {nutrient_data['unit']}\n"
             )
 
         nutrition_summary += (
@@ -482,4 +497,10 @@ def build_user_health_state(user_id: int) -> UserHealthState:
         system_stress_level=system_stress_level,
         nutrition_training_alignment=nutrition_training_alignment,
         coordinator_focus=coordinator_focus,
+        age=_profile_value(user_profile, "age"),
+        height_cm=_profile_value(user_profile, "height_cm"),
+        starting_weight=starting_weight,
+        latest_body_weight=latest_body_weight,
+        goal_weight=_profile_value(user_profile, "goal_weight"),
+        activity_level=_profile_value(user_profile, "activity_level"),
     )

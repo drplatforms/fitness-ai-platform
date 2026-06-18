@@ -25,6 +25,8 @@ def test_prompt_uses_provider_safe_context_and_exact_json_contract():
     prompt = build_direct_ollama_nutrition_report_section_prompt(evidence)
 
     assert "Return JSON only" in prompt
+    assert "approved_numeric_values" in prompt
+    assert "Do not calculate" in prompt
     assert "section_summary" in prompt
     assert "NutritionProvider" not in prompt
     assert "raw_output" not in prompt

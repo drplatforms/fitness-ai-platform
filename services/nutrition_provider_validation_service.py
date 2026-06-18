@@ -91,6 +91,11 @@ def build_nutrition_provider_safe_context(
         },
         approved_claims=[claim.to_dict() for claim in approved_claims],
         approved_food_suggestions=_safe_food_suggestions(suggestions),
+        approved_numeric_values=_approved_numeric_values(
+            actuals=actuals,
+            comparisons=comparisons,
+            suggestions=suggestions,
+        ),
         limitations=list(evidence_context.limitations),
         reason_codes=list(evidence_context.reason_codes),
     )
@@ -331,18 +336,34 @@ def _numeric_value_errors(
 
 
 def _allowed_numbers(safe_context: NutritionProviderSafeContext) -> set[float]:
+    return {float(value) for value in safe_context.approved_numeric_values}
+
+
+def _approved_numeric_values(
+    *,
+    actuals: dict[str, Any],
+    comparisons: dict[str, Any],
+    suggestions: dict[str, Any],
+) -> list[float]:
+    """Return exact numeric values a provider may repeat.
+
+    Do not include derived deltas/gaps/percentages here. If the model infers
+    a gap such as 40 g from 120 g target and 80 g actual, the validator should
+    reject it until the backend explicitly approves that number.
+    """
+
     values: set[float] = set()
-    for value in safe_context.approved_actuals.values():
+    for value in actuals.values():
         _add_number(values, value)
-    for comparison in safe_context.approved_comparisons.values():
+    for comparison in comparisons.values():
         if not isinstance(comparison, dict):
             continue
         for key in ["actual", "target_min", "target_max"]:
             _add_number(values, comparison.get(key))
-    for suggestion in safe_context.approved_food_suggestions:
+    for suggestion in _safe_food_suggestions(suggestions):
         for key in ["suggested_grams", "estimated_calories", "estimated_protein_g"]:
             _add_number(values, suggestion.get(key))
-    return values
+    return sorted(values)
 
 
 def _extract_number_unit_values(text: str) -> list[float]:

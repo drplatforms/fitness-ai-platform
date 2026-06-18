@@ -181,6 +181,7 @@ class NutritionProviderSafeContext:
     approved_guidance: dict[str, Any]
     approved_claims: list[dict[str, Any]]
     approved_food_suggestions: list[dict[str, Any]] = field(default_factory=list)
+    approved_numeric_values: list[float] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     reason_codes: list[str] = field(default_factory=list)
     forbidden_claims: list[str] = field(
@@ -203,6 +204,7 @@ class NutritionProviderSafeContext:
         _validate_list_of_dicts(
             "approved_food_suggestions", self.approved_food_suggestions
         )
+        _validate_number_list("approved_numeric_values", self.approved_numeric_values)
         _validate_text_list("limitations", self.limitations)
         _validate_text_list("reason_codes", self.reason_codes)
         _validate_text_list("forbidden_claims", self.forbidden_claims)
@@ -310,6 +312,13 @@ def _validate_list_of_dicts(field_name: str, values: list[dict[str, Any]]) -> No
         isinstance(value, dict) for value in values
     ):
         raise ValueError(f"{field_name} must be a list of dictionaries")
+
+
+def _validate_number_list(field_name: str, values: list[float]) -> None:
+    if not isinstance(values, list) or not all(
+        isinstance(value, int | float) for value in values
+    ):
+        raise ValueError(f"{field_name} must contain numeric values")
 
 
 def _validate_text_list(field_name: str, values: list[str]) -> None:

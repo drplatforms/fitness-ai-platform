@@ -9,10 +9,10 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Does Nutrition Full Report Opt-In Runtime QA v1 pass deterministic/default, section-enabled-but-full-report-disabled, and full opt-in runtime paths?
-- Do persisted-history exact-key leakage checks prove Nutrition raw/debug/provider content is absent?
+- Does Nutrition Provider Retry Runtime QA v1 approve a qwen2.5 Nutrition candidate after numeric allowlist prompt/context improvements?
+- If qwen2.5 still fails validation, what exact safe validation category should be addressed next?
 - What additional runtime cases are needed before Architecture considers Level 5 promotion?
-- What additional negative validator cases are required after observing real qwen2.5 output in section-only runtime QA?
+- What additional negative validator cases are required after observing real qwen2.5 output in full-report runtime QA?
 - When should Nutrition provider metadata be allowed into persisted full-report history, and at what level of detail?
 
 ## Recovery

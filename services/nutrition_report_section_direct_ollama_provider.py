@@ -11,6 +11,7 @@ from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_EXCEPTION,
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT,
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_TIMEOUT,
+    NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT,
     NUTRITION_PROVIDER_FALLBACK_REASON_VALIDATION_FAILED,
     NUTRITION_PROVIDER_FALLBACK_SOURCE,
     NUTRITION_PROVIDER_VALIDATION_STATUS_REJECTED,
@@ -33,6 +34,10 @@ from services.nutrition_provider_validation_service import (
 from services.nutrition_report_section_service import (
     build_deterministic_nutrition_report_section,
     derive_approved_nutrition_claims,
+)
+
+AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV = (
+    "AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT"
 )
 
 DIRECT_OLLAMA_NUTRITION_REPORT_SECTION_PROVIDER_NAME = "direct_ollama"
@@ -178,9 +183,49 @@ def run_direct_ollama_nutrition_report_section_provider(
         or DIRECT_OLLAMA_NUTRITION_DEFAULT_BASE_URL
     )
     safe_context = build_nutrition_provider_safe_context(evidence_context)
-    prompt = build_direct_ollama_nutrition_report_section_prompt(evidence_context)
 
     start = time.perf_counter()
+    if _qa_force_invalid_provider_output_enabled():
+        raw_output = _forced_invalid_nutrition_provider_candidate_json(safe_context)
+        elapsed_seconds = round(time.perf_counter() - start, 3)
+        parse_result = parse_candidate_nutrition_report_section(raw_output)
+        if parse_result.valid and parse_result.candidate is not None:
+            validation_result = validate_candidate_nutrition_report_section(
+                parse_result.candidate,
+                safe_context=safe_context,
+            )
+            return _fallback_result(
+                configured_model=configured_model,
+                selected_model=selected_model,
+                user_id=user_id,
+                report_date=report_date,
+                ollama_base_url=resolved_base_url,
+                elapsed_seconds=elapsed_seconds,
+                evidence_context=evidence_context,
+                fallback_reason=(
+                    NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT
+                ),
+                validation_errors=list(validation_result.validation_errors),
+                provider_attempted=True,
+                parse_result=parse_result,
+                validation_result=validation_result,
+            )
+        return _fallback_result(
+            configured_model=configured_model,
+            selected_model=selected_model,
+            user_id=user_id,
+            report_date=report_date,
+            ollama_base_url=resolved_base_url,
+            elapsed_seconds=elapsed_seconds,
+            evidence_context=evidence_context,
+            fallback_reason=NUTRITION_PROVIDER_FALLBACK_REASON_PARSE_FAILED,
+            validation_errors=list(parse_result.parse_errors),
+            provider_attempted=True,
+            parse_result=parse_result,
+        )
+
+    prompt = build_direct_ollama_nutrition_report_section_prompt(evidence_context)
+
     try:
         raw_output = generate(
             resolved_base_url,
@@ -408,3 +453,45 @@ def _fallback_validation_error_fields(
 
 def _latency_ms(elapsed_seconds: float) -> int:
     return max(0, int(round(elapsed_seconds * 1000)))
+
+
+def _qa_force_invalid_provider_output_enabled() -> bool:
+    raw = os.getenv(AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV, "")
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _forced_invalid_nutrition_provider_candidate_json(safe_context: Any) -> str:
+    """Return a parseable but invalid QA-only candidate without calling a model."""
+
+    confidence = getattr(safe_context, "confidence_ceiling", "Limited")
+    return json.dumps(
+        {
+            "section_summary": (
+                "Nutrition evidence is present, but this QA candidate is "
+                "intentionally invalid."
+            ),
+            "intake_snapshot": (
+                "Logged intake should remain interpreted only through approved "
+                "backend evidence."
+            ),
+            "target_alignment": (
+                "Nutrition target alignment must fall back when provider validation "
+                "rejects the candidate."
+            ),
+            "logging_quality": (
+                "Logging quality should remain bounded to approved backend context."
+            ),
+            "practical_food_focus": (
+                "Try 999 g of unapproved salmon to close the protein gap."
+            ),
+            "next_nutrition_action": (
+                "Add 999 g of unapproved salmon before changing targets."
+            ),
+            "limitations_context": (
+                "This candidate is intentionally invalid for QA fallback testing."
+            ),
+            "confidence": confidence,
+            "reason_codes": ["qa_forced_invalid_provider_output"],
+        },
+        sort_keys=True,
+    )

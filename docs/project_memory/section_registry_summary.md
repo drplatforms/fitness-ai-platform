@@ -21,7 +21,7 @@ Last updated: 2026-06-18
 
 Section maturity: `training`, `nutrition_report_section`.
 
-`Nutrition Level 5 Promotion Runtime QA v1` accepted `nutrition_report_section` as Level 5 runtime validated under explicit opt-in provider gates. Per-report persisted metadata lists `nutrition_report_section` only when approved Nutrition provider output actually rendered. Fallback or disabled-gate Nutrition reports remain explicit and do not imply provider approval.
+`Nutrition Level 5 Promotion Runtime QA v1` accepted `nutrition_report_section` as Level 5 runtime validated under explicit opt-in provider gates. Per-report persisted metadata lists `nutrition_report_section` only when approved Nutrition provider output actually rendered. Fallback or disabled-gate Nutrition reports remain explicit and do not imply provider approval. Forced-invalid fallback runtime QA confirmed that fallback reports keep `provider_integrated_report_sections=training`.
 
 ## Important distinction
 
@@ -31,7 +31,19 @@ Section maturity: `training`, `nutrition_report_section`.
 
 ## Latest runtime validation
 
-Nutrition Level 5 Promotion Runtime QA v1 passed with `NUTRITION_REPORT_SECTION_LEVEL_5_RUNTIME_VALIDATED`:
+Nutrition Level 5 Forced-Fallback Runtime QA v1 passed with `NUTRITION_LEVEL_5_RUNTIME_SEMANTICS_COMPLETE`:
+
+- forced-invalid users 101-105 all passed deterministic fallback semantics
+- `nutrition_fallback_used=true`
+- `nutrition_fallback_reason=qa_forced_invalid_provider_output`
+- `nutrition_section_source=deterministic_nutrition_report_section_fallback`
+- `provider_integrated_report_sections=training`
+- live model was not called
+- leakage checks were clean
+- qwen3 was not used
+- control user 102 remained provider-approved when forced-invalid mode was disabled
+
+Nutrition Level 5 Promotion Runtime QA v1 previously passed with `NUTRITION_REPORT_SECTION_LEVEL_5_RUNTIME_VALIDATED`:
 
 - users 101-105 all passed provider-approved Level 5 runtime QA
 - approved reports included `provider_integrated_report_sections=training,nutrition_report_section`
@@ -40,8 +52,8 @@ Nutrition Level 5 Promotion Runtime QA v1 passed with `NUTRITION_REPORT_SECTION_
 - Nutrition Target Display remained separate Level 2 with `provider_status=none`
 - public/persisted leakage checks were clean
 
-Fallback runtime semantics were not tested because no safe QA-only forced-invalid provider mode was used. This is accepted as an honest coverage note and should not be represented as completed runtime fallback coverage.
+Fallback runtime semantics are now runtime-tested through the QA-only forced-invalid provider mode. This closes the prior documented coverage gap. Public-facing wording should remain conservative: the forced-invalid mode is QA-only, disabled by default, and not normal user behavior.
 
 ## Next likely section path
 
-After closeout, this branch is a candidate for merge planning. Reasonable next product-facing milestones are UI polish / screenshot capture, GitHub README / portfolio update, optional forced-fallback runtime QA harness, or the next provider-quality section milestone.
+Next recommended milestone should be selected separately: Demo / Deployment Packaging Design v1 for recruiter/demo readiness, Nutrition Explanation Value-Aware Copy v1 for product depth, or a UI/README/portfolio polish pass.

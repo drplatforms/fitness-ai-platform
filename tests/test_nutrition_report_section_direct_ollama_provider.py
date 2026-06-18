@@ -4,12 +4,15 @@ from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_FALLBACK_REASON_PARSE_FAILED,
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_EXCEPTION,
     NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_TIMEOUT,
+    NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT,
     NUTRITION_PROVIDER_FALLBACK_REASON_VALIDATION_FAILED,
     NUTRITION_PROVIDER_PARSE_STATUS_SUCCESS,
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_EXTRA_KEY,
+    NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION,
     NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE,
 )
 from services.nutrition_report_section_direct_ollama_provider import (
+    AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV,
     CANDIDATE_NUTRITION_REPORT_SECTION_JSON_SCHEMA,
     DIRECT_OLLAMA_NUTRITION_REPORT_SECTION_SOURCE_APPROVED,
     build_direct_ollama_nutrition_report_section_prompt,
@@ -237,3 +240,76 @@ def test_direct_ollama_parse_failure_exposes_safe_parse_diagnostic_category_only
     assert "candidate_schema" in result.validation_error_fields
     assert "raw_output" not in str(result.safe_metadata)
     assert "validation_error_categories" not in result.safe_metadata
+
+
+def test_qa_force_invalid_mode_is_disabled_by_default(monkeypatch):
+    monkeypatch.delenv(
+        AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV, raising=False
+    )
+    evidence = build_complete_nutrition_provider_evidence()
+    calls = []
+
+    def fake_generate(*args):
+        calls.append(args)
+        return valid_provider_candidate_json()
+
+    result = run_direct_ollama_nutrition_report_section_provider(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=evidence,
+        generate=fake_generate,
+    )
+
+    assert len(calls) == 1
+    assert result.success is True
+    assert result.fallback_used is False
+    assert result.safe_metadata["fallback_reason"] is None
+
+
+def test_qa_force_invalid_mode_skips_model_and_falls_back_safely(monkeypatch):
+    monkeypatch.setenv(
+        AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV, "true"
+    )
+    evidence = build_complete_nutrition_provider_evidence()
+
+    def fail_if_called(*_args):
+        raise AssertionError("forced-invalid QA mode must not call the live model")
+
+    result = run_direct_ollama_nutrition_report_section_provider(
+        model="ollama/qwen2.5:3b",
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=evidence,
+        generate=fail_if_called,
+    )
+
+    assert result.success is False
+    assert result.provider_attempted is True
+    assert result.safe_metadata["selected_provider"] == "direct_ollama"
+    assert result.safe_metadata["selected_model"] == "qwen2.5:3b"
+    assert (
+        result.safe_metadata["parse_status"] == NUTRITION_PROVIDER_PARSE_STATUS_SUCCESS
+    )
+    assert result.safe_metadata["candidate_valid"] is False
+    assert result.safe_metadata["validation_status"] == "rejected"
+    assert result.safe_metadata["validation_errors_count"] > 0
+    assert result.fallback_used is True
+    assert (
+        result.fallback_reason
+        == NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT
+    )
+    assert result.safe_metadata["fallback_reason"] == result.fallback_reason
+    assert result.approved_section.source.endswith("fallback")
+    assert NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_NUMERIC_VALUE in (
+        result.validation_error_categories
+    )
+    assert NUTRITION_PROVIDER_VALIDATION_CATEGORY_UNSUPPORTED_FOOD_SUGGESTION in (
+        result.validation_error_categories
+    )
+    assert "practical_food_focus" in result.validation_error_fields
+    assert "next_nutrition_action" in result.validation_error_fields
+    assert "validation_error_categories" not in result.safe_metadata
+    assert "validation_error_fields" not in result.safe_metadata
+    assert "raw_output" not in str(result.safe_metadata)
+    assert "unapproved salmon" not in str(result.safe_metadata)

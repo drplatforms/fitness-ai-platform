@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from models.nutrition_provider_contract_models import (
     NUTRITION_PROVIDER_FALLBACK_REASON_INVALID_PROVIDER,
+    NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT,
     NUTRITION_PROVIDER_SAFE_METADATA_ALLOWLIST,
 )
 from services.full_report_section_registry_service import (
@@ -9,6 +10,9 @@ from services.full_report_section_registry_service import (
     get_full_report_section_definition,
     get_provider_integrated_full_report_section_ids,
     get_report_provider_integrated_section_ids,
+)
+from services.nutrition_report_section_direct_ollama_provider import (
+    AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV,
 )
 from services.nutrition_report_section_provider_service import (
     AI_HEALTH_REPORT_NUTRITION_SECTION_PROVIDER_ENABLED_ENV,
@@ -153,3 +157,43 @@ def test_configured_nutrition_provider_preserves_debug_diagnostics_on_rejection(
     assert "target_alignment" in result.validation_error_fields
     assert "validation_error_categories" not in result.safe_metadata
     assert "validation_error_fields" not in result.safe_metadata
+
+
+def test_configured_nutrition_provider_forced_invalid_flag_triggers_fallback(
+    monkeypatch,
+):
+    monkeypatch.setenv(AI_HEALTH_REPORT_NUTRITION_SECTION_PROVIDER_ENABLED_ENV, "true")
+    monkeypatch.setenv(
+        NUTRITION_REPORT_SECTION_PROVIDER_ENV,
+        NUTRITION_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+    monkeypatch.setenv(
+        AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV, "true"
+    )
+    evidence = build_complete_nutrition_provider_evidence()
+
+    def fail_if_called(*_args):
+        raise AssertionError("forced-invalid QA mode must not call Ollama")
+
+    result = build_configured_nutrition_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=evidence,
+        direct_ollama_generate=fail_if_called,
+    )
+
+    assert result.approved_section.source.endswith("fallback")
+    assert result.safe_metadata["provider_attempted"] is True
+    assert result.safe_metadata["selected_provider"] == "direct_ollama"
+    assert result.safe_metadata["parse_status"] == "success"
+    assert result.safe_metadata["candidate_valid"] is False
+    assert result.safe_metadata["validation_status"] == "rejected"
+    assert result.safe_metadata["fallback_used"] is True
+    assert (
+        result.safe_metadata["fallback_reason"]
+        == NUTRITION_PROVIDER_FALLBACK_REASON_QA_FORCED_INVALID_PROVIDER_OUTPUT
+    )
+    assert result.validation_error_categories
+    assert "practical_food_focus" in result.validation_error_fields
+    assert "validation_error_categories" not in result.safe_metadata
+    assert "raw_output" not in result.safe_metadata

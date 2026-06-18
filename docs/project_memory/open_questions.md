@@ -9,8 +9,8 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Should Architecture approve a safe QA-only forced-invalid provider mode for Nutrition Provider Forced-Fallback Runtime QA Harness v1?
-- What fallback-forced runtime case should QA use to confirm fallback Nutrition output is not falsely represented as provider-approved?
+- After accepted forced-fallback runtime QA, should public claims be updated to say Nutrition fallback semantics are runtime-validated through a QA-only forced-invalid provider mode?
+- Should a future production-like fallback QA scenario be designed, or is the QA-only forced-invalid mode sufficient for portfolio claims and regression protection?
 - Should Nutrition remain opt-in indefinitely after Level 5 runtime validation, or should a separate future default-provider readiness review be planned?
 - What additional non-seeded runtime cases are required after Level 5 promotion, if any?
 - What additional negative validator cases are required after observing real qwen2.5 approved output in matrix runtime QA?

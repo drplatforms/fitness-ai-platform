@@ -9,6 +9,9 @@ import pytest
 
 import database
 from services import coordinator_service, report_service
+from services.nutrition_report_section_direct_ollama_provider import (
+    AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV,
+)
 from services.nutrition_report_section_provider_service import (
     AI_HEALTH_REPORT_NUTRITION_SECTION_PROVIDER_ENABLED_ENV,
     NUTRITION_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
@@ -472,3 +475,106 @@ def test_debug_metadata_uses_validation_failure_when_category_mapping_is_empty()
     assert debug_metadata["validation_error_categories"] == ["validation_failure"]
     assert debug_metadata["first_validation_error_category"] == "validation_failure"
     assert debug_metadata["validation_error_fields"] == []
+
+
+def test_forced_invalid_nutrition_provider_fallback_keeps_level_5_metadata_truthful(
+    temp_database,
+    monkeypatch,
+):
+    monkeypatch.setenv(
+        coordinator_service.AI_HEALTH_REPORT_NUTRITION_FULL_REPORT_INTEGRATION_ENABLED_ENV,
+        "true",
+    )
+    monkeypatch.setenv(AI_HEALTH_REPORT_NUTRITION_SECTION_PROVIDER_ENABLED_ENV, "true")
+    monkeypatch.setenv(
+        NUTRITION_REPORT_SECTION_PROVIDER_ENV,
+        NUTRITION_REPORT_SECTION_PROVIDER_DIRECT_OLLAMA,
+    )
+    monkeypatch.setenv(
+        AI_HEALTH_REPORT_NUTRITION_FORCE_INVALID_PROVIDER_OUTPUT_ENV, "true"
+    )
+
+    def fail_if_called(*_args):
+        raise AssertionError("forced-invalid QA mode must not call Ollama")
+
+    nutrition_result = build_configured_nutrition_report_section_with_metadata(
+        user_id=102,
+        report_date="2026-06-14",
+        evidence_context=build_complete_nutrition_provider_evidence(),
+        direct_ollama_generate=fail_if_called,
+    )
+    training_result = coordinator_service.build_full_report_training_section_result(
+        user_id=102,
+        report_date="2026-06-14",
+    )
+
+    metadata = coordinator_service.build_health_report_persistence_metadata(
+        training_result,
+        nutrition_report_section_result=nutrition_result,
+        report_job_id="job-nutrition-forced-invalid",
+        report_generation_mode="async_report_job",
+        async_job_used=True,
+        provider_enabled=False,
+    )
+    safe_status_metadata = coordinator_service.nutrition_section_provider_job_metadata(
+        nutrition_result
+    )
+    debug_metadata = coordinator_service.nutrition_section_provider_debug_metadata(
+        nutrition_result
+    )
+
+    assert metadata["nutrition_provider_attempted"] is True
+    assert metadata["nutrition_selected_provider"] == "direct_ollama"
+    assert metadata["nutrition_parse_status"] == "success"
+    assert metadata["nutrition_candidate_valid"] is False
+    assert metadata["nutrition_validation_status"] == "rejected"
+    assert metadata["nutrition_validation_errors_count"] > 0
+    assert metadata["nutrition_fallback_used"] is True
+    assert metadata["nutrition_fallback_reason"] == "qa_forced_invalid_provider_output"
+    assert metadata["nutrition_section_source"] == (
+        "deterministic_nutrition_report_section_fallback"
+    )
+    assert metadata["provider_integrated_report_sections"] == "training"
+    assert "nutrition_report_section" not in metadata[
+        "provider_integrated_report_sections"
+    ].split(",")
+
+    assert "validation_error_categories" not in safe_status_metadata
+    assert "validation_error_fields" not in safe_status_metadata
+    assert debug_metadata["validation_error_categories"]
+    assert "practical_food_focus" in debug_metadata["validation_error_fields"]
+
+    metadata_with_debug_leak_attempt = {
+        **metadata,
+        "validation_error_categories": debug_metadata["validation_error_categories"],
+        "validation_error_fields": debug_metadata["validation_error_fields"],
+        "first_validation_error_category": debug_metadata[
+            "first_validation_error_category"
+        ],
+        "first_validation_error_field": debug_metadata["first_validation_error_field"],
+        "raw_output": "unapproved salmon should not persist",
+    }
+
+    report_service.save_health_report(
+        user_id=102,
+        report_text="Safe fallback report with deterministic Nutrition content.",
+        model_summary="deterministic_test",
+        report_date="2026-06-14",
+        report_metadata=metadata_with_debug_leak_attempt,
+    )
+
+    report = _latest_report_payload()
+    metadata_json = report["report_metadata_json"]
+    persisted = report["report_metadata"]
+
+    assert persisted["nutrition_fallback_used"] is True
+    assert persisted["nutrition_section_source"] == (
+        "deterministic_nutrition_report_section_fallback"
+    )
+    assert persisted["provider_integrated_report_sections"] == "training"
+    assert "validation_error_categories" not in metadata_json
+    assert "validation_error_fields" not in metadata_json
+    assert "first_validation_error_category" not in metadata_json
+    assert "first_validation_error_field" not in metadata_json
+    assert "raw_output" not in metadata_json
+    assert "unapproved salmon" not in metadata_json

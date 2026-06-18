@@ -93,7 +93,8 @@ def build_configured_nutrition_report_section_with_metadata(
 
     Deterministic remains the default. The nutrition direct_ollama path is isolated,
     config-gated, fake-generator testable, and does not integrate Nutrition into the
-    async full-report provider path or promote Nutrition to Level 5.
+    async full-report provider path. Nutrition is Level 5 provider-capable,
+    but execution remains opt-in and deterministic fallback remains mandatory.
     """
 
     resolved_context = evidence_context or build_nutrition_report_evidence_context(

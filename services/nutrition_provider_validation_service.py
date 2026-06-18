@@ -129,9 +129,15 @@ def build_nutrition_provider_safe_metadata(
     safe_context: NutritionProviderSafeContext,
     parse_result: NutritionProviderCandidateParseResult | None = None,
     validation_result: NutritionProviderCandidateValidationResult | None = None,
+    provider_enabled: bool = False,
+    provider_attempted: bool = False,
+    selected_provider: str | None = _PROVIDER_DISABLED,
+    selected_model: str | None = _PROVIDER_DISABLED,
     fallback_used: bool = False,
     fallback_reason: str | None = None,
     fallback_source: str | None = None,
+    nutrition_section_source: str | None = None,
+    provider_latency_ms: int | None = None,
 ) -> dict[str, Any]:
     """Build allowlisted metadata only; never include raw candidate/provider output."""
 
@@ -141,10 +147,11 @@ def build_nutrition_provider_safe_metadata(
     return {
         "nutrition_provider_contract_version": NUTRITION_PROVIDER_CONTRACT_VERSION,
         "nutrition_provider_context_schema_version": safe_context.schema_version,
-        "nutrition_provider_execution_enabled": False,
-        "provider_attempted": False,
-        "selected_provider": _PROVIDER_DISABLED,
-        "selected_model": _PROVIDER_DISABLED,
+        "nutrition_provider_execution_enabled": provider_enabled,
+        "provider_enabled": provider_enabled,
+        "provider_attempted": provider_attempted,
+        "selected_provider": selected_provider,
+        "selected_model": selected_model,
         "parse_status": parse_result.parse_status if parse_result else None,
         "candidate_valid": validation_result.valid if validation_result else None,
         "validation_status": (
@@ -157,6 +164,8 @@ def build_nutrition_provider_safe_metadata(
         "confidence_ceiling": safe_context.confidence_ceiling,
         "approved_claim_types": sorted(_approved_claim_types(safe_context)),
         "approved_food_suggestion_count": len(safe_context.approved_food_suggestions),
+        "nutrition_section_source": nutrition_section_source,
+        "provider_latency_ms": provider_latency_ms,
     }
 
 

@@ -31,7 +31,6 @@ from models.nutrition_target_vs_actual_models import (
     TargetVsActualNutritionSummary,
 )
 from services.full_report_section_registry_service import (
-    PROVIDER_STATUS_NONE,
     PROVIDER_STATUS_OPT_IN_FULL_REPORT_INTEGRATED,
     SECTION_ID_NUTRITION_REPORT,
     SECTION_ID_NUTRITION_TARGET_DISPLAY,
@@ -360,9 +359,9 @@ def test_nutrition_report_section_is_distinct_from_target_display_in_registry():
     assert target_display is not None
     assert training is not None
     assert nutrition_section.section_id != target_display.section_id
-    assert nutrition_section.maturity_level == 3
+    assert nutrition_section.maturity_level == 4
     assert target_display.maturity_level == 2
-    assert nutrition_section.provider_status == PROVIDER_STATUS_NONE
+    assert nutrition_section.provider_status == "not_full_report_integrated"
     assert get_provider_integrated_full_report_section_ids() == ["training"]
     assert training.provider_status == PROVIDER_STATUS_OPT_IN_FULL_REPORT_INTEGRATED
 

@@ -23,6 +23,15 @@ NUTRITION_PROVIDER_FALLBACK_REASON_PARSE_FAILED = "nutrition_provider_parse_fail
 NUTRITION_PROVIDER_FALLBACK_REASON_VALIDATION_FAILED = (
     "nutrition_provider_validation_failed"
 )
+NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_DISABLED = "nutrition_provider_disabled"
+NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_EXCEPTION = "nutrition_provider_exception"
+NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_TIMEOUT = "nutrition_provider_timeout"
+NUTRITION_PROVIDER_FALLBACK_REASON_PROVIDER_NON_STRING_OUTPUT = (
+    "nutrition_provider_non_string_output"
+)
+NUTRITION_PROVIDER_FALLBACK_REASON_INVALID_PROVIDER = (
+    "nutrition_provider_invalid_provider"
+)
 NUTRITION_PROVIDER_FALLBACK_SOURCE = "nutrition_provider_contract_fallback"
 
 NUTRITION_PROVIDER_CANDIDATE_REQUIRED_KEYS = {
@@ -140,6 +149,7 @@ NUTRITION_PROVIDER_SAFE_METADATA_ALLOWLIST = {
     "nutrition_provider_contract_version",
     "nutrition_provider_context_schema_version",
     "nutrition_provider_execution_enabled",
+    "provider_enabled",
     "provider_attempted",
     "selected_provider",
     "selected_model",
@@ -153,6 +163,8 @@ NUTRITION_PROVIDER_SAFE_METADATA_ALLOWLIST = {
     "confidence_ceiling",
     "approved_claim_types",
     "approved_food_suggestion_count",
+    "nutrition_section_source",
+    "provider_latency_ms",
 }
 
 

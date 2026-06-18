@@ -63,7 +63,7 @@ These fields are summary-level metadata only. They do not include raw model outp
 | `profile_context` | Profile Context | `UserHealthState` profile fields | `_format_profile_context` | none | 1 |
 | `grounded_recommendation` | Grounded Recommendation | `ApprovedActionPlan` | `build_approved_action_plan` | not full-report integrated | 3 |
 | `nutrition_target_display` | Nutrition Target Display | `NutritionTargets` display contract | `_render_nutrition_target_display` | none | 2 |
-| `nutrition_report_section` | Nutrition Report Section | `ApprovedNutritionReportSection` boundary | `build_deterministic_nutrition_report_section` | none | 3 |
+| `nutrition_report_section` | Nutrition Report Section | `ApprovedNutritionReportSection` boundary with isolated opt-in provider execution path | `build_deterministic_nutrition_report_section_with_metadata` | not full-report integrated | 4 |
 | `training` | Training Report Section | `ApprovedTrainingReportSection` | deterministic training section provider fallback | opt-in full-report integrated | 5 |
 | `biggest_issue` | Biggest Issue | valid structured coordinator output or deterministic fallback | `_build_fallback_unified_report` | none | 1 |
 | `likely_cause` | Likely Cause | valid structured coordinator output or deterministic fallback | `_build_fallback_unified_report` | none | 1 |

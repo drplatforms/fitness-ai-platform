@@ -9,11 +9,11 @@ Last updated: 2026-06-18
 
 ## Nutrition
 
-- Should Architecture approve `Nutrition Provider Implementation v1` / `Nutrition Provider Opt-In Implementation v1` next?
-- Should the future implementation add both `nutrition_report_section_direct_ollama_provider.py` and `nutrition_report_section_provider_service.py` in one milestone or split them?
+- Should Architecture approve `Nutrition Provider Opt-In Runtime QA v1` next?
 - Should Nutrition provider execution be tested first as section-only runtime QA before any full-report integration?
-- What exact runtime QA matrix is required before Nutrition can move from Level 3 to Level 4?
+- What exact runtime QA matrix is required before Nutrition can move from Level 4 to Level 5?
 - What additional negative validator cases are required after observing real qwen2.5 output?
+- When should Nutrition provider metadata be allowed into persisted full-report history, if ever?
 
 ## Recovery
 

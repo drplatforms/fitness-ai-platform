@@ -119,11 +119,11 @@ def get_full_report_section_registry() -> tuple[FullReportSectionDefinition, ...
         FullReportSectionDefinition(
             section_id=SECTION_ID_NUTRITION_REPORT,
             public_display_name="Nutrition Report Section",
-            current_source="ApprovedNutritionReportSection boundary; not yet rendered as a provider-owned full-report voice section",
-            deterministic_fallback_owner="services.nutrition_report_section_service.build_deterministic_nutrition_report_section",
-            provider_status=PROVIDER_STATUS_NONE,
+            current_source="ApprovedNutritionReportSection boundary with isolated opt-in provider execution path; not full-report integrated",
+            deterministic_fallback_owner="services.nutrition_report_section_provider_service.build_deterministic_nutrition_report_section_with_metadata",
+            provider_status=PROVIDER_STATUS_NOT_FULL_REPORT_INTEGRATED,
             evidence_source="TargetVsActualNutritionSummary, ApprovedNutritionGuidance, and ApprovedNutritionFoodSuggestions",
-            approved_claim_source="ApprovedNutritionClaim objects derived from backend-owned target, actual, logging-completeness, and canonical food-suggestion data",
+            approved_claim_source="ApprovedNutritionClaim objects plus nutrition provider parser/validator contract tied to backend-owned evidence",
             render_fields=[
                 "section_summary",
                 "intake_snapshot",
@@ -133,12 +133,26 @@ def get_full_report_section_registry() -> tuple[FullReportSectionDefinition, ...
                 "next_nutrition_action",
                 "limitations_context",
             ],
-            metadata_fields=[],
-            maturity_level=SECTION_MATURITY_APPROVED_CLAIMS,
+            metadata_fields=[
+                "provider_enabled",
+                "provider_attempted",
+                "selected_provider",
+                "selected_model",
+                "parse_status",
+                "candidate_valid",
+                "validation_status",
+                "validation_errors_count",
+                "fallback_used",
+                "fallback_reason",
+                "confidence_ceiling",
+                "nutrition_section_source",
+                "provider_latency_ms",
+            ],
+            maturity_level=SECTION_MATURITY_PROVIDER_EXPLANATION,
             notes=(
-                "Nutrition has a backend-owned report-section boundary and approved "
-                "claim service for future provider voice work. It is distinct from "
-                "Nutrition Target Display and is not provider-integrated in v1."
+                "Nutrition has an isolated opt-in provider execution path with fake-provider "
+                "tests, strict parser/validator, and deterministic fallback. It is not "
+                "full-report provider-integrated and must not be treated as Level 5."
             ),
         ),
         FullReportSectionDefinition(

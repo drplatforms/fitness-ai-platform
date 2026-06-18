@@ -10,7 +10,7 @@ Last updated: 2026-06-18
 | profile_context | User profile and context | 1 | None |
 | grounded_recommendation | Approved action-plan recommendation | 3 | Not provider-owned |
 | nutrition_target_display | Backend-approved target display | 2 | None |
-| nutrition_report_section | Backend-owned nutrition evidence/claims/fallback boundary | 3 | None |
+| nutrition_report_section | Backend-owned nutrition evidence/claims/fallback boundary plus isolated opt-in provider implementation | 4 | Not full-report integrated |
 | training | Training report section | 5 | direct_ollama opt-in integrated |
 | biggest_issue | Current issue summary | 1 | None |
 | likely_cause | Possible contributing factor | 1 | None |
@@ -27,4 +27,4 @@ Last updated: 2026-06-18
 
 ## Next likely section path
 
-Nutrition is the next logical provider candidate, but only after Nutrition Provider Readiness Review v1 confirms evidence, claims, validation, fallback, metadata, and runtime boundaries.
+Nutrition now has an isolated opt-in provider implementation path. The next logical step is section-only runtime QA before any full-report integration or Level 5 promotion.

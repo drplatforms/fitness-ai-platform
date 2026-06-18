@@ -1,8 +1,10 @@
 # Daily Coaching Product Loop v1
 
-Status: PLANNED / READY FOR ARCHITECTURE REVIEW
+Status: PLAN ACCEPTED / FIRST SLICE IMPLEMENTED PENDING QA
 
-Expected planning status after acceptance: DAILY_COACHING_PRODUCT_LOOP_V1_PLAN_ACCEPTED
+Planning status: DAILY_COACHING_PRODUCT_LOOP_V1_PLAN_ACCEPTED
+
+First implementation slice status: DAILY_NEXT_ACTION_PANEL_V1_IMPLEMENTED_PENDING_QA
 
 ## Scope
 
@@ -69,3 +71,10 @@ Architecture:
 ## Recommended next milestone
 
 `Daily Next Action Panel v1`
+
+
+## Implementation update
+
+Daily Next Action Panel v1 has been implemented as the first narrow product-loop slice. The implementation adds a deterministic backend model/service, an API route under `/daily-coach/{user_id}/next-action`, focused tests, and a Today-page card.
+
+No provider semantics, Level 5 semantics, validators, fallback behavior, nutrition formulas, workout generation behavior, or Streamlit tab redesign were changed.

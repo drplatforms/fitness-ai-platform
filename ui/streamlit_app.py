@@ -3912,6 +3912,77 @@ def friendly_daily_coach_limitations(limitations: list[object]) -> list[str]:
     return friendly_values
 
 
+DAILY_NEXT_ACTION_WORKFLOW_LABELS = {
+    "today_recovery_checkin": "Today → Recovery Check-In",
+    "today_recovery_aware_workout": "Today → Today’s Workout",
+    "nutrition_quick_log": "Nutrition → Quick Log Food",
+    "nutrition_target_vs_actual": "Nutrition → Target vs Actual",
+    "workout_preview": "Workout → Preview / Start Workout",
+    "reports_guidance": "Reports → Full Report Guidance",
+}
+
+DAILY_NEXT_ACTION_SEVERITY_LABELS = {
+    "info": "Next step",
+    "warning": "Recovery priority",
+    "success": "Ready when you are",
+}
+
+
+def render_daily_next_action_panel(user_id: int) -> None:
+    st.subheader("Next Best Action")
+    st.caption(
+        "One backend-selected action for today. No provider output controls this card."
+    )
+
+    try:
+        response = api_get(f"/daily-coach/{user_id}/next-action")
+    except requests.RequestException as exc:
+        st.info("Daily next action is not available yet.")
+        if st.session_state.get("developer_mode", False):
+            with st.expander("Developer details: daily next action error"):
+                st.write(extract_api_error_message(exc))
+        return
+
+    if not response.get("success"):
+        st.info("Daily next action is not available yet.")
+        developer_details("Developer details: daily next action response", response)
+        return
+
+    action = response.get("daily_next_action") or {}
+    if not action:
+        st.info("Daily next action is not available yet.")
+        developer_details("Developer details: daily next action response", response)
+        return
+
+    severity = action.get("severity") or "info"
+    severity_label = DAILY_NEXT_ACTION_SEVERITY_LABELS.get(severity, "Next step")
+    workflow_target = action.get("workflow_target")
+    workflow_label = DAILY_NEXT_ACTION_WORKFLOW_LABELS.get(
+        workflow_target,
+        humanize_label(workflow_target),
+    )
+
+    if severity == "warning":
+        st.warning(f"**{action.get('title', 'Next action')}**")
+    elif severity == "success":
+        st.success(f"**{action.get('title', 'Next action')}**")
+    else:
+        st.info(f"**{action.get('title', 'Next action')}**")
+
+    if action.get("summary"):
+        st.write(action.get("summary"))
+    if action.get("reason"):
+        st.caption(action.get("reason"))
+
+    meta_col, target_col = st.columns([1, 2])
+    with meta_col:
+        st.caption(f"**Priority:** {severity_label}")
+    with target_col:
+        st.caption(f"**Go to:** {workflow_label}")
+
+    developer_details("Developer details: daily next action", response)
+
+
 def render_daily_coach_synthesis_card(user_id: int) -> None:
     st.subheader("Coach’s Read for Today")
     st.caption(
@@ -4361,8 +4432,12 @@ def render_recent_workout_reflection_card(user_id: int) -> None:
 def render_today_section(user_id: int) -> None:
     st.header("Today")
     st.caption(
-        "Start with recovery, then review the backend-approved coach read and today's workout."
+        "Start with one backend-approved action, then use recovery, nutrition, and workout context to follow through."
     )
+
+    render_daily_next_action_panel(user_id)
+
+    st.divider()
 
     top_recovery_col, top_coach_col = st.columns([1, 1.25])
     with top_recovery_col:

@@ -1,8 +1,10 @@
 # Daily Coaching Product Loop v1
 
-Status: PLANNED / PENDING ARCHITECTURE ACCEPTANCE
+Status: PLAN ACCEPTED / FIRST IMPLEMENTATION SLICE APPROVED
 
-Planning result: DAILY_COACHING_PRODUCT_LOOP_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE
+Planning result: DAILY_COACHING_PRODUCT_LOOP_V1_PLAN_ACCEPTED
+
+First implementation slice: Daily Next Action Panel v1
 
 ## Goal
 
@@ -164,3 +166,8 @@ Do not:
 Expected implementation status after that milestone:
 
 `DAILY_NEXT_ACTION_PANEL_V1_READY_FOR_QA`
+
+
+## Architecture acceptance update
+
+Architecture accepted this planning milestone and approved Daily Next Action Panel v1 for implementation on `feature/daily-coaching-product-loop-v1`. The approved implementation boundary is deterministic backend selection plus Today-page rendering only.

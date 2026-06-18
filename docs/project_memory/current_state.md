@@ -8,25 +8,25 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`main`
+`feature/daily-coaching-product-loop-v1`
 
 ## Latest accepted milestone
 
-`Nutrition Level 5 Forced-Fallback Runtime QA v1`
+`Daily Coaching Product Loop v1` planning was accepted.
 
-Final status: `NUTRITION_LEVEL_5_RUNTIME_SEMANTICS_COMPLETE`. The QA-only forced-invalid Nutrition provider mode was runtime-tested and accepted. Forced-invalid users 101-105 all fell back deterministically without live model calls, and control user 102 still followed the normal provider-approved path when forced-invalid mode was disabled.
+Planning status: `DAILY_COACHING_PRODUCT_LOOP_V1_PLAN_ACCEPTED`.
 
-## Current provisional milestone
+## Current implementation milestone
 
-`Daily Coaching Product Loop v1` is approved to plan.
+`Daily Next Action Panel v1` is implemented and pending QA.
 
-Planning status: `DAILY_COACHING_PRODUCT_LOOP_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+Implementation status: `DAILY_NEXT_ACTION_PANEL_V1_IMPLEMENTED_PENDING_QA`.
 
-Recommended first implementation slice after planning acceptance: `Daily Next Action Panel v1`.
+The first product-loop slice adds a deterministic backend next-action service and Today-page action card. Backend owns the action decision; Streamlit renders one primary action; no provider output controls navigation or invents food, calorie, macro, workout, fatigue, or recovery claims.
 
 ## Next recommended milestone options
 
-- Daily Next Action Panel v1.
+- Daily Next Action Panel v1 QA.
 - Demo / Deployment Packaging Design v1.
 - Nutrition Explanation Value-Aware Copy v1.
 - UI polish / screenshot capture pass.
@@ -99,9 +99,11 @@ recovery check-in
 → one backend-approved next action
 ```
 
-Approved first implementation slice after planning acceptance: `Daily Next Action Panel v1`.
+Daily Next Action Panel v1 is implemented pending QA. The deterministic service returns exactly one action from the approved v1 action set, with backend-owned reason and workflow target. The Today page renders this card near the top without exposing raw provider/debug metadata.
 
-The panel should be deterministic and backend-truth-owned. It may surface one primary action, a short backend-supported reason, and a workflow pointer, but it must not allow AI/provider output to invent navigation, food, calorie, macro, workout, fatigue, or recovery claims.
+Approved v1 action set: Complete recovery check-in, Keep training conservative, Log a meal or snack, Review nutrition target progress, Review today’s workout, Review today’s report guidance.
+
+The panel remains backend-truth-owned. It surfaces one primary action, a short backend-supported reason, and a workflow pointer, but does not allow AI/provider output to invent navigation, food, calorie, macro, workout, fatigue, or recovery claims.
 
 ## What must not be changed casually
 

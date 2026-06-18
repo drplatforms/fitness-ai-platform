@@ -4,11 +4,19 @@ Last updated: 2026-06-18
 
 ## Daily Coaching Product Loop
 
-- Which backend-owned signals should drive the first deterministic `Daily Next Action Panel v1` ranking order?
-- Should the first action priority be data completeness first, safety/recovery first, or workout readiness first?
-- Which existing Today-page workflows should the panel link to first: recovery check-in, quick food logging, workout preview, or report generation?
-- Should the next-action service expose a stable API/model before Streamlit renders it, or should the first implementation remain UI-local with backend helper functions?
-- How should seeded users 101, 102, and 105 map to QA scenarios for recovery-limited, aligned-managed, and data-quality-limited daily actions?
+Resolved for v1:
+
+- Daily Next Action Panel v1 uses a deterministic backend service and stable API route before Streamlit renders it.
+- Priority order is recovery/safety, missing recovery input, nutrition logging completeness, workout readiness, report guidance, then data-quality/nutrition-target progress.
+- Workflow targets are limited to existing surfaces: Today recovery check-in, Today workout, Nutrition quick log, Nutrition target-vs-actual, Workout preview, and Reports guidance.
+- Seeded QA classes are defined for users 101, 102, and 105.
+
+Open after v1 implementation:
+
+- Should future versions support a secondary action, or should Today remain strictly one primary action?
+- Should workflow targets become real Streamlit navigation anchors after UI navigation is formalized?
+- Should action availability be persisted for analytics, or remain read-only/computed at request time?
+- How should the panel behave once catalog expansion and food logging usability improve?
 
 ## Product voice
 

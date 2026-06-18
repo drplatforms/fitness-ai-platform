@@ -63,6 +63,7 @@ These fields are summary-level metadata only. They do not include raw model outp
 | `profile_context` | Profile Context | `UserHealthState` profile fields | `_format_profile_context` | none | 1 |
 | `grounded_recommendation` | Grounded Recommendation | `ApprovedActionPlan` | `build_approved_action_plan` | not full-report integrated | 3 |
 | `nutrition_target_display` | Nutrition Target Display | `NutritionTargets` display contract | `_render_nutrition_target_display` | none | 2 |
+| `nutrition_report_section` | Nutrition Report Section | `ApprovedNutritionReportSection` boundary | `build_deterministic_nutrition_report_section` | none | 3 |
 | `training` | Training Report Section | `ApprovedTrainingReportSection` | deterministic training section provider fallback | opt-in full-report integrated | 5 |
 | `biggest_issue` | Biggest Issue | valid structured coordinator output or deterministic fallback | `_build_fallback_unified_report` | none | 1 |
 | `likely_cause` | Likely Cause | valid structured coordinator output or deterministic fallback | `_build_fallback_unified_report` | none | 1 |
@@ -94,7 +95,7 @@ Training is Level 5 because it has:
 - safe persistence metadata
 - runtime QA through `direct_ollama/qwen2.5:3b`
 
-Non-training sections remain deterministic/current-state for full-report ownership.
+Non-training sections remain deterministic/current-state for full-report ownership. Nutrition now has a Level 3 boundary, but it is not provider-integrated and does not replace Nutrition Target Display.
 
 Important nuance:
 
@@ -108,7 +109,7 @@ Important nuance:
 
 ```text
 full_report_section_registry_version=full_report_section_registry_v1
-full_report_section_ids=overall_score,profile_context,grounded_recommendation,nutrition_target_display,training,biggest_issue,likely_cause,priority_action,best_recommendation
+full_report_section_ids=overall_score,profile_context,grounded_recommendation,nutrition_target_display,nutrition_report_section,training,biggest_issue,likely_cause,priority_action,best_recommendation
 provider_integrated_report_sections=training
 ```
 

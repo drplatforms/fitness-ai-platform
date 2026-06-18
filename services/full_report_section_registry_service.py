@@ -18,6 +18,7 @@ PROVIDER_STATUS_OPT_IN_FULL_REPORT_INTEGRATED = "opt_in_full_report_integrated"
 SECTION_ID_PROFILE_CONTEXT = "profile_context"
 SECTION_ID_GROUNDED_RECOMMENDATION = "grounded_recommendation"
 SECTION_ID_NUTRITION_TARGET_DISPLAY = "nutrition_target_display"
+SECTION_ID_NUTRITION_REPORT = "nutrition_report_section"
 SECTION_ID_TRAINING = "training"
 SECTION_ID_OVERALL_SCORE = "overall_score"
 SECTION_ID_BIGGEST_ISSUE = "biggest_issue"
@@ -114,6 +115,31 @@ def get_full_report_section_registry() -> tuple[FullReportSectionDefinition, ...
             metadata_fields=[],
             maturity_level=SECTION_MATURITY_DERIVED_EVIDENCE,
             notes="Target display is deterministic and provider output cannot unlock hidden targets.",
+        ),
+        FullReportSectionDefinition(
+            section_id=SECTION_ID_NUTRITION_REPORT,
+            public_display_name="Nutrition Report Section",
+            current_source="ApprovedNutritionReportSection boundary; not yet rendered as a provider-owned full-report voice section",
+            deterministic_fallback_owner="services.nutrition_report_section_service.build_deterministic_nutrition_report_section",
+            provider_status=PROVIDER_STATUS_NONE,
+            evidence_source="TargetVsActualNutritionSummary, ApprovedNutritionGuidance, and ApprovedNutritionFoodSuggestions",
+            approved_claim_source="ApprovedNutritionClaim objects derived from backend-owned target, actual, logging-completeness, and canonical food-suggestion data",
+            render_fields=[
+                "section_summary",
+                "intake_snapshot",
+                "target_alignment",
+                "logging_quality",
+                "practical_food_focus",
+                "next_nutrition_action",
+                "limitations_context",
+            ],
+            metadata_fields=[],
+            maturity_level=SECTION_MATURITY_APPROVED_CLAIMS,
+            notes=(
+                "Nutrition has a backend-owned report-section boundary and approved "
+                "claim service for future provider voice work. It is distinct from "
+                "Nutrition Target Display and is not provider-integrated in v1."
+            ),
         ),
         FullReportSectionDefinition(
             section_id=SECTION_ID_TRAINING,

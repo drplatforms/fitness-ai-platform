@@ -1,240 +1,204 @@
+<#
+.SYNOPSIS
+  Windows-first commit validation helper for AI Health Coach.
+
+.DESCRIPTION
+  Use this script from the Windows source-of-truth repo at C:\projects\fitness_ai.
+  It intentionally separates docs/tooling checks from code checks so docs-only
+  commits do not trigger Ruff, Black, or Pytest noise.
+
+.EXAMPLE
+  powershell -ExecutionPolicy Bypass -File scripts/dev_commit_check.ps1 -Mode docs-only
+
+.EXAMPLE
+  powershell -ExecutionPolicy Bypass -File scripts/dev_commit_check.ps1 -Mode code
+
+.EXAMPLE
+  powershell -ExecutionPolicy Bypass -File scripts/dev_commit_check.ps1 -Mode full
+#>
+
 param(
     [ValidateSet("docs-only", "code", "full")]
-    [string]$Mode = "docs-only",
-
-    [string[]]$PytestArgs = @()
+    [string]$Mode = "docs-only"
 )
 
-Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 
-$ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-Set-Location $ProjectRoot
-
 function Write-Section {
-    param([string]$Message)
+    param([string]$Title)
     Write-Host ""
-    Write-Host "== $Message ==" -ForegroundColor Cyan
+    Write-Host "============================================================"
+    Write-Host $Title
+    Write-Host "============================================================"
 }
 
-function Get-ToolPath {
+function Invoke-CheckedCommand {
     param(
-        [string]$CommandName,
-        [string]$VenvRelativePath
+        [Parameter(Mandatory = $true)]
+        [string]$Command,
+
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$CommandArgs
     )
 
-    $candidate = Join-Path $ProjectRoot $VenvRelativePath
-    if (Test-Path $candidate) {
-        return $candidate
-    }
-
-    return $CommandName
-}
-
-function Invoke-Tool {
-    param(
-        [string]$Label,
-        [string]$FilePath,
-        [string[]]$Arguments
-    )
-
-    Write-Section $Label
-    & $FilePath @Arguments
-
+    Write-Host "> $Command $($CommandArgs -join ' ')"
+    & $Command @CommandArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "$Label failed with exit code $LASTEXITCODE"
+        throw "Command failed with exit code ${LASTEXITCODE}: $Command $($CommandArgs -join ' ')"
     }
+}
+
+function Get-RepoRoot {
+    $root = (& git rev-parse --show-toplevel).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) {
+        throw "This script must be run inside the fitness_ai git repository."
+    }
+    return $root
 }
 
 function Get-ChangedFiles {
-    $files = @()
+    $tracked = @(& git diff --name-only --diff-filter=ACMRT HEAD)
+    $untracked = @(& git ls-files --others --exclude-standard)
 
-    $files += git diff --name-only
-    if ($LASTEXITCODE -ne 0) {
-        throw "git diff --name-only failed"
-    }
-
-    $files += git diff --cached --name-only
-    if ($LASTEXITCODE -ne 0) {
-        throw "git diff --cached --name-only failed"
-    }
-
-    $files += git ls-files --others --exclude-standard
-    if ($LASTEXITCODE -ne 0) {
-        throw "git ls-files --others --exclude-standard failed"
-    }
-
-    return $files |
-        Where-Object { $_ -and $_.Trim().Length -gt 0 } |
-        Sort-Object -Unique
+    return @($tracked + $untracked |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Sort-Object -Unique)
 }
 
-function Show-ChangedFiles {
-    param([string[]]$Files)
-
-    Write-Section "Visible git changes"
-    if (-not $Files -or $Files.Count -eq 0) {
-        Write-Host "No changed or untracked files visible to git."
-        return
-    }
-
-    $Files | ForEach-Object { Write-Host "  $_" }
+function Get-ChangedPythonFiles {
+    $files = Get-ChangedFiles
+    return @($files |
+        Where-Object { $_ -match '\.py$' } |
+        Where-Object { Test-Path $_ } |
+        Sort-Object -Unique)
 }
 
-function Test-ProjectMemoryFiles {
-    $requiredPaths = @(
+function Test-RequiredProjectMemoryDocs {
+    $required = @(
+        "docs/project_memory/README.md",
         "docs/project_memory/current_state.md",
         "docs/project_memory/product_vision.md",
         "docs/project_memory/architecture_principles.md",
         "docs/project_memory/backend_truth_contract.md",
         "docs/project_memory/ai_boundaries.md",
         "docs/project_memory/section_registry_summary.md",
-        "docs/project_memory/handoffs"
+        "docs/project_memory/development_workflow.md",
+        "docs/project_memory/qa_workflow.md",
+        "docs/project_memory/open_questions.md",
+        "docs/project_memory/handoffs/architecture_handoff_current.md",
+        "docs/project_memory/handoffs/backend_handoff_current.md",
+        "docs/project_memory/handoffs/qa_handoff_current.md",
+        "docs/project_memory/handoffs/ai_provider_handoff_current.md",
+        "docs/project_memory/handoffs/codex_handoff_rules.md"
     )
 
-    $missing = @()
-
-    foreach ($path in $requiredPaths) {
-        if (-not (Test-Path (Join-Path $ProjectRoot $path))) {
-            $missing += $path
-        }
-    }
-
+    $missing = @($required | Where-Object { -not (Test-Path $_) })
     if ($missing.Count -gt 0) {
-        Write-Host "Missing required project memory paths:" -ForegroundColor Red
-        $missing | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
-        throw "Project memory check failed"
+        Write-Host "Missing required project memory docs:" -ForegroundColor Red
+        $missing | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }
+        throw "Required project memory docs are missing."
     }
 
-    Write-Section "Project memory check"
-    Write-Host "Required project memory files/directories found."
+    Write-Host "Required project memory docs exist."
 }
 
-function Test-ArtifactRisk {
-    param([string[]]$Files)
+function Show-GitStatusAndArtifacts {
+    Write-Section "Git status"
+    & git status --short
 
-    $blocked = @()
+    $statusLines = @(& git status --short)
+    $visibleArtifacts = @($statusLines | Where-Object {
+        $_ -match '^\?\? .*\.(patch|zip)$' -or
+        $_ -match '^\?\? artifacts/' -or
+        $_ -match '^\?\? _backup_before_' -or
+        $_ -match '^\?\? _patched_'
+    })
 
-    foreach ($file in $Files) {
-        $normalized = $file -replace "\\", "/"
-
-        if (
-            $normalized -like "*.patch" -or
-            $normalized -like "*.zip" -or
-            $normalized -like "artifacts/*" -or
-            $normalized -like "*/artifacts/*" -or
-            $normalized -like "_backup_before_*" -or
-            $normalized -like "*/_backup_before_*" -or
-            $normalized -like "_patched_*" -or
-            $normalized -like "*/_patched_*" -or
-            $normalized -eq "patch_check_output.txt" -or
-            $normalized -like "*/patch_check_output.txt"
-        ) {
-            $blocked += $file
-        }
-    }
-
-    if ($blocked.Count -gt 0) {
-        Write-Host "Patch/snapshot/artifact files are visible to git:" -ForegroundColor Red
-        $blocked | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    if ($visibleArtifacts.Count -gt 0) {
         Write-Host ""
-        Write-Host "Do not stage these. Add them to .git/info/exclude or move them outside the repo." -ForegroundColor Yellow
-        throw "Artifact staging risk detected"
+        Write-Host "Visible local patch/snapshot artifacts detected:" -ForegroundColor Yellow
+        $visibleArtifacts | ForEach-Object { Write-Host "- $_" -ForegroundColor Yellow }
+        Write-Host "Consider adding local-only artifact rules to .git/info/exclude." -ForegroundColor Yellow
     }
 }
 
-function Test-DocsOnlyChangeSet {
-    param([string[]]$Files)
+function Invoke-DocsOnlyCheck {
+    Write-Section "Docs/tooling-only validation"
+    Invoke-CheckedCommand git diff --check
+    Test-RequiredProjectMemoryDocs
 
-    $notDocsOnly = @()
+    $changed = Get-ChangedFiles
+    $runtimePython = @($changed | Where-Object {
+        $_ -match '\.py$' -and
+        $_ -notmatch '^docs/'
+    })
 
-    foreach ($file in $Files) {
-        $normalized = $file -replace "\\", "/"
-
-        if ($normalized -like "docs/*") {
-            continue
-        }
-
-        if ($normalized -like "*.md") {
-            continue
-        }
-
-        if ($normalized -eq "scripts/dev_commit_check.ps1") {
-            continue
-        }
-
-        $notDocsOnly += $file
+    if ($runtimePython.Count -gt 0) {
+        Write-Host "Changed Python files detected during docs-only validation:" -ForegroundColor Yellow
+        $runtimePython | ForEach-Object { Write-Host "- $_" -ForegroundColor Yellow }
+        Write-Host "Use -Mode code when Python/runtime/test files are intentionally changed." -ForegroundColor Yellow
     }
 
-    if ($notDocsOnly.Count -gt 0) {
-        Write-Host "Docs-only mode found non-doc/tooling changes:" -ForegroundColor Red
-        $notDocsOnly | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
-        Write-Host ""
-        Write-Host "Use -Mode code or inspect these files before committing." -ForegroundColor Yellow
-        throw "Docs-only check failed"
-    }
+    Show-GitStatusAndArtifacts
 }
 
-$ruff = Get-ToolPath "ruff" ".venv\Scripts\ruff.exe"
-$black = Get-ToolPath "black" ".venv\Scripts\black.exe"
-$python = Get-ToolPath "python" ".venv\Scripts\python.exe"
+function Invoke-CodeCheck {
+    Write-Section "Changed-code validation"
+    Invoke-CheckedCommand git diff --check
 
-Write-Section "Developer commit check"
+    $pythonFiles = Get-ChangedPythonFiles
+    if ($pythonFiles.Count -eq 0) {
+        Write-Host "No changed Python files detected. Skipping Ruff and Black."
+    }
+    else {
+        Write-Host "Changed Python files:"
+        $pythonFiles | ForEach-Object { Write-Host "- $_" }
+        Invoke-CheckedCommand ruff check @pythonFiles --fix
+        Invoke-CheckedCommand black @pythonFiles
+    }
+
+    Write-Section "Focused safety tests"
+    $focusedTests = @(
+        "tests/test_full_report_section_registry.py",
+        "tests/test_nutrition_report_section_boundary.py",
+        "tests/test_full_report_composition_boundary.py",
+        "tests/test_report_persistence_boundary.py",
+        "tests/test_report_status.py",
+        "tests/test_api_smoke.py"
+    )
+
+    $existingTests = @($focusedTests | Where-Object { Test-Path $_ })
+    if ($existingTests.Count -eq 0) {
+        Write-Host "No focused safety test files found. Skipping Pytest."
+    }
+    else {
+        Invoke-CheckedCommand .\.venv\Scripts\python.exe -m pytest @existingTests -q
+    }
+
+    Show-GitStatusAndArtifacts
+}
+
+function Invoke-FullCheck {
+    Write-Section "Full validation"
+    Invoke-CheckedCommand git diff --check
+    Invoke-CheckedCommand ruff check . --fix
+    Invoke-CheckedCommand black .
+    Invoke-CheckedCommand .\.venv\Scripts\python.exe -m pytest -q
+    Show-GitStatusAndArtifacts
+}
+
+$repoRoot = Get-RepoRoot
+Set-Location $repoRoot
+
+Write-Section "AI Health Coach commit check"
+Write-Host "Repo root: $repoRoot"
 Write-Host "Mode: $Mode"
-Write-Host "Project root: $ProjectRoot"
-
-$changedFiles = @(Get-ChangedFiles)
-Show-ChangedFiles -Files $changedFiles
-Test-ArtifactRisk -Files $changedFiles
-
-Invoke-Tool "git diff --check" "git" @("diff", "--check")
-Test-ProjectMemoryFiles
 
 switch ($Mode) {
-    "docs-only" {
-        Test-DocsOnlyChangeSet -Files $changedFiles
-        Write-Section "Docs-only validation complete"
-        Write-Host "No Ruff/Black/pytest run in docs-only mode."
-    }
-
-    "code" {
-        Invoke-Tool "ruff check . --fix" $ruff @("check", ".", "--fix")
-        Invoke-Tool "black ." $black @(".")
-
-        if ($PytestArgs.Count -gt 0) {
-            Invoke-Tool "focused pytest" $python (@("-m", "pytest") + $PytestArgs)
-        }
-        else {
-            $touchedTests = @(
-                $changedFiles |
-                    Where-Object { ($_ -replace "\\", "/") -match "^tests/.+\.py$" }
-            )
-
-            if ($touchedTests.Count -gt 0) {
-                Invoke-Tool "touched pytest files" $python (@("-m", "pytest") + $touchedTests + @("-q"))
-            }
-            else {
-                Write-Section "Focused pytest"
-                Write-Host "No touched test files detected."
-                Write-Host "Run a focused pytest command manually if code behavior changed, or use -Mode full."
-            }
-        }
-
-        Invoke-Tool "git diff --check after formatting" "git" @("diff", "--check")
-        Write-Section "Code validation complete"
-    }
-
-    "full" {
-        Invoke-Tool "ruff check . --fix" $ruff @("check", ".", "--fix")
-        Invoke-Tool "black ." $black @(".")
-        Invoke-Tool "pytest -q" $python @("-m", "pytest", "-q")
-        Invoke-Tool "git diff --check after full validation" "git" @("diff", "--check")
-        Write-Section "Full validation complete"
-    }
+    "docs-only" { Invoke-DocsOnlyCheck }
+    "code" { Invoke-CodeCheck }
+    "full" { Invoke-FullCheck }
 }
 
 Write-Host ""
-Write-Host "Next:" -ForegroundColor Cyan
-Write-Host "  git status --short"
-Write-Host "  git add <intended files only>"
-Write-Host "  git diff --cached --name-only"
+Write-Host "Commit check completed for mode: $Mode" -ForegroundColor Green

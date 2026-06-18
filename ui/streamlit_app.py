@@ -6946,14 +6946,27 @@ def render_nutrition_trend_calibration_card(user_id: int) -> None:
 def render_nutrition_section(user_id: int) -> None:
     st.header("Nutrition")
     st.caption(
-        "Fast path: search clean foods, log grams, then review today’s guidance "
-        "and target comparison."
+        "Log clean foods first, then review backend-approved targets, suggestions, "
+        "and nutrition explanations."
     )
 
-    st.subheader("Canonical Food Search / Logging")
+    st.subheader("Quick Log Food")
     st.caption(
-        "Search clean app-facing foods first, log grams, and keep noisy source "
-        "records behind the advanced fallback path."
+        "Search the clean canonical catalog, choose a food, enter grams, and log it "
+        "without touching noisy source records."
+    )
+    st.markdown(
+        """
+        <div class="quick-log-panel">
+            <div class="quick-log-title">Clean canonical food logging</div>
+            <div class="quick-log-copy">Use the approved app-facing catalog first. Source-food fallback stays tucked away for edge cases.</div>
+            <span class="quick-log-step">1 Search</span>
+            <span class="quick-log-step">2 Select</span>
+            <span class="quick-log-step">3 Log grams</span>
+            <span class="quick-log-step">4 Review targets</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     canonical_results_key = "canonical_food_search_results"
@@ -6962,13 +6975,17 @@ def render_nutrition_section(user_id: int) -> None:
     raw_fallback_query_key = "raw_food_fallback_query"
 
     with st.form("nutrition_canonical_food_search_form"):
-        food_query = st.text_input(
-            "Food search",
-            value="",
-            key="nutrition_canonical_food_query",
-            placeholder="Example: chicken breast, rice, egg, oats",
-        )
-        search_food = st.form_submit_button("Search Clean Foods", type="primary")
+        search_col, button_col = st.columns([4, 1])
+        with search_col:
+            food_query = st.text_input(
+                "Search clean foods",
+                value="",
+                key="nutrition_canonical_food_query",
+                placeholder="chicken breast, rice, egg, oats",
+            )
+        with button_col:
+            st.write("")
+            search_food = st.form_submit_button("Search", type="primary")
 
     if search_food:
         query = food_query.strip()
@@ -7021,7 +7038,7 @@ def render_nutrition_section(user_id: int) -> None:
                 st.write(canonical_error)
 
     if canonical_results:
-        display_canonical_food_matches(canonical_results)
+        st.success(f"Found {len(canonical_results)} clean canonical match(es).")
 
         canonical_options = {}
         used_canonical_labels = set()
@@ -7036,33 +7053,23 @@ def render_nutrition_section(user_id: int) -> None:
 
         if canonical_options:
             with st.form("nutrition_log_canonical_food_form"):
-                selected_food_label = st.selectbox(
-                    "Selected clean food",
-                    list(canonical_options.keys()),
-                    key="nutrition_selected_canonical_food",
+                st.markdown("#### Select and log")
+                select_col, grams_col, date_col, action_col = st.columns(
+                    [2.4, 0.8, 1, 0.8]
                 )
+                with select_col:
+                    selected_food_label = st.selectbox(
+                        "Clean food",
+                        list(canonical_options.keys()),
+                        key="nutrition_selected_canonical_food",
+                    )
                 selected_food = canonical_options[selected_food_label]
                 selected_food_name = selected_food.get("display_name", "Selected food")
                 selected_food_type = humanize_label(selected_food.get("food_type"))
                 selected_default_grams = selected_food.get("default_grams")
                 selected_nutrients = canonical_food_nutrient_summary_text(selected_food)
-
-                st.markdown(f"**{selected_food_name}**")
-
-                selected_meta = []
-                if selected_food_type and selected_food_type != "Unknown":
-                    selected_meta.append(selected_food_type)
-                if selected_default_grams is not None:
-                    selected_meta.append(f"default {selected_default_grams:g}g")
-                if selected_meta:
-                    st.caption(" · ".join(selected_meta))
-
-                if selected_nutrients and selected_nutrients != "Nutrients unavailable":
-                    st.caption(
-                        f"Per 100g: {selected_nutrients.replace(' per 100g', '')}"
-                    )
-
                 default_grams = float(selected_food.get("default_grams") or 100.0)
+
                 try:
                     default_entry_date = datetime.fromisoformat(
                         selected_nutrition_summary_date_text(user_id)
@@ -7070,7 +7077,6 @@ def render_nutrition_section(user_id: int) -> None:
                 except ValueError:
                     default_entry_date = datetime.now().date()
 
-                grams_col, date_col, action_col = st.columns([1, 1, 1])
                 with grams_col:
                     grams = st.number_input(
                         "Grams",
@@ -7084,19 +7090,30 @@ def render_nutrition_section(user_id: int) -> None:
                         "Date",
                         value=default_entry_date,
                         key=f"nutrition_canonical_log_date_{user_id}",
-                        help=(
-                            "Defaults to the Nutrition Today Summary date when available."
-                        ),
+                        help="Defaults to the Nutrition Today Summary date when available.",
                     )
                 with action_col:
                     st.write("")
                     log_canonical_food = st.form_submit_button(
-                        "Log Food",
+                        "Log",
                         type="primary",
                     )
 
+                detail_parts = []
+                if selected_food_type and selected_food_type != "Unknown":
+                    detail_parts.append(selected_food_type)
+                if selected_default_grams is not None:
+                    detail_parts.append(f"default {selected_default_grams:g}g")
+                if selected_nutrients and selected_nutrients != "Nutrients unavailable":
+                    detail_parts.append(
+                        f"per 100g: {selected_nutrients.replace(' per 100g', '')}"
+                    )
+
+                st.caption(f"Selected: {selected_food_name}")
+                if detail_parts:
+                    st.caption(" · ".join(detail_parts))
                 st.caption(
-                    "Nutrition values are estimates from the approved canonical food record."
+                    "Nutrition values come from the approved canonical food record."
                 )
 
             if log_canonical_food:
@@ -7123,12 +7140,34 @@ def render_nutrition_section(user_id: int) -> None:
                     else:
                         st.error(data.get("message", "Food logging failed."))
 
+        with st.expander("Clean matches from the canonical catalog", expanded=False):
+            rows = []
+            for index, food in enumerate(canonical_results[:10], start=1):
+                display_name = food.get("display_name") or "Unknown food"
+                food_type = humanize_label(food.get("food_type"))
+                default_serving = canonical_food_default_serving_text(food)
+                nutrient_summary = canonical_food_nutrient_summary_text(food)
+                rows.append(
+                    {
+                        "Match": f"{index}. {display_name}",
+                        "Type": "" if food_type == "Unknown" else food_type,
+                        "Default": default_serving.replace("Default: ", ""),
+                        "Per 100g": nutrient_summary.replace(" per 100g", ""),
+                    }
+                )
+            if rows:
+                st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
         developer_details(
             "Developer details: canonical food search response",
             canonical_response,
         )
     elif search_food and not canonical_error:
         st.caption("No clean food match found yet. Use existing food database for now.")
+    else:
+        st.caption(
+            "Try common seeded foods like chicken breast, rice, egg, oats, banana, or Greek yogurt."
+        )
 
     fallback_expanded = bool(
         st.session_state.get("food_search_results")
@@ -7643,3 +7682,119 @@ with reports_tab:
 
 with developer_tab:
     render_developer_section(user_id)
+
+# Portfolio visual tightening v4 — garnet/gold portfolio palette
+st.markdown(
+    """
+    <style>
+    div[data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(206, 184, 136, 0.15);
+        border-radius: 0.7rem;
+        padding: 0.55rem 0.65rem;
+    }
+    div[data-testid="stMetricLabel"] p {
+        font-size: 0.78rem;
+        color: #cdbf9f;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 1.15rem;
+    }
+    .portfolio-card {
+        border: 1px solid rgba(206, 184, 136, 0.20);
+        border-radius: 0.85rem;
+        padding: 0.72rem 0.82rem;
+        background: linear-gradient(180deg, rgba(39, 24, 32, 0.82), rgba(15, 23, 42, 0.46));
+        margin-bottom: 0.55rem;
+    }
+    .portfolio-card-accent { border-left: 4px solid #CEB888; }
+    .portfolio-card-green { border-left: 4px solid #CEB888; }
+    .portfolio-card-amber { border-left: 4px solid #F2C75C; }
+    .portfolio-card-purple { border-left: 4px solid #782F40; }
+    .portfolio-eyebrow {
+        color: #CEB888;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 750;
+        margin-bottom: 0.25rem;
+    }
+    .portfolio-title {
+        font-size: 1.02rem;
+        font-weight: 750;
+        line-height: 1.2;
+        margin-bottom: 0.28rem;
+        color: #fff8e6;
+    }
+    .portfolio-body {
+        font-size: 0.86rem;
+        line-height: 1.35;
+        color: #e5dcc6;
+        margin-bottom: 0.26rem;
+    }
+    .portfolio-chip {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.12rem 0.45rem;
+        margin: 0.08rem 0.15rem 0.08rem 0;
+        font-size: 0.72rem;
+        font-weight: 650;
+        color: #fff8e6;
+        background: rgba(120, 47, 64, 0.22);
+        border: 1px solid rgba(206, 184, 136, 0.30);
+    }
+    .portfolio-chip-green {
+        color: #fff8e6;
+        background: rgba(206, 184, 136, 0.16);
+        border-color: rgba(206, 184, 136, 0.42);
+    }
+    .portfolio-chip-amber {
+        color: #fff3c4;
+        background: rgba(242, 199, 92, 0.14);
+        border-color: rgba(242, 199, 92, 0.34);
+    }
+    .portfolio-chip-purple {
+        color: #ffe9ef;
+        background: rgba(120, 47, 64, 0.28);
+        border-color: rgba(206, 184, 136, 0.24);
+    }
+    .portfolio-muted {
+        color: #b9ad92;
+        font-size: 0.78rem;
+        margin-top: 0.2rem;
+    }
+    .quick-log-panel {
+        border: 1px solid rgba(206, 184, 136, 0.24);
+        border-radius: 0.95rem;
+        padding: 0.9rem 1rem;
+        background: linear-gradient(135deg, rgba(120, 47, 64, 0.22), rgba(15, 23, 42, 0.50));
+        margin: 0.5rem 0 0.85rem 0;
+    }
+    .quick-log-title {
+        color: #fff8e6;
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 0.15rem;
+    }
+    .quick-log-copy {
+        color: #e5dcc6;
+        font-size: 0.86rem;
+        line-height: 1.35;
+        margin-bottom: 0.35rem;
+    }
+    .quick-log-step {
+        display: inline-block;
+        color: #fff8e6;
+        background: rgba(206, 184, 136, 0.14);
+        border: 1px solid rgba(206, 184, 136, 0.30);
+        border-radius: 999px;
+        padding: 0.12rem 0.48rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin-right: 0.18rem;
+        margin-top: 0.12rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)

@@ -1,6 +1,6 @@
 # Public Screenshot Capture Checklist
 
-Status: STREAMLIT_PORTFOLIO_VISUALIZATION_POLISH_V2_READY_FOR_QA candidate
+Status: STREAMLIT_PORTFOLIO_VISUALIZATION_POLISH_V4_READY_FOR_QA candidate
 
 Branch: chore/public-ui-polish
 
@@ -20,7 +20,7 @@ Secondary demo user: QA 105 — Messy/incomplete logging
 
 1. User 102 Today / Daily Coach Overview
 2. User 102 Nutrition Target Band / Target-vs-Actual
-3. User 102 Canonical Food Logging or Food Suggestion Cards
+3. User 102 Quick Log Food / Food Suggestion Cards
 4. User 102 Workout Preview Card Layout
 5. User 102 Nutrition Report Section
 6. Terminal validation passing
@@ -57,14 +57,14 @@ Secondary demo user: QA 105 — Messy/incomplete logging
 
 1. Today tab, QA 102, Daily Grounded Recommendation expanded.
 2. Nutrition tab, QA 102, target bands plus Target-vs-Actual table.
-3. Nutrition tab, QA 102, canonical food search results or Food Suggestions cards.
+3. Nutrition tab, QA 102, Quick Log Food flow or Food Suggestions cards.
 4. Workout tab, QA 102, Plan step with Workout Preview Card Layout.
 5. Reports tab, QA 102, latest sectionized Nutrition or Training report section.
 6. Terminal validation screenshot after checks pass.
 
 ## Final acceptance label
 
-STREAMLIT_PORTFOLIO_VISUALIZATION_POLISH_V2_READY_FOR_QA
+STREAMLIT_PORTFOLIO_VISUALIZATION_POLISH_V4_READY_FOR_QA
 
 
 ## Portfolio visual tightening v3 notes
@@ -74,3 +74,10 @@ STREAMLIT_PORTFOLIO_VISUALIZATION_POLISH_V2_READY_FOR_QA
 - Workout preview cards should avoid oversized metric blocks.
 - Today page should make Recovery Check-In visible as the first coaching input.
 - Developer Mode should remain off for normal screenshots.
+
+## Canonical quick-log v4 notes
+
+- Nutrition should lead with a clear quick-log flow: search, select, grams, log.
+- Canonical food matches should support the logging action instead of dominating the page.
+- Existing source-food search remains available only as an advanced fallback.
+- Garnet/gold accents are visual-only and do not change product behavior.

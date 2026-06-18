@@ -57,3 +57,15 @@ Fallback runtime semantics are now runtime-tested through the QA-only forced-inv
 ## Next likely section path
 
 Next recommended milestone should be selected separately: Demo / Deployment Packaging Design v1 for recruiter/demo readiness, Nutrition Explanation Value-Aware Copy v1 for product depth, or a UI/README/portfolio polish pass.
+
+## Daily Coaching Product Loop planning note
+
+`Daily Coaching Product Loop v1` does not change section maturity or provider ownership.
+
+The planned `Daily Next Action Panel v1` should consume existing backend-approved section state and routing signals. It should not become a new provider-owned report section, and it should not merge `nutrition_target_display` with `nutrition_report_section`.
+
+Expected ownership:
+
+- Backend owns next-action selection, reason codes, workflow pointers, and eligibility checks.
+- Streamlit renders the selected action on the Today page.
+- AI/provider output may be displayed only after existing backend validation and must not independently control navigation or daily action ranking.

@@ -8,7 +8,7 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`test/nutrition-forced-invalid-provider-mode`
+`main`
 
 ## Latest accepted milestone
 
@@ -18,10 +18,15 @@ Final status: `NUTRITION_LEVEL_5_RUNTIME_SEMANTICS_COMPLETE`. The QA-only forced
 
 ## Current provisional milestone
 
-Recommended next milestone: choose between `Demo / Deployment Packaging Design v1`, `Nutrition Explanation Value-Aware Copy v1`, or a separate product/portfolio polish pass.
+`Daily Coaching Product Loop v1` is approved to plan.
+
+Planning status: `DAILY_COACHING_PRODUCT_LOOP_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+
+Recommended first implementation slice after planning acceptance: `Daily Next Action Panel v1`.
 
 ## Next recommended milestone options
 
+- Daily Next Action Panel v1.
 - Demo / Deployment Packaging Design v1.
 - Nutrition Explanation Value-Aware Copy v1.
 - UI polish / screenshot capture pass.
@@ -67,6 +72,8 @@ Provider-integrated section maturity: `training` and `nutrition_report_section`.
 
 ## What is safe to build next
 
+- Daily Coaching Product Loop v1 planning/design.
+- Daily Next Action Panel v1 as a narrow deterministic Today-page implementation slice.
 - Demo / Deployment Packaging Design v1.
 - Nutrition Explanation Value-Aware Copy v1.
 - UI polish / screenshot capture pass.
@@ -76,6 +83,25 @@ Provider-integrated section maturity: `training` and `nutrition_report_section`.
 - Keep deterministic fallback, provider gates, strict parser/validator behavior, and public/persisted sanitizer boundaries unchanged.
 - Preserve the distinction between `nutrition_target_display` and `nutrition_report_section`.
 - Preserve qwen2.5:3b as the only accepted Nutrition provider model; qwen3 remains experimental only.
+
+## Current product loop direction
+
+The next product development priority is daily usefulness: help the user answer “What should I do today?” from the Today page without reopening provider safety or Level 5 semantics.
+
+Daily Coaching Product Loop v1 should connect existing backend-approved state into a practical loop:
+
+```text
+recovery check-in
+→ current recovery/training/nutrition state
+→ nutrition target-vs-actual and logging completeness
+→ workout preview / workout execution
+→ report guidance
+→ one backend-approved next action
+```
+
+Approved first implementation slice after planning acceptance: `Daily Next Action Panel v1`.
+
+The panel should be deterministic and backend-truth-owned. It may surface one primary action, a short backend-supported reason, and a workflow pointer, but it must not allow AI/provider output to invent navigation, food, calorie, macro, workout, fatigue, or recovery claims.
 
 ## What must not be changed casually
 

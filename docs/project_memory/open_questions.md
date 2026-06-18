@@ -2,6 +2,14 @@
 
 Last updated: 2026-06-18
 
+## Daily Coaching Product Loop
+
+- Which backend-owned signals should drive the first deterministic `Daily Next Action Panel v1` ranking order?
+- Should the first action priority be data completeness first, safety/recovery first, or workout readiness first?
+- Which existing Today-page workflows should the panel link to first: recovery check-in, quick food logging, workout preview, or report generation?
+- Should the next-action service expose a stable API/model before Streamlit renders it, or should the first implementation remain UI-local with backend helper functions?
+- How should seeded users 101, 102, and 105 map to QA scenarios for recovery-limited, aligned-managed, and data-quality-limited daily actions?
+
 ## Product voice
 
 - When should qwen3 be re-tested for Training product voice?

@@ -246,12 +246,12 @@ def _build_approved_limitations(evidence: dict[str, object]) -> list[str]:
 
     if evidence.get("workout_available") is False:
         limitations.append(
-            "Workout-specific explanation is limited unless an approved workout preview is available."
+            "Workout-specific explanation is limited unless today's workout preview is available."
         )
 
     if not limitations:
         limitations.append(
-            "Narrative wording must stay limited to the approved daily action and facts."
+            "Keep the note focused on today's selected action and available facts."
         )
 
     return limitations
@@ -268,19 +268,15 @@ def _build_confidence_language(
 
     nutrition_confidence = evidence.get("nutrition_confidence")
     if nutrition_confidence in _LIMITED_CONFIDENCE_VALUES:
-        return "Confidence is limited to backend-approved facts and current logging completeness."
+        return "Confidence is limited until more nutrition logging is available today."
 
     if action.severity == "warning":
-        return (
-            "Use conservative language and do not exceed the backend-approved action."
-        )
+        return "Confidence stays conservative because today's action is safety-focused."
 
     if approved_limitations:
-        return (
-            "Use only the backend-approved daily action, reason, and supporting facts."
-        )
+        return "Confidence is based on today's selected action and available facts."
 
-    return "Use only backend-approved facts."
+    return "Confidence is based on today's selected action and available facts."
 
 
 def _build_fallback_note(action: DailyNextAction) -> str:

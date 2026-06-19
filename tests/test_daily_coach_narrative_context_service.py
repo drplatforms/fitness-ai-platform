@@ -138,7 +138,7 @@ def test_forbidden_claims_cover_v1_safety_boundary():
     assert "medical diagnosis" in forbidden_claims
     assert "meal plan" in forbidden_claims
     assert context.confidence_language == (
-        "Use conservative language and do not exceed the backend-approved action."
+        "Confidence stays conservative because today's action is safety-focused."
     )
 
 

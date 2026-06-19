@@ -221,3 +221,59 @@ Still not approved:
 - direct_ollama default changes
 - validator loosening
 - deterministic fallback weakening
+
+
+## Daily Coach Narrative Developer Preview v1 Closeout
+
+Resolved by Developer Preview v1 acceptance:
+
+- Local API runtime QA confirmed provider-disabled fallback for users 101, 102, and 105.
+- qwen3:8b passed through the debug endpoint for users 101, 102, and 105 and remains a developer-preview evaluation candidate only.
+- qwen2.5:3b is safe as a developer-preview baseline only.
+- qwen3:32b remains optional offline/debug reference only due to latency.
+- Backend debug endpoint coverage is enough before Product Readiness Review; Streamlit Developer Mode panel should be a later milestone.
+- Developer-only preview latency around 40-50 seconds is acceptable for debug usage but not for normal Today UI.
+
+Still not approved:
+
+- normal Today UI integration
+- Streamlit normal surface integration
+- report integration
+- persistence of model-generated narrative
+- model promotion
+- qwen3 production approval
+- direct_ollama default changes
+- validator loosening
+- deterministic fallback weakening
+
+## Daily Coach Narrative Async Today Preview Design v1
+
+Resolved by design:
+
+- Normal Today UI must not make synchronous provider calls.
+- Today must show deterministic fallback immediately.
+- First Today-adjacent implementation should be manual and developer-gated.
+- Provider disabled remains the default.
+- Approved provider output may display only after parse + validation success.
+- Failed or rejected provider output keeps fallback.
+- Rejected provider text, raw prompts, provider payloads, stack traces, and validation internals must remain hidden.
+- No user-facing persistence/cache is approved for the first Today preview implementation.
+- First recommended implementation after design acceptance is `Daily Coach Narrative Today Developer Panel v1`.
+
+Open after design:
+
+- Should the Developer Panel live under the existing Streamlit Developer Mode area or a dedicated Daily Coach debug expander?
+- Should the panel call the accepted backend endpoint directly or use a small frontend helper wrapper?
+- What exact label should be shown for fallback-vs-approved status in Developer Mode?
+- Should the first panel include all public-safe metadata or only action, fallback, approved narrative, status, and latency?
+- Should automatic background generation remain deferred until after Developer Panel QA?
+- What provider disable switch should future normal UI use: environment config, query/debug gate, or a backend settings service?
+
+Still not approved:
+
+- automatic background generation from normal Today UI
+- synchronous provider call from Today page load
+- normal user-facing Coach Note card
+- provider output persistence/cache
+- model promotion
+- direct_ollama default change

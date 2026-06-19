@@ -13,11 +13,15 @@ from streamlit_autorefresh import st_autorefresh
 API_BASE_URL = "http://127.0.0.1:8000"
 
 
-def api_get(path: str, params: dict | None = None) -> dict:
+def api_get(
+    path: str,
+    params: dict | None = None,
+    request_timeout: float = 120,
+) -> dict:
     response = requests.get(
         f"{API_BASE_URL}{path}",
         params=params,
-        timeout=120,
+        timeout=request_timeout,
     )
     response.raise_for_status()
     return response.json()
@@ -3315,6 +3319,8 @@ SESSION_DEFAULTS = {
     "last_user_id": None,
     "daily_recommendation_by_user": {},
     "daily_recommendation_error_by_user": {},
+    "daily_coach_narrative_preview_by_user": {},
+    "daily_coach_narrative_preview_error_by_user": {},
     "workout_explanation_by_user": {},
     "workout_explanation_error_by_user": {},
 }
@@ -3928,6 +3934,256 @@ DAILY_NEXT_ACTION_SEVERITY_LABELS = {
 }
 
 
+DAILY_COACH_NARRATIVE_LANES = {
+    "deterministic": {
+        "label": "Deterministic fallback",
+        "provider": "deterministic",
+        "model": None,
+        "timeout_seconds": 0,
+        "request_timeout": 120,
+        "description": "Immediate backend fallback. No provider call is made.",
+    },
+    "qwen3_8b_fast": {
+        "label": "Fast preview: qwen3:8b",
+        "provider": "direct_ollama",
+        "model": "qwen3:8b",
+        "timeout_seconds": 180,
+        "request_timeout": 210,
+        "description": "Lower-latency developer preview lane.",
+    },
+    "qwen3_32b_premium": {
+        "label": "Premium preview: qwen3:32b",
+        "provider": "direct_ollama",
+        "model": "qwen3:32b",
+        "timeout_seconds": 420,
+        "request_timeout": 450,
+        "description": "Higher-quality slow/manual preview lane.",
+        "warning": (
+            "Premium preview may take several minutes. The deterministic fallback "
+            "remains available while generation runs."
+        ),
+    },
+    "qwen25_3b_baseline": {
+        "label": "Baseline/regression: qwen2.5:3b",
+        "provider": "direct_ollama",
+        "model": "qwen2.5:3b",
+        "timeout_seconds": 180,
+        "request_timeout": 210,
+        "description": "Small-model validator and regression lane.",
+    },
+}
+
+
+def daily_coach_narrative_lane_labels() -> list[str]:
+    return [str(lane["label"]) for lane in DAILY_COACH_NARRATIVE_LANES.values()]
+
+
+def daily_coach_narrative_lane_key_from_label(label: str) -> str:
+    for lane_key, lane in DAILY_COACH_NARRATIVE_LANES.items():
+        if lane["label"] == label:
+            return lane_key
+
+    return "deterministic"
+
+
+def build_daily_coach_narrative_preview_params(lane_key: str) -> dict[str, object]:
+    lane = DAILY_COACH_NARRATIVE_LANES.get(
+        lane_key, DAILY_COACH_NARRATIVE_LANES["deterministic"]
+    )
+    params: dict[str, object] = {"provider": lane["provider"]}
+
+    if lane.get("model"):
+        params["model"] = lane["model"]
+
+    timeout_seconds = lane.get("timeout_seconds")
+    if timeout_seconds:
+        params["timeout_seconds"] = timeout_seconds
+
+    return params
+
+
+def daily_coach_narrative_request_timeout(lane_key: str) -> float:
+    lane = DAILY_COACH_NARRATIVE_LANES.get(
+        lane_key, DAILY_COACH_NARRATIVE_LANES["deterministic"]
+    )
+    return float(lane.get("request_timeout") or 120)
+
+
+def daily_coach_narrative_lane_description(lane_key: str) -> str:
+    lane = DAILY_COACH_NARRATIVE_LANES.get(
+        lane_key, DAILY_COACH_NARRATIVE_LANES["deterministic"]
+    )
+    return str(lane.get("description") or "Developer-only preview lane.")
+
+
+def daily_coach_narrative_lane_warning(lane_key: str) -> str | None:
+    lane = DAILY_COACH_NARRATIVE_LANES.get(
+        lane_key, DAILY_COACH_NARRATIVE_LANES["deterministic"]
+    )
+    warning = lane.get("warning")
+    return str(warning) if warning else None
+
+
+def daily_coach_narrative_fallback_display(preview: dict) -> str:
+    return (
+        preview.get("deterministic_fallback_note")
+        or "Deterministic fallback narrative is not available yet."
+    )
+
+
+def daily_coach_narrative_approved_display(preview: dict) -> dict:
+    narrative = preview.get("approved_narrative")
+    return narrative if isinstance(narrative, dict) else {}
+
+
+def fetch_daily_coach_narrative_preview(
+    user_id: int, lane_key: str = "deterministic"
+) -> dict | None:
+    params = build_daily_coach_narrative_preview_params(lane_key)
+    errors = st.session_state.daily_coach_narrative_preview_error_by_user
+
+    try:
+        response = api_get(
+            f"/daily-coach/{user_id}/narrative-preview/debug",
+            params=params,
+            request_timeout=daily_coach_narrative_request_timeout(lane_key),
+        )
+    except requests.RequestException as exc:
+        errors[user_id] = extract_api_error_message(exc)
+        return None
+
+    errors.pop(user_id, None)
+    return response.get("daily_coach_narrative_preview") or {}
+
+
+def render_daily_coach_narrative_preview_status(preview: dict) -> None:
+    status_rows = [
+        {"Status": "Provider attempted", "Value": preview.get("provider_attempted")},
+        {"Status": "Selected provider", "Value": preview.get("selected_provider")},
+        {"Status": "Selected model", "Value": preview.get("selected_model")},
+        {"Status": "Parse success", "Value": preview.get("parse_success")},
+        {"Status": "Validation success", "Value": preview.get("validation_success")},
+        {"Status": "Fallback used", "Value": preview.get("fallback_used")},
+        {"Status": "Fallback reason", "Value": preview.get("fallback_reason")},
+        {"Status": "Latency ms", "Value": preview.get("latency_ms")},
+    ]
+    st.dataframe(pd.DataFrame(status_rows), width="stretch", hide_index=True)
+
+
+def render_daily_coach_narrative_context_summary(preview: dict) -> None:
+    context_summary = preview.get("context_summary") or {}
+    summary_rows = [
+        {
+            "Context": "Approved facts",
+            "Count": context_summary.get("approved_facts_count"),
+            "Summary": ", ".join(context_summary.get("approved_facts_summary") or []),
+        },
+        {
+            "Context": "Approved limitations",
+            "Count": context_summary.get("approved_limitations_count"),
+            "Summary": ", ".join(
+                context_summary.get("approved_limitations_summary") or []
+            ),
+        },
+        {
+            "Context": "Forbidden claim categories",
+            "Count": context_summary.get("forbidden_claim_categories_count"),
+            "Summary": ", ".join(
+                context_summary.get("forbidden_claim_categories_summary") or []
+            ),
+        },
+    ]
+    st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
+
+
+def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
+    if not st.session_state.get("developer_mode", False):
+        return
+
+    with st.expander("Developer Preview: Daily Coach Narrative", expanded=False):
+        st.caption(
+            "Developer-only, manual, fallback-first preview. Provider output is "
+            "shown only after backend parse and validation pass."
+        )
+
+        fallback_preview = fetch_daily_coach_narrative_preview(user_id)
+        if fallback_preview:
+            st.write("**Deterministic fallback**")
+            st.info(daily_coach_narrative_fallback_display(fallback_preview))
+        else:
+            fallback_error = (
+                st.session_state.daily_coach_narrative_preview_error_by_user.get(
+                    user_id
+                )
+            )
+            st.warning(
+                "Daily Coach Narrative fallback preview is not available: "
+                f"{fallback_error or 'Unknown error'}"
+            )
+
+        lane_label = st.selectbox(
+            "Narrative lane",
+            options=daily_coach_narrative_lane_labels(),
+            key=f"daily_coach_narrative_lane_{user_id}",
+            help="Manual Developer Mode preview only. This does not change normal Today UI.",
+        )
+        lane_key = daily_coach_narrative_lane_key_from_label(lane_label)
+        st.caption(daily_coach_narrative_lane_description(lane_key))
+
+        lane_warning = daily_coach_narrative_lane_warning(lane_key)
+        if lane_warning:
+            st.warning(lane_warning)
+
+        if st.button(
+            "Run selected narrative preview",
+            key=f"run_daily_coach_narrative_preview_{user_id}",
+        ):
+            preview = fetch_daily_coach_narrative_preview(user_id, lane_key)
+            if preview:
+                st.session_state.daily_coach_narrative_preview_by_user[user_id] = (
+                    preview
+                )
+            else:
+                st.session_state.daily_coach_narrative_preview_by_user.pop(
+                    user_id, None
+                )
+
+        preview_error = (
+            st.session_state.daily_coach_narrative_preview_error_by_user.get(user_id)
+        )
+        preview = st.session_state.daily_coach_narrative_preview_by_user.get(user_id)
+
+        if preview_error:
+            st.warning(f"Narrative preview call failed safely: {preview_error}")
+
+        if not preview:
+            return
+
+        approved_narrative = daily_coach_narrative_approved_display(preview)
+        fallback_used = preview.get("fallback_used")
+
+        if approved_narrative and not fallback_used:
+            st.success("Approved provider narrative")
+            st.write(approved_narrative.get("coach_note") or "No coach note returned.")
+            key_takeaway = approved_narrative.get("key_takeaway")
+            if key_takeaway:
+                st.write(f"**Key takeaway:** {key_takeaway}")
+            recommended_focus = approved_narrative.get("recommended_focus")
+            if recommended_focus:
+                st.write(f"**Recommended focus:** {recommended_focus}")
+            confidence_language = approved_narrative.get("confidence_language")
+            if confidence_language:
+                st.caption(confidence_language)
+        else:
+            st.info(daily_coach_narrative_fallback_display(preview))
+
+        st.write("**Public-safe preview status**")
+        render_daily_coach_narrative_preview_status(preview)
+
+        with st.expander("Public-safe context summary", expanded=False):
+            render_daily_coach_narrative_context_summary(preview)
+
+
 def render_daily_next_action_panel(user_id: int) -> None:
     st.subheader("Next Best Action")
     st.caption(
@@ -4446,6 +4702,7 @@ def render_today_section(user_id: int) -> None:
         render_daily_coach_synthesis_card(user_id)
         with st.expander("Daily Grounded Recommendation", expanded=True):
             render_daily_recommendation_snapshot(user_id)
+        render_daily_coach_narrative_developer_panel(user_id)
 
     st.divider()
 

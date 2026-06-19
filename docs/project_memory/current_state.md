@@ -509,3 +509,30 @@ The design now explicitly supports four lanes:
 The next implementation should be `Daily Coach Narrative Today Developer Panel v1` with a model-lane selector from the beginning. It must not be implemented as `qwen3:8b` only.
 
 Boundaries remain unchanged: no normal Today UI integration, no synchronous provider call from Today, no automatic background generation, no persistence/cache, no report integration, no model promotion, no direct_ollama default change, no validator loosening, and no deterministic fallback weakening.
+
+## Daily Coach Narrative Today Developer Panel v1
+
+Daily Coach Narrative Today Developer Panel v1 is implemented pending QA.
+
+Implementation status: `DAILY_COACH_NARRATIVE_TODAY_DEVELOPER_PANEL_V1_IMPLEMENTED_PENDING_QA`.
+
+Implemented:
+
+- Streamlit Developer Mode-only panel: `Developer Preview: Daily Coach Narrative`
+- manual model-lane selector with all accepted lanes
+- deterministic fallback lane
+- `qwen3:8b` fast preview lane
+- `qwen3:32b` premium preview lane
+- `qwen2.5:3b` baseline/regression lane
+- manual trigger only
+- fallback-first display
+- approved provider narrative display only when backend parse + validation pass
+- curated public-safe status and context summary
+
+The panel uses the accepted backend debug endpoint:
+
+```text
+GET /daily-coach/{user_id}/narrative-preview/debug
+```
+
+No normal Today UI integration occurs. The panel is hidden when Developer Mode is disabled. No provider generation happens automatically on normal Today page load. No report integration, persistence, model promotion, provider default change, validator change, or deterministic fallback weakening is introduced.

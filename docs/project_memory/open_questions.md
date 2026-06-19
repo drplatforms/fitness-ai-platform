@@ -306,3 +306,26 @@ Still not approved:
 - model promotion
 - qwen3 production approval
 - direct_ollama default change
+
+## Daily Coach Narrative Today Developer Panel v1
+
+Open for QA:
+
+- Does the panel remain hidden when Developer Mode is off?
+- Does normal Today user view remain unchanged?
+- Does deterministic fallback appear immediately in the Developer Mode panel?
+- Does each provider lane require manual trigger only?
+- Does the `qwen3:32b` premium lane warning communicate long runtime clearly enough?
+- Do qwen3:8b, qwen3:32b, and qwen2.5:3b lanes either display approved output after validation or keep fallback safely?
+- Are selected provider/model, fallback status, parse success, validation success, and latency shown clearly enough for QA?
+- Is the curated context summary sufficient, or should future Developer Mode add more public-safe metadata?
+
+Still not approved:
+
+- normal Today UI narrative card
+- automatic background generation
+- persistence/cache
+- report integration
+- model promotion
+- qwen3 production approval
+- direct_ollama default change

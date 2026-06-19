@@ -18,19 +18,18 @@ Final accepted status: `DAILY_NEXT_ACTION_PANEL_V1_ACCEPTED`.
 
 The first product-loop slice added a deterministic backend next-action service, `GET /daily-coach/{user_id}/next-action`, and a Today-page action card. Backend owns the action decision; Streamlit renders one primary action; no provider output controls navigation or invents food, calorie, macro, workout, fatigue, or recovery claims.
 
-## Current planning milestone
+## Current implementation milestone
 
-`Catalog Expansion & Curation v1` is planned and pending Architecture acceptance.
+`Food Catalog Expansion v1` is implemented and pending Architecture/QA review.
 
-Planning status: `CATALOG_EXPANSION_CURATION_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+Implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
 
-The goal is to design deterministic, curated food and exercise catalog expansion so the daily action loop becomes easier to use in real life without adding RAG, embeddings, scraping, AI-generated production catalog entries, meal planning, or provider behavior changes.
+Catalog Expansion & Curation v1 planning was accepted, and Food Catalog Expansion v1 was approved as the first implementation slice. The implementation expands the starter canonical food catalog in a deterministic, curated, inspectable way so the Daily Next Action Panel food-logging path becomes more useful without adding RAG, embeddings, scraping, AI-generated production catalog entries, meal planning, or provider behavior changes.
 
 ## Next recommended milestone options
 
-- Catalog Expansion & Curation v1 architecture acceptance.
-- Food Catalog Expansion v1.
-- Exercise Catalog Expansion v1.
+- Food Catalog Expansion v1 Architecture/QA acceptance.
+- Exercise Catalog Expansion v1 planning/implementation.
 - Nutrition Explanation Value-Aware Copy v1.
 - Demo / Deployment Packaging Design v1.
 
@@ -110,11 +109,13 @@ The panel remains backend-truth-owned. It surfaces one primary action, a short b
 
 ## Current catalog direction
 
-Catalog Expansion & Curation v1 is the current planning milestone.
+Catalog Expansion & Curation v1 planning was accepted. Food Catalog Expansion v1 is now implemented pending review.
 
 The app can now tell the user to log food or review a workout; the next product-quality bottleneck is whether those actions are easy and useful. Catalog expansion should remain deterministic, curated, inspectable, testable, and backend-owned.
 
-Current planning audits record 132 starter canonical foods and 178 curated exercise entries in the code snapshot. Food Catalog Expansion v1 is recommended first because it directly improves the “Log a meal or snack” daily action. Exercise Catalog Expansion v1 is recommended second to improve workout variety, equipment matching, substitutions, and recovery-aware options.
+Food Catalog Expansion v1 increases the starter canonical food catalog from 132 to 202 curated entries. The 70-entry expansion covers practical lean proteins, dairy/eggs, grains/starches, legumes, fruits, vegetables, fats/seeds, and simple convenience foods. Existing per-100g nutrient storage, manually curated source policy, Moderate confidence, default grams, aliases, and canonical search/logging behavior are preserved.
+
+Exercise Catalog Expansion v1 remains recommended second to improve workout variety, equipment matching, substitutions, and recovery-aware options.
 
 Do not add RAG, embeddings, scraping, AI-generated production catalog entries, meal planning, unreviewed food dumps, or clinical nutrition claims.
 

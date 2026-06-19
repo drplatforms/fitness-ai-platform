@@ -14,6 +14,7 @@ from services.food_normalization_service import (
     get_raw_food_source_record,
     get_source_links_for_canonical_food,
     link_canonical_food_to_source,
+    normalize_food_name,
     search_canonical_foods,
     seed_starter_canonical_foods,
 )
@@ -250,7 +251,7 @@ def test_starter_canonical_seed_is_expanded_and_idempotent(tmp_path, monkeypatch
 
     assert len(first_seed) == len(STARTER_CANONICAL_FOODS)
     assert len(second_seed) == len(STARTER_CANONICAL_FOODS)
-    assert len(first_seed) >= 120
+    assert len(first_seed) >= 200
 
     conn = database.get_connection()
     cursor = conn.cursor()
@@ -344,6 +345,75 @@ def test_expanded_seed_supports_common_daily_food_aliases(tmp_path, monkeypatch)
             "Carbohydrate",
             "Fat",
         }
+
+
+def test_food_catalog_expansion_v1_supports_practical_new_foods(
+    tmp_path,
+    monkeypatch,
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    seed_starter_canonical_foods()
+
+    expected_names_by_query = {
+        "rotisserie chicken": "Chicken, Rotisserie, Meat Only",
+        "canned chicken": "Chicken, Canned in Water",
+        "tofu": "Tofu, Firm",
+        "skyr": "Skyr, Plain Nonfat",
+        "oatmeal cooked": "Oatmeal, Cooked",
+        "farro": "Farro, Cooked",
+        "navy beans": "Navy Beans, Cooked",
+        "kiwi": "Kiwi",
+        "mixed vegetables": "Mixed Vegetables, Frozen, Cooked",
+        "cauliflower rice": "Cauliflower Rice",
+        "pumpkin seeds": "Pumpkin Seeds",
+        "marinara": "Marinara Sauce",
+    }
+
+    for query, expected_name in expected_names_by_query.items():
+        results = search_canonical_foods(query)
+        assert results, query
+        assert results[0].canonical_food.display_name == expected_name
+        assert results[0].matched_on in {"display_name", "alias"}
+        nutrients = get_nutrients_for_canonical_food(results[0].canonical_food.id)
+        assert {nutrient.nutrient_name for nutrient in nutrients} >= {
+            "Calories",
+            "Protein",
+            "Carbohydrate",
+            "Fat",
+        }
+
+
+def test_food_catalog_expansion_v1_seed_integrity_is_reviewable():
+    normalized_food_keys = {
+        (
+            normalize_food_name(seed_food["display_name"]),
+            seed_food["food_type"],
+        )
+        for seed_food in STARTER_CANONICAL_FOODS
+    }
+
+    assert len(STARTER_CANONICAL_FOODS) >= 200
+    assert len(normalized_food_keys) == len(STARTER_CANONICAL_FOODS)
+
+    required_nutrients = {"Calories", "Protein", "Carbohydrate", "Fat"}
+    allowed_food_types = {"raw", "cooked", "prepared", "branded", "generic"}
+
+    for seed_food in STARTER_CANONICAL_FOODS:
+        assert seed_food["display_name"].strip()
+        assert seed_food["food_type"] in allowed_food_types
+        assert seed_food["aliases"]
+        assert seed_food["search_priority"] >= 0
+        assert set(seed_food["nutrients_per_100g"]) >= required_nutrients
+
+        calories = seed_food["nutrients_per_100g"]["Calories"][0]
+        protein = seed_food["nutrients_per_100g"]["Protein"][0]
+        carbs = seed_food["nutrients_per_100g"]["Carbohydrate"][0]
+        fat = seed_food["nutrients_per_100g"]["Fat"][0]
+
+        assert 0 <= calories <= 900, seed_food["display_name"]
+        assert 0 <= protein <= 100, seed_food["display_name"]
+        assert 0 <= carbs <= 100, seed_food["display_name"]
+        assert 0 <= fat <= 100, seed_food["display_name"]
 
 
 def test_existing_nutrition_logging_remains_stable(tmp_path, monkeypatch):

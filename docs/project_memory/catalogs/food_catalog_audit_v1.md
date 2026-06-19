@@ -4,7 +4,7 @@ Last updated: 2026-06-18
 
 ## Status
 
-`CATALOG_EXPANSION_CURATION_V1_PLANNING_AUDIT`
+`FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`
 
 This is a planning audit only. It does not add foods, change nutrition target formulas, change provider behavior, or approve public nutrition claims.
 
@@ -12,14 +12,15 @@ This is a planning audit only. It does not add foods, change nutrition target fo
 
 The app currently has a curated starter canonical food catalog seeded through `services/food_normalization_service.py` and `scripts/seed_canonical_foods.py`.
 
-Current starter count observed in the code snapshot:
+Current starter count after Food Catalog Expansion v1:
 
-- canonical starter foods: 132
+- canonical starter foods: 202
+- added in Food Catalog Expansion v1: 70
 - food types represented:
-  - generic: 69
-  - cooked: 29
-  - prepared: 24
-  - raw: 10
+  - generic: 88
+  - cooked: 57
+  - prepared: 41
+  - raw: 16
 
 Current canonical food infrastructure includes:
 
@@ -193,3 +194,43 @@ Reason:
 The Daily Next Action Panel often asks the user to log food. Better canonical foods will immediately improve the usefulness of that action.
 
 Expected Food Catalog Expansion v1 should be a curated, reviewed seed expansion with tests around search, aliases, nutrient completeness, and duplicate prevention.
+
+
+## Food Catalog Expansion v1 implementation summary
+
+Food Catalog Expansion v1 adds 70 curated canonical food entries across practical daily logging categories:
+
+- lean proteins and seafood
+- eggs and dairy
+- grains and starches
+- legumes
+- fruits
+- vegetables
+- fats, nuts, and seeds
+- simple convenience foods and sauces
+
+The implementation intentionally keeps the current schema and curation model:
+
+- nutrients are stored per 100g
+- required macro nutrients remain Calories, Protein, Carbohydrate, and Fat
+- source policy remains `manually_curated` for seeded entries
+- confidence remains `Moderate` for seeded entries
+- default unit remains grams
+- default grams remain 100g
+- aliases are explicit and reviewable
+
+The implementation does not add meal planning, brand-heavy foods, scraping, RAG, embeddings, AI-generated production entries, nutrition target formula changes, provider/report behavior changes, or Streamlit UI changes.
+
+## Food Catalog Expansion v1 QA focus
+
+QA should verify:
+
+- starter seed count is 202
+- canonical seed remains idempotent
+- new foods are searchable by useful aliases
+- new foods can be logged by canonical food id
+- calories/protein/carbs/fat are present and non-negative
+- macro values remain within sane per-100g ranges
+- Nutrition Target Display still reflects logged canonical foods
+- Daily Next Action Panel remains functional
+- provider/report semantics remain unchanged

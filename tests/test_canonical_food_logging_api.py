@@ -226,6 +226,43 @@ def test_expanded_canonical_food_can_be_logged_and_counted(tmp_path, monkeypatch
     assert actuals["logged_fat"] == 0.8
 
 
+def test_food_catalog_expansion_v1_new_canonical_food_can_be_logged(
+    tmp_path,
+    monkeypatch,
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    seed_starter_canonical_foods()
+    search_response = _client().get("/foods/canonical/search?q=skyr")
+    assert search_response.status_code == 200
+    skyr_id = search_response.json()["results"][0]["canonical_food_id"]
+
+    response = _client().post(
+        "/nutrition/1/log-canonical",
+        json={
+            "canonical_food_id": skyr_id,
+            "grams": 100,
+            "entry_date": "2026-06-05",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["display_name"] == "Skyr, Plain Nonfat"
+    assert response.json()["nutrient_summary"] == {
+        "calories": 63.0,
+        "protein_g": 11.0,
+        "carbohydrate_g": 4.0,
+        "fat_g": 0.2,
+    }
+
+    target_response = _client().get("/nutrition/1/target-vs-actual?date=2026-06-05")
+    assert target_response.status_code == 200
+    actuals = target_response.json()["nutrition_actuals"]
+    assert actuals["logged_calories"] == 63.0
+    assert actuals["logged_protein"] == 11.0
+    assert actuals["logged_carbs"] == 4.0
+    assert actuals["logged_fat"] == 0.2
+
+
 def test_existing_raw_source_nutrition_log_behavior_remains_stable(
     tmp_path,
     monkeypatch,

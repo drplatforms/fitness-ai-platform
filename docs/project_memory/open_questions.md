@@ -21,24 +21,25 @@ Open after v1 implementation:
 
 ## Catalog Expansion & Curation
 
-Planning status: `CATALOG_EXPANSION_CURATION_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+Catalog Expansion & Curation v1 planning accepted Food Catalog Expansion v1 as the first implementation slice.
 
-Resolved in planning draft:
+Resolved through Food Catalog Expansion v1 implementation:
 
-- Current starter inventory is documented at planning level: 132 canonical starter foods and 178 curated exercise entries observed in the code snapshot.
-- Food Catalog Expansion v1 is recommended as the first implementation slice because Daily Next Action Panel v1 often routes users to food logging.
-- Exercise Catalog Expansion v1 is recommended second because workout variety, equipment matching, substitutions, and recovery suitability are the next training-loop usability bottlenecks.
-- Catalogs should remain deterministic, curated, inspectable, testable, and backend-owned.
-- RAG, embeddings, scraping, AI-generated production entries, meal planning, and unreviewed catalog dumps remain out of scope.
+- Food Catalog Expansion v1 starts with curated seed entries rather than a schema migration.
+- The starter canonical food catalog is expanded from 132 to 202 entries.
+- New entries keep current per-100g nutrient storage, default grams, source policy, confidence, and alias infrastructure.
+- The implementation stays deterministic, manually curated, reviewable, and backend-owned.
+- Fiber and sodium remain optional/future nutrients rather than required v1 fields.
+- Brand-heavy, highly variable mixed foods, scraping, RAG, embeddings, AI-generated production entries, and meal planning remain out of scope.
 
-Open for Architecture review:
+Open after Food Catalog Expansion v1:
 
-- Should Food Catalog Expansion v1 add only new seed entries, or also add explicit first-class category fields?
-- Should default serving sizes remain optional metadata or become required for quick logging?
-- Should fiber and sodium be required for new foods or remain optional v1 nutrients?
+- Should a future schema migration add first-class category fields beyond `food_type`?
+- Should future quick-log UX use default serving sizes as shortcuts, or continue requiring explicit grams?
+- Should Food Catalog Expansion v2 add fiber and sodium for a smaller high-confidence subset?
+- Which new foods should be prioritized from actual user logging misses after QA?
 - Should Exercise Catalog Expansion v1 require schema changes for joint stress, recovery suitability, substitution group, setup notes, and safety notes, or start with deterministic constants/docs first?
-- What is the target size for curated Food Catalog Expansion v1 and Exercise Catalog Expansion v1 before QA?
-- Should catalog additions be split by user-relevant home-gym and food-logging priorities rather than broad generic completeness?
+- What acceptance threshold should be used before considering the food catalog broad enough for demo/recruiter walkthroughs?
 
 ## Product voice
 

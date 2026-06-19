@@ -1,8 +1,8 @@
 # Catalog Expansion & Curation v1 Planning Review
 
-Status: PLANNED / READY FOR ARCHITECTURE REVIEW
+Status: PLAN_ACCEPTED / FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA
 
-Planning status: `CATALOG_EXPANSION_CURATION_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`
+Planning status: `CATALOG_EXPANSION_CURATION_V1_PLAN_ACCEPTED`
 
 ## Decision request
 
@@ -107,3 +107,10 @@ Architecture can accept this plan if it agrees that:
 ## Expected accepted status
 
 `CATALOG_EXPANSION_CURATION_V1_PLAN_ACCEPTED`
+
+
+## Food Catalog Expansion v1 implementation note
+
+Architecture accepted this planning milestone and approved Food Catalog Expansion v1 as the first implementation slice. The first slice expands the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic curation, per-100g nutrient storage, manually curated source policy, Moderate confidence, canonical aliases, and existing logging/search behavior.
+
+Implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.

@@ -94,4 +94,8 @@ Expected ownership:
 - Streamlit may later render improved search/logging/workout options.
 - AI/provider output must not generate production catalog entries.
 
-Current planning status: `CATALOG_EXPANSION_CURATION_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+Catalog Expansion & Curation v1 planning was accepted. Food Catalog Expansion v1 is implemented pending Architecture/QA review.
+
+Food Catalog Expansion v1 increases the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic canonical search/logging behavior and provider/report boundaries.
+
+Current implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.

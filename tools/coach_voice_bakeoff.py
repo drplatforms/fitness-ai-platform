@@ -10,6 +10,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from services.coach_voice_bakeoff_service import (  # noqa: E402
+    all_context_ids,
     build_default_coach_voice_contexts,
     generate_markdown_report,
     run_coach_voice_bakeoff,
@@ -76,7 +77,7 @@ def main() -> int:
 
 def _selected_context_ids(args, contexts_by_id: dict) -> list[str]:
     if args.all_contexts:
-        return sorted(contexts_by_id)
+        return all_context_ids()
     if args.contexts:
         missing = [
             context_id

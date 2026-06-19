@@ -201,3 +201,34 @@ For code/tooling changes:
 ## What a new AI assistant should read first
 
 Read `docs/project_memory/README.md`, then this file, then the role-specific handoff under `docs/project_memory/handoffs/`.
+
+## Coach Voice Contract Tightening v1
+
+Coach Voice Contract Tightening v1 is implemented on `feature/coach-voice-contract-tightening-v1` pending Architecture/QA review.
+
+Implementation status: `COACH_VOICE_CONTRACT_TIGHTENING_V1_IMPLEMENTED_PENDING_QA`.
+
+This milestone tightens the offline coach voice bakeoff prompt/schema packaging so local models are less likely to echo schema metadata or miss the required answer object. The prompt now separates output instructions, example answer format, approved context, approved facts, and forbidden claims without exposing raw JSON Schema metadata.
+
+The strict parser and validators remain unchanged in authority:
+
+- exact required keys
+- strict JSON-only output
+- exact `recommended_focus` matching
+- exact approved fact matching
+- forbidden claim rejection
+- invented numeric token rejection
+- generic filler rejection
+- compact coach-note validation
+
+The generated bakeoff report now includes model-level summary metrics and failure categories for all-context QA.
+
+No model is promoted. qwen3 remains not approved. No Today, Streamlit, report, production provider, catalog, workout generation, nutrition formula, fallback, or provider gate behavior changes in this milestone.
+
+Required runtime QA should run all five context packs with:
+
+```powershell
+python tools\coach_voice_bakeoff.py --all-contexts --model qwen2.5:3b --model qwen3:8b --model qwen3:14b --model qwen3:30b-a3b --model qwen3:32b
+```
+
+If `qwen3:32b` is too slow, it may run separately as the offline quality reference.

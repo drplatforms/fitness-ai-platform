@@ -102,3 +102,27 @@ No model is promoted by the bakeoff itself.
 ## Developer workflow
 
 - Should the new Windows validation helper eventually be mirrored with a Linux runtime-QA helper?
+
+## Coach Voice Contract Tightening v1 QA questions
+
+Status: PENDING RUNTIME QA
+
+Questions for the all-context bakeoff run:
+
+- Does the tightened contract reduce schema echoing for `qwen2.5:3b`, `qwen3:14b`, or `qwen3:30b-a3b`?
+- Does `qwen3:8b` remain the best practical evaluation-only candidate across all five contexts?
+- Does `qwen3:32b` remain the best offline / chores-mode quality reference across all five contexts?
+- Does `qwen3:14b` improve enough to justify Practical Model Comparison v2?
+- Does `qwen3:30b-a3b` remain incompatible with the strict JSON-only contract, or does the tightened prompt help?
+- Are failure categories clearer enough to guide a possible Coach Voice Contract Tightening v2?
+- Is the next safe milestone Daily Coach Narrative v1 Planning, Practical Model Comparison v2, Offline Report Voice Mode v1 Planning, or another contract-tightening slice?
+
+Non-negotiable constraints:
+
+- no model promotion
+- no qwen3 production approval
+- no Today integration
+- no report integration
+- no validator loosening
+- no provider path changes
+- no direct_ollama default change

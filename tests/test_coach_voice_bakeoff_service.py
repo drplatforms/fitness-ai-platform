@@ -15,6 +15,7 @@ from models.coach_voice_bakeoff_models import (
     COACH_VOICE_VALIDATION_STATUS_REJECTED,
 )
 from services.coach_voice_bakeoff_service import (
+    all_context_ids,
     build_coach_voice_prompt,
     build_default_coach_voice_contexts,
     generate_markdown_report,
@@ -51,6 +52,13 @@ def test_default_contexts_include_starter_users_and_contexts():
         "user_102_daily_log_food",
         "user_105_data_quality_limited",
     }
+    assert all_context_ids() == [
+        "user_101_recovery_limited",
+        "user_102_daily_log_food",
+        "user_105_data_quality_limited",
+        "user_102_nutrition_target_status",
+        "user_102_workout_preview",
+    ]
     assert contexts["user_101_recovery_limited"].user_id == 101
     assert contexts["user_102_daily_log_food"].user_id == 102
     assert contexts["user_105_data_quality_limited"].user_id == 105
@@ -76,15 +84,23 @@ def test_cli_direct_entrypoint_help_runs_from_repo_root_without_pythonpath():
     assert "Run the offline bounded coach voice bakeoff" in result.stdout
 
 
-def test_prompt_contains_schema_approved_facts_and_exact_focus_rule():
+def test_prompt_tightening_separates_contract_from_approved_context():
     context = build_default_coach_voice_contexts()["user_102_daily_log_food"]
 
     prompt = build_coach_voice_prompt(context)
 
-    assert "Return strict JSON only" in prompt
-    assert "recommended_focus must exactly match" in prompt
+    assert "Return one JSON object only" in prompt
+    assert "Do not return the schema" in prompt
+    assert "recommended_focus must exactly equal" in prompt
     assert "Daily next action: Log a meal or snack" in prompt
+    assert "APPROVED FACTS" in prompt
+    assert "EXAMPLE ANSWER FORMAT ONLY" in prompt
     assert "used_approved_facts" in prompt
+    assert '"schema"' not in prompt
+    assert '"type"' not in prompt
+    assert '"properties"' not in prompt
+    assert '"required"' not in prompt
+    assert '"additionalProperties"' not in prompt
 
 
 def test_parse_accepts_strict_json_candidate():
@@ -110,6 +126,20 @@ def test_parse_rejects_missing_required_field():
 
     assert result.parse_status == COACH_VOICE_PARSE_STATUS_FAILED
     assert "missing" in (result.error or "")
+
+
+def test_parse_rejects_schema_echo_object():
+    schema_echo = {
+        "type": "object",
+        "properties": {"coach_note": {"type": "string"}},
+        "required": ["coach_note"],
+        "additionalProperties": False,
+    }
+
+    result = parse_coach_voice_candidate(json.dumps(schema_echo))
+
+    assert result.parse_status == COACH_VOICE_PARSE_STATUS_FAILED
+    assert "extra" in (result.error or "")
 
 
 def test_validation_accepts_grounded_safe_output():
@@ -209,7 +239,7 @@ def test_run_candidate_returns_fail_for_parse_error():
     assert result.representative_rejection_reason
 
 
-def test_run_bakeoff_and_markdown_report_include_model_context_and_decision():
+def test_run_bakeoff_and_markdown_report_include_summary_matrix_and_decision():
     contexts = [build_default_coach_voice_contexts()["user_102_daily_log_food"]]
 
     def fake_generate(_model_name, _prompt, _timeout_seconds, _ollama_base_url):
@@ -223,6 +253,10 @@ def test_run_bakeoff_and_markdown_report_include_model_context_and_decision():
     report = generate_markdown_report(results)
 
     assert len(results) == 2
+    assert "## Model summary" in report
+    assert "## Context matrix" in report
+    assert "Parse pass" in report
+    assert "Failure categories" in report
     assert "qwen2.5:3b" in report
     assert "qwen3:14b" in report
     assert "user_102_daily_log_food" in report

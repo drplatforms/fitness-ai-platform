@@ -12,36 +12,54 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Daily Coach Narrative Offline Provider Runtime QA v1` was accepted with model findings and merged to main.
+`Daily Coach Narrative Developer Preview v1` was accepted and merged to `main`.
 
-Final accepted status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
+Final accepted status: `DAILY_COACH_NARRATIVE_DEVELOPER_PREVIEW_V1_ACCEPTED`.
 
-Accepted model findings:
+Accepted developer/debug endpoint:
 
-- `qwen3:8b` passed users 101, 102, and 105 and remains the best practical Daily Coach Narrative evaluation candidate. It is not production-approved.
-- `qwen2.5:3b` passed as a safe compliance baseline but produced meta/process copy and is not recommended for developer preview voice without validator tightening. It is not production-approved.
-- `qwen3:32b` passed users 102 and 105 but timed out on user 101; it remains an optional offline quality reference, not a practical preview model. It is not production-approved.
+```text
+GET /daily-coach/{user_id}/narrative-preview/debug
+```
 
-No model is production-approved. No Today, Streamlit, report, provider, catalog, workout, or nutrition runtime path was changed.
+Accepted behavior:
+
+- default path remains deterministic fallback only
+- provider path is explicit `direct_ollama` opt-in only
+- approved provider narrative is returned only after parse + validation success
+- rejected/unparsable/provider-failed output falls back deterministically
+- rejected provider text, raw prompts, raw provider payloads, raw validation internals, stack traces, and hidden architecture language are not exposed
+
+No normal Today UI integration occurred. No Streamlit normal surface integration occurred. No report integration occurred. No provider narrative persistence occurred. No model was production-approved.
 
 ## Current implementation milestone
 
-`Daily Coach Narrative Provider Contract Tightening v1.1` is implemented pending QA/runtime review.
+`Daily Coach Narrative Async Today Preview Design v1` is complete and ready for Architecture review.
 
-Implementation status: `DAILY_COACH_NARRATIVE_PROVIDER_CONTRACT_TIGHTENING_V1_1_IMPLEMENTED_PENDING_QA`.
+Implementation status: `DAILY_COACH_NARRATIVE_ASYNC_TODAY_PREVIEW_DESIGN_V1_COMPLETE`.
 
-This milestone adds a narrow product-copy validator tightening pass for Daily Coach Narrative provider output. It rejects meta/process/internal architecture language in model-generated user-facing narrative fields before any Developer Preview surface can display provider copy.
+Architecture has made the Product Readiness call: Daily Coach Narrative is not approved for synchronous normal Today UI integration because qwen3:8b latency around 40-50 seconds is not acceptable for blocking Today page load.
 
-The tightened validator applies to `coach_note`, `key_takeaway`, `confidence_language`, and `avoided_claims`. It intentionally does not reject canonical parser field names such as `used_approved_facts` solely because the structured output contract contains technical names.
+The design defines the approved bridge pattern:
 
-The offline QA prompt example was also cleaned up so it no longer demonstrates the rejected qwen2.5-style phrase pattern.
+```text
+Today page loads immediately
+→ deterministic Daily Next Action remains primary
+→ deterministic fallback coach note appears immediately
+→ provider narrative may be generated only through async/developer-gated preview
+→ approved provider narrative may replace fallback only after parse + validation success
+→ failed or rejected provider output keeps fallback
+→ provider can be disabled without breaking Today
+```
 
-No model is called by normal product paths. No model is promoted. No Today, Streamlit, report, or production provider integration occurs in this milestone.
+Design recommendation: implement `Daily Coach Narrative Today Developer Panel v1` next, using the accepted backend debug endpoint with a manual Developer Mode trigger. Do not implement normal Today UI narrative integration yet.
 
 ## Next recommended milestone options
 
-- Daily Coach Narrative Provider Contract Tightening v1.1 runtime QA/Architecture review.
-- Daily Coach Narrative Developer Preview v1 after v1.1 acceptance.
+- Daily Coach Narrative Async Today Preview Design v1 Architecture review/acceptance.
+- AI Coding Workflow Supercharger v1.
+- Daily Coach Narrative Today Developer Panel v1 after design acceptance.
+- Daily Coach Narrative Async Preview Backend v1 if Architecture wants backend-first status helpers.
 - Logging UX Speed & Friction Reduction v1.
 - Nutrition Explanation Value-Aware Copy v1.
 
@@ -421,3 +439,73 @@ Recommended local runtime QA:
 Invoke-RestMethod "http://localhost:8000/daily-coach/102/narrative-preview/debug"
 Invoke-RestMethod "http://localhost:8000/daily-coach/102/narrative-preview/debug?provider=direct_ollama&model=qwen3:8b&date=2026-06-19&timeout_seconds=180"
 ```
+
+
+## Daily Coach Narrative Developer Preview v1 Closeout
+
+Daily Coach Narrative Developer Preview v1 is accepted and merged to `main`.
+
+Final accepted status: `DAILY_COACH_NARRATIVE_DEVELOPER_PREVIEW_V1_ACCEPTED`.
+
+Accepted endpoint:
+
+```text
+GET /daily-coach/{user_id}/narrative-preview/debug
+```
+
+Accepted behavior:
+
+- deterministic fallback by default
+- explicit `direct_ollama` provider opt-in only
+- approved narrative returned only after parse + validation success
+- fallback returned on provider disabled, unavailable, timed out, parse-failed, or validation-failed paths
+- rejected provider text and raw internals are not exposed
+
+Accepted model findings:
+
+- `qwen3:8b`: developer-preview approved as evaluation candidate only; not production-approved.
+- `qwen2.5:3b`: developer-preview baseline only; not production-approved.
+- `qwen3:32b`: optional offline/debug reference only due to latency; not production-approved.
+
+Normal Today UI integration remains not approved.
+
+## Daily Coach Narrative Async Today Preview Design v1
+
+Daily Coach Narrative Async Today Preview Design v1 is complete and ready for Architecture review.
+
+Implementation status: `DAILY_COACH_NARRATIVE_ASYNC_TODAY_PREVIEW_DESIGN_V1_COMPLETE`.
+
+Design artifacts:
+
+- `docs/project_memory/architecture/daily_coach_narrative_async_today_preview_v1.md`
+- `docs/project_memory/milestones/daily_coach_narrative_async_today_preview_design_v1.md`
+- `docs/project_memory/reviews/daily_coach_narrative_product_readiness_review_v1.md`
+
+Design decision:
+
+- Do not block Today on qwen3:8b.
+- Do not proceed directly to normal Today UI integration.
+- Today must load deterministic fallback immediately.
+- First Today-adjacent implementation should be manual and developer-gated.
+- Provider output may display only after parse + validation success.
+- Failed provider output keeps deterministic fallback.
+- No provider narrative is persisted as user-facing history in the first Today preview.
+
+Recommended next implementation after acceptance: `Daily Coach Narrative Today Developer Panel v1`.
+
+## Daily Coach Narrative Multi-Tier Async Today Preview Design v1 Addendum
+
+Architecture accepted the docs-only async Today preview design with a required multi-tier model-lane addendum.
+
+Revised accepted status: `DAILY_COACH_NARRATIVE_MULTI_TIER_ASYNC_TODAY_PREVIEW_DESIGN_V1_ACCEPTED_WITH_ADDENDUM`.
+
+The design now explicitly supports four lanes:
+
+- deterministic fallback: immediate/default Today-safe lane with no provider call
+- `qwen3:8b`: fast developer-preview lane for practical runtime QA and lower-latency experimentation
+- `qwen3:32b`: premium-quality developer-preview lane for manual long-running generation and future better-hardware/precompute exploration
+- `qwen2.5:3b`: small baseline/regression lane for compliance and validator sanity checks
+
+The next implementation should be `Daily Coach Narrative Today Developer Panel v1` with a model-lane selector from the beginning. It must not be implemented as `qwen3:8b` only.
+
+Boundaries remain unchanged: no normal Today UI integration, no synchronous provider call from Today, no automatic background generation, no persistence/cache, no report integration, no model promotion, no direct_ollama default change, no validator loosening, and no deterministic fallback weakening.

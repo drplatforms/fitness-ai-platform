@@ -51,6 +51,22 @@ Open after catalog v1 slices:
 - Should workout generation begin using explicit recovery-suitability tags after a schema review?
 - What acceptance threshold should be used before considering the food and exercise catalogs broad enough for demo/recruiter walkthroughs?
 
+
+## Coach Voice Bakeoff
+
+Bounded Coach Voice Bakeoff v1 is implemented pending QA.
+
+Open questions for QA:
+
+- Does qwen3:14b materially improve coach voice without adding unsafe inference?
+- Does qwen3:8b still over-infer when given richer backend-approved context?
+- Is qwen2.5:3b still the safest baseline for compact daily coach language?
+- Which contexts fail because of model behavior versus validator/context design?
+- Is qwen3:14b latency acceptable only for offline/report voice, or also for future daily UI narrative?
+- Should the next milestone be Daily Coach Narrative v1 Planning, Coach Voice Contract Tightening v1, or Offline Report Voice Mode v1?
+
+No model is promoted by the bakeoff itself.
+
 ## Product voice
 
 - When should qwen3 be re-tested for Training product voice?

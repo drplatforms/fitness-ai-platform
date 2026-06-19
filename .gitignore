@@ -49,6 +49,7 @@ logs/
 *.sqlite3
 
 # Data exports / temporary data
+artifacts/
 exports/
 tmp/
 temp/

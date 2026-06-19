@@ -121,6 +121,18 @@ Exercise Catalog Expansion v1 remains recommended second to improve workout vari
 
 Do not add RAG, embeddings, scraping, AI-generated production catalog entries, meal planning, unreviewed food dumps, or clinical nutrition claims.
 
+
+
+## Current AI provider evaluation direction
+
+Bounded Coach Voice Bakeoff v1 is implemented pending QA on `feature/bounded-coach-voice-bakeoff-v1`.
+
+The bakeoff is an offline/backend-controlled evaluation harness. It compares local model candidates against the same backend-approved coach context packs and validates strict JSON output before scoring. It does not integrate model output into Today, reports, Streamlit, or production provider paths.
+
+Starter model candidates: qwen2.5:3b, qwen3:8b, and qwen3:14b. qwen3 remains experimental and not approved for production.
+
+The harness is intended to answer whether richer local models can produce premium coach language while staying inside backend-approved truth. Any production narrative use requires a later Architecture decision.
+
 ## What must not be changed casually
 
 - Deterministic default behavior.

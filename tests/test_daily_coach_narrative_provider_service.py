@@ -48,16 +48,43 @@ def _context(user_id: int = 102):
     )
 
 
+def _recovery_context(user_id: int = 101):
+    action = DailyNextAction(
+        action_id="recovery_training",
+        title="Keep training conservative",
+        summary="Use lower-risk training while recovery signals are limited.",
+        reason="Recovery signals call for a conservative training day.",
+        priority=2,
+        workflow_target="today_recovery_aware_workout",
+        severity="warning",
+        evidence={
+            "scenario": "recovery_limited",
+            "readiness_level": "Low",
+            "fatigue_risk": "Elevated",
+            "recovery_checkin_present": True,
+            "nutrition_logging_completeness": "likely_incomplete",
+            "nutrition_confidence": "Limited",
+            "workout_available": True,
+            "report_guidance_available": False,
+        },
+    )
+    return build_daily_coach_narrative_context_from_action(
+        user_id=user_id,
+        action=action,
+        context_date="2026-06-19",
+    )
+
+
 def _approved_output(context):
     return json.dumps(
         {
             "coach_note": (
-                "Log a meal or snack so today's nutrition guidance has enough approved "
-                "data to work from."
+                "Log a meal or snack so today's nutrition guidance has enough "
+                "information to work from."
             ),
             "key_takeaway": "Today's nutrition state is limited until more food data is logged.",
             "recommended_focus": context.approved_focus,
-            "confidence_language": context.confidence_language,
+            "confidence_language": "Keep this limited until more food data is logged.",
             "used_approved_facts": [
                 f"Daily next action: {context.next_action_title}",
                 f"Daily next action reason: {context.next_action_reason}",
@@ -69,18 +96,40 @@ def _approved_output(context):
     )
 
 
-def test_prompt_uses_approved_context_without_source_metadata():
+def test_prompt_uses_coach_facing_context_without_source_metadata():
     context = _context()
 
     prompt = build_daily_coach_narrative_prompt(context)
 
     assert context.next_action_id in prompt
-    assert context.workflow_target in prompt
-    assert f'APPROVED_FOCUS: "{context.approved_focus}"' in prompt
-    assert "APPROVED_FACTS" in prompt
+    assert f'FOCUS_TO_COPY_EXACTLY: "{context.approved_focus}"' in prompt
+    assert "FACT_STRINGS_FOR_USED_FACTS" in prompt
+    assert "copy exactly two strings" in prompt
+    assert "Copy them exactly character-for-character" in prompt
+    assert "ACTION_FOCUS_HINT" in prompt
+    assert "Nutrition confidence: Limited" not in prompt
     assert "source_metadata" not in prompt
     assert "raw_provider" not in prompt
     assert "DailyCoachNarrativeContext" not in prompt
+    assert "APPROVED_CONTEXT" not in prompt
+    assert "APPROVED_FACTS" not in prompt
+    assert "backend" not in prompt.lower()
+
+
+def test_recovery_prompt_stays_action_focused_and_hides_confidence_fact():
+    context = _recovery_context()
+
+    prompt = build_daily_coach_narrative_prompt(context)
+
+    assert 'FOCUS_TO_COPY_EXACTLY: "Keep training conservative"' in prompt
+    assert "training/recovery focus" in prompt
+    assert "without switching to nutrition logging" in prompt
+    assert "Daily next action: Keep training conservative" in prompt
+    assert (
+        "Daily next action reason: Recovery signals call for a conservative training day."
+        in prompt
+    )
+    assert "Nutrition confidence: Limited" not in prompt
 
 
 def test_run_candidate_approves_mocked_valid_output():
@@ -88,7 +137,8 @@ def test_run_candidate_approves_mocked_valid_output():
 
     def fake_generate(model_name, prompt, timeout_seconds, ollama_base_url):
         assert model_name == "qwen3:8b"
-        assert "APPROVED_CONTEXT" in prompt
+        assert "SELECTED_ACTION_CONTEXT" in prompt
+        assert "FACT_STRINGS_FOR_USED_FACTS" in prompt
         return _approved_output(context)
 
     result = run_daily_coach_narrative_candidate(

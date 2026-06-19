@@ -149,11 +149,16 @@ Resolved by runtime QA:
 - `qwen3:32b` remains a useful offline quality reference, but it timed out on user 101 and is too slow for practical preview loops.
 - Daily Next Action-specific validation must now include product-copy filters for meta/process/internal architecture language.
 
-Open after runtime QA:
+Resolved by Provider Contract Tightening v1.1 implementation:
 
-- What exact meta/process phrases should `Daily Coach Narrative Provider Contract Tightening v1.1` reject beyond the initial list?
+- The first meta/process rejection list is now implemented in the Daily Coach Narrative validator. It covers `approved facts`, `backend-approved`, `backend approved`, `exact approved focus`, `use the exact`, `use the approved`, `approved context`, `provided context`, `given context`, `as instructed`, `per instruction`, `according to the instructions`, `output contract`, `JSON`, `schema`, `validator`, `validation`, `backend facts`, `model output`, `provider output`, `deterministic facts`, `required focus`, `required facts`, `context packet`, `workflow target`, `deterministic fallback`, `backend`, `provider`, and `exact match`.
+
+Open after v1.1 implementation:
+
+- Does local runtime QA show that `qwen3:8b` remains approved for users 101, 102, and 105 after meta/process language tightening?
+- Does `qwen2.5:3b` stop producing meta/process language, or is it now safely rejected as baseline-only copy?
 - Should future Developer Preview use a debug endpoint, a local artifact viewer, or Streamlit Developer Mode only?
-- Should `qwen3:14b` or `qwen3:30b-a3b` be retried later, or remain out of scope until after v1.1?
+- Should `qwen3:14b` or `qwen3:30b-a3b` remain out of scope until after Developer Preview, given prior JSON reliability issues?
 - What developer-only preview latency budget is acceptable for `qwen3:8b` if no normal Today UI integration is allowed yet?
 
 Still not approved:
@@ -165,3 +170,21 @@ Still not approved:
 - qwen3 production approval
 - direct_ollama default changes
 - persistence of model-generated narrative output
+
+## Daily Coach Narrative Provider Contract Tightening v1.1 Runtime Fix
+
+Resolved by runtime-fix implementation:
+
+- v1.1 validator failures are now field-specific for user-facing narrative copy.
+- `avoided_claims` is treated as offline audit metadata, not product coach copy.
+- provider prompt wording no longer uses `APPROVED_CONTEXT`, `APPROVED_FACTS`, or backend phrasing.
+- provider-facing fact strings no longer expose workflow target route internals.
+- context confidence language no longer tells the model to use backend-approved/internal phrasing.
+- strict exact fact validation remains unchanged.
+
+Open after runtime-fix implementation:
+
+- Does `qwen3:8b` return to a clean practical pass on users 101, 102, and 105?
+- Does `qwen2.5:3b` become safely rejected as baseline-only copy or produce acceptable coach copy without meta language?
+- Is one more prompt-only pass needed before Developer Preview, or is v1.1 sufficient after runtime QA?
+- Should Developer Preview hide `used_approved_facts` and `avoided_claims` entirely from normal UI surfaces?

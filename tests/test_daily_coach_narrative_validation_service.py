@@ -46,12 +46,12 @@ def _context():
 def _valid_payload(context):
     return {
         "coach_note": (
-            "Log a meal or snack so today's nutrition guidance has enough approved "
-            "data to work from."
+            "Log a meal or snack so today's nutrition guidance has enough "
+            "information to work from."
         ),
         "key_takeaway": "Today's nutrition state is limited until more food data is logged.",
         "recommended_focus": context.approved_focus,
-        "confidence_language": context.confidence_language,
+        "confidence_language": "Keep this limited until more food data is logged.",
         "used_approved_facts": [
             f"Daily next action: {context.next_action_title}",
             f"Daily next action reason: {context.next_action_reason}",
@@ -179,3 +179,195 @@ def test_validation_rejects_raw_debug_provider_metadata():
         validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
     )
     assert any("metadata" in error for error in validation.validation_errors)
+
+
+def test_validation_rejects_qwen25_style_meta_process_language():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["coach_note"] = (
+        "Use the exact approved focus Log a meal or snack because the "
+        "backend-approved facts support it."
+    )
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    assert any(
+        "Meta/internal process language" in error
+        for error in validation.validation_errors
+    )
+
+
+def test_validation_reports_meta_language_field_name():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["coach_note"] = "The backend-approved facts support logging food today."
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    assert any(
+        "coach_note:" in error and "backend-approved" in error
+        for error in validation.validation_errors
+    )
+
+
+def test_validation_rejects_internal_architecture_language_in_user_copy():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["key_takeaway"] = (
+        "Based on the provided context, the validator requires this workflow target."
+    )
+    payload["confidence_language"] = "As instructed, keep the JSON output compact."
+    payload["avoided_claims"] = [
+        "No provider output should mention the deterministic fallback."
+    ]
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    joined_errors = " ".join(validation.validation_errors)
+    assert "key_takeaway:" in joined_errors
+    assert "confidence_language:" in joined_errors
+    assert "provided context" in joined_errors
+    assert "workflow target" in joined_errors
+    assert "json" in joined_errors.lower()
+
+
+def test_validation_allows_normal_qwen3_style_coach_copy():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["coach_note"] = (
+        "Log your meal or snack to improve nutrition tracking accuracy."
+    )
+    payload["key_takeaway"] = (
+        "Today's nutrition state is limited until more food data is logged."
+    )
+    payload["confidence_language"] = "Keep this limited until more food data is logged."
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED
+    )
+    assert validation.validation_errors == []
+
+
+def test_validation_allows_audit_language_in_avoided_claims_only():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["avoided_claims"] = [
+        "No backend-approved facts, provider output, or deterministic fallback "
+        "language is displayed."
+    ]
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED
+    )
+    assert validation.validation_errors == []
+
+
+def test_validation_allows_exact_nutrition_confidence_fact_but_rejects_paraphrase():
+    context = _context()
+    exact_fact = "Nutrition confidence: Limited"
+    assert exact_fact in context.approved_facts
+
+    exact_payload = _valid_payload(context)
+    exact_payload["used_approved_facts"] = [
+        f"Daily next action: {context.next_action_title}",
+        exact_fact,
+    ]
+    exact_parsed = parse_daily_coach_narrative_candidate(json.dumps(exact_payload))
+    exact_validation = validate_daily_coach_narrative_candidate(
+        exact_parsed.candidate,
+        context=context,
+    )
+    assert (
+        exact_validation.validation_status
+        == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED
+    )
+
+    paraphrased_payload = _valid_payload(context)
+    paraphrased_payload["used_approved_facts"] = [
+        f"Daily next action: {context.next_action_title}",
+        "Nutritional confidence: Limited",
+    ]
+    paraphrased_parsed = parse_daily_coach_narrative_candidate(
+        json.dumps(paraphrased_payload)
+    )
+    paraphrased_validation = validate_daily_coach_narrative_candidate(
+        paraphrased_parsed.candidate,
+        context=context,
+    )
+    assert (
+        paraphrased_validation.validation_status
+        == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    assert any(
+        "unapproved fact: Nutritional confidence: Limited" in error
+        for error in paraphrased_validation.validation_errors
+    )
+
+    typo_payload = _valid_payload(context)
+    typo_payload["used_approved_facts"] = [
+        f"Daily next action: {context.next_action_title}",
+        "Nut,rition confidence: Limited",
+    ]
+    typo_parsed = parse_daily_coach_narrative_candidate(json.dumps(typo_payload))
+    typo_validation = validate_daily_coach_narrative_candidate(
+        typo_parsed.candidate,
+        context=context,
+    )
+    assert (
+        typo_validation.validation_status
+        == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    assert any(
+        "unapproved fact: Nut,rition confidence: Limited" in error
+        for error in typo_validation.validation_errors
+    )
+
+
+def test_validation_rejects_changed_workflow_target_reference():
+    context = _context()
+    payload = _valid_payload(context)
+    payload["coach_note"] = "Log a meal or snack before moving over to workout_preview."
+    parsed = parse_daily_coach_narrative_candidate(json.dumps(payload))
+
+    validation = validate_daily_coach_narrative_candidate(
+        parsed.candidate,
+        context=context,
+    )
+
+    assert (
+        validation.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED
+    )
+    assert any("workflow target" in error for error in validation.validation_errors)

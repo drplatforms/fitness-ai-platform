@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
 
 from models.daily_coach_narrative_models import (
     DAILY_COACH_NARRATIVE_DECISION_FAIL,
@@ -87,6 +86,48 @@ _INTERNAL_METADATA_FRAGMENTS = {
     "crewai",
     "parser",
 }
+
+_META_PROCESS_LANGUAGE_FRAGMENTS = {
+    "approved facts",
+    "backend-approved",
+    "backend approved",
+    "exact approved focus",
+    "use the exact",
+    "use the approved",
+    "approved context",
+    "provided context",
+    "given context",
+    "as instructed",
+    "per instruction",
+    "according to the instructions",
+    "output contract",
+    "json",
+    "schema",
+    "validator",
+    "validation",
+    "backend facts",
+    "model output",
+    "provider output",
+    "deterministic facts",
+    "required focus",
+    "required facts",
+    "context packet",
+    "workflow target",
+    "deterministic fallback",
+    "backend",
+    "provider",
+    "exact match",
+}
+
+_META_PROCESS_LANGUAGE_ERROR = (
+    "Meta/internal process language is not allowed in coach narrative output"
+)
+
+_USER_FACING_META_LANGUAGE_FIELDS = (
+    "coach_note",
+    "key_takeaway",
+    "confidence_language",
+)
 
 
 class DailyCoachNarrativeProviderValidationError(ValueError):
@@ -195,6 +236,12 @@ def validate_daily_coach_narrative_candidate(
 
     public_text = _candidate_public_text(candidate)
     lowercase_public_text = public_text.lower()
+
+    meta_language_found = _meta_process_language_found(candidate)
+    if meta_language_found:
+        validation_errors.append(
+            f"{_META_PROCESS_LANGUAGE_ERROR}: " + "; ".join(meta_language_found)
+        )
 
     for action_title in sorted(_KNOWN_DAILY_ACTION_TITLES - {context.approved_focus}):
         if action_title.lower() in lowercase_public_text:
@@ -448,9 +495,53 @@ def _runtime_practicality_score(elapsed_seconds: float) -> int:
 
 
 def _contains_internal_metadata(candidate: CandidateDailyCoachNarrative) -> bool:
-    payload: dict[str, Any] = candidate.to_dict()
-    text = json.dumps(payload, sort_keys=True).lower()
+    # Only user-facing narrative fields should be rejected for accidental raw/debug
+    # metadata leakage. Contract/debug fields such as used_approved_facts and
+    # avoided_claims can contain audit language in offline artifacts and are not
+    # rendered as coach copy.
+    text = _user_facing_generated_text(candidate).lower()
     return any(fragment in text for fragment in _INTERNAL_METADATA_FRAGMENTS)
+
+
+def _meta_process_language_found(
+    candidate: CandidateDailyCoachNarrative,
+) -> list[str]:
+    """Return field-specific meta/process language found in user copy.
+
+    The check intentionally ignores canonical field names,
+    ``used_approved_facts``, and ``avoided_claims``. Those fields are part of the
+    offline audit contract, not coach-facing narrative copy.
+    """
+
+    matches: list[str] = []
+    for field_name in _USER_FACING_META_LANGUAGE_FIELDS:
+        field_text = getattr(candidate, field_name)
+        normalized_text = _normalize_for_fragment_matching(field_text)
+        field_matches: list[str] = []
+        for fragment in sorted(_META_PROCESS_LANGUAGE_FRAGMENTS):
+            normalized_fragment = _normalize_for_fragment_matching(fragment)
+            if _contains_normalized_fragment(normalized_text, normalized_fragment):
+                field_matches.append(fragment)
+        if field_matches:
+            matches.append(f"{field_name}: " + ", ".join(field_matches))
+    return _dedupe_preserve_order(matches)
+
+
+def _user_facing_generated_text(candidate: CandidateDailyCoachNarrative) -> str:
+    return " ".join(
+        getattr(candidate, field_name)
+        for field_name in _USER_FACING_META_LANGUAGE_FIELDS
+    )
+
+
+def _normalize_for_fragment_matching(text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", text.lower())).strip()
+
+
+def _contains_normalized_fragment(text: str, fragment: str) -> bool:
+    if not fragment:
+        return False
+    return f" {fragment} " in f" {text} "
 
 
 def _dedupe_preserve_order(items: list[str]) -> list[str]:

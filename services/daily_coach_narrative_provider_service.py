@@ -53,69 +53,112 @@ class DailyCoachNarrativeProviderError(ValueError):
 def build_daily_coach_narrative_prompt(context: DailyCoachNarrativeContext) -> str:
     """Build a compact prompt from approved DailyCoachNarrativeContext fields only."""
 
-    approved_facts = "\n".join(
-        f'{index}. "{fact}"'
-        for index, fact in enumerate(context.approved_facts, start=1)
-    )
-    approved_limitations = "\n".join(
+    fact_strings_json = json.dumps(_provider_fact_strings(context), indent=2)
+    limitations = "\n".join(
         f'- "{limitation}"' for limitation in context.approved_limitations
     )
     forbidden_claims = "\n".join(
         f'- "{claim}"' for claim in sorted(set(context.forbidden_claims))
     )
     example_output = {
-        "coach_note": "Use the exact approved focus because the approved facts support it.",
-        "key_takeaway": "One exact approved fact copied from the context.",
-        "recommended_focus": "Exact approved focus from this context",
-        "confidence_language": "This stays limited to the approved facts provided here.",
-        "used_approved_facts": ["One exact approved fact copied from the context."],
+        "coach_note": "Log a meal or snack to improve today's nutrition picture.",
+        "key_takeaway": "More food logging gives today's guidance a clearer base.",
+        "recommended_focus": "Log a meal or snack",
+        "confidence_language": "Keep this limited until more food data is logged.",
+        "used_approved_facts": [
+            "Daily next action: Log a meal or snack",
+            (
+                "Daily next action reason: Today's nutrition state is limited until "
+                "more food data is logged."
+            ),
+        ],
         "avoided_claims": [
             "No food, exercise, target, recovery, or medical claim was invented."
         ],
     }
 
     return (
-        "You are writing one bounded Daily Coach Narrative for AI Health Coach.\n"
-        "The backend already selected the daily action. You may explain it, "
-        "but you must not change it.\n"
-        "The backend owns every fact. Your job is language only.\n\n"
-        "OUTPUT CONTRACT:\n"
-        "- Return one JSON object only. No markdown, prose, code fence, or preface.\n"
-        "- Do not return the schema. Do not explain the schema.\n"
-        "- Do not return keys like type, properties, required, items, or "
-        "additionalProperties.\n"
+        "Write one short Daily Coach Narrative for AI Health Coach.\n"
+        "Today's action is already selected. Explain why it matters without "
+        "changing the action or adding a second action.\n"
+        "Use only the listed fact strings and plain coach language.\n\n"
+        "OUTPUT FORMAT:\n"
+        "- Return a single raw object only. No markdown, code fence, preface, or "
+        "follow-up explanation.\n"
         "- Return exactly these six keys and no others: coach_note, "
         "key_takeaway, recommended_focus, confidence_language, "
         "used_approved_facts, avoided_claims.\n"
-        "- coach_note, key_takeaway, recommended_focus, and "
-        "confidence_language must be strings.\n"
+        "- coach_note, key_takeaway, recommended_focus, and confidence_language "
+        "must be strings.\n"
         "- used_approved_facts and avoided_claims must be arrays of strings.\n"
-        "- recommended_focus must exactly equal APPROVED_FOCUS below.\n"
-        "- used_approved_facts must copy exact strings from APPROVED_FACTS only.\n"
-        "- Keep coach_note compact enough for a small Today card.\n\n"
-        "EXAMPLE ANSWER FORMAT ONLY. Do not copy these placeholder values:\n"
+        "- recommended_focus must exactly copy FOCUS_TO_COPY_EXACTLY.\n"
+        "- For used_approved_facts, copy exactly two strings from "
+        "FACT_STRINGS_FOR_USED_FACTS. The safest choice is the first two "
+        "strings.\n"
+        "- Do not paraphrase, edit, re-spell, punctuate, or summarize "
+        "used_approved_facts. Copy them exactly character-for-character.\n"
+        "- Do not place CONFIDENCE_TONE, WORDING_LIMITS, or your own summary "
+        "inside used_approved_facts.\n"
+        "- Keep coach_note compact enough for a small Today card.\n"
+        "- In coach_note, key_takeaway, and confidence_language, do not mention "
+        "prompts, objects, validators, services, data packets, routes, internal "
+        "instructions, or whether facts were approved.\n\n"
+        "EXAMPLE SHAPE ONLY. Do not copy these placeholder values:\n"
         f"{json.dumps(example_output, indent=2)}\n\n"
-        "APPROVED_CONTEXT:\n"
+        "SELECTED_ACTION_CONTEXT:\n"
         f"- user_id: {context.user_id}\n"
         f"- date: {context.date}\n"
-        f"- next_action_id: {context.next_action_id}\n"
-        f'- next_action_title: "{context.next_action_title}"\n'
-        f'- next_action_reason: "{context.next_action_reason}"\n'
-        f"- workflow_target: {context.workflow_target}\n"
+        f"- action_id: {context.next_action_id}\n"
+        f'- action_title: "{context.next_action_title}"\n'
+        f'- action_reason: "{context.next_action_reason}"\n'
         f"- priority: {context.priority}\n"
         f"- severity: {context.severity}\n"
-        f'- APPROVED_FOCUS: "{context.approved_focus}"\n'
-        f'- confidence_language: "{context.confidence_language}"\n\n'
-        "APPROVED_FACTS. Use only these exact strings when filling "
-        "used_approved_facts:\n"
-        f"{approved_facts}\n\n"
-        "APPROVED_LIMITATIONS:\n"
-        f"{approved_limitations}\n\n"
-        "FORBIDDEN_CLAIMS. Do not make these claims or close variants:\n"
+        f'- FOCUS_TO_COPY_EXACTLY: "{context.approved_focus}"\n'
+        f'- ACTION_FOCUS_HINT: "{_action_focus_hint(context)}"\n'
+        f'- CONFIDENCE_TONE: "{context.confidence_language}"\n\n'
+        "FACT_STRINGS_FOR_USED_FACTS:\n"
+        f"{fact_strings_json}\n\n"
+        "WORDING_LIMITS:\n"
+        f"{limitations}\n\n"
+        "CLAIMS_TO_AVOID:\n"
         f"{forbidden_claims}\n\n"
-        "Write the answer now as a single JSON object. "
+        "Write the answer now as the single raw object. "
         f'recommended_focus must be exactly: "{context.approved_focus}"\n'
     )
+
+
+def _provider_fact_strings(context: DailyCoachNarrativeContext) -> list[str]:
+    """Return fact strings useful for provider grounding without route internals.
+
+    The offline provider only needs stable, user-facing grounding facts. Keeping
+    confidence and route internals out of the list reduces the chance that a
+    model cites a paraphrased confidence label as a used fact.
+    """
+
+    excluded_prefixes = (
+        "Workflow target:",
+        "Nutrition confidence:",
+    )
+    return [
+        fact
+        for fact in context.approved_facts
+        if not any(fact.startswith(prefix) for prefix in excluded_prefixes)
+    ]
+
+
+def _action_focus_hint(context: DailyCoachNarrativeContext) -> str:
+    title = context.next_action_title.lower()
+    reason = context.next_action_reason.lower()
+    if "training" in title or "workout" in title or "rir" in reason:
+        return (
+            "Explain today's training/recovery focus without switching to "
+            "nutrition logging."
+        )
+    if "meal" in title or "nutrition" in title or "food" in title:
+        return "Explain today's nutrition logging focus without adding workout advice."
+    if "recovery" in title or "sleep" in reason or "soreness" in reason:
+        return "Explain today's recovery focus without adding food or workout changes."
+    return "Explain only the selected action for today."
 
 
 def build_daily_coach_narrative_contexts_for_users(

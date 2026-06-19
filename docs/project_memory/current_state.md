@@ -12,34 +12,36 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Coach Voice Contract Tightening v1` was accepted and merged to main.
+`Daily Coach Narrative Offline Provider Runtime QA v1` was accepted with model findings and merged to main.
 
-Final accepted status: `COACH_VOICE_CONTRACT_TIGHTENING_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
+Final accepted status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
 
 Accepted model findings:
 
-- `qwen3:8b` remains the best practical evaluation-only bounded coach voice candidate.
-- `qwen3:32b` remains the best offline / chores-mode quality reference.
-- `qwen2.5:3b` improved to a compliant small baseline but remains more generic.
-- `qwen3:14b` partially improved but remains unreliable.
-- `qwen3:30b-a3b` remains incompatible with the strict JSON-only contract.
+- `qwen3:8b` passed users 101, 102, and 105 and remains the best practical Daily Coach Narrative evaluation candidate. It is not production-approved.
+- `qwen2.5:3b` passed as a safe compliance baseline but produced meta/process copy and is not recommended for developer preview voice without validator tightening. It is not production-approved.
+- `qwen3:32b` passed users 102 and 105 but timed out on user 101; it remains an optional offline quality reference, not a practical preview model. It is not production-approved.
 
 No model is production-approved. No Today, Streamlit, report, provider, catalog, workout, or nutrition runtime path was changed.
 
 ## Current implementation milestone
 
-`Daily Coach Narrative v1 Planning` was accepted by Architecture.
+`Daily Coach Narrative Provider Contract Tightening v1.1` is implemented pending QA/runtime review.
 
-`Daily Coach Narrative Context Builder v1` is implemented and pending QA/Architecture review.
+Implementation status: `DAILY_COACH_NARRATIVE_PROVIDER_CONTRACT_TIGHTENING_V1_1_IMPLEMENTED_PENDING_QA`.
 
-Implementation status: `DAILY_COACH_NARRATIVE_CONTEXT_BUILDER_V1_IMPLEMENTED_PENDING_QA`.
+This milestone adds a narrow product-copy validator tightening pass for Daily Coach Narrative provider output. It rejects meta/process/internal architecture language in model-generated user-facing narrative fields before any Developer Preview surface can display provider copy.
 
-The context builder creates a deterministic `DailyCoachNarrativeContext` from the existing Daily Next Action state. It preserves the selected action and workflow target exactly, produces explicit approved facts/limitations/forbidden claims, and creates deterministic fallback wording. It does not call a model and does not integrate into Today, Streamlit, reports, or production provider paths.
+The tightened validator applies to `coach_note`, `key_takeaway`, `confidence_language`, and `avoided_claims`. It intentionally does not reject canonical parser field names such as `used_approved_facts` solely because the structured output contract contains technical names.
+
+The offline QA prompt example was also cleaned up so it no longer demonstrates the rejected qwen2.5-style phrase pattern.
+
+No model is called by normal product paths. No model is promoted. No Today, Streamlit, report, or production provider integration occurs in this milestone.
 
 ## Next recommended milestone options
 
-- Daily Coach Narrative Context Builder v1 Architecture/QA review.
-- Daily Coach Narrative Offline Runtime QA v1 after Context Builder acceptance.
+- Daily Coach Narrative Provider Contract Tightening v1.1 runtime QA/Architecture review.
+- Daily Coach Narrative Developer Preview v1 after v1.1 acceptance.
 - Logging UX Speed & Friction Reduction v1.
 - Nutrition Explanation Value-Aware Copy v1.
 
@@ -306,3 +308,62 @@ Validator gap identified:
 No normal Today UI integration occurred. No Streamlit integration occurred. No report integration occurred. No model output is persisted. No model is promoted. qwen3 remains not approved. direct_ollama remains opt-in only.
 
 Recommended next milestone: `Daily Coach Narrative Provider Contract Tightening v1.1`.
+
+## Daily Coach Narrative Provider Contract Tightening v1.1
+
+Daily Coach Narrative Provider Contract Tightening v1.1 is implemented pending QA/runtime review.
+
+Implementation status: `DAILY_COACH_NARRATIVE_PROVIDER_CONTRACT_TIGHTENING_V1_1_IMPLEMENTED_PENDING_QA`.
+
+This milestone tightens Daily Coach Narrative product-copy validation after runtime QA identified safe but unacceptable meta/process copy from `qwen2.5:3b`.
+
+Implemented behavior:
+
+- rejects meta/process/internal architecture language in `coach_note`, `key_takeaway`, `confidence_language`, and `avoided_claims`
+- rejects phrases and close variants such as `approved facts`, `backend-approved`, `exact approved focus`, `use the exact`, `provided context`, `as instructed`, `JSON`, `schema`, `validator`, `provider output`, `workflow target`, and `deterministic fallback`
+- preserves exact `recommended_focus` validation
+- preserves exact `used_approved_facts` validation
+- preserves forbidden-claim, invented-number, invented-food/target, changed-action, and changed-workflow-target rejection
+- keeps normal qwen3-style coach copy valid when it stays grounded in the approved context
+
+The offline provider prompt example was cleaned up to avoid demonstrating rejected process language.
+
+No normal Today UI integration occurred. No Streamlit integration occurred. No report integration occurred. No model output is persisted. No model is promoted. qwen3 remains not approved. direct_ollama remains opt-in only.
+
+Required runtime QA:
+
+```powershell
+python tools\daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
+```
+
+Recommended next milestone after acceptance: `Daily Coach Narrative Developer Preview v1`.
+
+## Daily Coach Narrative Provider Contract Tightening v1.1 Runtime Fix
+
+Daily Coach Narrative Provider Contract Tightening v1.1 Runtime Fix is implemented pending local/runtime QA.
+
+Implementation status: `DAILY_COACH_NARRATIVE_PROVIDER_CONTRACT_TIGHTENING_V1_1_RUNTIME_FIX_IMPLEMENTED_PENDING_QA`.
+
+Runtime QA after the first v1.1 implementation showed a useful but unsatisfactory result: the validator correctly rejected meta/process/internal language, but provider copy still produced too much internal phrasing and one qwen3:8b run cited a non-exact confidence fact.
+
+This runtime-fix patch keeps the validator strict and does not loosen action, workflow target, fact, forbidden-claim, or invented-number validation.
+
+Implemented runtime-fix behavior:
+
+- field-specific meta/internal rejection diagnostics now identify the user-facing field that failed
+- meta/internal language checks apply to coach-facing generated fields: `coach_note`, `key_takeaway`, and `confidence_language`
+- `avoided_claims` remains an offline audit field and no longer causes product-copy rejection by itself
+- raw/debug/provider metadata checks now scan coach-facing generated fields instead of offline audit fields
+- provider prompt labels were rewritten away from `APPROVED_CONTEXT`, `APPROVED_FACTS`, backend wording, and workflow-target exposure
+- provider prompt now uses coach-facing labels such as `SELECTED_ACTION_CONTEXT`, `FOCUS_TO_COPY_EXACTLY`, and `FACT_STRINGS_FOR_USED_FACTS`
+- provider-facing fact strings exclude workflow target route internals
+- confidence language produced by the context builder no longer uses backend-approved/internal phrasing
+- exact `used_approved_facts` validation remains strict; paraphrases such as `Nutritional confidence: Limited` remain rejected unless that exact string appears in the approved fact list
+
+No normal Today UI integration occurred. No Streamlit integration occurred. No report integration occurred. No model output is persisted. No model is promoted. qwen3 remains not approved. direct_ollama remains opt-in only.
+
+Required runtime QA remains:
+
+```powershell
+python tools\daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
+```

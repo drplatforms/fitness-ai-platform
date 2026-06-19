@@ -188,3 +188,36 @@ Open after runtime-fix implementation:
 - Does `qwen2.5:3b` become safely rejected as baseline-only copy or produce acceptable coach copy without meta language?
 - Is one more prompt-only pass needed before Developer Preview, or is v1.1 sufficient after runtime QA?
 - Should Developer Preview hide `used_approved_facts` and `avoided_claims` entirely from normal UI surfaces?
+
+## Daily Coach Narrative Developer Preview v1
+
+Resolved by Developer Preview v1 implementation:
+
+- The first developer-only preview surface is a backend debug endpoint: `GET /daily-coach/{user_id}/narrative-preview/debug`.
+- The endpoint defaults to deterministic fallback and does not call a provider by default.
+- The provider path is explicitly opt-in with `provider=direct_ollama`.
+- Approved provider narrative appears only after parse and validation pass.
+- Rejected/unparsable/provider-failed output falls back deterministically.
+- Public-safe fallback reasons are used instead of raw validation errors or exception internals.
+- Raw prompts, raw model output, raw provider payloads, stack traces, and validation internals are not returned.
+
+Open after Developer Preview v1 implementation:
+
+- Does local API runtime QA confirm provider-disabled fallback for users 101, 102, and 105?
+- Does qwen3:8b pass or safely fall back through the debug endpoint for users 101, 102, and 105?
+- Does qwen2.5:3b pass or safely fall back through the debug endpoint for users 101, 102, and 105?
+- Should qwen3:32b be tested through the endpoint only as an optional offline/reference run due to latency?
+- Should a Streamlit Developer Mode panel be added in a later v1.1 slice, or is backend debug endpoint coverage enough before Product Readiness Review?
+- What latency budget is acceptable for a developer-only preview using qwen3:8b?
+
+Still not approved:
+
+- normal Today UI integration
+- Streamlit normal surface integration
+- report integration
+- persistence of model-generated narrative
+- model promotion
+- qwen3 production approval
+- direct_ollama default changes
+- validator loosening
+- deterministic fallback weakening

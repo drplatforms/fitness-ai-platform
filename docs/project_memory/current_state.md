@@ -367,3 +367,57 @@ Required runtime QA remains:
 ```powershell
 python tools\daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
 ```
+
+## Daily Coach Narrative Provider Contract Tightening v1.1 Closeout
+
+Daily Coach Narrative Provider Contract Tightening v1.1 is accepted and merged to `main`.
+
+Final accepted status: `DAILY_COACH_NARRATIVE_PROVIDER_CONTRACT_TIGHTENING_V1_1_ACCEPTED`.
+
+Runtime QA after citation/action focus tightening produced a clean pass across `qwen3:8b`, `qwen2.5:3b`, and `qwen3:32b` for users 101, 102, and 105.
+
+Accepted model findings:
+
+- `qwen3:8b`: best practical evaluation candidate; not production-approved.
+- `qwen2.5:3b`: safe small compliant baseline; less polished; not production-approved.
+- `qwen3:32b`: useful offline reference; too slow for practical preview loops; not production-approved.
+
+No model is production-approved. qwen3 remains not approved for production. direct_ollama remains opt-in only.
+
+## Daily Coach Narrative Developer Preview v1
+
+Daily Coach Narrative Developer Preview v1 is implemented pending local/runtime QA.
+
+Implementation status: `DAILY_COACH_NARRATIVE_DEVELOPER_PREVIEW_V1_IMPLEMENTED_PENDING_QA`.
+
+Implemented:
+
+- `DailyCoachNarrativePreviewResult` public-safe preview model
+- `services/daily_coach_narrative_preview_service.py`
+- developer-only backend debug route: `GET /daily-coach/{user_id}/narrative-preview/debug`
+- focused preview service tests
+- focused preview route tests
+- project memory milestone/review/runtime QA docs
+
+The preview endpoint defaults to deterministic fallback and does not call a provider unless explicitly requested with `provider=direct_ollama`.
+
+Provider output is returned only after existing Daily Coach Narrative parser and validator rules pass. Unparsable, rejected, timed out, or unavailable provider output falls back deterministically.
+
+Public-safe fallback reasons are limited to:
+
+- `provider_disabled`
+- `provider_timeout`
+- `provider_parse_failed`
+- `provider_validation_failed`
+- `provider_unavailable`
+
+The preview payload intentionally excludes rejected provider text, raw model output, raw prompts, raw provider payloads, raw validation errors, validation internals, stack traces, model-facing schema text, and source metadata.
+
+No normal Today UI integration occurs. No Streamlit normal surface integration occurs. No report integration occurs. No model-generated narrative is persisted. No model is promoted. qwen3 remains not production-approved. direct_ollama remains opt-in only.
+
+Recommended local runtime QA:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/daily-coach/102/narrative-preview/debug"
+Invoke-RestMethod "http://localhost:8000/daily-coach/102/narrative-preview/debug?provider=direct_ollama&model=qwen3:8b&date=2026-06-19&timeout_seconds=180"
+```

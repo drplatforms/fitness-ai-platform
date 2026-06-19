@@ -128,6 +128,38 @@ class DailyCoachNarrativeValidationResult:
 
 
 @dataclass(frozen=True)
+class DailyCoachNarrativePreviewResult:
+    """Public-safe developer preview payload for Daily Coach Narrative.
+
+    This object may contain approved provider narrative only after validation
+    succeeds. Rejected model output, raw prompts, raw provider payloads, raw
+    validation internals, and stack traces are intentionally excluded.
+    """
+
+    user_id: int
+    date: str
+    next_action_id: str
+    next_action_title: str
+    workflow_target: str
+    provider_enabled: bool
+    provider_attempted: bool
+    selected_provider: str
+    selected_model: str | None
+    parse_success: bool
+    validation_success: bool
+    fallback_used: bool
+    fallback_reason: str | None
+    approved_narrative: dict[str, Any] | None
+    deterministic_fallback_note: str
+    approved_focus: str
+    context_summary: dict[str, Any]
+    latency_ms: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class DailyCoachNarrativeScores:
     grounding: int
     claim_safety: int

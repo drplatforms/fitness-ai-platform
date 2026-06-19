@@ -144,3 +144,20 @@ Daily Coach Narrative is accepted for developer/debug preview.
 Daily Coach Narrative is not accepted for synchronous normal Today UI.
 Daily Coach Narrative should proceed through async/background Today Preview design.
 ```
+
+## Multi-tier model-lane addendum
+
+Architecture accepts the async Today preview design with a required multi-tier model-lane addendum.
+
+The product should not be architected only around current hardware latency or `qwen3:8b`. The design must support high-quality slow generation wherever waiting is acceptable.
+
+Accepted lanes:
+
+- deterministic fallback: immediate/default, production-safe fallback
+- `qwen3:8b`: fast developer-preview lane, not production-approved
+- `qwen3:32b`: premium-quality developer-preview lane, slow but valuable, not production-approved
+- `qwen2.5:3b`: small baseline/regression lane, not product voice target
+
+Implementation implication:
+
+The next milestone should be `Daily Coach Narrative Today Developer Panel v1` with a model-lane selector from the beginning. It must not be implemented as a single-lane `qwen3:8b` panel.

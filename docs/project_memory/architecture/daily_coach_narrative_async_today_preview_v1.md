@@ -1,6 +1,6 @@
 # Daily Coach Narrative Async Today Preview v1 Design
 
-Status: COMPLETE / READY FOR ARCHITECTURE REVIEW
+Status: ACCEPTED WITH REQUIRED MULTI-TIER ADDENDUM
 
 Related milestone: `Daily Coach Narrative Async Today Preview Design v1`
 
@@ -10,7 +10,7 @@ Related accepted milestone: `Daily Coach Narrative Developer Preview v1`
 
 Daily Coach Narrative is not approved for synchronous normal Today UI integration.
 
-Daily Coach Narrative is approved to move into an async/background-safe Today Preview design.
+Daily Coach Narrative is approved to move into an async/background-safe Today Preview design with an explicit multi-tier model-lane addendum.
 
 Reason: `qwen3:8b` has passed developer/debug preview QA and produces bounded approved narrative output, but observed latency around 40-50 seconds is not acceptable for blocking the normal Today page load.
 
@@ -25,6 +25,21 @@ Today page loads immediately
 → failed or rejected provider output silently keeps fallback
 → provider can be disabled without breaking Today
 ```
+
+## Multi-tier addendum requirement
+
+Architecture accepted the fallback-first async design but requires the Today preview architecture to support multiple model lanes from the beginning.
+
+The revised design must not over-center `qwen3:8b` as the only practical path. It must explicitly support:
+
+- deterministic fallback as the immediate/default lane
+- `qwen3:8b` as the fast developer-preview lane
+- `qwen3:32b` as the premium-quality developer-preview lane
+- `qwen2.5:3b` as the small baseline/regression lane
+
+See: `docs/project_memory/architecture/daily_coach_narrative_multi_tier_async_preview_addendum_v1.md`.
+
+The core product rule remains unchanged: Today must never block on provider generation, but slow premium generation is allowed in manual developer-preview lanes where waiting is acceptable.
 
 ## Design intent
 

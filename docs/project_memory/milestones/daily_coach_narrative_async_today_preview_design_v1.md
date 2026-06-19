@@ -1,8 +1,8 @@
 # Daily Coach Narrative Async Today Preview Design v1
 
-Status: COMPLETE / READY FOR ARCHITECTURE REVIEW
+Status: ACCEPTED WITH REQUIRED MULTI-TIER ADDENDUM
 
-Implementation status: `DAILY_COACH_NARRATIVE_ASYNC_TODAY_PREVIEW_DESIGN_V1_COMPLETE`
+Implementation status: `DAILY_COACH_NARRATIVE_MULTI_TIER_ASYNC_TODAY_PREVIEW_DESIGN_V1_ACCEPTED_WITH_ADDENDUM`
 
 ## Goal
 
@@ -195,3 +195,20 @@ Recommended scope:
 - no report integration
 - no model promotion
 - no direct_ollama default change
+
+## Required multi-tier addendum
+
+Architecture accepted the docs-only async Today preview design as the correct fallback-first foundation, with one required addendum before implementation.
+
+The next implementation must support model lanes from the beginning:
+
+- deterministic fallback: immediate/default lane
+- `qwen3:8b`: fast developer-preview lane
+- `qwen3:32b`: premium-quality developer-preview lane
+- `qwen2.5:3b`: small baseline/regression lane
+
+The implementation must not be single-lane `qwen3:8b` only.
+
+Addendum doc:
+
+- `docs/project_memory/architecture/daily_coach_narrative_multi_tier_async_preview_addendum_v1.md`

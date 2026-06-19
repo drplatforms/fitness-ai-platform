@@ -492,3 +492,20 @@ Design decision:
 - No provider narrative is persisted as user-facing history in the first Today preview.
 
 Recommended next implementation after acceptance: `Daily Coach Narrative Today Developer Panel v1`.
+
+## Daily Coach Narrative Multi-Tier Async Today Preview Design v1 Addendum
+
+Architecture accepted the docs-only async Today preview design with a required multi-tier model-lane addendum.
+
+Revised accepted status: `DAILY_COACH_NARRATIVE_MULTI_TIER_ASYNC_TODAY_PREVIEW_DESIGN_V1_ACCEPTED_WITH_ADDENDUM`.
+
+The design now explicitly supports four lanes:
+
+- deterministic fallback: immediate/default Today-safe lane with no provider call
+- `qwen3:8b`: fast developer-preview lane for practical runtime QA and lower-latency experimentation
+- `qwen3:32b`: premium-quality developer-preview lane for manual long-running generation and future better-hardware/precompute exploration
+- `qwen2.5:3b`: small baseline/regression lane for compliance and validator sanity checks
+
+The next implementation should be `Daily Coach Narrative Today Developer Panel v1` with a model-lane selector from the beginning. It must not be implemented as `qwen3:8b` only.
+
+Boundaries remain unchanged: no normal Today UI integration, no synchronous provider call from Today, no automatic background generation, no persistence/cache, no report integration, no model promotion, no direct_ollama default change, no validator loosening, and no deterministic fallback weakening.

@@ -277,3 +277,32 @@ Still not approved:
 - provider output persistence/cache
 - model promotion
 - direct_ollama default change
+
+## Daily Coach Narrative Multi-Tier Async Today Preview Addendum
+
+Resolved by Architecture addendum:
+
+- The Today preview design must support multiple model lanes, not only `qwen3:8b`.
+- `qwen3:8b` is the fast/practical developer-preview lane, not the final-quality target.
+- `qwen3:32b` is the premium-quality developer-preview lane despite latency.
+- `qwen2.5:3b` is the small baseline/regression lane.
+- Deterministic fallback remains the immediate/default lane.
+
+Open for the next implementation:
+
+- Where should the model-lane selector live in Streamlit Developer Mode?
+- Should lane labels be `Fallback`, `Fast`, `Premium`, and `Baseline`, or include model names directly?
+- What timeout defaults should the Developer Panel use for fast vs premium lanes?
+- Should premium lane execution be protected by an extra confirmation because it may take several minutes?
+- Which public-safe status fields should be shown for each lane in the first panel implementation?
+
+Still not approved:
+
+- normal Today UI integration
+- synchronous provider call from Today
+- automatic background generation
+- persistent narrative cache
+- report integration
+- model promotion
+- qwen3 production approval
+- direct_ollama default change

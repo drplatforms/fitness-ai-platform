@@ -105,3 +105,23 @@ PASS if:
 - no model is promoted
 - direct_ollama remains opt-in only
 - existing focused tests pass
+
+## Debug endpoint smoke QA
+
+Status: DEBUG_ENDPOINT_SMOKE_CLEAR
+
+Smoke result:
+- FastAPI health endpoint reachable from Windows to Linux host.
+- Developer preview endpoint reachable through backend debug route.
+- Provider-disabled/default path confirmed as developer preview fallback path.
+- No rejected provider text, raw prompt, raw provider payload, stack trace, or raw validation internals were intentionally exposed by the preview contract.
+
+Boundary confirmation:
+- developer/debug endpoint only
+- no normal Today UI integration
+- no Streamlit normal surface integration
+- no report integration
+- no persistence as user-facing history
+- no model promotion
+- direct_ollama remains opt-in only
+- deterministic fallback remains available

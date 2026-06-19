@@ -1,6 +1,6 @@
 # Daily Coach Narrative Offline Provider QA v1
 
-Status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_IMPLEMENTED_PENDING_RUNTIME_QA`
+Status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`
 
 ## Purpose
 
@@ -60,8 +60,18 @@ This milestone does not:
 - remove deterministic fallback
 - change food, exercise, workout, nutrition, Training Level 5, or Nutrition Level 5 behavior
 
-## Expected QA status
+## Final QA status
 
-Expected final review status after manual runtime QA:
+Runtime QA is accepted with model findings.
 
 `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`
+
+Accepted model findings:
+
+- `qwen3:8b`: clean practical pass; best practical evaluation candidate; not production-approved.
+- `qwen2.5:3b`: safe compliance pass; copy-quality warning due to meta/process language; baseline only.
+- `qwen3:32b`: partial offline reference pass; user 101 timed out; useful but too slow for practical preview loops.
+
+Next required milestone before Developer Preview:
+
+`Daily Coach Narrative Provider Contract Tightening v1.1`

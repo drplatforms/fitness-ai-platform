@@ -1,12 +1,14 @@
 # Daily Coach Narrative Offline Provider QA v1 Review
 
-Status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_IMPLEMENTED_PENDING_RUNTIME_QA`
+Status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`
 
 ## Review summary
 
-Daily Coach Narrative Offline Provider QA v1 is implemented as an offline/debug-only harness for testing provider output against real `DailyCoachNarrativeContext` packets.
+Daily Coach Narrative Offline Provider QA v1 is accepted with model findings.
 
-The implementation creates a model-facing prompt from approved context fields only and validates provider output against the tightened six-key coach voice JSON contract.
+The implementation added an offline/debug-only harness for testing provider output against real `DailyCoachNarrativeContext` packets. Runtime QA confirmed the harness can safely evaluate local model output without integrating narrative output into normal Today, Streamlit, reports, or production provider paths.
+
+No model is promoted. No model is production-approved.
 
 ## Implemented files
 
@@ -27,24 +29,68 @@ Updated:
 - `docs/project_memory/current_state.md`
 - `docs/project_memory/open_questions.md`
 
-## Validation behavior
+## Runtime QA findings
 
-Provider output is rejected for:
+### qwen3:8b
 
-- markdown/prose around JSON
-- missing keys
-- extra keys
-- changed `recommended_focus`
-- unapproved facts in `used_approved_facts`
-- invented numbers
-- invented foods
-- invented exercises
-- invented calorie/macro targets
-- changed Daily Next Action phrases
-- changed workflow target references
-- medical/clinical claims
-- generic filler
-- raw/debug/provider/model metadata
+Result: `CLEAN_PRACTICAL_PASS`
+
+- users 101, 102, and 105 passed
+- parse success: 3/3
+- validation approved: 3/3
+- decision pass: 3/3
+- grounding: 5
+- voice: 4
+- latency roughly 39-52 seconds
+
+Architecture interpretation: `qwen3:8b` remains the best practical Daily Coach Narrative evaluation candidate. It is not production-approved.
+
+### qwen2.5:3b
+
+Result: `SAFE_COMPLIANCE_PASS_COPY_QUALITY_WARNING`
+
+- users 101, 102, and 105 passed
+- parse success: 3/3
+- validation approved: 3/3
+- decision pass: 3/3
+- grounding: 5
+- voice: 4 by harness score
+- latency roughly 25-40 seconds
+
+Architecture interpretation: `qwen2.5:3b` is useful as a small compliant baseline, but representative excerpts showed process/meta-language leakage. It is not recommended for developer preview voice without additional validator protection.
+
+Observed product-copy issue:
+
+- "Use the exact approved focus because the backend-approved facts support it."
+
+### qwen3:32b
+
+Result: `PARTIAL_OFFLINE_REFERENCE_PASS_TIMEOUT_LIMITATION`
+
+- users 102 and 105 passed
+- user 101 failed due to provider `TimeoutError`
+- parse pass: 2/3
+- validation pass: 2/3
+- decision pass: 2/3
+- average latency roughly 214 seconds
+- timeout observed at roughly 300 seconds
+
+Architecture interpretation: `qwen3:32b` remains a useful offline quality reference, but it is operationally too slow and not reliable enough for practical preview loops. The timeout was safely contained. It is not production-approved.
+
+## Validator gap
+
+The current validator catches safety and grounding failures, but runtime QA identified a product-copy validator gap.
+
+The validator should reject meta/process language before any Developer Preview surface displays provider narrative.
+
+Examples to reject in a follow-up milestone:
+
+- "approved facts"
+- "backend-approved"
+- "exact approved focus"
+- "use the exact"
+- "as instructed"
+- "provided context"
 
 ## Boundary review
 
@@ -61,27 +107,16 @@ Confirmed preserved:
 - no `DailyCoachNarrativeContext` truth-field changes
 - no provider gate changes
 - no validator loosening
+- no deterministic fallback weakening
 
-## Validation completed
+## Final accepted status
 
-Focused tests passed:
-
-- `tests/test_daily_coach_narrative_validation_service.py`
-- `tests/test_daily_coach_narrative_provider_service.py`
-- `tests/test_daily_coach_narrative_context_service.py`
-- `tests/test_daily_next_action_service.py`
-- `tests/test_coach_voice_bakeoff_service.py`
-- `tests/test_report_persistence_boundary.py`
-- `tests/test_full_report_section_registry.py`
-
-Runtime QA remains pending because automated tests do not call live Ollama.
+`DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`
 
 ## Recommended next action
 
-Run manual offline provider QA with:
+Proceed to merge after documenting runtime findings.
 
-```bash
-python tools/daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
-```
+Recommended next milestone after merge:
 
-Then run `qwen3:32b` separately if practical.
+`Daily Coach Narrative Provider Contract Tightening v1.1`

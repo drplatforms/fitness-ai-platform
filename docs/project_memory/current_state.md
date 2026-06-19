@@ -279,9 +279,9 @@ No model is called. No qwen, Ollama, direct_ollama, or CrewAI path is introduced
 
 ## Daily Coach Narrative Offline Provider QA v1
 
-Daily Coach Narrative Offline Provider QA v1 is implemented on `feature/daily-coach-narrative-offline-provider-qa-v1` pending manual runtime QA.
+Daily Coach Narrative Offline Provider QA v1 is accepted with model findings.
 
-Implementation status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_IMPLEMENTED_PENDING_RUNTIME_QA`.
+Final accepted status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
 
 Implemented:
 
@@ -293,22 +293,16 @@ Implemented:
 
 The offline QA path builds `DailyCoachNarrativeContext` for selected users, sends only approved context fields to the model, parses the tightened six-key JSON output contract, validates recommended focus and approved facts, blocks forbidden claims, records local QA artifacts, and keeps deterministic fallback behavior available.
 
-Runtime QA command:
+Runtime findings:
 
-```bash
-python tools/daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
-```
+- `qwen3:8b`: clean practical pass across users 101, 102, and 105; parse/validation/decision 3/3; grounding 5; voice 4; latency roughly 39-52 seconds; best practical Daily Coach Narrative evaluation candidate; not production-approved.
+- `qwen2.5:3b`: safe compliance pass across users 101, 102, and 105; parse/validation/decision 3/3; useful small baseline but produced meta/process language such as "Use the exact approved focus because the backend-approved facts support it"; not recommended for developer preview voice without validator tightening.
+- `qwen3:32b`: partial offline reference pass; users 102 and 105 passed, user 101 timed out at roughly 300 seconds; useful quality reference but too slow and timeout-prone for practical preview loops.
 
-Optional offline reference:
+Validator gap identified:
 
-```bash
-python tools/daily_coach_narrative_offline_qa.py --model qwen3:32b --user-id 101 --user-id 102 --user-id 105
-```
-
-Local artifacts:
-
-- `artifacts/daily_coach_narrative_offline_qa_v1/contexts.json`
-- `artifacts/daily_coach_narrative_offline_qa_v1/results.json`
-- `artifacts/daily_coach_narrative_offline_qa_v1/report.md`
+- Product-copy validation must reject meta/process/internal architecture language before any Developer Preview surface displays provider narrative.
 
 No normal Today UI integration occurred. No Streamlit integration occurred. No report integration occurred. No model output is persisted. No model is promoted. qwen3 remains not approved. direct_ollama remains opt-in only.
+
+Recommended next milestone: `Daily Coach Narrative Provider Contract Tightening v1.1`.

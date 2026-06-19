@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 2026-06-18
+Last updated: 2026-06-19
 
 ## Project
 
@@ -12,26 +12,35 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Food Catalog Expansion v1` was accepted and merged to main.
+`Coach Voice Contract Tightening v1` was accepted and merged to main.
 
-Final accepted status: `FOOD_CATALOG_EXPANSION_V1_ACCEPTED`.
+Final accepted status: `COACH_VOICE_CONTRACT_TIGHTENING_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
 
-The curated canonical food catalog expanded from 132 to 202 entries while preserving deterministic seeding, per-100g macro coverage, source/confidence behavior, alias/search behavior, canonical logging, Daily Next Action behavior, nutrition formulas, provider/report semantics, Level 5 Training/Nutrition boundaries, and public-safe rendering.
+Accepted model findings:
+
+- `qwen3:8b` remains the best practical evaluation-only bounded coach voice candidate.
+- `qwen3:32b` remains the best offline / chores-mode quality reference.
+- `qwen2.5:3b` improved to a compliant small baseline but remains more generic.
+- `qwen3:14b` partially improved but remains unreliable.
+- `qwen3:30b-a3b` remains incompatible with the strict JSON-only contract.
+
+No model is production-approved. No Today, Streamlit, report, provider, catalog, workout, or nutrition runtime path was changed.
 
 ## Current implementation milestone
 
-`Exercise Catalog Expansion v1` is implemented and pending Architecture/QA review.
+`Daily Coach Narrative v1 Planning` was accepted by Architecture.
 
-Implementation status: `EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
+`Daily Coach Narrative Context Builder v1` is implemented and pending QA/Architecture review.
 
-Exercise Catalog Expansion v1 expands the curated local exercise catalog in a deterministic, home-gym-aware, reviewable way so workout preview and future substitutions have stronger coverage across movement patterns, equipment, core, conditioning, and mobility/recovery options. It does not change workout generation logic, provider/report semantics, Level 5 boundaries, Streamlit UI, food catalog behavior, RAG/embeddings, or AI-generated production catalog behavior.
+Implementation status: `DAILY_COACH_NARRATIVE_CONTEXT_BUILDER_V1_IMPLEMENTED_PENDING_QA`.
+
+The context builder creates a deterministic `DailyCoachNarrativeContext` from the existing Daily Next Action state. It preserves the selected action and workflow target exactly, produces explicit approved facts/limitations/forbidden claims, and creates deterministic fallback wording. It does not call a model and does not integrate into Today, Streamlit, reports, or production provider paths.
 
 ## Next recommended milestone options
 
-- Exercise Catalog Expansion v1 Architecture/QA acceptance.
+- Daily Coach Narrative Context Builder v1 Architecture/QA review.
+- Daily Coach Narrative Offline Runtime QA v1 after Context Builder acceptance.
 - Logging UX Speed & Friction Reduction v1.
-- Bounded Coach Voice Bakeoff v1.
-- Daily Coach Narrative v1.
 - Nutrition Explanation Value-Aware Copy v1.
 
 ## Current model/provider status
@@ -125,34 +134,33 @@ Do not add RAG, embeddings, scraping, AI-generated production catalog entries, m
 
 ## Current AI provider evaluation direction
 
-Bounded Coach Voice Bakeoff v1 is accepted with model findings on `feature/bounded-coach-voice-bakeoff-v1`.
+Bounded Coach Voice Bakeoff v1 and Coach Voice Contract Tightening v1 are accepted and merged to `main` as offline evaluation milestones.
 
-Final accepted status: `BOUNDED_COACH_VOICE_BAKEOFF_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
+Current accepted coach voice findings:
 
-Closeout status: `BOUNDED_COACH_VOICE_BAKEOFF_V1_CLOSEOUT_COMPLETE_PENDING_MERGE`.
+- `qwen3:8b` remains the best practical evaluation-only bounded coach voice candidate.
+- `qwen3:32b` remains the best offline / chores-mode quality reference, but it is too slow for tight Today UI.
+- `qwen2.5:3b` improved to a compliant small baseline after contract tightening, but copy remains more generic.
+- `qwen3:14b` partially improved but remains unreliable.
+- `qwen3:30b-a3b` remains incompatible with strict JSON-only output.
 
-The bakeoff is an offline/backend-controlled evaluation harness. It compares local model candidates against the same backend-approved coach context packs and validates strict JSON output before scoring. It does not integrate model output into Today, reports, Streamlit, or production provider paths.
+No model is production-approved. `qwen3` remains not approved. No model may write to Today, Streamlit, reports, production provider paths, next-action selection, food suggestions, exercise suggestions, targets, workouts, recovery status, nutrition claims, or medical claims.
 
-Accepted model findings:
+Daily Coach Narrative v1 Planning is the current docs-only bridge from offline bakeoff evidence toward a future bounded daily narrative layer.
 
-- `qwen3:8b` passed all 3 required starter contexts and is the best practical bounded coach voice candidate so far. It is promising for future contract-tightened coach voice work, but it is not production-approved.
-- `qwen3:32b` passed all 3 starter contexts as an exploratory addendum. It is the best offline / chores-mode quality signal so far, with grounding 5 and voice 4, but roughly 2.6-3.1 minute latency per context makes it unsuitable for tight Today UI.
-- `qwen2.5:3b` is a fast baseline but failed the current output contract.
-- `qwen3:14b` failed the current output contract.
+Current planned future narrative sequence:
 
-Interpretation: the harness works, bounded coach voice is viable, and prompt/schema packaging needs tightening before judging qwen2.5:3b or qwen3:14b permanently unsuitable.
-
-No model is promoted. `qwen3` remains experimental and not approved for production. Any production narrative use requires a later Architecture decision.
-
-Coach Voice Bakeoff CLI Entrypoint Fix v1 is implemented to keep the direct repo-root command stable without requiring manual `PYTHONPATH` setup:
-
-```powershell
-python tools/coach_voice_bakeoff.py --model qwen2.5:3b
+```text
+Daily Next Action state
+→ DailyCoachNarrativeContext
+→ CandidateDailyCoachNarrative JSON attempt
+→ narrative parser/validator
+→ ApprovedDailyCoachNarrative or deterministic fallback
+→ future Developer Mode preview
+→ future normal Today UI only after Architecture acceptance
 ```
 
-The fix is CLI/tooling only. It does not change prompts, validators, model approval, Streamlit, Today, reports, provider gates, or production integration.
-
-Recommended next milestone: `Coach Voice Contract Tightening v1`.
+Recommended next milestone after planning acceptance: `Daily Coach Narrative Context Builder v1`.
 
 ## What must not be changed casually
 
@@ -204,31 +212,67 @@ Read `docs/project_memory/README.md`, then this file, then the role-specific han
 
 ## Coach Voice Contract Tightening v1
 
-Coach Voice Contract Tightening v1 is implemented on `feature/coach-voice-contract-tightening-v1` pending Architecture/QA review.
+Coach Voice Contract Tightening v1 is accepted and merged to `main`.
 
-Implementation status: `COACH_VOICE_CONTRACT_TIGHTENING_V1_IMPLEMENTED_PENDING_QA`.
+Final accepted status: `COACH_VOICE_CONTRACT_TIGHTENING_V1_ACCEPTED_WITH_MODEL_FINDINGS`.
 
-This milestone tightens the offline coach voice bakeoff prompt/schema packaging so local models are less likely to echo schema metadata or miss the required answer object. The prompt now separates output instructions, example answer format, approved context, approved facts, and forbidden claims without exposing raw JSON Schema metadata.
+The tightened prompt/schema packaging improved model compliance across all five accepted context packs while preserving strict validators and production boundaries.
 
-The strict parser and validators remain unchanged in authority:
+Accepted model findings:
 
-- exact required keys
-- strict JSON-only output
-- exact `recommended_focus` matching
-- exact approved fact matching
-- forbidden claim rejection
-- invented numeric token rejection
-- generic filler rejection
-- compact coach-note validation
+- `qwen3:8b`: 5/5 pass, best practical evaluation-only bounded coach voice candidate, not production-approved.
+- `qwen3:32b`: 5/5 pass, best offline / chores-mode quality reference, too slow for tight Today UI, not production-approved.
+- `qwen2.5:3b`: 5/5 pass after contract tightening, useful compliant small baseline, still more generic.
+- `qwen3:14b`: 2/5 pass, partial improvement, still unreliable.
+- `qwen3:30b-a3b`: 0/5 pass, still incompatible with strict JSON-only output.
 
-The generated bakeoff report now includes model-level summary metrics and failure categories for all-context QA.
+No model is promoted. qwen3 remains not approved. No Today, Streamlit, report, production provider, catalog, workout generation, nutrition formula, fallback, or provider gate behavior changed.
 
-No model is promoted. qwen3 remains not approved. No Today, Streamlit, report, production provider, catalog, workout generation, nutrition formula, fallback, or provider gate behavior changes in this milestone.
+## Daily Coach Narrative v1 Planning
 
-Required runtime QA should run all five context packs with:
+Daily Coach Narrative v1 Planning is implemented as a docs-only milestone on `feature/daily-coach-narrative-v1-planning` pending Architecture acceptance.
 
-```powershell
-python tools\coach_voice_bakeoff.py --all-contexts --model qwen2.5:3b --model qwen3:8b --model qwen3:14b --model qwen3:30b-a3b --model qwen3:32b
+Planning status: `DAILY_COACH_NARRATIVE_V1_PLANNED_PENDING_ARCHITECTURE_ACCEPTANCE`.
+
+The planned future narrative layer would explain the backend-selected Daily Next Action with compact coach-style language while preserving backend authority over action selection, workflow target, confidence, approved facts, forbidden claims, and fallback behavior.
+
+Proposed future context:
+
+```text
+Daily Next Action state
+→ DailyCoachNarrativeContext
+→ CandidateDailyCoachNarrative JSON attempt
+→ narrative parser/validator
+→ ApprovedDailyCoachNarrative or deterministic fallback
 ```
 
-If `qwen3:32b` is too slow, it may run separately as the offline quality reference.
+Planning confirms:
+
+- the narrative may explain the approved action but may not choose or change it
+- the model owns wording only
+- backend owns truth, confidence, approved facts, forbidden claims, validation, and fallback
+- output should use the tightened coach voice JSON object unless a later implementation proves a need to specialize it
+- failed model output falls back to deterministic Daily Next Action wording
+- the first implementation slice should be `Daily Coach Narrative Context Builder v1`, with no model call
+
+Normal Today UI integration remains out of scope until later runtime QA and Architecture acceptance.
+
+## Daily Coach Narrative Context Builder v1
+
+Daily Coach Narrative Context Builder v1 is implemented on `feature/daily-coach-narrative-context-builder-v1` pending QA/Architecture acceptance.
+
+Implementation status: `DAILY_COACH_NARRATIVE_CONTEXT_BUILDER_V1_IMPLEMENTED_PENDING_QA`.
+
+Implemented:
+
+- `DailyCoachNarrativeContext` model
+- deterministic context builder service
+- context validation helper
+- focused unit tests
+- project memory milestone/review docs
+
+The builder consumes the existing deterministic Daily Next Action result and returns a compact backend-approved context packet for future narrative provider QA. It preserves `next_action_id`, `next_action_title`, `next_action_reason`, `workflow_target`, `priority`, and `severity` exactly. `approved_focus` is exactly the Daily Next Action title.
+
+The builder creates explicit approved facts, approved limitations, forbidden claim categories, and deterministic fallback wording. It filters raw/debug/provider-like evidence keys and does not expose raw logs, raw provider output, raw validation errors, raw debug payloads, full catalog dumps, or unfiltered history.
+
+No model is called. No qwen, Ollama, direct_ollama, or CrewAI path is introduced. No Today/Streamlit/report integration occurs in this slice.

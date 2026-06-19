@@ -94,8 +94,10 @@ Expected ownership:
 - Streamlit may later render improved search/logging/workout options.
 - AI/provider output must not generate production catalog entries.
 
-Catalog Expansion & Curation v1 planning was accepted. Food Catalog Expansion v1 is implemented pending Architecture/QA review.
+Catalog Expansion & Curation v1 planning was accepted. Food Catalog Expansion v1 was accepted and merged to main. Exercise Catalog Expansion v1 is implemented pending Architecture/QA review.
 
-Food Catalog Expansion v1 increases the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic canonical search/logging behavior and provider/report boundaries.
+Food Catalog Expansion v1 increased the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic canonical search/logging behavior and provider/report boundaries.
 
-Current implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
+Exercise Catalog Expansion v1 expands the curated local exercise catalog from 178 to 240 entries while preserving deterministic catalog loading/filtering, workout preview compatibility, Daily Next Action behavior, provider/report semantics, and Level 5 boundaries.
+
+Current implementation status: `EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.

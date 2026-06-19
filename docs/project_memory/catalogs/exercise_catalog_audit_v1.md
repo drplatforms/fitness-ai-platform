@@ -4,66 +4,69 @@ Last updated: 2026-06-18
 
 ## Status
 
-`CATALOG_EXPANSION_CURATION_V1_PLANNING_AUDIT`
+`EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`
 
-This is a planning audit only. It does not change workout generation behavior, add new workout logic, or change Training provider semantics.
+This audit documents the current exercise catalog after Exercise Catalog Expansion v1. The implementation expands curated seed data only. It does not change workout generation logic, Training provider semantics, Nutrition provider semantics, Daily Next Action priority order, Streamlit UI, or report/persistence boundaries.
 
-## Current inventory
+## Current inventory after Exercise Catalog Expansion v1
 
-The app currently has a curated local exercise catalog seeded through `services/exercise_catalog_service.py` and `scripts/seed_exercise_catalog.py`.
+The app has a curated local exercise catalog seeded through `services/exercise_catalog_service.py` and `scripts/seed_exercise_catalog.py`.
 
-Current curated catalog count observed in the code snapshot:
+Current curated catalog count observed in the implementation snapshot:
 
-- exercise catalog entries: 178
+- exercise catalog entries: 240
+- prior planning inventory: 178
+- curated entries added in Exercise Catalog Expansion v1: 62
 
 Current exercise types:
 
-- strength: 138
-- core: 20
-- conditioning: 18
-- mobility: 2
+- strength: 173
+- core: 28
+- conditioning: 26
+- mobility: 13
 
 Current movement-pattern coverage:
 
-- horizontal_pull: 25
-- horizontal_push: 20
-- hinge: 16
-- vertical_push: 16
-- conditioning: 15
-- lunge: 13
-- arms_biceps: 13
-- vertical_pull: 13
-- squat: 12
-- core_anti_extension: 12
-- arms_triceps: 11
-- core_anti_rotation: 7
-- carry: 5
+- horizontal_pull: 31
+- horizontal_push: 27
+- hinge: 23
+- conditioning: 21
+- vertical_push: 19
+- lunge: 18
+- arms_biceps: 18
+- squat: 16
+- core_anti_extension: 16
+- vertical_pull: 15
+- arms_triceps: 13
+- core_anti_rotation: 11
+- carry: 7
+- mobility: 5
 
 Current equipment coverage:
 
-- dumbbell: 43
-- plates: 33
-- bodyweight: 29
-- adjustable_bench: 27
-- cable: 25
-- barbell: 23
-- resistance_band: 21
-- rack: 12
-- pull_up_bar: 11
-- ez_bar: 7
-- treadmill: 6
-- rope_cable_attachment: 6
+- dumbbell: 57
+- bodyweight: 46
+- plates: 43
+- cable: 33
+- adjustable_bench: 32
+- barbell: 30
+- resistance_band: 29
+- rack: 14
+- pull_up_bar: 13
+- ez_bar: 10
+- treadmill: 8
+- bike: 7
+- rope_cable_attachment: 7
 - exercise_ball: 6
-- bike: 5
 - machine: 3
 
 Current difficulty coverage:
 
-- beginner: 93
-- intermediate: 76
-- advanced: 9
+- beginner: 134
+- intermediate: 94
+- advanced: 12
 
-Current app-facing model fields include:
+Current app-facing model fields remain:
 
 - `name`
 - `exercise_type`
@@ -72,87 +75,73 @@ Current app-facing model fields include:
 - `equipment_required`
 - `difficulty`
 
+## Expansion summary
+
+Exercise Catalog Expansion v1 adds curated, reviewable entries across:
+
+- bodyweight scaling options
+- low-stress core options
+- mobility/recovery drills
+- dumbbell pressing, rowing, lower-body, arm, carry, and hinge variants
+- barbell/rack/plate options
+- EZ bar accessory options
+- pull-up bar hold/progression options
+- resistance band push, pull, hinge, squat, anti-rotation, and mobility options
+- cable push, pull, hinge, anti-rotation, and accessory options
+- treadmill and bike lower-intensity conditioning options
+
+Representative new entries include:
+
+- Wall Push-Up
+- Scapular Push-Up
+- Plank Shoulder Tap
+- Reverse Crunch
+- Cat-Cow
+- Quadruped T-Spine Rotation
+- Half-Kneeling Hip Flexor Stretch
+- Dumbbell Squeeze Press
+- Dumbbell Suitcase Deadlift
+- Dumbbell Farmer March
+- Rack Pull
+- Barbell Shrug
+- Band Chest Press
+- Band Romanian Deadlift
+- Cable Chest Press
+- Cable Romanian Deadlift
+- Treadmill Recovery Walk
+- Bike Easy Spin
+
 ## Current strengths
 
-- The catalog is curated and deterministic.
-- It already covers the user's home-gym equipment well: dumbbells, bench, barbell/rack/plates, cables, bands, pull-up bar, treadmill, and bike.
-- Movement patterns are explicit enough for deterministic workout planning and substitutions.
-- Existing substitution service can reason from movement pattern, muscles, and equipment.
-- The catalog already includes a meaningful number of dumbbell, bodyweight, cable, barbell, and band movements.
+- The catalog remains curated and deterministic.
+- Home-gym equipment coverage is stronger across dumbbells, bench, barbell/rack/plates, cables, bands, pull-up bar, treadmill, and bike.
+- Movement-pattern coverage is broad enough for workout preview variety and future substitution work.
+- Mobility/recovery depth is improved without adding clinical rehab claims.
+- Limited-equipment filtering still excludes bench, cable, barbell, rack, plates, rope, exercise ball, treadmill, bike, and machine options when unavailable.
+- Machine exercises remain limited and excludable for home-gym users.
 
-## Current gaps
+## Remaining gaps
 
-Likely gaps to review before Exercise Catalog Expansion v1:
+Exercise Catalog Expansion v1 deliberately does not add schema fields for:
 
-- Mobility/recovery entries are very limited.
-- Recovery suitability is not first-class yet.
-- Joint stress is not first-class yet.
-- Substitution groups are inferred rather than explicitly curated.
-- Setup and safety notes are not first-class fields.
-- Progression type is not first-class.
-- Some near-duplicates likely need naming/alias policy review.
-- Advanced movements exist but should be bounded by safety/recovery tags before being surfaced aggressively.
-- Machine entries exist but may not match the user's home-gym environment and should be treated carefully.
+- secondary muscles
+- substitution group
+- joint stress
+- recovery suitability
+- progression type
+- setup notes
+- safety notes
 
-## Proposed target exercise catalog groups
+Those remain candidate v2/schema-review fields.
 
-Exercise Catalog Expansion v1 should focus on practical variety and safer substitutions across:
+The catalog still relies on inferred substitution behavior from existing fields:
 
-1. Dumbbell movements
-   - pressing variants
-   - rowing variants
-   - squat/lunge/hinge variants
-   - shoulder/arm accessories
+- movement pattern
+- equipment required
+- primary muscle groups
+- difficulty
 
-2. Barbell and rack movements
-   - squat/bench/press/row/hinge variants
-   - conservative variants where recovery-limited
-
-3. EZ bar movements
-   - curls/extensions
-   - selected accessory work only
-
-4. Cable system movements
-   - rows/pulldowns/pressdowns/curls
-   - safe accessory options
-
-5. Bodyweight movements
-   - scalable push/pull/lower/core options
-
-6. Band movements
-   - warm-up, accessory, recovery-friendly, and substitution options
-
-7. Conditioning
-   - treadmill
-   - bike
-   - low-impact options
-
-8. Mobility/recovery
-   - warm-up drills
-   - low-stress recovery options
-   - movement-prep entries
-
-## Recommended fields for Exercise Catalog Expansion v1
-
-Current schema can support a basic expansion, but the target catalog should define these fields explicitly:
-
-- `exercise_id`
-- `display_name`
-- `movement_pattern`
-- `primary_muscles`
-- `secondary_muscles`
-- `equipment_required`
-- `difficulty`
-- `joint_stress`
-- `recovery_suitability`
-- `progression_type`
-- `substitution_group`
-- `setup_notes`
-- `safety_notes`
-
-Implementation can begin with deterministic constants and existing tables. Schema expansion should be planned separately if first-class fields are needed for workout generation or UI filtering.
-
-## Curation rules
+## Curation rules preserved
 
 An exercise qualifies as catalog-ready only when:
 
@@ -161,39 +150,38 @@ An exercise qualifies as catalog-ready only when:
 - required equipment is accurate
 - primary muscles are listed conservatively
 - difficulty is reasonable
-- high joint-stress or advanced options are not surfaced as default recovery-limited choices
-- substitution group is clear enough for deterministic alternatives
-- setup/safety notes are included when execution risk is non-obvious
+- high-skill or high-load options are not expected to be surfaced aggressively during recovery-limited plans
+- the entry fits existing deterministic seed/test behavior
 
-Duplicates should be avoided by:
+Duplicates are avoided by normalized name review.
 
-- normalized name review
-- equipment-specific naming rules
-- movement-pattern review
-- substitution-group review
+Equipment tags are limited to existing supported equipment names, including the user's home gym equipment.
 
-Recovery-sensitive tagging should distinguish:
+## Non-goals preserved
 
-- recovery-friendly
-- neutral
-- use-with-caution
-- avoid-when-recovery-limited
-
-## Non-goals
-
-Do not add:
+This milestone does not add:
 
 - generated exercise dumps
-- RAG/embeddings
+- scraping
+- RAG or embeddings
 - AI-authored production catalog entries
-- new workout generation behavior in the planning milestone
-- new progression algorithms
+- new workout generation behavior
+- provider/report behavior changes
+- Training Level 5 semantic changes
+- Nutrition Level 5 semantic changes
+- progression algorithms
 - clinical rehab claims
-- unsupported pain/injury guidance
+- Streamlit redesign
+- food catalog changes
 
-## Recommended second implementation slice
+## Expected next status
 
-`Exercise Catalog Expansion v1`
+If accepted by Architecture/QA:
 
-Reason:
-After food logging improves, workout variety and equipment-aware substitutions become the next daily-use bottleneck. The existing catalog is strong enough to build on, but recovery suitability, joint stress, substitution grouping, and mobility/recovery depth need deliberate curation.
+`EXERCISE_CATALOG_EXPANSION_V1_ACCEPTED`
+
+Recommended next product milestones after acceptance:
+
+- Logging UX Speed & Friction Reduction v1
+- Bounded Coach Voice Bakeoff v1
+- Daily Coach Narrative v1

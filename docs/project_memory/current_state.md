@@ -12,26 +12,27 @@ AI Health Coach / fitness-ai
 
 ## Latest accepted milestone
 
-`Daily Next Action Panel v1` was accepted and merged to main.
+`Food Catalog Expansion v1` was accepted and merged to main.
 
-Final accepted status: `DAILY_NEXT_ACTION_PANEL_V1_ACCEPTED`.
+Final accepted status: `FOOD_CATALOG_EXPANSION_V1_ACCEPTED`.
 
-The first product-loop slice added a deterministic backend next-action service, `GET /daily-coach/{user_id}/next-action`, and a Today-page action card. Backend owns the action decision; Streamlit renders one primary action; no provider output controls navigation or invents food, calorie, macro, workout, fatigue, or recovery claims.
+The curated canonical food catalog expanded from 132 to 202 entries while preserving deterministic seeding, per-100g macro coverage, source/confidence behavior, alias/search behavior, canonical logging, Daily Next Action behavior, nutrition formulas, provider/report semantics, Level 5 Training/Nutrition boundaries, and public-safe rendering.
 
 ## Current implementation milestone
 
-`Food Catalog Expansion v1` is implemented and pending Architecture/QA review.
+`Exercise Catalog Expansion v1` is implemented and pending Architecture/QA review.
 
-Implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
+Implementation status: `EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
 
-Catalog Expansion & Curation v1 planning was accepted, and Food Catalog Expansion v1 was approved as the first implementation slice. The implementation expands the starter canonical food catalog in a deterministic, curated, inspectable way so the Daily Next Action Panel food-logging path becomes more useful without adding RAG, embeddings, scraping, AI-generated production catalog entries, meal planning, or provider behavior changes.
+Exercise Catalog Expansion v1 expands the curated local exercise catalog in a deterministic, home-gym-aware, reviewable way so workout preview and future substitutions have stronger coverage across movement patterns, equipment, core, conditioning, and mobility/recovery options. It does not change workout generation logic, provider/report semantics, Level 5 boundaries, Streamlit UI, food catalog behavior, RAG/embeddings, or AI-generated production catalog behavior.
 
 ## Next recommended milestone options
 
-- Food Catalog Expansion v1 Architecture/QA acceptance.
-- Exercise Catalog Expansion v1 planning/implementation.
+- Exercise Catalog Expansion v1 Architecture/QA acceptance.
+- Logging UX Speed & Friction Reduction v1.
+- Bounded Coach Voice Bakeoff v1.
+- Daily Coach Narrative v1.
 - Nutrition Explanation Value-Aware Copy v1.
-- Demo / Deployment Packaging Design v1.
 
 ## Current model/provider status
 
@@ -73,9 +74,10 @@ Provider-integrated section maturity: `training` and `nutrition_report_section`.
 
 ## What is safe to build next
 
-- Catalog Expansion & Curation v1 planning/design.
-- Food Catalog Expansion v1 as the recommended first catalog implementation slice.
-- Exercise Catalog Expansion v1 as the recommended second catalog implementation slice.
+- Exercise Catalog Expansion v1 Architecture/QA review.
+- Logging UX Speed & Friction Reduction v1.
+- Bounded Coach Voice Bakeoff v1.
+- Daily Coach Narrative v1.
 - Nutrition Explanation Value-Aware Copy v1.
 - Demo / Deployment Packaging Design v1.
 - UI polish / screenshot capture pass.

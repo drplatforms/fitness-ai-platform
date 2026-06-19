@@ -198,3 +198,9 @@ Recommended next milestone:
 Architecture accepted this planning milestone and approved Food Catalog Expansion v1 as the first implementation slice. The first slice expands the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic curation, per-100g nutrient storage, manually curated source policy, Moderate confidence, canonical aliases, and existing logging/search behavior.
 
 Implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
+
+## Exercise Catalog Expansion v1 implementation note
+
+Architecture accepted Food Catalog Expansion v1 and approved Exercise Catalog Expansion v1 as the next catalog usability slice. Exercise Catalog Expansion v1 expands the curated local exercise catalog from 178 to 240 entries while preserving deterministic seeding, existing schema fields, equipment filtering, workout preview compatibility, Daily Next Action behavior, provider/report semantics, and Level 5 boundaries.
+
+Implementation status: `EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.

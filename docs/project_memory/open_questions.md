@@ -21,7 +21,7 @@ Open after v1 implementation:
 
 ## Catalog Expansion & Curation
 
-Catalog Expansion & Curation v1 planning accepted Food Catalog Expansion v1 as the first implementation slice.
+Catalog Expansion & Curation v1 planning accepted Food Catalog Expansion v1 as the first implementation slice and Exercise Catalog Expansion v1 as the next product-usability slice.
 
 Resolved through Food Catalog Expansion v1 implementation:
 
@@ -32,14 +32,24 @@ Resolved through Food Catalog Expansion v1 implementation:
 - Fiber and sodium remain optional/future nutrients rather than required v1 fields.
 - Brand-heavy, highly variable mixed foods, scraping, RAG, embeddings, AI-generated production entries, and meal planning remain out of scope.
 
-Open after Food Catalog Expansion v1:
+Resolved through Exercise Catalog Expansion v1 implementation:
 
-- Should a future schema migration add first-class category fields beyond `food_type`?
+- Exercise Catalog Expansion v1 starts with curated seed entries and existing schema fields rather than a schema migration.
+- The curated local exercise catalog expands from 178 to 240 entries.
+- New entries improve home-gym coverage across dumbbell, barbell/rack/plates, EZ bar, cable, bands, pull-up bar, treadmill, bike, bodyweight, and mobility/recovery options.
+- Movement-pattern coverage expands while keeping current deterministic filtering and workout preview behavior.
+- Recovery suitability, joint stress, substitution group, progression type, setup notes, and safety notes remain future schema/design work rather than forced into v1.
+- Scraping, RAG, embeddings, AI-generated production entries, provider changes, workout generation rewrites, and Streamlit redesign remain out of scope.
+
+Open after catalog v1 slices:
+
+- Should a future food schema migration add first-class category fields beyond `food_type`?
 - Should future quick-log UX use default serving sizes as shortcuts, or continue requiring explicit grams?
 - Should Food Catalog Expansion v2 add fiber and sodium for a smaller high-confidence subset?
 - Which new foods should be prioritized from actual user logging misses after QA?
-- Should Exercise Catalog Expansion v1 require schema changes for joint stress, recovery suitability, substitution group, setup notes, and safety notes, or start with deterministic constants/docs first?
-- What acceptance threshold should be used before considering the food catalog broad enough for demo/recruiter walkthroughs?
+- Should Exercise Catalog Expansion v2 add first-class joint stress, recovery suitability, substitution group, setup notes, and safety notes?
+- Should workout generation begin using explicit recovery-suitability tags after a schema review?
+- What acceptance threshold should be used before considering the food and exercise catalogs broad enough for demo/recruiter walkthroughs?
 
 ## Product voice
 

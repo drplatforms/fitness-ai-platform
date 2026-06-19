@@ -114,3 +114,11 @@ Architecture can accept this plan if it agrees that:
 Architecture accepted this planning milestone and approved Food Catalog Expansion v1 as the first implementation slice. The first slice expands the starter canonical food catalog from 132 to 202 curated entries while preserving deterministic curation, per-100g nutrient storage, manually curated source policy, Moderate confidence, canonical aliases, and existing logging/search behavior.
 
 Implementation status: `FOOD_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.
+
+## Exercise Catalog Expansion v1 implementation note
+
+Food Catalog Expansion v1 was accepted and merged to main. Exercise Catalog Expansion v1 is implemented as the next premium-product usability slice.
+
+The implementation expands the curated local exercise catalog from 178 to 240 entries with home-gym-aware additions across bodyweight, dumbbell, barbell/rack/plates, EZ bar, cable, resistance band, pull-up bar, treadmill, bike, core, conditioning, and mobility/recovery options.
+
+Implementation status: `EXERCISE_CATALOG_EXPANSION_V1_IMPLEMENTED_PENDING_QA`.

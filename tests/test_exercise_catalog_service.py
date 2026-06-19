@@ -53,7 +53,7 @@ def test_exercise_catalog_seeds_curated_entries_with_requirements(
 
     entries = get_exercise_catalog()
 
-    assert 150 <= len(entries) <= 200
+    assert 225 <= len(entries) <= 260
     assert all(entry.name for entry in entries)
     assert all(entry.movement_pattern for entry in entries)
     assert all(entry.exercise_type for entry in entries)
@@ -571,3 +571,146 @@ def test_expanded_catalog_keeps_machine_exercises_excludable(tmp_path, monkeypat
 
     assert len(entries) >= 100
     assert all("machine" not in entry.equipment_required for entry in entries)
+
+
+def test_exercise_catalog_expansion_v1_adds_curated_reviewable_entries(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = get_exercise_catalog()
+    names = {entry.name for entry in entries}
+
+    assert len(entries) == 240
+    for expected_name in {
+        "Wall Push-Up",
+        "Scapular Push-Up",
+        "Dumbbell Squeeze Press",
+        "Dumbbell Suitcase Deadlift",
+        "Barbell Shrug",
+        "Rack Pull",
+        "Band Chest Press",
+        "Band Romanian Deadlift",
+        "Cable Chest Press",
+        "Cable Romanian Deadlift",
+        "Treadmill Recovery Walk",
+        "Bike Easy Spin",
+        "Cat-Cow",
+        "Half-Kneeling Hip Flexor Stretch",
+    }:
+        assert expected_name in names
+
+
+def test_exercise_catalog_expansion_v1_has_no_duplicate_names(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    names = [entry.name.strip().lower() for entry in get_exercise_catalog()]
+
+    assert len(names) == len(set(names))
+
+
+def test_exercise_catalog_expansion_v1_required_tags_are_valid(tmp_path, monkeypatch):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    allowed_types = {"strength", "core", "conditioning", "mobility"}
+    allowed_patterns = {
+        "arms_biceps",
+        "arms_triceps",
+        "carry",
+        "conditioning",
+        "core_anti_extension",
+        "core_anti_rotation",
+        "hinge",
+        "horizontal_pull",
+        "horizontal_push",
+        "lunge",
+        "mobility",
+        "squat",
+        "vertical_pull",
+        "vertical_push",
+    }
+    allowed_difficulties = {"beginner", "intermediate", "advanced"}
+    allowed_equipment = set(USER_HOME_GYM_EQUIPMENT) | {"bodyweight", "machine"}
+
+    for entry in get_exercise_catalog():
+        assert entry.exercise_type in allowed_types
+        assert entry.movement_pattern in allowed_patterns
+        assert entry.difficulty in allowed_difficulties
+        assert entry.name.strip()
+        assert entry.primary_muscle_groups
+        assert entry.equipment_required
+        assert set(entry.equipment_required).issubset(allowed_equipment)
+
+
+def test_exercise_catalog_expansion_v1_improves_mobility_and_recovery_depth(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = get_exercise_catalog()
+    mobility_names = {
+        entry.name for entry in entries if entry.exercise_type == "mobility"
+    }
+
+    assert len(mobility_names) >= 12
+    assert "Cat-Cow" in mobility_names
+    assert "Quadruped T-Spine Rotation" in mobility_names
+    assert "Half-Kneeling Hip Flexor Stretch" in mobility_names
+    assert "Child's Pose Lat Stretch" in mobility_names
+    assert "Pull-Up Bar Dead Hang" in mobility_names
+
+
+def test_home_gym_filter_includes_expanded_v1_equipment_aware_options(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = filter_exercises_for_equipment(
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+    names = {entry.name for entry in entries}
+
+    assert "Dumbbell Squeeze Press" in names
+    assert "Rack Pull" in names
+    assert "Band Chest Press" in names
+    assert "Cable Chest Press" in names
+    assert "Treadmill Recovery Walk" in names
+    assert "Bike Easy Spin" in names
+    assert all("machine" not in entry.equipment_required for entry in entries)
+
+
+def test_limited_equipment_filter_keeps_expanded_v1_options_compatible(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    entries = filter_exercises_for_equipment(
+        available_equipment=["bodyweight", "dumbbell"],
+        unavailable_equipment=[
+            "adjustable_bench",
+            "barbell",
+            "bike",
+            "cable",
+            "exercise_ball",
+            "ez_bar",
+            "machine",
+            "plates",
+            "pull_up_bar",
+            "rack",
+            "resistance_band",
+            "rope_cable_attachment",
+            "treadmill",
+        ],
+    )
+    names = {entry.name for entry in entries}
+
+    assert "Wall Push-Up" in names
+    assert "Scapular Push-Up" in names
+    assert "Dumbbell Suitcase Deadlift" in names
+    assert "Dumbbell Farmer March" in names
+    assert "Dumbbell Squeeze Press" not in names
+    assert all(
+        set(entry.equipment_required).issubset({"bodyweight", "dumbbell"})
+        for entry in entries
+    )

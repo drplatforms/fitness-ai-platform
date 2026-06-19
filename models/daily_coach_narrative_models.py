@@ -64,3 +64,104 @@ class DailyCoachNarrativeContext:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS = "success"
+DAILY_COACH_NARRATIVE_PARSE_STATUS_FAILED = "failed"
+
+DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED = "approved"
+DAILY_COACH_NARRATIVE_VALIDATION_STATUS_REJECTED = "rejected"
+
+DAILY_COACH_NARRATIVE_DECISION_PASS = "pass"
+DAILY_COACH_NARRATIVE_DECISION_FAIL = "fail"
+
+
+@dataclass(frozen=True)
+class CandidateDailyCoachNarrative:
+    """Strict provider candidate output for offline narrative QA.
+
+    This is not user-facing until a validator approves it. Normal Today UI does
+    not consume this object in v1.
+    """
+
+    coach_note: str
+    key_takeaway: str
+    recommended_focus: str
+    confidence_language: str
+    used_approved_facts: list[str]
+    avoided_claims: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachNarrativeParseResult:
+    parse_status: str
+    candidate: CandidateDailyCoachNarrative | None = None
+    error: str | None = None
+
+    @property
+    def success(self) -> bool:
+        return self.parse_status == DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["candidate"] = self.candidate.to_dict() if self.candidate else None
+        return payload
+
+
+@dataclass(frozen=True)
+class DailyCoachNarrativeValidationResult:
+    validation_status: str
+    validation_errors: list[str]
+    forbidden_claims_found: list[str]
+
+    @property
+    def approved(self) -> bool:
+        return (
+            self.validation_status == DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachNarrativeScores:
+    grounding: int
+    claim_safety: int
+    coach_voice: int
+    specificity: int
+    brevity: int
+    actionability: int
+    validator_compatibility: int
+    runtime_practicality: int
+
+    def to_dict(self) -> dict[str, int]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachNarrativeOfflineQAResult:
+    model_name: str
+    user_id: int
+    date: str
+    next_action_id: str
+    next_action_title: str
+    workflow_target: str
+    parse_status: str
+    validation_status: str
+    overall_decision: str
+    elapsed_seconds: float
+    latency_ms: int
+    scores: DailyCoachNarrativeScores
+    validation_errors: list[str]
+    forbidden_claims_found: list[str]
+    representative_safe_excerpt: str | None = None
+    representative_rejection_reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["scores"] = self.scores.to_dict()
+        return payload

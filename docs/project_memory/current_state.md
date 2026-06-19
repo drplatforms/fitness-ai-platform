@@ -259,9 +259,9 @@ Normal Today UI integration remains out of scope until later runtime QA and Arch
 
 ## Daily Coach Narrative Context Builder v1
 
-Daily Coach Narrative Context Builder v1 is implemented on `feature/daily-coach-narrative-context-builder-v1` pending QA/Architecture acceptance.
+Daily Coach Narrative Context Builder v1 is accepted and merged to `main`.
 
-Implementation status: `DAILY_COACH_NARRATIVE_CONTEXT_BUILDER_V1_IMPLEMENTED_PENDING_QA`.
+Final accepted status: `DAILY_COACH_NARRATIVE_CONTEXT_BUILDER_V1_ACCEPTED`.
 
 Implemented:
 
@@ -276,3 +276,39 @@ The builder consumes the existing deterministic Daily Next Action result and ret
 The builder creates explicit approved facts, approved limitations, forbidden claim categories, and deterministic fallback wording. It filters raw/debug/provider-like evidence keys and does not expose raw logs, raw provider output, raw validation errors, raw debug payloads, full catalog dumps, or unfiltered history.
 
 No model is called. No qwen, Ollama, direct_ollama, or CrewAI path is introduced. No Today/Streamlit/report integration occurs in this slice.
+
+## Daily Coach Narrative Offline Provider QA v1
+
+Daily Coach Narrative Offline Provider QA v1 is implemented on `feature/daily-coach-narrative-offline-provider-qa-v1` pending manual runtime QA.
+
+Implementation status: `DAILY_COACH_NARRATIVE_OFFLINE_PROVIDER_QA_V1_IMPLEMENTED_PENDING_RUNTIME_QA`.
+
+Implemented:
+
+- Daily Coach Narrative provider/offline QA service
+- Daily Coach Narrative validation service
+- offline QA CLI tool
+- focused parser/validator/provider tests
+- runtime QA project memory docs
+
+The offline QA path builds `DailyCoachNarrativeContext` for selected users, sends only approved context fields to the model, parses the tightened six-key JSON output contract, validates recommended focus and approved facts, blocks forbidden claims, records local QA artifacts, and keeps deterministic fallback behavior available.
+
+Runtime QA command:
+
+```bash
+python tools/daily_coach_narrative_offline_qa.py --model qwen3:8b --model qwen2.5:3b --user-id 101 --user-id 102 --user-id 105
+```
+
+Optional offline reference:
+
+```bash
+python tools/daily_coach_narrative_offline_qa.py --model qwen3:32b --user-id 101 --user-id 102 --user-id 105
+```
+
+Local artifacts:
+
+- `artifacts/daily_coach_narrative_offline_qa_v1/contexts.json`
+- `artifacts/daily_coach_narrative_offline_qa_v1/results.json`
+- `artifacts/daily_coach_narrative_offline_qa_v1/report.md`
+
+No normal Today UI integration occurred. No Streamlit integration occurred. No report integration occurred. No model output is persisted. No model is promoted. qwen3 remains not approved. direct_ollama remains opt-in only.

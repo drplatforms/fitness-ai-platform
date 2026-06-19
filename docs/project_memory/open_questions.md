@@ -139,3 +139,24 @@ Non-negotiable constraints:
 - no provider path changes
 - no direct_ollama default change
 - no raw model/debug/provider leakage in normal UI
+
+## Daily Coach Narrative Offline Provider QA v1
+
+Open during runtime QA:
+
+- Does `qwen3:8b` pass all required DailyCoachNarrativeContext users 101, 102, and 105?
+- Does `qwen2.5:3b` remain contract-compliant but generic, or does the real context improve usefulness?
+- Does `qwen3:32b` provide a meaningful offline quality signal relative to its runtime cost?
+- Are any Daily Next Action-specific forbidden claim fragments missing from the validator?
+- Should future Developer Preview use a debug endpoint, a local artifact viewer, or Streamlit Developer Mode only?
+- Should `qwen3:14b` or `qwen3:30b-a3b` be retried later, or are they out of scope until a contract-tightening v1.1?
+
+Still not approved:
+
+- normal Today UI integration
+- Streamlit normal surface integration
+- report integration
+- model promotion
+- qwen3 production approval
+- direct_ollama default changes
+- persistence of model-generated narrative output

@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from services.coach_voice_bakeoff_service import (
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from services.coach_voice_bakeoff_service import (  # noqa: E402
     build_default_coach_voice_contexts,
     generate_markdown_report,
     run_coach_voice_bakeoff,

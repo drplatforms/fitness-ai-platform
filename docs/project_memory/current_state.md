@@ -133,6 +133,14 @@ Starter model candidates: qwen2.5:3b, qwen3:8b, and qwen3:14b. qwen3 remains exp
 
 The harness is intended to answer whether richer local models can produce premium coach language while staying inside backend-approved truth. Any production narrative use requires a later Architecture decision.
 
+Coach Voice Bakeoff CLI Entrypoint Fix v1 is implemented to keep the direct repo-root command stable without requiring manual `PYTHONPATH` setup:
+
+```powershell
+python tools/coach_voice_bakeoff.py --model qwen2.5:3b
+```
+
+The fix is CLI/tooling only. It does not change prompts, validators, model approval, Streamlit, Today, reports, provider gates, or production integration.
+
 ## What must not be changed casually
 
 - Deterministic default behavior.

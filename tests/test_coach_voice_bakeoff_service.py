@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 from models.coach_voice_bakeoff_models import (
     COACH_VOICE_DECISION_FAIL,
@@ -51,6 +55,25 @@ def test_default_contexts_include_starter_users_and_contexts():
     assert contexts["user_102_daily_log_food"].user_id == 102
     assert contexts["user_105_data_quality_limited"].user_id == 105
     assert contexts["user_102_workout_preview"].approved_facts
+
+
+def test_cli_direct_entrypoint_help_runs_from_repo_root_without_pythonpath():
+    repo_root = Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+
+    result = subprocess.run(
+        [sys.executable, "tools/coach_voice_bakeoff.py", "--help"],
+        cwd=repo_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "Run the offline bounded coach voice bakeoff" in result.stdout
 
 
 def test_prompt_contains_schema_approved_facts_and_exact_focus_rule():

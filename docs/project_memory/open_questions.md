@@ -54,7 +54,7 @@ Open after catalog v1 slices:
 
 ## Coach Voice Bakeoff
 
-Bounded Coach Voice Bakeoff v1 is implemented pending QA.
+Bounded Coach Voice Bakeoff v1 is implemented pending QA. The direct CLI entrypoint is patched so repo-root execution no longer requires manual `PYTHONPATH`.
 
 Open questions for QA:
 

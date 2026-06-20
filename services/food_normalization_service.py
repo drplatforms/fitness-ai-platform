@@ -2943,6 +2943,308 @@ STARTER_CANONICAL_FOODS = [
             "Fat": (14.0, "g"),
         },
     },
+    # Food Catalog Import Batch v1 - tiny reviewed USDA/FDC generic foods.
+    # Source: USDA FoodData Central Foundation Foods, values normalized per 100g.
+    {
+        "display_name": "Alaska Pollock, Raw",
+        "food_type": "raw",
+        "aliases": ["alaska pollock", "pollock", "raw pollock"],
+        "search_priority": 82,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2768188, Alaska Pollock, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (78.5, "kcal"),
+            "Protein": (17.3, "g"),
+            "Carbohydrate": (0.1, "g"),
+            "Fat": (1.0, "g"),
+        },
+    },
+    {
+        "display_name": "Apricot, Raw",
+        "food_type": "raw",
+        "aliases": ["apricot", "apricots", "fresh apricot"],
+        "search_priority": 82,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710815, Apricot, with skin, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (48.4, "kcal"),
+            "Protein": (1.0, "g"),
+            "Carbohydrate": (10.2, "g"),
+            "Fat": (0.4, "g"),
+        },
+    },
+    {
+        "display_name": "Arugula, Raw",
+        "food_type": "raw",
+        "aliases": ["arugula", "baby arugula", "rocket greens"],
+        "search_priority": 82,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710822, Arugula, baby, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (31.0, "kcal"),
+            "Protein": (1.6, "g"),
+            "Carbohydrate": (5.4, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Beets, Raw",
+        "food_type": "raw",
+        "aliases": ["beets", "raw beets", "beetroot"],
+        "search_priority": 82,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2685576, Beets, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (44.6, "kcal"),
+            "Protein": (1.7, "g"),
+            "Carbohydrate": (8.8, "g"),
+            "Fat": (0.3, "g"),
+        },
+    },
+    {
+        "display_name": "Beet Greens, Raw",
+        "food_type": "raw",
+        "aliases": ["beet greens", "raw beet greens"],
+        "search_priority": 84,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2747653, Beet greens, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (26.4, "kcal"),
+            "Protein": (1.6, "g"),
+            "Carbohydrate": (4.7, "g"),
+            "Fat": (0.1, "g"),
+        },
+    },
+    {
+        "display_name": "Bok Choy, Raw",
+        "food_type": "raw",
+        "aliases": ["bok choy", "raw bok choy", "pak choi"],
+        "search_priority": 84,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2685572, Cabbage, bok choy, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (20.3, "kcal"),
+            "Protein": (1.0, "g"),
+            "Carbohydrate": (3.5, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Red Cabbage, Raw",
+        "food_type": "raw",
+        "aliases": ["red cabbage", "raw red cabbage"],
+        "search_priority": 84,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2346408, Cabbage, red, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (34.1, "kcal"),
+            "Protein": (1.2, "g"),
+            "Carbohydrate": (6.8, "g"),
+            "Fat": (0.2, "g"),
+        },
+    },
+    {
+        "display_name": "Collard Greens, Raw",
+        "food_type": "raw",
+        "aliases": ["collard greens", "collards", "raw collards"],
+        "search_priority": 84,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2685574, Collards, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (46.9, "kcal"),
+            "Protein": (3.0, "g"),
+            "Carbohydrate": (7.0, "g"),
+            "Fat": (0.8, "g"),
+        },
+    },
+    {
+        "display_name": "Fennel Bulb, Raw",
+        "food_type": "raw",
+        "aliases": ["fennel", "fennel bulb", "raw fennel"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2747655, Fennel, bulb, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (26.9, "kcal"),
+            "Protein": (0.9, "g"),
+            "Carbohydrate": (5.5, "g"),
+            "Fat": (0.1, "g"),
+        },
+    },
+    {
+        "display_name": "Figs, Dried",
+        "food_type": "generic",
+        "aliases": ["figs", "dried figs", "fig"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 326905, Figs, dried, uncooked. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (249.0, "kcal"),
+            "Protein": (3.3, "g"),
+            "Carbohydrate": (63.9, "g"),
+            "Fat": (0.9, "g"),
+        },
+    },
+    {
+        "display_name": "Haddock, Raw",
+        "food_type": "raw",
+        "aliases": ["haddock", "raw haddock"],
+        "search_priority": 82,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 333374, Fish, haddock, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (74.0, "kcal"),
+            "Protein": (16.3, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (0.5, "g"),
+        },
+    },
+    {
+        "display_name": "Catfish, Raw",
+        "food_type": "raw",
+        "aliases": ["catfish", "raw catfish", "farm raised catfish"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2684445, Fish, catfish, farm raised, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (129.1, "kcal"),
+            "Protein": (16.5, "g"),
+            "Carbohydrate": (0.0, "g"),
+            "Fat": (7.3, "g"),
+        },
+    },
+    {
+        "display_name": "Plantain, Raw",
+        "food_type": "raw",
+        "aliases": ["plantain", "plantains", "ripe plantain"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710817, Plantains, ripe, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (136.5, "kcal"),
+            "Protein": (1.2, "g"),
+            "Carbohydrate": (31.0, "g"),
+            "Fat": (0.9, "g"),
+        },
+    },
+    {
+        "display_name": "Mandarin, Raw",
+        "food_type": "raw",
+        "aliases": ["mandarin", "mandarins", "mandarin orange"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710832, Mandarin, seedless, peeled, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (62.0, "kcal"),
+            "Protein": (1.0, "g"),
+            "Carbohydrate": (13.4, "g"),
+            "Fat": (0.5, "g"),
+        },
+    },
+    {
+        "display_name": "Black Rice, Dry",
+        "food_type": "raw",
+        "aliases": ["black rice", "dry black rice", "forbidden rice"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710825, Rice, black, unenriched, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (370.0, "kcal"),
+            "Protein": (7.6, "g"),
+            "Carbohydrate": (77.2, "g"),
+            "Fat": (3.4, "g"),
+        },
+    },
+    {
+        "display_name": "Red Rice, Dry",
+        "food_type": "raw",
+        "aliases": ["red rice", "dry red rice"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710838, Rice, red, unenriched, dry, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (369.8, "kcal"),
+            "Protein": (8.6, "g"),
+            "Carbohydrate": (76.2, "g"),
+            "Fat": (3.4, "g"),
+        },
+    },
+    {
+        "display_name": "Fonio Grain, Dry",
+        "food_type": "raw",
+        "aliases": ["fonio", "fonio grain", "dry fonio"],
+        "search_priority": 88,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710829, Fonio, grain, dry, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (369.1, "kcal"),
+            "Protein": (7.2, "g"),
+            "Carbohydrate": (81.3, "g"),
+            "Fat": (1.7, "g"),
+        },
+    },
+    {
+        "display_name": "Khorasan Grain, Dry",
+        "food_type": "raw",
+        "aliases": ["khorasan", "khorasan grain", "kamut", "dry khorasan"],
+        "search_priority": 88,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2710830, Khorasan, grain, dry, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (371.4, "kcal"),
+            "Protein": (14.8, "g"),
+            "Carbohydrate": (71.8, "g"),
+            "Fat": (2.8, "g"),
+        },
+    },
+    {
+        "display_name": "Parsnips, Raw",
+        "food_type": "raw",
+        "aliases": ["parsnips", "parsnip", "raw parsnips"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2747659, Parsnips, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (87.1, "kcal"),
+            "Protein": (1.3, "g"),
+            "Carbohydrate": (19.3, "g"),
+            "Fat": (0.5, "g"),
+        },
+    },
+    {
+        "display_name": "Radishes, Raw",
+        "food_type": "raw",
+        "aliases": ["radishes", "radish", "red radishes"],
+        "search_priority": 86,
+        "notes": "Food Catalog Import Batch v1. Source: USDA FoodData Central Foundation Foods fdc_id 2747665, Radishes, red, raw. Reviewed per-100g generic row.",
+        "source_policy": "direct_source",
+        "confidence": "High",
+        "nutrients_per_100g": {
+            "Calories": (19.6, "kcal"),
+            "Protein": (0.7, "g"),
+            "Carbohydrate": (4.1, "g"),
+            "Fat": (0.1, "g"),
+        },
+    },
 ]
 
 
@@ -3674,7 +3976,9 @@ def seed_starter_canonical_foods() -> list[CanonicalFood]:
         default_unit = "grams"
         default_grams = 100.0
         search_priority = int(seed_food["search_priority"])
-        notes = "Canonical food for app-facing search."
+        notes = seed_food.get("notes", "Canonical food for app-facing search.")
+        source_policy = seed_food.get("source_policy", "manually_curated")
+        confidence = seed_food.get("confidence", "Moderate")
 
         cursor.execute(
             """
@@ -3753,7 +4057,7 @@ def seed_starter_canonical_foods() -> list[CanonicalFood]:
                     confidence,
                     updated_at
                 )
-                VALUES (?, ?, ?, ?, 'manually_curated', 'Moderate', CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(canonical_food_id, nutrient_name) DO UPDATE SET
                     nutrient_unit = excluded.nutrient_unit,
                     amount_per_100g = excluded.amount_per_100g,
@@ -3761,7 +4065,14 @@ def seed_starter_canonical_foods() -> list[CanonicalFood]:
                     confidence = excluded.confidence,
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                (canonical_food_id, nutrient_name, unit, float(amount)),
+                (
+                    canonical_food_id,
+                    nutrient_name,
+                    unit,
+                    float(amount),
+                    source_policy,
+                    confidence,
+                ),
             )
 
     conn.commit()

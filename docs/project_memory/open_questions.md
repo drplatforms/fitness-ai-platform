@@ -113,16 +113,23 @@ Resolved by Catalog Source Evaluation v1:
 - Exercise batch work should start with manual curation; wger and Wikidata may be source-assist/cross-check inputs only until license/attribution handling is narrowed.
 - Scraped exercise libraries, commercial APIs, unclear mirrored datasets, copied descriptions/images, and AI-generated catalog truth are rejected for now.
 
-Open after Catalog Source Evaluation v1:
+Resolved by Food Catalog Import Batch v1:
 
-- Should the first USDA food batch contain 10 rows or 20 rows?
-- Should Foundation Foods or SR Legacy be the first exact USDA subset?
-- What exact row-review checklist is required before staged rows can be promoted into canonical catalogs?
+- The first USDA/FDC canonical batch size is 20 rows.
+- The first exact source subset is USDA FoodData Central Foundation Foods, not a branded-food dump.
+- Every row has per-100g calories/protein/carbohydrate/fat reviewed before canonical insertion.
+- New batch rows preserve direct-source/high-confidence metadata in canonical nutrient rows.
+- Raw/staged USDA/FDC artifacts remain local-only and uncommitted.
+
+Open after Food Catalog Import Batch v1:
+
+- Should the next food batch expand additional generic staples or wait until after exercise catalog work?
+- Should future catalog reviews require persisted raw source links for seed rows, or are canonical notes sufficient for small reviewed batches?
+- Should duplicate detection eventually compare staged rows against canonical catalog rows, not only within the import file?
+- What size limit should apply to committed test fixtures versus local-only qa_artifacts?
 - Should Open Food Facts require a formal ODbL attribution/share-alike policy before any import batch?
 - Should wger per-entry license metadata be reviewed before any copied exercise data is considered?
 - Should Wikidata be used only for cross-checking names, or should a tiny CC0 taxonomy sample be evaluated later?
-- Should duplicate detection eventually compare staged rows against canonical catalog rows, not only within the import file?
-- What size limit should apply to committed test fixtures versus local-only qa_artifacts?
 
 ## Developer workflow
 

@@ -4452,7 +4452,7 @@ def render_daily_next_action_panel(user_id: int) -> None:
 def render_daily_coach_synthesis_card(user_id: int) -> None:
     st.subheader("Coach’s Read for Today")
     st.caption(
-        "A concise synthesis of today’s recovery, training, workout, and logging context."
+        "Backend-approved Daily Coach Synthesis for today. This is the Coach’s Read surface, separate from the Developer Preview panel."
     )
 
     synthesis_response = None
@@ -4464,25 +4464,33 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
         synthesis_error = extract_api_error_message(exc)
 
     if synthesis_error:
-        st.info("Coach synthesis is not available yet.")
+        st.info(
+            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+        )
         if st.session_state.get("developer_mode", False):
-            with st.expander("Developer details: daily coach synthesis error"):
+            with st.expander(
+                "Developer details: Coach’s Read / Daily Coach Synthesis error"
+            ):
                 st.write(synthesis_error)
         return
 
     if not synthesis_response or not synthesis_response.get("success"):
-        st.info("Coach synthesis is not available yet.")
+        st.info(
+            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+        )
         developer_details(
-            "Developer details: daily coach synthesis response",
+            "Developer details: Coach’s Read / Daily Coach Synthesis response",
             synthesis_response or {},
         )
         return
 
     synthesis = synthesis_response.get("daily_coach_synthesis") or {}
     if not synthesis:
-        st.info("Coach synthesis is not available yet.")
+        st.info(
+            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+        )
         developer_details(
-            "Developer details: daily coach synthesis response",
+            "Developer details: Coach’s Read / Daily Coach Synthesis response",
             synthesis_response,
         )
         return
@@ -4496,7 +4504,16 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
     top_col, confidence_col = st.columns([4, 1])
     with top_col:
         if today_summary:
-            st.write(today_summary)
+            st.markdown(
+                portfolio_card_html(
+                    "Coach’s Read",
+                    "Daily Coach Synthesis",
+                    today_summary,
+                    [portfolio_chip("Backend-approved", "green")],
+                    "portfolio-card-accent",
+                ),
+                unsafe_allow_html=True,
+            )
         else:
             st.info("No coach summary is available yet.")
     with confidence_col:
@@ -4528,7 +4545,7 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
                 st.write(f"- {limitation}")
 
     developer_details(
-        "Developer details: daily coach synthesis response",
+        "Developer details: Coach’s Read / Daily Coach Synthesis response",
         synthesis_response,
     )
 

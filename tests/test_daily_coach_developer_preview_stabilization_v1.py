@@ -59,6 +59,18 @@ def test_today_section_preserves_coach_synthesis_before_grounded_recommendation(
     assert synthesis_index < recommendation_index < preview_index
 
 
+def test_coachs_read_card_is_visible_and_separate_from_developer_preview() -> None:
+    synthesis_source = _function_source("render_daily_coach_synthesis_card")
+    preview_source = _function_source("render_daily_coach_narrative_developer_panel")
+
+    assert "Coach’s Read for Today" in synthesis_source
+    assert "Daily Coach Synthesis" in synthesis_source
+    assert "portfolio_card_html" in synthesis_source
+    assert "Developer Preview: Daily Coach Narrative" not in synthesis_source
+    assert "Approve for this session" not in synthesis_source
+    assert "Developer Preview: Daily Coach Narrative" in preview_source
+
+
 def test_normal_today_card_source_does_not_call_provider_preview() -> None:
     function_source = _function_source("render_daily_coach_today_card")
 

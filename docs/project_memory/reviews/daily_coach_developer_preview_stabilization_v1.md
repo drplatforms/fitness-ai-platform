@@ -34,3 +34,10 @@ Boundary confirmation:
 - no Daily Next Action changes
 - no nutrition/workout/catalog changes
 - no raw/rejected provider output in normal UI
+
+
+## Coach’s Read visibility addendum
+
+A follow-up source review confirmed that the deterministic `/daily-coach/{user_id}/synthesis` route remained registered, but the Today UI needed a clearer visible separation between the existing Coach’s Read / Daily Coach Synthesis card and the Developer Mode-only Daily Coach Narrative preview panel.
+
+This addendum keeps the existing Coach’s Read surface visible in the normal Today flow, renders the summary using the shared card component, and clarifies developer-detail labels so Daily Coach Synthesis is not confused with the Developer Preview panel. No same-session approval was added.

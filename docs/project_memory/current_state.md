@@ -574,3 +574,8 @@ Implemented stabilization:
 - normal Today Coach Note remains deterministic and does not call provider preview
 
 No same-session approval, persistence, provider/model promotion, or Daily Next Action/workout/nutrition/catalog/report behavior change is included.
+
+
+### Coach’s Read / Daily Coach Synthesis visibility addendum
+
+Daily Coach Developer Preview Stabilization v1 now explicitly preserves the normal Today `Coach’s Read for Today` / Daily Coach Synthesis card as a separate visible surface from the Developer Mode-only `Developer Preview: Daily Coach Narrative` panel. The synthesis card uses a normal Today card presentation and does not add same-session approval or provider display in normal UI.

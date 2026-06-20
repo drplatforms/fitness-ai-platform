@@ -445,3 +445,8 @@ Open after implementation:
 - Does QA 102 show `Coach’s Read for Today`, Today Coach Note, Daily Next Action, and Developer Preview in the intended order?
 - Do qwen/Ollama preview lanes return useful sanitized diagnostics when parse or validation fails?
 - After stabilization is accepted, should the same-session approval bridge be retried from this stable baseline or redesigned into smaller backend/UI phases?
+
+
+## Daily Coach provider approval bridge remains paused
+
+Same-session approval remains out of scope until the normal Coach’s Read / Daily Coach Synthesis surface and Developer Preview diagnostics have been manually smoke-tested from a stable main-based branch.

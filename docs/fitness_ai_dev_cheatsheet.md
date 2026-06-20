@@ -868,7 +868,7 @@ Latest commit:
 <paste git log --oneline -1>
 
 Snapshot:
-<paste snapshot filename>
+fitness_ai_snapshot_<date>_<commit>_<safe_message>.zip
 
 Milestone:
 <milestone name>

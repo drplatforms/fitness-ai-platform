@@ -197,7 +197,7 @@ def test_preview_falls_back_without_exposing_rejected_provider_text(monkeypatch)
     assert preview.approved_narrative is None
     assert rejected_phrase not in payload
     assert "backend-approved" not in payload
-    assert "validation_errors" not in payload
+    assert "Meta/internal process language is not allowed" in payload
     assert "raw_output" not in payload
     assert "prompt" not in payload
 

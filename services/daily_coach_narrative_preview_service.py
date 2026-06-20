@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import os
+import re
 import time
 
 from models.daily_coach_narrative_models import (
+    DAILY_COACH_NARRATIVE_REQUIRED_OUTPUT_KEYS,
     CandidateDailyCoachNarrative,
     DailyCoachNarrativeContext,
     DailyCoachNarrativePreviewResult,
@@ -128,7 +131,10 @@ def build_daily_coach_narrative_preview(
         )
 
     latency_ms = _elapsed_ms(started)
-    parse_result = parse_daily_coach_narrative_candidate(raw_output)
+    normalized_output, parse_extraction_strategy = (
+        _normalize_provider_output_for_preview(raw_output)
+    )
+    parse_result = parse_daily_coach_narrative_candidate(normalized_output)
     if parse_result.candidate is None:
         return _fallback_result(
             context=context,
@@ -150,6 +156,7 @@ def build_daily_coach_narrative_preview(
                 fallback_used=True,
                 fallback_reason=PUBLIC_SAFE_FALLBACK_PROVIDER_PARSE_FAILED,
                 parse_error=parse_result.error,
+                parse_extraction_strategy=parse_extraction_strategy,
             ),
         )
 
@@ -179,6 +186,7 @@ def build_daily_coach_narrative_preview(
                 fallback_reason=PUBLIC_SAFE_FALLBACK_PROVIDER_VALIDATION_FAILED,
                 validation_errors=validation_result.validation_errors,
                 forbidden_claims_found=validation_result.forbidden_claims_found,
+                parse_extraction_strategy=parse_extraction_strategy,
             ),
         )
 
@@ -211,6 +219,7 @@ def build_daily_coach_narrative_preview(
             fallback_used=False,
             fallback_reason=None,
             approved_narrative_returned=True,
+            parse_extraction_strategy=parse_extraction_strategy,
         ),
     )
 
@@ -333,6 +342,8 @@ def _preview_developer_diagnostics(
     parse_error: str | None = None,
     validation_errors: list[str] | None = None,
     forbidden_claims_found: list[str] | None = None,
+    parse_extraction_strategy: str | None = None,
+    provider_error: str | None = None,
 ) -> dict[str, object]:
     """Return sanitized diagnostics for Developer Mode preview inspection.
 
@@ -353,11 +364,17 @@ def _preview_developer_diagnostics(
         "approved_narrative_returned": approved_narrative_returned,
     }
 
+    if parse_extraction_strategy:
+        diagnostics["parse_extraction_strategy"] = _sanitize_diagnostic_text(
+            parse_extraction_strategy
+        )
+    if provider_error:
+        diagnostics["provider_error"] = _sanitize_diagnostic_text(provider_error)
     if parse_error:
         diagnostics["parse_error"] = _sanitize_diagnostic_text(parse_error)
     if validation_errors:
         diagnostics["validation_errors"] = [
-            _sanitize_diagnostic_text(error) for error in validation_errors
+            _public_safe_validation_error(error) for error in validation_errors
         ]
     if forbidden_claims_found:
         diagnostics["forbidden_claims_found"] = [
@@ -365,6 +382,123 @@ def _preview_developer_diagnostics(
         ]
 
     return diagnostics
+
+
+_THINK_BLOCK_PATTERN = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
+_MARKDOWN_JSON_FENCE_PATTERN = re.compile(
+    r"^```(?:json|JSON)?\s*(?P<body>.*?)\s*```$",
+    re.DOTALL,
+)
+
+
+def _normalize_provider_output_for_preview(raw_output: str) -> tuple[str, str]:
+    """Return a deterministic JSON candidate string and extraction strategy.
+
+    The preview lane is allowed to normalize common local-model wrappers before
+    passing text to the existing strict parser. It never exposes raw provider
+    output, and it refuses ambiguous multi-object output unless exactly one JSON
+    object satisfies the Daily Coach Narrative contract key set.
+    """
+
+    text = raw_output.strip()
+    strategy_steps: list[str] = []
+
+    without_thinking = _THINK_BLOCK_PATTERN.sub("", text).strip()
+    if without_thinking != text:
+        text = without_thinking
+        strategy_steps.append("qwen_think_stripped")
+
+    fence_match = _MARKDOWN_JSON_FENCE_PATTERN.match(text)
+    if fence_match:
+        text = fence_match.group("body").strip()
+        strategy_steps.append("markdown_json_fence_stripped")
+
+    if text.startswith("{") and text.endswith("}"):
+        try:
+            json.loads(text)
+        except json.JSONDecodeError:
+            pass
+        else:
+            strategy_steps.append("raw_json_object")
+            return text, "+".join(strategy_steps)
+
+    json_objects = _extract_balanced_json_objects(text)
+    if len(json_objects) == 1:
+        strategy_steps.append("single_embedded_json_object")
+        return json_objects[0], "+".join(strategy_steps)
+
+    contract_objects = [
+        candidate for candidate in json_objects if _looks_like_contract_json(candidate)
+    ]
+    if len(contract_objects) == 1:
+        strategy_steps.append("single_contract_json_object")
+        return contract_objects[0], "+".join(strategy_steps)
+
+    if len(json_objects) > 1:
+        strategy_steps.append("ambiguous_multiple_json_objects")
+    else:
+        strategy_steps.append("no_json_object_found")
+    return text, "+".join(strategy_steps)
+
+
+def _extract_balanced_json_objects(text: str) -> list[str]:
+    objects: list[str] = []
+    depth = 0
+    start: int | None = None
+    in_string = False
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+            continue
+        if char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+            continue
+        if char == "}" and depth:
+            depth -= 1
+            if depth == 0 and start is not None:
+                objects.append(text[start : index + 1].strip())
+                start = None
+
+    return objects
+
+
+def _looks_like_contract_json(candidate: str) -> bool:
+    try:
+        parsed = json.loads(candidate)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(parsed, dict):
+        return False
+    return set(parsed) == DAILY_COACH_NARRATIVE_REQUIRED_OUTPUT_KEYS
+
+
+def _public_safe_validation_error(value: object) -> str:
+    text = _sanitize_diagnostic_text(value)
+    lowered = text.lower()
+    if "meta/internal process language" in lowered:
+        return (
+            "Meta/internal process language is not allowed in coach narrative output."
+        )
+    if "unapproved fact" in lowered:
+        return "Provider output used a fact that was not approved for this preview context."
+    if "forbidden claim" in lowered:
+        return "Provider output included a claim category that is not approved for this preview context."
+    if "invented numeric" in lowered:
+        return "Provider output included numeric detail that is not approved for this preview context."
+    return text
 
 
 def _sanitize_diagnostic_text(value: object) -> str:

@@ -53,6 +53,19 @@ def _preview_payload(
             "forbidden_claim_categories_summary": ["invented food"],
         },
         latency_ms=0,
+        developer_diagnostics={
+            "provider_enabled": provider_attempted,
+            "provider_attempted": provider_attempted,
+            "selected_provider": (
+                "direct_ollama" if provider_attempted else "deterministic"
+            ),
+            "selected_model": "qwen3:8b" if provider_attempted else None,
+            "parse_success": provider_attempted,
+            "validation_success": provider_attempted,
+            "fallback_used": not provider_attempted,
+            "fallback_reason": None if provider_attempted else "provider_disabled",
+            "approved_narrative_returned": provider_attempted,
+        },
     )
 
 
@@ -165,3 +178,51 @@ def test_narrative_preview_debug_route_maps_invalid_preview_request_to_400(monke
 
     assert response.status_code == 400
     assert response.json()["detail"] == "bad provider"
+
+
+def test_narrative_preview_debug_route_exposes_stable_sanitized_diagnostics(
+    monkeypatch,
+):
+    def fake_build_preview(
+        user_id: int,
+        *,
+        target_date: str | None = None,
+        provider: str | None = None,
+        model_name: str | None = None,
+        timeout_seconds: float = 300.0,
+    ):
+        return _preview_payload(provider_attempted=True)
+
+    monkeypatch.setattr(
+        daily_coach_routes,
+        "build_daily_coach_narrative_preview",
+        fake_build_preview,
+    )
+
+    client = TestClient(app)
+    response = client.get(
+        "/daily-coach/102/narrative-preview/debug",
+        params={"provider": "direct_ollama", "model": "qwen3:8b"},
+    )
+
+    assert response.status_code == 200
+    preview = response.json()["daily_coach_narrative_preview"]
+    diagnostics = preview["developer_diagnostics"]
+
+    for key in [
+        "provider_enabled",
+        "provider_attempted",
+        "selected_provider",
+        "selected_model",
+        "parse_success",
+        "validation_success",
+        "fallback_used",
+        "fallback_reason",
+        "approved_narrative_returned",
+    ]:
+        assert key in preview
+        assert key in diagnostics
+
+    assert preview["approved_narrative_returned"] is True
+    assert "raw_output" not in str(preview).lower()
+    assert "prompt" not in str(preview).lower()

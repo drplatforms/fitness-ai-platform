@@ -12,19 +12,19 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Project Memory Alignment + North Star Architecture v1`
+`Daily Coach Provider Preview Contract Reliability v1`
 
-Status: `AUTHORIZED_TO_IMPLEMENT`
+Status: `IMPLEMENTED / READY_FOR_ARCHITECTURE_REVIEW`
 
-Purpose: restore repo project memory as the authoritative continuity layer before the next provider milestone.
+Purpose: make the manual Developer Mode Daily Coach provider-preview lane reliable, inspectable, and safe before any same-session approval retry.
 
-North-star references:
+North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
 - Premium product/backend blueprint: `docs/project_memory/premium_platform_blueprint.md`
 
 ## Latest accepted main baseline
 
-The accepted main baseline before this docs sweep includes:
+The accepted main baseline before this provider-reliability branch includes:
 
 - Supercharger / session-brief developer tooling
 - Catalog Import Pipeline v1
@@ -39,10 +39,13 @@ The accepted main baseline before this docs sweep includes:
 - Workout Exercise Count Preference v1
 - Workout Daily State Lifecycle v1
 - Daily Coach Developer Preview Stabilization v1
+- Project Memory Alignment + North Star Architecture v1
+- Future Architecture Ledger
+- Premium Platform Blueprint
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
-Daily Coach Provider Preview Contract Reliability v1 is the next provider-reliability lane after this docs alignment branch unless Architecture has already accepted it separately in a later handoff.
+Daily Coach Provider Preview Contract Reliability v1 is implemented on this branch and ready for Architecture review. It improves only the manual Developer Mode provider-preview contract and does not affect normal Today behavior.
 
 ## Definition of Done update
 
@@ -74,6 +77,14 @@ The Today flow contains distinct surfaces:
 - Developer Preview: Daily Coach Narrative: Developer Mode-only manual preview/debug lane.
 
 These surfaces must not be collapsed into each other without Architecture approval.
+
+Daily Coach Provider Preview Contract Reliability v1 adds deterministic normalization and diagnostics for manual provider previews only:
+
+- clean valid JSON, markdown-fenced JSON, qwen `<think>...</think>` wrappers, and single embedded JSON objects can be parsed when otherwise safe
+- ambiguous multi-object output fails safely
+- validation failures return sanitized diagnostics without exposing rejected provider text
+- `approved_narrative_returned` is true only when parse and validation both succeed
+- normal Today page load remains deterministic and must not call the provider
 
 ### Workout
 

@@ -19,7 +19,7 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 ### Daily Coach provider preview
 
-- After docs alignment, which local provider lane should be treated as the first known-good contract reliability baseline?
+- Daily Coach Provider Preview Contract Reliability v1 is implemented for Architecture review; manual runtime smoke must still identify whether `qwen2.5:3b` reaches `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` for QA 102.
 - Should `qwen2.5:3b` remain the baseline for JSON/contract reliability even if its copy quality is plain?
 - Which qwen3 model should be evaluated first for voice quality once the preview contract is reliable?
 - What manual smoke evidence is required before retrying same-session approval?

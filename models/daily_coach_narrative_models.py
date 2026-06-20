@@ -213,7 +213,21 @@ class DailyCoachNarrativePreviewResult:
     developer_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        diagnostics = dict(self.developer_diagnostics or {})
+        payload["approved_narrative_returned"] = self.approved_narrative is not None
+        for key in [
+            "parse_error",
+            "provider_error",
+            "validation_errors",
+            "forbidden_claims_found",
+            "parse_extraction_strategy",
+            "final_source",
+            "result_source",
+        ]:
+            if key in diagnostics:
+                payload[key] = diagnostics[key]
+        return payload
 
 
 @dataclass(frozen=True)

@@ -427,3 +427,11 @@ Open for Architecture / Product review:
 - Should workout size preference become persistent in a future Workout Session Preference Persistence v1 milestone?
 - Does fuller workout generation worsen observed latency when switching Plan / Active Workout / Substitutions / Review tabs outside local Windows Streamlit?
 - After count preference is accepted, should the next milestone be Workout Tab Performance Profiling v1 or Daily Coach Narrative Same-Session Approved Preview Bridge v1?
+## Workout Daily State Lifecycle v1
+
+Open after implementation:
+
+- Should expired uncompleted planned workouts eventually be marked `abandoned` in persistence, or should v1 read-time filtering remain the long-term behavior?
+- Should a future Workout History polish distinguish expired uncompleted plans from completed workout history more clearly?
+- Should Workout Session Preference Persistence v1 store the user's Quick/Standard/Full preference once lifecycle behavior is accepted?
+- Does the Workout tab still need performance profiling after lifecycle cleanup and fuller workouts?

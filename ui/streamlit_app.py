@@ -3362,6 +3362,8 @@ SESSION_DEFAULTS = {
     "workout_flow_step": "1. Plan",
     "workout_flow_step_selector": "1. Plan",
     "workout_flow_step_override": None,
+    "workout_daily_state_response": None,
+    "workout_daily_state_message": None,
     "developer_mode": False,
     "current_user_id": None,
     "last_user_id": None,
@@ -3422,6 +3424,8 @@ def reset_user_scoped_state() -> None:
     st.session_state.workout_flow_step = "1. Plan"
     st.session_state.workout_flow_step_selector = "1. Plan"
     st.session_state.workout_flow_step_override = None
+    st.session_state.workout_daily_state_response = None
+    st.session_state.workout_daily_state_message = None
 
 
 def handle_user_switch(selected_user_id: int) -> None:
@@ -3522,7 +3526,64 @@ def get_plan_instance_id_from_response(plan_response: dict | None) -> int | None
         return None
 
 
+def clear_workout_transient_state_for_daily_lifecycle() -> None:
+    st.session_state.selected_workout_plan_response = None
+    st.session_state.started_workout_plan_response = None
+    st.session_state.completed_workout_plan_response = None
+    st.session_state.visible_substitution_candidates = []
+    st.session_state.applied_substitution_responses = {}
+    st.session_state.substitution_apply_message = None
+    st.session_state.substitution_apply_error = None
+    st.session_state.substitution_apply_error_detail = None
+    st.session_state.substitution_flow_ready_to_do_workout = False
+    st.session_state.actual_set_logging_message = None
+    st.session_state.actual_set_editing_message = None
+    st.session_state.actual_set_editing_error = None
+    st.session_state.actual_set_edit_response = None
+
+
+def apply_workout_daily_state_response(daily_state_response: dict | None) -> None:
+    if not daily_state_response:
+        return
+
+    st.session_state.workout_daily_state_response = daily_state_response
+    daily_state = daily_state_response.get("workout_daily_state") or {}
+
+    if daily_state.get("stale_state_detected"):
+        clear_workout_transient_state_for_daily_lifecycle()
+        st.session_state.workout_daily_state_message = (
+            daily_state.get("user_safe_message")
+            or "An unfinished workout from a previous day was cleared so you can start fresh today."
+        )
+
+
 def get_active_plan_response(user_id: int) -> dict | None:
+    try:
+        daily_state_response = api_get(f"/workout-plans/current/{user_id}")
+    except requests.RequestException:
+        daily_state_response = None
+
+    if daily_state_response:
+        apply_workout_daily_state_response(daily_state_response)
+        current_execution_state = daily_state_response.get("current_execution_state")
+        if current_execution_state:
+            workout_plan_instance = (
+                current_execution_state.get("workout_plan_instance") or {}
+            )
+            status = workout_plan_instance.get("status")
+            if status == "selected":
+                st.session_state.selected_workout_plan_response = (
+                    current_execution_state
+                )
+                st.session_state.started_workout_plan_response = None
+            elif status in {"started", "in_progress", "completed"}:
+                st.session_state.started_workout_plan_response = current_execution_state
+                st.session_state.selected_workout_plan_response = None
+            return current_execution_state
+
+        clear_workout_transient_state_for_daily_lifecycle()
+        return None
+
     active_response = (
         st.session_state.started_workout_plan_response
         or st.session_state.selected_workout_plan_response
@@ -3530,36 +3591,6 @@ def get_active_plan_response(user_id: int) -> dict | None:
 
     if active_response:
         return active_response
-
-    try:
-        history_response = api_get(f"/workout-plans/history/{user_id}")
-    except requests.RequestException:
-        return None
-
-    for history_item in history_response.get("workout_plan_instances", []):
-        workout_plan_instance = history_item.get("workout_plan_instance") or {}
-        status = workout_plan_instance.get("status")
-
-        if status not in {"selected", "started", "in_progress"}:
-            continue
-
-        plan_instance_id = workout_plan_instance.get("id")
-        if plan_instance_id is None:
-            continue
-
-        try:
-            execution_response = api_get(
-                f"/workout-plans/{int(plan_instance_id)}/execution"
-            )
-        except (requests.RequestException, TypeError, ValueError):
-            continue
-
-        if status == "selected":
-            st.session_state.selected_workout_plan_response = execution_response
-        else:
-            st.session_state.started_workout_plan_response = execution_response
-
-        return execution_response
 
     return None
 
@@ -4877,6 +4908,10 @@ def render_workout_plan_section(user_id: int) -> None:
 
     if st.session_state.workout_plan_action_error:
         st.error(st.session_state.workout_plan_action_error)
+
+    if st.session_state.workout_daily_state_message:
+        st.info(st.session_state.workout_daily_state_message)
+        st.session_state.workout_daily_state_message = None
 
     workout_steps = ["1. Plan", "2. Do Workout", "3. Review"]
     workout_step_display_labels = {
@@ -8114,6 +8149,9 @@ def render_developer_section(user_id: int) -> None:
             is not None,
             "has_completed_workout_plan_response": st.session_state.completed_workout_plan_response
             is not None,
+            "workout_daily_state": (
+                st.session_state.workout_daily_state_response or {}
+            ).get("workout_daily_state"),
         }
     )
 

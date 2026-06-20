@@ -549,3 +549,12 @@ Workout generation now supports a bounded Workout size preference in the Workout
 Backend count resolution remains deterministic and safety-owned. Recovery-limited sessions clamp to 4 exercises, data-quality-limited full requests clamp to 5, and v1 never exceeds 7 exercises.
 
 This milestone preserves provider/model behavior, persistence/schema, reports, Daily Coach logic, nutrition calculations, catalog data, substitution backend behavior, and workout logging lifecycle.
+## Workout Daily State Lifecycle v1
+
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW.
+
+Workout daily state now has a deterministic lifecycle boundary so prior-date uncompleted selected/active workouts no longer appear as today's active plan. The current-day route and Streamlit Workout page can distinguish no workout today, selected today, active today, completed today, and expired prior uncompleted state.
+
+When an unfinished prior-day workout is detected, transient selected/active/substitution UI state is cleared or ignored and the user sees a safe reset message. Completed workout history is preserved and remains queryable.
+
+This milestone preserves workout generation, workout exercise count preference behavior, substitution algorithm behavior, persistence schema, provider/model behavior, report persistence, Daily Coach logic, nutrition calculations, and catalog data.

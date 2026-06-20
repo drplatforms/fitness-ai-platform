@@ -12,6 +12,10 @@ from services.post_workout_review_service import (
     build_post_workout_review_context,
 )
 from services.user_state_service import build_user_health_state
+from services.workout_daily_state_service import (
+    get_current_day_execution_state,
+    resolve_workout_daily_state,
+)
 from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
     WorkoutPlanNotFoundError,
@@ -66,6 +70,37 @@ class ActualSetUpdatePayload(BaseModel):
 class ExerciseSubstitutionPayload(BaseModel):
     replacement_catalog_exercise_id: int
     substitution_reason: str | None = "user_selected"
+
+
+@router.get("/workout-plans/current/{user_id}")
+def current_workout_plan_state(user_id: int, target_date: str | None = None):
+    daily_state = resolve_workout_daily_state(user_id, target_date=target_date)
+    execution_state = get_current_day_execution_state(user_id, target_date=target_date)
+
+    current_execution_state = None
+    if execution_state is not None:
+        current_execution_state = {
+            "workout_plan_instance": asdict(execution_state["workout_plan_instance"]),
+            "execution_session": asdict(execution_state["execution_session"]),
+            "planned_exercises": [
+                asdict(exercise) for exercise in execution_state["planned_exercises"]
+            ],
+            "actual_sets": [
+                asdict(actual_set) for actual_set in execution_state["actual_sets"]
+            ],
+            "active_substitutions": [
+                asdict(substitution)
+                for substitution in execution_state.get("active_substitutions", [])
+            ],
+            "approved_workout_plan": asdict(execution_state["approved_workout_plan"]),
+        }
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "workout_daily_state": asdict(daily_state),
+        "current_execution_state": current_execution_state,
+    }
 
 
 @router.get("/workout-plans/history/{user_id}")

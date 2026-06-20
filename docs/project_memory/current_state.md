@@ -8,45 +8,51 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`feature/supercharger-session-brief-v1-1`
+`feature/catalog-import-pipeline-v1`
 
 ## Latest accepted milestone
 
-`Headroom Developer Workflow Spike v1` is accepted, merged to `main`, and completed as rejected for now.
+`Supercharger v1.1 - Session Brief Command` is accepted and merged to `main`.
 
-Final accepted status: `HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`.
+Final accepted status: `SUPERCHARGER_SESSION_BRIEF_V1_1_ACCEPTED`.
 
-Accepted conclusion:
-
-- Headroom is not adopted by default.
-- Headroom is not runtime.
-- Headroom is not provider prompt compression.
-- Headroom is not model-facing context compression.
-- Headroom is not source of truth.
-- Headroom is not required for tests or development.
-- Headroom may only be revisited later as a developer-workflow-only experiment.
-
-## Current implementation milestone
-
-`Supercharger v1.1 - Session Brief Command` is implemented pending review.
-
-Implementation status: `SUPERCHARGER_SESSION_BRIEF_V1_1_IMPLEMENTED_PENDING_REVIEW`.
-
-This milestone adds a first-class Dev Assistant command that writes a clean UTF-8 uploadable session brief:
+The normal uploadable handoff workflow is now:
 
 ```powershell
 python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt
 ```
 
-The command replaces fragile PowerShell transcript/Tee-Object/copy-paste logging for ChatGPT handoffs. It includes repo status, recent commits, Dev Assistant status, memory-check, stale-doc-check, suggested next action, snapshot command, and Linux sync reminder.
+Headroom remains rejected for now. Aider is paused and not authorized. Codex remains optional/scoped only.
 
-This milestone does not change product runtime behavior, FastAPI routes, Streamlit product surfaces, provider defaults, validators, persistence, reports, nutrition, training, food catalog, exercise catalog, model approval status, Headroom status, or Claude workflow status.
+## Current implementation milestone
+
+`Catalog Import Pipeline v1` is implemented pending review.
+
+Implementation status: `CATALOG_IMPORT_PIPELINE_V1_IMPLEMENTED_PENDING_REVIEW`.
+
+This milestone adds deterministic staged import tooling for food and exercise catalog candidate data. The tools accept local CSV/JSON inputs and write review artifacts under `qa_artifacts/catalog_import_v1/`.
+
+The pipeline is staging only:
+
+```text
+Raw local source file
+-> deterministic importer
+-> normalized staged catalog rows
+-> validation report
+-> duplicate/suspicion report
+-> human review
+-> later approved merge into canonical catalog
+```
+
+This milestone does not change canonical food rows, canonical exercise rows, nutrition calculations, workout generation, Streamlit product UI, FastAPI runtime behavior, provider behavior, validators/fallback behavior outside the import tools, persistence/database behavior, Headroom status, Aider status, Codex status, or Claude workflow status.
 
 ## Next recommended milestone options
 
-- Architecture / QA review for Supercharger v1.1 - Session Brief Command.
+- Architecture / QA review for Catalog Import Pipeline v1.
+- Catalog Source Evaluation v1 after staged tooling is accepted.
+- Food Catalog Import Batch v1 after a safe source file is approved.
+- Exercise Catalog Import Batch v1 after a safe source file is approved.
 - Daily Coach Narrative Limited Today UI Readiness v1 after product-readiness review.
-- Daily Coach Narrative Async Background Generation v1 after runtime/persistence strategy is approved.
 
 ---
 

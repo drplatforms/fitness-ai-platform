@@ -189,6 +189,33 @@ The output belongs under `qa_artifacts/` and must not be committed.
 
 Do not use session briefs as source of truth. They are uploadable convenience context only. Project memory docs and git history remain source of truth.
 
+
+## Catalog import staging workflow
+
+Use deterministic catalog import tools for local candidate data review. These tools create staged artifacts only and do not mutate canonical catalogs.
+
+Food candidate import:
+
+```powershell
+python tools/import_food_catalog.py --input path\to\food.csv --out-dir qa_artifacts\catalog_import_v1\food
+```
+
+Exercise candidate import:
+
+```powershell
+python tools/import_exercise_catalog.py --input path\to\exercises.csv --out-dir qa_artifacts\catalog_import_v1\exercise
+```
+
+Expected outputs include staged CSV rows, a Markdown report, and JSON findings. Generated artifacts belong under `qa_artifacts/` and must not be committed.
+
+Important boundaries:
+
+- staged rows are candidates only
+- no staged row is production-approved
+- no importer automatically merges into canonical catalogs
+- no scraping, external APIs, AI/provider calls, Aider, Headroom, or Claude workflow are required
+- human review is required before any future canonical catalog merge
+
 ## Snapshot command
 
 Use `git archive`, not `Compress-Archive`.

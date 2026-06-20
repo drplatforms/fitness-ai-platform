@@ -95,6 +95,17 @@ Open after contract tightening:
 
 - How should cross-domain recommendations consume approved section claims without becoming a monolithic AI-owned summary?
 
+## Catalog Import Pipeline v1
+
+Open after implementation:
+
+- Which food data sources are safe, legal, and reviewable for the first approved staged import batch?
+- Which exercise data sources are safe, legal, and reviewable for the first approved staged import batch?
+- What minimum human-review checklist should be required before staged rows can be promoted into canonical catalogs?
+- Should future batch imports require source-policy metadata for every row?
+- Should duplicate detection eventually compare staged rows against canonical catalog rows, not only within the import file?
+- What size limit should apply to committed test fixtures versus local-only qa_artifacts?
+
 ## Developer workflow
 
 Resolved by Supercharger v1.1 - Session Brief Command:

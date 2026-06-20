@@ -131,6 +131,23 @@ Open after Food Catalog Import Batch v1:
 - Should wger per-entry license metadata be reviewed before any copied exercise data is considered?
 - Should Wikidata be used only for cross-checking names, or should a tiny CC0 taxonomy sample be evaluated later?
 
+Resolved by Exercise Catalog Import Batch v1:
+
+- The first exercise-side canonical batch size is 18 rows.
+- The source approach is manual curation with existing project taxonomy alignment.
+- New rows use only neutral taxonomy fields: name, exercise type, movement pattern, primary muscle groups, equipment, and difficulty.
+- No copied exercise descriptions, cue prose, medical/rehab claims, or unsafe coaching claims are added.
+- No raw exercise datasets or staged qa_artifacts are committed.
+- Workout generation behavior remains unchanged.
+
+Open after Exercise Catalog Import Batch v1:
+
+- Should a future Exercise Catalog Import Batch v1.1 add another tiny set of missing equipment-matched rows, or should catalog expansion pause?
+- Should exercise aliases become a first-class canonical field, or should names remain the only catalog search key for now?
+- Should future exercise catalog work add a source-note field, or is milestone documentation enough for manually curated rows?
+- Should workout generation eventually prefer newer curated entries for variety, or should generation behavior remain untouched until a separate generation milestone?
+- What product surface should show newly added exercises first: workout logging, workout preview, substitution UI, or Today recommendations?
+
 ## Developer workflow
 
 Resolved by Supercharger v1.1 - Session Brief Command:

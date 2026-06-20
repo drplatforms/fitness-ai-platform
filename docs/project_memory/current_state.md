@@ -8,54 +8,52 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`feature/food-catalog-import-batch-v1`
+`feature/exercise-catalog-import-batch-v1`
 
 ## Latest accepted milestone
 
-`Catalog Source Evaluation v1` is accepted and merged to `main`.
+`Food Catalog Import Batch v1` is accepted and merged to `main`.
 
-Final accepted status: `CATALOG_SOURCE_EVALUATION_V1_ACCEPTED_WITH_APPROVED_SMALL_BATCH_CANDIDATES`.
+Final accepted status: `FOOD_CATALOG_IMPORT_BATCH_V1_ACCEPTED`.
 
-USDA FoodData Central is accepted as the first source candidate for a tiny reviewed generic food batch.
+The canonical food catalog is expanded by 20 reviewed USDA/FDC generic rows. No raw/staged USDA/FDC artifacts are committed, and runtime/provider/nutrition/food logging behavior remains unchanged.
 
 ## Current implementation milestone
 
-`Food Catalog Import Batch v1` is implemented pending review.
+`Exercise Catalog Import Batch v1` is implemented pending review.
 
-Implementation status: `FOOD_CATALOG_IMPORT_BATCH_V1_IMPLEMENTED_PENDING_REVIEW`.
+Implementation status: `EXERCISE_CATALOG_IMPORT_BATCH_V1_IMPLEMENTED_PENDING_REVIEW`.
 
-This milestone adds exactly 20 reviewed USDA/FDC Foundation Foods generic rows to the canonical food seed list. The batch is small, per-100g clear, source-noted, and limited to practical generic staples not already well-covered by the starter catalog.
+This milestone adds exactly 18 manually curated, equipment-aligned exercise rows to the canonical exercise catalog. The batch is tiny, reviewed, schema-preserving, and limited to neutral taxonomy fields. No copied descriptions, medical/rehab claims, unsafe coaching claims, raw datasets, staged qa_artifacts, scraping, API clients, or AI-generated exercise facts are added.
 
-Canonical additions include fish/protein options, vegetables, fruits, dry grains, and a few high-value staples:
+Canonical additions include unilateral lower-body options, bodyweight core options, dumbbell push/lower-body accessories, barbell lower-body options, and cable pull/accessory options:
 
-- Alaska Pollock, Raw
-- Apricot, Raw
-- Arugula, Raw
-- Beets, Raw
-- Beet Greens, Raw
-- Bok Choy, Raw
-- Red Cabbage, Raw
-- Collard Greens, Raw
-- Fennel Bulb, Raw
-- Figs, Dried
-- Haddock, Raw
-- Catfish, Raw
-- Plantain, Raw
-- Mandarin, Raw
-- Black Rice, Dry
-- Red Rice, Dry
-- Fonio Grain, Dry
-- Khorasan Grain, Dry
-- Parsnips, Raw
-- Radishes, Raw
+- Bodyweight Step-Up
+- Front-Foot Elevated Split Squat
+- Deficit Reverse Lunge
+- Cossack Squat
+- Single-Leg Calf Raise
+- Single-Leg Hip Thrust
+- Reverse Plank
+- V-Up
+- Lying Leg Raise
+- Copenhagen Side Plank
+- Dumbbell Alternating Bench Press
+- Single-Arm Dumbbell Floor Press
+- Dumbbell Cossack Squat
+- Dumbbell Seated Calf Raise
+- Barbell Step-Up
+- Zercher Squat
+- Single-Arm Cable Lat Pulldown
+- Cable Hip Abduction
 
-No raw USDA/FDC dataset is committed. No staged qa_artifacts are committed. No scraping, API client, AI-generated nutrition facts, runtime behavior, provider behavior, nutrition calculation behavior, food logging behavior, or exercise catalog behavior changed.
+No food catalog rows changed. No workout generation, exercise recommendation, provider, validator/fallback, persistence, report, FastAPI, or Streamlit behavior changed.
 
 ## Next recommended milestone options
 
-- Exercise Catalog Import Batch v1 using manual curation and/or CC0 structured-name inspiration only.
-- Food Catalog Import Batch v1.1 if the first batch review identifies obvious missing generic staples.
-- Daily Coach Narrative Limited Today UI Readiness v1 if Product chooses to return to product-facing work.
+- Daily Coach Narrative Limited Today UI Readiness v1 after exercise batch acceptance.
+- Exercise Catalog Import Batch v1.1 only if review finds an obvious low-risk follow-up.
+- Food Catalog Import Batch v1.1 only if Product wants another tiny generic staple batch before Daily Coach work.
 
 ---
 

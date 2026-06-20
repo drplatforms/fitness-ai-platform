@@ -4,6 +4,11 @@ Last updated: 2026-06-20
 
 This file separates active work from parked future ideas, resolved historical questions, and rejected/reference-only branches.
 
+North-star docs now preserve the larger platform direction:
+- `docs/project_memory/future_architecture_ledger.md`
+- `docs/project_memory/premium_platform_blueprint.md`
+Future-only ideas in those files remain parked until scoped milestones approve implementation.
+
 ## Active current questions
 
 ### Project memory and continuity

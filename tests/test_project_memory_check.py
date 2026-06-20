@@ -43,6 +43,11 @@ def write_required_project_memory(root: Path) -> None:
                 "RAG\nVector\nMoE\nMCP\nfrontend\n"
                 "This ledger records direction. It does not authorize implementation.\n"
             )
+        elif relative_path == "docs/project_memory/premium_platform_blueprint.md":
+            text = (
+                "premium\nRAG\nvector\nMoE\nMCP\nqwen3:32b\n"
+                "This document is aspirational. It does not authorize implementation of all features.\n"
+            )
         elif relative_path == "docs/project_memory/current_state.md":
             text = (
                 "Project Memory Alignment + North Star Architecture v1\n"

@@ -4,136 +4,561 @@ Last updated: 2026-06-20
 
 ## Purpose
 
-This ledger preserves the long-term technical north star without authorizing future-only implementation.
+This ledger preserves the long-term technical architecture north star for AI Health Coach.
 
-Future ideas in this file are recorded so agents do not lose the dream, but they are not approved scope unless a later milestone explicitly authorizes them.
+It records future platform directions, dependencies, sequencing, and safety boundaries so future agents do not lose the architectural thread. It is intentionally future-facing and strict.
+
+This ledger records direction. It does not authorize implementation.
+
+Anything in this file still requires a scoped milestone, tests, validation, manual QA where appropriate, and Architecture acceptance before it becomes implementation scope.
+
+## Non-authorization statement
+
+This file does not approve:
+
+- RAG implementation
+- vector database implementation
+- MoE or model routing implementation
+- MCP or autonomous tool implementation
+- frontend rewrite
+- deployment rewrite
+- provider persistence
+- qwen3:32b production promotion
+- same-session approval
+- normal Today page provider calls
+- database migrations
+- schema changes
+- report persistence changes
+
+Current accepted behavior remains governed by `current_state.md`, `ai_boundaries.md`, accepted milestone reviews, and Architecture handoffs.
+
+## Core doctrine
+
+The future architecture must preserve the project doctrine:
+
+- Backend owns truth.
+- AI explains backend-approved truth.
+- Validators gate AI output.
+- Deterministic fallback always exists.
+- Provider paths remain manual/developer-gated unless explicitly promoted.
+- No model is production-approved without QA matrix evidence.
+- `qwen3:32b` is a future premium voice candidate, not a current default.
+- Raw or rejected provider output must not appear in normal UI.
+- Model output must not write permanent truth without backend and user approval.
+- Retrieved knowledge supports explanation, not authority.
+- Vector hits are evidence candidates, not facts.
+- RAG does not create truth.
+- Model routing is backend-owned, not model-owned.
+- MCP/tools expose safe backend APIs, not raw database freedom.
+- User data and memory must be inspectable and correctable.
+- Project memory docs are a first-class continuity layer.
 
 ## 1. Local-first foundation
 
-Current foundation: Streamlit UI, FastAPI backend, SQLite data layer, local deterministic services, local Ollama provider experiments, Windows source-of-truth development, and Linux staging/runtime QA.
+### Current foundation
 
-Why this came first: fast iteration, inspectable failures, safe deterministic fallback, portfolio-friendly architecture, local privacy/control, and easier learning/debugging.
+The current platform is local-first:
 
-Local-first remains valuable even if a future frontend/deployment architecture is added.
+- Streamlit frontend shell
+- FastAPI backend
+- SQLite local data store
+- deterministic service layer
+- Pydantic-style contracts and explicit service boundaries
+- report section registry
+- validation-first provider architecture
+- local Ollama experimentation
+- Windows source-of-truth development flow
+- Linux runtime/staging QA flow
+- project-memory and stale-doc checks
+
+### Why this came first
+
+The local-first foundation came first because it supports:
+
+- fast iteration
+- low-cost experimentation
+- inspectable failures
+- deterministic fallback
+- safe provider experimentation
+- strong learning value
+- no dependency on cloud services for core behavior
+- easier snapshotting and handoffs
+- strong boundaries around personal health data
+
+The project needed deterministic truth before expanding AI features.
+
+### Future direction
+
+Local-first can evolve without being discarded:
+
+- local server / LAN deployment
+- Docker Compose
+- service-managed FastAPI and Streamlit processes
+- PostgreSQL when migration discipline is ready
+- reverse proxy through Apache, Nginx, or Caddy
+- model-serving separation
+- observability services
+- backup/restore tooling
+
+No service split, deployment rewrite, or database migration is approved by this ledger alone.
 
 ## 2. Provider architecture
 
-Provider doctrine: deterministic default, manual/developer-gated preview lanes first, parse before validate, validate before display, deterministic fallback always available, no raw/rejected output in normal UI, and no provider authority over truth.
+### Current doctrine
 
-Future provider architecture may include async/background generation, approved narrative cache after validation, provider QA matrices, explicit model routing, and developer diagnostics dashboards.
+Provider behavior is validation-first:
 
-No provider cache/persistence is approved yet for Daily Coach narrative.
+1. backend builds approved context
+2. provider/model proposes candidate text
+3. response is parsed
+4. parsed content is validated
+5. approved content may be displayed only where the milestone allows
+6. failed output falls back deterministically
 
-## 3. qwen3:32b premium coach lane
+Provider paths are opt-in and developer-gated unless explicitly promoted.
 
-Long-term target: richer coach voice, premium synthesis language, motivational framing, and more human-feeling daily explanation.
+### Future provider architecture
 
-Current status: future candidate only, not production-promoted, not default, not page-load blocking, and not allowed to bypass validators.
+Future provider architecture may include:
 
-Likely future shape: async generation, precomputed after backend context is ready, validated before display, cached only after explicit persistence design, deterministic fallback immediately visible.
+- explicit provider abstraction
+- model capability registry
+- provider QA matrix
+- provider latency tracking
+- parse/validation/fallback metrics
+- manual preview lanes
+- async/background generation
+- approval workflows
+- provider-job history
+- approved narrative caching only after persistence design
+- per-section provider policies
+
+### Required boundaries
+
+Future provider work must keep these boundaries:
+
+- no provider call on normal Today load unless explicitly approved later
+- no raw or rejected provider output in normal UI
+- no provider persistence without explicit design
+- no model promotion without QA evidence
+- no provider output changing Daily Next Action or backend-owned decisions
+- deterministic fallback remains available
+- provider diagnostics stay developer-only and sanitized
+
+## 3. `qwen3:32b` premium coach voice lane
+
+### Future role
+
+`qwen3:32b` is a future premium narrative candidate. It may eventually support:
+
+- richer Today Coach Note language
+- premium Coach's Read variants
+- report narrative polish
+- weekly review synthesis
+- monthly review synthesis
+- motivational but bounded coaching language
+- more natural transitions between nutrition, workout, and recovery context
+
+### Required operating model
+
+A future `qwen3:32b` lane should likely be:
+
+- async/precomputed
+- not page-load blocking
+- not enabled by default
+- manually evaluated first
+- gated by parser and validator
+- operated only on backend-approved context
+- compared against smaller baselines in a QA matrix
+- blocked from changing truth, targets, decisions, CTA, or persistence
+
+### Current status
+
+`qwen3:32b` is not production-promoted.
+
+Other local model roles may remain:
+
+- `qwen2.5:3b`: reliable JSON/contract baseline candidate
+- `qwen3:8b`: practical voice/quality probe
+- `qwen3:14b`: intermediate probe candidate
+- `qwen3:30b-a3b`: optional experimental candidate where locally available
+
+No model may promote itself. The backend owns provider selection policy.
 
 ## 4. RAG / curated knowledge base
 
-Future support areas: exercise explanations, nutrition education, coaching rationale, form cues, recovery education, and meal/snack idea explanation.
+### Future role
 
-Rules: retrieval explains approved context, retrieval does not create truth, retrieved facts must be source-tagged, medical/nutrition safety boundaries are required, curated/local knowledge should come before broad web retrieval, and backend validators remain final authority.
+A future RAG layer could help the coach explain approved context using curated knowledge. It may support:
 
-No RAG implementation is approved yet.
+- exercise technique explanations
+- nutrition basics
+- recovery principles
+- habit coaching
+- app-specific help docs
+- report explanations
+- user education mode
+- explain-why controls
+- source-tagged coaching context
+
+### Source strategy
+
+Preferred order:
+
+1. curated local project knowledge
+2. user-approved educational content
+3. vetted exercise/nutrition references
+4. later, broader retrieval only with source trust rules
+
+### Strict boundary
+
+RAG does not decide.
+
+RAG does not create truth.
+
+RAG does not override backend calculations.
+
+Retrieved chunks must be source-tagged. Medical, nutrition, and exercise safety rules are required. Retrieval may provide explanatory evidence, but backend services and validators remain final authority.
 
 ## 5. Vector database / embeddings
 
-Future semantic search may cover user history, workout logs, nutrition logs, reports, approved coaching facts, curated knowledge, preferences, and constraints.
+### Future uses
 
-Candidate stores: Chroma, SQLite vector extensions, FAISS, LanceDB, or Postgres/pgvector later.
+Vector search may eventually support semantic retrieval over:
 
-Rules: vector hits are evidence candidates, not truth; retrieval must be bounded; retrieved evidence must be inspectable; backend services decide what is approved.
+- user history
+- workout logs
+- food logs
+- reports
+- approved coaching facts
+- Coach's Read history
+- curated knowledge base content
+- similar meals
+- similar workouts
+- similar prior adherence patterns
+- user feedback
+- project documentation
 
-No vector database is approved yet.
+### Candidate tools
+
+Possible tools include:
+
+- PostgreSQL with `pgvector`
+- LanceDB
+- Chroma
+- FAISS
+- SQLite vector extensions if practical
+
+No candidate is approved yet.
+
+### Strict boundary
+
+Vector hits are evidence candidates, not truth.
+
+All conclusions derived from vector search must pass through deterministic backend services and validators. Retrieved personal history must be bounded by user, date, data quality, and context. Memory retrieval must be inspectable.
 
 ## 6. Long-term coach memory
 
-Memory should be deterministic and inspectable first.
+### Future memory types
 
-Future memory should separate facts, preferences, goals, constraints, coach observations, and model-generated suggestions.
+Long-term coach memory may eventually store:
 
-Rules: avoid hidden model memory, allow user inspection/editing later, recognize trends only from verified data, and never turn model suggestions into facts without backend acceptance.
+- facts
+- preferences
+- goals
+- constraints
+- equipment
+- food preferences
+- training preferences
+- schedule patterns
+- recurring barriers
+- user feedback
+- coaching observations
+- resolved historical notes
 
-## 7. MoE / model routing
+### Memory rules
 
-Future routing may assign tasks by model strength: small local model for JSON/contract tasks, larger qwen3 model for premium narrative, deterministic services for decisions, and specialized extraction/classification models only if justified.
+Memory must be:
 
-Rules: the router must be explicit, router decisions must be logged, no model chooses its own authority, no automatic promotion without QA matrix, and deterministic fallback remains default.
+- inspectable
+- editable
+- exportable
+- correctable
+- scoped by source and confidence
+- separated by memory type
+- stale-aware
 
-No MoE router is approved yet.
+Inferred memory must be labeled as inferred. AI cannot silently create permanent memory. Memory writes require backend and/or user approval. Hidden model memory is not acceptable.
 
-## 8. MCP / tool interface architecture
+## 7. Unified Health State Snapshot
 
-Future tool surfaces may include food catalog lookup, exercise catalog lookup, report builder, workout planner, trend analyzer, memory retriever, and validation service.
+### Future role
 
-Rules: tools expose approved backend APIs rather than raw database freedom, tool calls go through backend authority, no autonomous writes happen without user/backend approval, and tool outputs remain validate-before-display when user-facing.
+A future Unified Health State Snapshot should be the canonical daily state object consumed by Today, reports, provider context, memory, and recommendations.
 
-No MCP implementation is approved yet.
+It may include:
 
-## 9. Better frontend / deployment
+- target date
+- user profile facts
+- nutrition status
+- workout status
+- recovery status
+- recent history
+- data quality
+- confidence gates
+- current Daily Next Action
+- approved limitations
+- current user preferences
+- active constraints
+- provider-safe context projection
 
-Streamlit is the current learning/product shell.
+### Sequencing
 
-Future frontend candidates include React, Vue, Svelte, or another web frontend over FastAPI.
+Unified Health State Snapshot likely comes before advanced RAG, long-term memory, async provider display, and premium coach voice. It should be deterministic and testable first.
 
-Future deployment candidates include local server, LAN dashboard, Dockerized services, systemd services, and Apache/nginx/Caddy reverse proxy.
+## 8. MoE / model routing
 
-Future frontend must preserve Today, Workout, Nutrition, Reports, Developer Mode, and traceable diagnostics.
+### Future model routing
 
-No frontend rewrite is approved yet.
+A future model routing layer may assign tasks to different model classes:
 
-## 10. Deployment architecture
+- deterministic services for decisions
+- small local model for JSON/contract tasks
+- larger local model for premium narrative
+- specialized extraction/classification models if useful
+- fallback renderers for failures
+- latency-aware route selection
+- quality-aware route selection
 
-Current deployment is local development.
+### Strict boundary
 
-Future deployment work should address local service startup, reverse proxy, authentication, backup strategy, log/artifact strategy, database migration discipline, model serving separation, and LAN access constraints.
+The model router is backend-owned.
 
-No production deployment is approved yet.
+No model chooses its own authority. No task is routed to a model without explicit approval. A model capability registry and QA matrix are required before promotion. Model routing must be logged and inspectable.
+
+## 9. MCP / tool interface architecture
+
+### Future idea
+
+MCP-style or tool-based interfaces may eventually expose approved backend capabilities to agents or models.
+
+Possible tools:
+
+- food catalog lookup
+- exercise catalog lookup
+- report builder
+- workout planner
+- trend analyzer
+- memory retriever
+- validation service
+- recommendation context builder
+- provider preview runner
+- QA artifact generator
+
+### Strict boundary
+
+Tools must call approved backend service APIs.
+
+Tools must not expose raw database freedom. Autonomous writes are not allowed without explicit approval. Tool permissions must be explicit. Tool calls must be logged. Model output still requires validation.
+
+## 10. Async / background orchestration
+
+### Future needs
+
+Large model work and recurring product workflows should not block page load. Future background orchestration may support:
+
+- provider narrative jobs
+- report generation jobs
+- catalog ingestion jobs
+- embedding jobs
+- RAG ingestion jobs
+- weekly review generation
+- monthly review generation
+- stale-state cleanup jobs
+- backup jobs
+
+### Candidate tools
+
+Potential tools:
+
+- Celery + Redis
+- Prefect
+- APScheduler for lightweight scheduling
+- a custom job table first
+
+### State model
+
+Any job system should expose states such as:
+
+- pending
+- running
+- succeeded
+- failed
+- retrying
+- cancelled
+
+Jobs should be inspectable and safe to retry.
 
 ## 11. Data architecture
 
-Current data architecture: SQLite, deterministic seed scripts, canonical food/exercise catalogs, user logs, report persistence, and local-only QA artifacts.
+### Current state
 
-Future possibilities: Postgres, vector store, object/file storage for artifacts, explicit migrations, and backup/restore tooling.
+SQLite is the current local data store.
 
-Migration discipline: no schema change without explicit Architecture approval, preserve history, test migrations, and document persistence boundaries.
+### Future path
 
-## 12. Agent engineering
+Future data architecture may include:
 
-Current agent pattern: ChatGPT acts as Architecture/TPM/QA/product reasoning partner, Backend implementation happens through scoped branches and scripts, Dev Assistant provides local checks and session briefs, and Codex may be used later in scoped workflows.
+- PostgreSQL
+- Alembic migrations
+- `pgvector`
+- audit tables
+- job tables
+- canonical catalog tables
+- staged import tables
+- report persistence tables
+- memory ledger
+- embedding metadata
+- backup/restore process
+- export/import support
+- data quality checks
+- data retention policy
 
-Boundaries: no Aider unless explicitly reapproved, no Headroom reintroduction, no Claude workflow, no `CLAUDE.md`, agents must obey project memory, and agents must not broaden scope silently.
+No migration is approved yet.
 
-## 13. Safety doctrine
+## 12. Observability / diagnostics
 
-Safety rules: backend owns truth, AI explains truth, validators gate AI, deterministic fallback always exists, no raw/rejected output in normal UI, no unsupported medical claims, no unsupported nutrition/workout claims, no hidden persistence of provider text, and no model authority over decisions.
+### Future premium backend needs
 
-## 14. Roadmap phases
+A premium platform will need:
 
-Phase 1: deterministic truth foundation.
+- structured logs
+- request IDs
+- provider trace IDs
+- OpenTelemetry
+- Prometheus
+- Grafana
+- log aggregation
+- fallback-rate metrics
+- parse-failure metrics
+- validation-failure metrics
+- provider latency dashboards
+- provider quality dashboards
+- health endpoints
+- QA artifact generation
+- smoke-test reports
 
-Phase 2: validated report sections.
+Observability should make fallback and validator behavior visible without exposing raw or unsafe model output in normal UI.
 
-Phase 3: daily product loop.
+## 13. Better frontend / deployment
 
-Phase 4: developer preview stability.
+### Current frontend
 
-Phase 5: provider contract reliability.
+Streamlit is the current learning/product shell. It is useful for local iteration and Developer Mode diagnostics.
 
-Phase 6: same-session approved display.
+### Future frontend options
 
-Phase 7: async narrative generation.
+Future frontend directions may include:
 
-Phase 8: unified health state snapshot.
+- React / Next.js / TypeScript
+- generated API client from FastAPI OpenAPI
+- Tailwind or shadcn-style component system
+- real design system
+- mobile-friendly UI
+- PWA
+- charts and trends
+- active workout experience
+- Playwright E2E tests
 
-Phase 9: RAG/vector memory.
+### Future deployment candidates
 
-Phase 10: production frontend/deployment.
+Deployment may evolve toward:
 
-## Final reminder
+- Docker Compose
+- Apache reverse proxy
+- Nginx or Caddy alternatives
+- systemd services
+- local LAN deployment
+- TLS later
+- Kubernetes only much later if useful for learning or scale
+
+No frontend rewrite or deployment rewrite is approved yet.
+
+## 14. Agent engineering
+
+### Current doctrine
+
+Agent workflows are bounded:
+
+- ChatGPT acts as Architecture / TPM / QA brain
+- Backend implements scoped changes
+- Codex is optional and scoped later
+- no Aider unless explicitly reapproved
+- no Headroom
+- no Claude workflow
+- no `CLAUDE.md`
+
+### Future agent infrastructure
+
+Future agent engineering may include:
+
+- tool registry
+- handoff templates
+- project-memory checks
+- session briefs
+- architecture decision records
+- agent permission rules
+- code maps
+- dependency maps
+- branch-risk profiles
+- QA checklist generation
+- possible MCP integration
+
+Agents must obey project memory and milestone boundaries.
+
+## 15. Safety doctrine
+
+Future architecture must continue to enforce:
+
+- backend owns truth
+- AI explains truth
+- validators gate AI
+- deterministic fallback always available
+- no unsupported medical claims
+- no unsupported nutrition claims
+- no unsupported workout claims
+- no raw or rejected output in normal UI
+- no hidden persistence of model text
+- provider output must be inspectable and bounded
+- user data must be handled conservatively
+- confidence gates must protect numeric targets and claims
+
+Safety is not a later bolt-on. It is the architecture.
+
+## 16. Roadmap phases
+
+The long-term architecture can be thought of in phases:
+
+1. Deterministic backend truth
+2. Validated report sections
+3. Daily product loop
+4. Developer preview stability
+5. Provider preview contract reliability
+6. Same-session approved provider display
+7. Async provider narrative generation
+8. Unified Health State Snapshot
+9. Long-term memory ledger
+10. RAG / curated knowledge base
+11. Vector search over knowledge and user history
+12. Model routing / MoE
+13. MCP / tool interface architecture
+14. Real frontend / deployment architecture
+15. Observability and premium operations
+
+Each phase must still be implemented through a scoped milestone.
+
+## Closing boundary
 
 This ledger records direction. It does not authorize implementation.
+
+Future systems must be promoted through explicit Architecture approval, tests, validation, QA, project-memory updates, and user acceptance.

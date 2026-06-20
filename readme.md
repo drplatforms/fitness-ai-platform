@@ -110,3 +110,11 @@ User data
 → backend validator
 → approved report section or deterministic fallback
 → public-safe rendering
+
+## Project memory and north-star docs
+
+The long-term technical north star is preserved in `docs/project_memory/future_architecture_ledger.md`.
+
+The premium product/backend blueprint is preserved in `docs/project_memory/premium_platform_blueprint.md`.
+
+These documents record direction only. They do not authorize RAG, vector search, MoE/model routing, MCP/tool interfaces, frontend rewrite, deployment rewrite, provider persistence, or model promotion without scoped milestones and Architecture acceptance.

@@ -15,7 +15,8 @@ Read project memory before making changes:
 7. `docs/project_memory/development_workflow.md`
 8. `docs/project_memory/open_questions.md`
 9. `docs/project_memory/future_architecture_ledger.md`
-9. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
+10. `docs/project_memory/premium_platform_blueprint.md`
+11. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
 
 When project memory and a pasted prompt disagree, stop and ask for the latest source-of-truth snapshot or Architecture handoff.
 

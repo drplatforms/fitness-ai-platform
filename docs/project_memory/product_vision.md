@@ -14,6 +14,11 @@ Backend owns facts. AI explains facts.
 
 The product should feel premium, but never fake precision or unsupported certainty.
 
+Long-term platform direction is split across two project-memory north-star docs:
+- `future_architecture_ledger.md` records future technical architecture possibilities, dependencies, and boundaries.
+- `premium_platform_blueprint.md` records the aspirational premium product and engineering platform vision.
+Both are future-facing records, not implementation authorization.
+
 ## Current product loop
 
 The current accepted loop includes daily deterministic next action, deterministic Today Coach Note, deterministic Coach's Read / Daily Coach Synthesis, grounded daily recommendation, nutrition logging and target-vs-actual context, workout planning/substitution/count/lifecycle cleanup, full reports with provider-integrated Training and Nutrition sections, and Developer Mode diagnostics for provider experimentation.

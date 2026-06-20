@@ -24,6 +24,7 @@ REQUIRED_FILES = [
     "docs/project_memory/ai_boundaries.md",
     "docs/project_memory/section_registry_summary.md",
     "docs/project_memory/future_architecture_ledger.md",
+    "docs/project_memory/premium_platform_blueprint.md",
     "docs/project_memory/open_questions.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
@@ -46,6 +47,11 @@ FORBIDDEN_CURRENT_CLAIMS = {
         "Daily Coach provider narrative persistence is approved",
     ],
     "docs/project_memory/ai_boundaries.md": [
+        "qwen3:32b is promoted",
+        "same-session approved display is accepted",
+        "Daily Coach provider narrative persistence is approved",
+    ],
+    "docs/project_memory/premium_platform_blueprint.md": [
         "qwen3:32b is promoted",
         "same-session approved display is accepted",
         "Daily Coach provider narrative persistence is approved",
@@ -85,6 +91,15 @@ REQUIRED_PHRASES = {
         "MCP",
         "frontend",
         "This ledger records direction. It does not authorize implementation.",
+    ],
+    "docs/project_memory/premium_platform_blueprint.md": [
+        "premium",
+        "RAG",
+        "vector",
+        "MoE",
+        "MCP",
+        "qwen3:32b",
+        "This document is aspirational. It does not authorize implementation of all features.",
     ],
     "docs/project_memory/current_state.md": [
         "Project Memory Alignment + North Star Architecture v1",

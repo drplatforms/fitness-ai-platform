@@ -18,6 +18,10 @@ Status: `AUTHORIZED_TO_IMPLEMENT`
 
 Purpose: restore repo project memory as the authoritative continuity layer before the next provider milestone.
 
+North-star references:
+- Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
+- Premium product/backend blueprint: `docs/project_memory/premium_platform_blueprint.md`
+
 ## Latest accepted main baseline
 
 The accepted main baseline before this docs sweep includes:

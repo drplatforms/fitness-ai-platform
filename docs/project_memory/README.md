@@ -13,9 +13,10 @@ Agents and humans should read these files before changing architecture, provider
 5. `ai_boundaries.md`
 6. `section_registry_summary.md`
 7. `future_architecture_ledger.md`
-8. `development_workflow.md`
-9. `agent_workflow.md`
-10. `open_questions.md`
+8. `premium_platform_blueprint.md`
+9. `development_workflow.md`
+10. `agent_workflow.md`
+11. `open_questions.md`
 
 ## Project memory update requirement
 

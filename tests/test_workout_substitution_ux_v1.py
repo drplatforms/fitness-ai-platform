@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 STREAMLIT_SOURCE = Path("ui/streamlit_app.py")
@@ -61,10 +62,13 @@ def test_substitution_empty_and_error_states_are_user_safe() -> None:
     assert expected_empty_end in table_source
     assert expected_error in apply_source
     assert "Substitution apply failed for" not in apply_source
-    assert "extract_api_error_message(exc)" not in apply_source.replace(
-        "st.session_state.substitution_apply_error_detail = extract_api_error_message(exc)",
+    sanitized_apply_source = re.sub(
+        r"st\.session_state\.substitution_apply_error_detail\s*=\s*\(?\s*"
+        r"extract_api_error_message\(exc\)\s*\)?",
         "",
+        apply_source,
     )
+    assert "extract_api_error_message(exc)" not in sanitized_apply_source
 
 
 def test_normal_substitution_ui_does_not_expose_raw_debug_or_provider_terms() -> None:

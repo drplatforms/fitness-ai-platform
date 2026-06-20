@@ -37,30 +37,36 @@ The goal is not to build a generic fitness chatbot. The goal is to build a serio
 
 ## Current Status
 
-The current main branch includes the merged Training Evidence Claim Service and Nutrition Level 5 provider milestone.
+The current accepted project baseline is a local-first, validation-first AI Health Coach with deterministic backend truth, provider-gated report sections, and increasingly complete daily/product workflow surfaces.
 
-Current confirmed state:
+Current accepted capabilities include:
 
-- Training Report Section is Level 5 provider-integrated.
-- Nutrition Report Section is Level 5 runtime validated.
-- Nutrition Report Section provider status is `opt_in_full_report_integrated`.
-- Nutrition Target Display remains a separate Level 2 display contract.
-- `direct_ollama/qwen2.5:3b` is approved as a tested opt-in provider path.
-- qwen3 remains experimental and is not approved.
-- Deterministic fallback remains mandatory.
-- Provider gates remain mandatory.
-- Provider output is parsed and validated before rendering.
-- Invalid provider output falls back deterministically.
-- Public/status/persisted sanitizer boundaries remain intact.
-- Runtime QA matrices were executed across seeded users 101–105.
-- Nutrition Level 5 Promotion Runtime QA v1 passed.
+- deterministic Daily Next Action
+- deterministic Today Coach Note
+- deterministic Coach's Read / Daily Coach Synthesis
+- Developer Mode-only Daily Coach Narrative preview diagnostics
+- provider-integrated Training Report Section under strict validation/fallback
+- provider-integrated Nutrition Report Section under strict validation/fallback
+- workout substitution UX
+- workout exercise count preference
+- workout daily state lifecycle cleanup
+- catalog import/source evaluation foundations
+- initial reviewed food and exercise catalog batches
+- Supercharger/session-brief tooling
+- project memory and stale-doc checks
+
+Current AI/provider boundaries:
+
+- deterministic behavior remains the default
+- provider preview lanes remain manual/developer-gated unless explicitly promoted later
+- qwen3 models are not production-promoted
+- qwen3:32b is a future premium coach candidate only
+- no Daily Coach provider narrative persistence is approved
+- no same-session approval bridge is accepted
 
 Honest coverage note:
 
-Fallback architecture and deterministic fallback behavior are implemented and required, but the latest Nutrition Level 5 fallback runtime semantics were not fully runtime-tested because the project does not yet have a safe QA-only forced-invalid provider mode.
-
----
-
+The app is not a production healthcare system. It is a local-first engineering project demonstrating backend-owned truth, deterministic fallbacks, strict provider validation, and controlled local LLM experimentation.
 ## What It Does
 
 AI Health Coach currently supports:
@@ -74,19 +80,22 @@ AI Health Coach currently supports:
 - workout logging
 - exercise catalog search and filtering
 - workout plan preview
+- workout substitution flow
+- workout size preference for Quick / Standard / Full sessions
+- workout daily state lifecycle cleanup
 - workout execution tracking
 - health-state display
-- daily grounded recommendations
+- Daily Next Action
+- Today Coach Note
+- Coach's Read / Daily Coach Synthesis
+- Daily Grounded Recommendation
 - AI health report generation
 - latest report and report history views
 - provider-integrated Training Report Section
 - provider-integrated Nutrition Report Section
-- developer/debug metadata for provider runtime inspection
+- Developer Mode diagnostics for provider preview/runtime inspection
 
 The app is local-first and currently designed for controlled development, QA, and portfolio demonstration rather than production healthcare use.
-
----
-
 ## Architecture
 
 The project follows a validation-first pipeline:

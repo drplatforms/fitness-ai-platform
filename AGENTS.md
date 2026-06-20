@@ -14,6 +14,7 @@ Read project memory before making changes:
 6. `docs/project_memory/section_registry_summary.md`
 7. `docs/project_memory/development_workflow.md`
 8. `docs/project_memory/open_questions.md`
+9. `docs/project_memory/future_architecture_ledger.md`
 9. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
 
 When project memory and a pasted prompt disagree, stop and ask for the latest source-of-truth snapshot or Architecture handoff.
@@ -105,3 +106,9 @@ export OLLAMA_BASE_URL=http://<WINDOWS_IP>:11434
 ```
 
 Provider-selection env vars such as `RECOMMENDATION_CANDIDATE_PROVIDER` and `NUTRITION_EXPLANATION_PROVIDER` should remain unset unless a milestone explicitly says to test provider defaults.
+
+## Project memory update requirement
+
+Every meaningful milestone or feature branch that changes user-visible behavior, backend behavior, architecture boundaries, provider behavior, persistence, routes, UI, tests, project scope, or accepted status must update project memory in the same branch.
+
+A milestone is not done if project memory still describes older project truth.

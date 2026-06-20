@@ -23,6 +23,7 @@ REQUIRED_FILES = [
     "docs/project_memory/backend_truth_contract.md",
     "docs/project_memory/ai_boundaries.md",
     "docs/project_memory/section_registry_summary.md",
+    "docs/project_memory/future_architecture_ledger.md",
     "docs/project_memory/open_questions.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
@@ -32,6 +33,22 @@ STALE_MARKERS = {
     "docs/project_memory/current_state.md": [
         "Latest accepted milestone\n\n`Daily Coach Narrative Developer Preview v1`",
         "Current implementation milestone\n\n`Daily Coach Narrative Async Today Preview Design v1`",
+        "`Exercise Catalog Import Batch v1` is accepted.\n\nFinal accepted status",
+        "feature/daily-coach-narrative-limited-today-ui-readiness-v1",
+    ],
+}
+
+FORBIDDEN_CURRENT_CLAIMS = {
+    "docs/project_memory/current_state.md": [
+        "DAILY_COACH_NARRATIVE_SAME_SESSION_APPROVED_PREVIEW_BRIDGE_V1_ACCEPTED",
+        "qwen3:32b is promoted",
+        "qwen3:32b is production",
+        "Daily Coach provider narrative persistence is approved",
+    ],
+    "docs/project_memory/ai_boundaries.md": [
+        "qwen3:32b is promoted",
+        "same-session approved display is accepted",
+        "Daily Coach provider narrative persistence is approved",
     ],
 }
 
@@ -41,11 +58,13 @@ REQUIRED_PHRASES = {
         "Backend owns facts",
         "Deterministic fallback remains the default",
         "Do not add `CLAUDE.md`",
+        "Project memory update requirement",
     ],
     ".github/copilot-instructions.md": [
         "Backend owns facts",
         "Preserve deterministic fallback behavior",
         "Do not add Claude workflow files",
+        "Project memory update requirement",
     ],
     "docs/project_memory/agent_workflow.md": [
         "ChatGPT",
@@ -58,6 +77,25 @@ REQUIRED_PHRASES = {
         "OLLAMA_BASE_URL",
         "Windows owns source-of-truth repo work",
         "Linux owns runtime/staging QA",
+    ],
+    "docs/project_memory/future_architecture_ledger.md": [
+        "RAG",
+        "Vector",
+        "MoE",
+        "MCP",
+        "frontend",
+        "This ledger records direction. It does not authorize implementation.",
+    ],
+    "docs/project_memory/current_state.md": [
+        "Project Memory Alignment + North Star Architecture v1",
+        "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1",
+        "reference-only",
+        "No provider may run on normal Today page load",
+    ],
+    "docs/project_memory/ai_boundaries.md": [
+        "Deterministic fallback remains the default",
+        "Daily Coach Narrative provider lanes are manual/developer-gated preview",
+        "future premium coach candidate",
     ],
 }
 
@@ -130,6 +168,21 @@ def run_project_memory_check(project_root: Path | str = ".") -> list[MemoryCheck
                         "WARN",
                         relative_path,
                         f"Possible stale milestone wording found: {marker}",
+                    )
+                )
+
+    for relative_path, forbidden_claims in FORBIDDEN_CURRENT_CLAIMS.items():
+        path = root / relative_path
+        if not path.exists():
+            continue
+        text = _read_text(path)
+        for claim in forbidden_claims:
+            if claim in text:
+                results.append(
+                    MemoryCheckResult(
+                        "FAIL",
+                        relative_path,
+                        f"Forbidden current-state claim found: {claim}",
                     )
                 )
 

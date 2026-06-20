@@ -21,12 +21,14 @@ def write_required_project_memory(root: Path) -> None:
                 "Backend owns facts\n"
                 "Deterministic fallback remains the default\n"
                 "Do not add `CLAUDE.md`\n"
+                "Project memory update requirement\n"
             )
         elif relative_path == ".github/copilot-instructions.md":
             text = (
                 "Backend owns facts\n"
                 "Preserve deterministic fallback behavior\n"
                 "Do not add Claude workflow files\n"
+                "Project memory update requirement\n"
             )
         elif relative_path == "docs/project_memory/agent_workflow.md":
             text = "ChatGPT\nCodex\nDev Assistant\nClaude\nOut of scope\n"
@@ -35,6 +37,24 @@ def write_required_project_memory(root: Path) -> None:
                 "OLLAMA_BASE_URL\n"
                 "Windows owns source-of-truth repo work\n"
                 "Linux owns runtime/staging QA\n"
+            )
+        elif relative_path == "docs/project_memory/future_architecture_ledger.md":
+            text = (
+                "RAG\nVector\nMoE\nMCP\nfrontend\n"
+                "This ledger records direction. It does not authorize implementation.\n"
+            )
+        elif relative_path == "docs/project_memory/current_state.md":
+            text = (
+                "Project Memory Alignment + North Star Architecture v1\n"
+                "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1\n"
+                "reference-only\n"
+                "No provider may run on normal Today page load\n"
+            )
+        elif relative_path == "docs/project_memory/ai_boundaries.md":
+            text = (
+                "Deterministic fallback remains the default\n"
+                "Daily Coach Narrative provider lanes are manual/developer-gated preview\n"
+                "qwen3:32b remains a future premium coach candidate only\n"
             )
         path.write_text(text, encoding="utf-8")
 
@@ -94,5 +114,45 @@ def test_project_memory_check_warns_on_stale_current_state_marker(
         result.status == "WARN"
         and result.path == "docs/project_memory/current_state.md"
         and "Possible stale milestone wording" in result.message
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_future_architecture_ledger(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (tmp_path / "docs/project_memory/future_architecture_ledger.md").unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path == "docs/project_memory/future_architecture_ledger.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_fails_on_forbidden_provider_claim(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (tmp_path / "docs/project_memory/current_state.md").write_text(
+        "Project Memory Alignment + North Star Architecture v1\n"
+        "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1\n"
+        "reference-only\n"
+        "No provider may run on normal Today page load\n"
+        "qwen3:32b is promoted\n",
+        encoding="utf-8",
+    )
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path == "docs/project_memory/current_state.md"
+        and "Forbidden current-state claim" in result.message
         for result in results
     )

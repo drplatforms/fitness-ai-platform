@@ -24,3 +24,7 @@ Keep suggestions narrow and consistent with existing service boundaries.
 - Keep public endpoints stable unless the milestone explicitly changes them.
 - Keep raw provider output, prompts, payloads, validation internals, and stack traces out of normal UI/API responses.
 - Never stage snapshots, patches, QA artifacts, runtime outputs, or local database files.
+
+## Project memory update requirement
+
+For meaningful feature or milestone work, update project memory before considering the branch complete. Do not imply provider/model promotion, persistence, same-session approval, or runtime behavior that has not been explicitly accepted.

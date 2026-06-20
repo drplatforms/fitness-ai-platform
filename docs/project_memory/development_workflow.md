@@ -156,6 +156,39 @@ Use Dev Assistant commands:
 
 The checks are read-only. They verify required project-memory docs and flag obvious stale/conflicting workflow statements.
 
+## Session brief command
+
+Use Dev Assistant to generate a clean UTF-8 uploadable handoff brief without PowerShell transcript or Tee-Object encoding issues.
+
+```powershell
+cd C:\projects\fitness_ai
+
+python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt
+```
+
+Optional milestone label:
+
+```powershell
+python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt --milestone "<milestone>"
+```
+
+The generated brief includes:
+
+- project name and generated timestamp
+- current branch and latest commit
+- git status --short
+- recent commits
+- Dev Assistant status summary
+- memory-check output
+- stale-doc-check output
+- suggested next action
+- snapshot command
+- Linux sync reminder
+
+The output belongs under `qa_artifacts/` and must not be committed.
+
+Do not use session briefs as source of truth. They are uploadable convenience context only. Project memory docs and git history remain source of truth.
+
 ## Snapshot command
 
 Use `git archive`, not `Compress-Archive`.

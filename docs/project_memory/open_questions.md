@@ -97,7 +97,16 @@ Open after contract tightening:
 
 ## Developer workflow
 
+Resolved by Supercharger v1.1 - Session Brief Command:
+
+- Dev Assistant can now generate a clean UTF-8 uploadable session brief with `python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt`.
+- Session briefs replace fragile PowerShell transcript/Tee-Object/copy-paste handoff capture for normal ChatGPT session startup.
+- Session brief output remains local-only under `qa_artifacts/` and is not source of truth.
+
+Open after Supercharger v1.1:
+
 - Should the new Windows validation helper eventually be mirrored with a Linux runtime-QA helper?
+- Should a future Supercharger v1.2 add a dedicated Architecture handoff packet command after session-brief stabilizes?
 
 ## Daily Coach Narrative v1 Planning / Context Builder
 

@@ -8,40 +8,43 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`feature/ai-coding-workflow-supercharger-v1`
+`feature/supercharger-session-brief-v1-1`
 
 ## Latest accepted milestone
 
-`Daily Coach Narrative Today Developer Panel v1` is accepted and merged to `main`.
+`Headroom Developer Workflow Spike v1` is accepted, merged to `main`, and completed as rejected for now.
 
-Final accepted status: `DAILY_COACH_NARRATIVE_TODAY_DEVELOPER_PANEL_V1_ACCEPTED`.
+Final accepted status: `HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`.
 
-Accepted behavior:
+Accepted conclusion:
 
-- Streamlit Developer Mode-only panel is available.
-- Normal Today user view remains unchanged.
-- Provider calls are manual-trigger only.
-- Accepted lanes are deterministic fallback, `qwen3:8b` fast preview, `qwen3:32b` premium preview, and `qwen2.5:3b` baseline/regression.
-- Approved provider narrative appears only after backend parse and validation success.
-- Rejected/raw/provider/debug output remains hidden.
-- No report integration, persistence, model promotion, provider default change, validator change, or deterministic fallback change occurred.
+- Headroom is not adopted by default.
+- Headroom is not runtime.
+- Headroom is not provider prompt compression.
+- Headroom is not model-facing context compression.
+- Headroom is not source of truth.
+- Headroom is not required for tests or development.
+- Headroom may only be revisited later as a developer-workflow-only experiment.
 
 ## Current implementation milestone
 
-`AI Coding Workflow Supercharger v1` is implemented pending review.
+`Supercharger v1.1 - Session Brief Command` is implemented pending review.
 
-Implementation status: `AI_CODING_WORKFLOW_SUPERCHARGER_V1_IMPLEMENTED_PENDING_QA`.
+Implementation status: `SUPERCHARGER_SESSION_BRIEF_V1_1_IMPLEMENTED_PENDING_REVIEW`.
 
-This milestone adds repo-native workflow guidance and read-only local tooling for ChatGPT-led development, optional scoped Codex/Aider/Copilot use, project-memory checks, prompt/context-pack generation, snapshot commands, Windows/Linux sync commands, and deterministic-safe FastAPI restart guidance for Windows-hosted Ollama provider-lane testing.
+This milestone adds a first-class Dev Assistant command that writes a clean UTF-8 uploadable session brief:
 
-This milestone does not change product runtime behavior, FastAPI routes, Streamlit product surfaces, provider defaults, validators, persistence, reports, nutrition, training, food catalog, exercise catalog, or model approval status.
+```powershell
+python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt
+```
 
-Claude-specific files and commands remain out of scope. No `CLAUDE.md` is added.
+The command replaces fragile PowerShell transcript/Tee-Object/copy-paste logging for ChatGPT handoffs. It includes repo status, recent commits, Dev Assistant status, memory-check, stale-doc-check, suggested next action, snapshot command, and Linux sync reminder.
+
+This milestone does not change product runtime behavior, FastAPI routes, Streamlit product surfaces, provider defaults, validators, persistence, reports, nutrition, training, food catalog, exercise catalog, model approval status, Headroom status, or Claude workflow status.
 
 ## Next recommended milestone options
 
-- Architecture / QA review for AI Coding Workflow Supercharger v1.
-- Headroom Developer Workflow Spike v1 after Supercharger acceptance.
+- Architecture / QA review for Supercharger v1.1 - Session Brief Command.
 - Daily Coach Narrative Limited Today UI Readiness v1 after product-readiness review.
 - Daily Coach Narrative Async Background Generation v1 after runtime/persistence strategy is approved.
 

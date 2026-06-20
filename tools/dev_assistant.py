@@ -1,8 +1,9 @@
 """Developer workflow assistant for AI Health Coach.
 
-This script is intentionally read-only. It summarizes local Git state,
-suggests safe next actions, recommends tests, and generates copy/paste
-handoff/PR templates without modifying files, committing, or pushing.
+This script is intentionally read-only except for explicit local artifact
+commands such as session-brief. It summarizes local Git state, suggests
+safe next actions, recommends tests, and generates copy/paste handoff/PR
+templates without committing, pushing, or changing product/runtime files.
 """
 
 from __future__ import annotations
@@ -128,6 +129,10 @@ def get_recent_commits() -> str:
     return get_output(["git", "log", "--oneline", "--decorate", "-7"])
 
 
+def get_recent_commits_8() -> str:
+    return get_output(["git", "log", "--oneline", "--decorate", "-8"])
+
+
 def get_short_status() -> str:
     return get_output(["git", "status", "--short"], fallback="")
 
@@ -186,8 +191,24 @@ def get_branch_changed_files(base_branch: str) -> list[str]:
     return unique_sorted(split_lines(output))
 
 
+def is_only_qa_artifacts_untracked(short_status: str) -> bool:
+    lines = split_lines(short_status)
+    if not lines:
+        return False
+
+    return all(line.startswith("?? qa_artifacts/") for line in lines)
+
+
 def recommend_next_action(short_status: str, upstream_status: str) -> str:
     if short_status:
+        if is_only_qa_artifacts_untracked(short_status):
+            return (
+                "Only qa_artifacts appears untracked. Recommended next step:\n"
+                "1. Treat qa_artifacts as local handoff output.\n"
+                "2. Do not stage or commit qa_artifacts.\n"
+                "3. Continue validation, handoff, snapshot, or merge flow as scoped."
+            )
+
         return (
             "Working tree has changes. Recommended next step:\n"
             "1. Review changes with: git status\n"
@@ -642,6 +663,100 @@ Notes:
 """
 
 
+def get_project_memory_check_text() -> str:
+    try:
+        from project_memory_check import format_results, run_project_memory_check
+    except Exception as exc:  # pragma: no cover - defensive CLI fallback
+        return f"Project memory check unavailable: {exc}"
+
+    results = run_project_memory_check(".")
+    return format_results(results)
+
+
+def build_session_brief(milestone: str | None = None) -> str:
+    branch = get_current_branch()
+    latest_commit = get_latest_commit()
+    latest_commit_hash = get_latest_commit_hash()
+    latest_commit_subject = get_latest_commit_subject()
+    short_status = get_short_status()
+    upstream_status = get_upstream_status()
+    recent_commits = get_recent_commits_8()
+    snapshot_name = generate_snapshot_name(latest_commit_hash, latest_commit_subject)
+    next_action = recommend_next_action(short_status, upstream_status)
+
+    memory_check = get_project_memory_check_text()
+    stale_doc_check = get_project_memory_check_text()
+
+    lines = [
+        "AI Health Coach - Developer Workflow Assistant",
+        "=" * 72,
+        f"Generated: {datetime.now().isoformat(timespec='seconds')}",
+        "Project: AI Health Coach / fitness-ai",
+    ]
+
+    if milestone:
+        lines.append(f"Milestone: {milestone}")
+
+    lines.extend(
+        [
+            f"Current branch: {branch}",
+            f"Latest commit: {latest_commit}",
+            "",
+            "Git Status",
+            "-" * 72,
+            upstream_status,
+            "",
+            "git status --short:",
+            short_status or "Clean - no uncommitted changes.",
+            "",
+            "Recent Commits",
+            "-" * 72,
+            recent_commits,
+            "",
+            "Dev Assistant Status",
+            "-" * 72,
+            f"Branch: {branch}",
+            f"Latest commit: {latest_commit}",
+            f"Suggested snapshot filename: {snapshot_name}",
+            "",
+            "Memory Check",
+            "-" * 72,
+            memory_check,
+            "",
+            "Stale Doc Check",
+            "-" * 72,
+            stale_doc_check,
+            "",
+            "Suggested Next Action",
+            "-" * 72,
+            next_action,
+            "",
+            "Snapshot Command",
+            "-" * 72,
+            generate_snapshot_command(),
+            "",
+            "Linux Sync Reminder",
+            "-" * 72,
+            generate_linux_sync_command(branch),
+            "",
+            "Artifact Rules",
+            "-" * 72,
+            "- qa_artifacts is local handoff output and should not be committed.",
+            "- Do not stage snapshots, patches, local DB files, logs, raw provider output, or Headroom artifacts.",
+            "- Do not include secrets, provider payloads, or local database contents in handoff briefs.",
+        ]
+    )
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_session_brief(output_path: str, milestone: str | None = None) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(build_session_brief(milestone), encoding="utf-8")
+    return path
+
+
 def print_status_report() -> None:
     branch = get_current_branch()
     latest_commit = get_latest_commit()
@@ -785,6 +900,15 @@ def build_parser() -> argparse.ArgumentParser:
     qa_plan = subparsers.add_parser("qa-plan", help="Generate a milestone QA plan.")
     qa_plan.add_argument("--milestone", required=True)
 
+    session_brief = subparsers.add_parser(
+        "session-brief",
+        help="Write a clean UTF-8 uploadable session brief to a local artifact file.",
+    )
+    session_brief.add_argument(
+        "--out", required=True, help="Output path for the brief."
+    )
+    session_brief.add_argument("--milestone", default=None)
+
     snapshot_command = subparsers.add_parser(
         "snapshot-command", help="Print snapshot and Linux sync commands."
     )
@@ -829,6 +953,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "qa-plan":
         print(generate_qa_plan(args.milestone))
+        return 0
+
+    if args.command == "session-brief":
+        output_path = write_session_brief(args.out, args.milestone)
+        print(f"Session brief written to: {output_path}")
         return 0
 
     if args.command == "snapshot-command":

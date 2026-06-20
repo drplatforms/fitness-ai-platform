@@ -1,14 +1,30 @@
 # Headroom Developer Workflow Spike v1
 
-Status: `HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_IMPLEMENTED_PENDING_REVIEW`
+Status: `HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`
 
 ## Purpose
 
 Evaluate Headroom as a developer-workflow-only compression tool for AI Health Coach handoffs, context packs, QA logs, diffs, pytest output, helper prompts, and milestone summaries.
 
+## Final decision
+
+Headroom is rejected for now.
+
+Final status:
+
+`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`
+
+Reason:
+
+- The spike shape was safe.
+- Local artifact handling was safe.
+- The deterministic baseline was useful as a control.
+- The real Headroom comparison did not produce adoption-ready evidence meeting the required Safety >= 4 and Accuracy >= 4 threshold.
+- Architecture does not approve Headroom as a default workflow helper.
+
 ## Boundary
 
-This spike is developer workflow only.
+This spike was developer workflow only.
 
 No changes were made to:
 
@@ -32,17 +48,23 @@ Compressed output is convenience context only. It is not source of truth.
 
 The spike generated local-only source artifacts under:
 
-``text
+```text
 qa_artifacts/headroom_spike_v1/original/
-``
+```
 
-It generated local-only compressed baseline artifacts under:
+It generated local-only deterministic baseline/control artifacts under:
 
-``text
+```text
 qa_artifacts/headroom_spike_v1/compressed/
-``
+```
 
-The local baseline compressor is not Headroom. It was used only to create a comparison/control set and prove the workflow can keep generated artifacts out of git.
+It also generated or attempted local real Headroom artifacts under:
+
+```text
+qa_artifacts/headroom_spike_v1/real_headroom/
+```
+
+These local artifacts are intentionally not committed.
 
 ## Inputs used
 
@@ -54,71 +76,121 @@ The local baseline compressor is not Headroom. It was used only to create a comp
 - Git diff stat
 - Git diff name-only
 - Focused pytest output
+- Supercharger session brief
+- Long Architecture/Backend handoff
+- QA / pytest-style report
 
-## Size comparison
+## Deterministic baseline/control comparison
+
+The deterministic baseline was not Headroom. It was used only as a control to prove that local workflow artifacts could be generated safely and kept out of git.
 
 | Case | Original chars | Compressed chars | Reduction | Compression | Safety | Usefulness | Accuracy | Result |
 |---|---:|---:|---:|---|---:|---:|---:|---|
-| context_pack_aider | 2275 | 947 | 58.4% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| context_pack_codex | 2275 | 961 | 57.8% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| context_pack_copilot | 2277 | 947 | 58.4% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| dev_assistant_status | 10120 | 3148 | 68.9% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| git_diff_name_only | 0 | 1 | 0% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| git_diff_stat | 0 | 1 | 0% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| pytest_project_memory_check | 100 | 18 | 82% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
-| qa_plan | 1081 | 799 | 26.1% | Baseline only | 5 | 3 | 4 | Needs real Headroom comparison |
+| context_pack_aider | 2275 | 947 | 58.4% | Baseline only | 5 | 3 | 4 | Control only |
+| context_pack_codex | 2275 | 961 | 57.8% | Baseline only | 5 | 3 | 4 | Control only |
+| context_pack_copilot | 2277 | 947 | 58.4% | Baseline only | 5 | 3 | 4 | Control only |
+| dev_assistant_status | 10120 | 3148 | 68.9% | Baseline only | 5 | 3 | 4 | Control only |
+| git_diff_name_only | 0 | 1 | 0% | Baseline only | 5 | 3 | 4 | Control only |
+| git_diff_stat | 0 | 1 | 0% | Baseline only | 5 | 3 | 4 | Control only |
+| pytest_project_memory_check | 100 | 18 | 82% | Baseline only | 5 | 3 | 4 | Control only |
+| qa_plan | 1081 | 799 | 26.1% | Baseline only | 5 | 3 | 4 | Control only |
 
-## Safety findings
+## Real Headroom Comparison Addendum
 
-The baseline compression preserved the developer-workflow boundary because it did not touch app runtime code or source-of-truth docs.
+### Real Headroom run summary
 
-Critical boundaries preserved:
+A real Headroom comparison pass was attempted as a developer-workflow-only evaluation.
 
-- Backend remains source of truth.
-- Deterministic fallback remains default.
-- Provider paths remain opt-in/debug/manual unless explicitly approved.
-- Headroom is not introduced as a runtime dependency.
-- Headroom is not used on provider prompts or model-facing health facts.
-- Codex remains optional/scoped.
-- Claude remains out of scope.
+The local real Headroom artifacts were generated under:
 
-## Accuracy findings
+```text
+qa_artifacts/headroom_spike_v1/real_headroom/
+```
 
-The deterministic baseline did not invent files, commits, test results, or provider behavior.
+Those artifacts are intentionally not committed.
 
-However, because this run did not execute real Headroom, it cannot prove Headroom accuracy yet.
+The command/tool block is not adoption evidence. The captured command/output record was not complete enough to support adopting Headroom as a default workflow helper.
 
-## Lost-boundary findings
+### Real Headroom scoring conclusion
 
-No repo boundary was changed.
+The real Headroom comparison did not produce adoption-ready evidence that met the required project threshold.
 
-Generated artifacts stayed under `qa_artifacts/` and are locally ignored through `.git/info/exclude`.
+Required threshold:
 
-## Recommendation
+- Safety >= 4
+- Accuracy >= 4
 
-Current recommendation:
+Result:
 
-`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_OPTIONAL_ONLY_PENDING_REAL_HEADROOM_RUN`
+- The automated review did not meet the minimum safety/accuracy threshold.
+- The comparison evidence was not strong enough to approve Headroom as a default workflow helper.
+- Architecture therefore rejects Headroom adoption for now.
 
-Reason:
+The previous empty comparison table is not adoption evidence. It means the real Headroom output was not usable enough, or not sufficiently captured, to support a scored project-memory comparison table.
 
-- The workflow is safe.
-- Local artifact handling is safe.
-- Context-pack compression is potentially useful.
-- But this run used a deterministic local baseline, not actual Headroom output.
-- Architecture should require one real Headroom output comparison before adopting it as a default developer workflow step.
+### Final status
 
-## Recommended allowed uses if real Headroom passes
+`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`
 
-- compress long Architecture-to-Backend handoffs
-- compress Supercharger context packs into handoff capsules
-- compress QA logs for review
-- compress pytest output for quick triage
-- compress git diff/file summaries
-- compress Codex/OpenAI helper prompts for small scoped tasks
-- compress milestone closeout summaries
+## Findings
+
+### What was preserved
+
+- Headroom remained developer-workflow only.
+- Compressed output remained convenience context, not source of truth.
+- No FastAPI runtime integration was added.
+- No Streamlit runtime integration was added.
+- No provider prompt compression was added.
+- No model-facing health context compression was added.
+- No validator, fallback, persistence, report, nutrition, training, food catalog, or exercise catalog behavior changed.
+- No Claude workflow was added.
+- Codex remains optional/scoped only.
+
+### What was lost or weakened
+
+The real Headroom evidence was not strong enough to prove safe adoption.
+
+The rejected-for-now decision is based on insufficient adoption-ready safety/accuracy evidence, not on a product/runtime defect.
+
+### Invention / hallucination findings
+
+The real Headroom evidence was not complete enough to prove semantic accuracy for this project.
+
+Because source-of-truth preservation is non-negotiable, Architecture rejects Headroom adoption for now rather than relying on incomplete evidence.
+
+## Current project position
+
+Headroom may be revisited later as a developer-workflow-only experiment, but it is not approved for default daily use.
+
+Current forbidden position:
+
+- not adopted by default
+- not runtime
+- not provider prompt compression
+- not model-facing context compression
+- not source of truth
+- not required for tests
+- not required for development
+- not added as an app dependency
+- not used in FastAPI
+- not used in Streamlit
+- not used in validation, persistence, reports, nutrition, training, food catalog, or exercise catalog behavior
+- not connected to Claude workflow
+
+## Recommended allowed future position
+
+Allowed later only if Architecture explicitly reopens the experiment:
+
+- developer-workflow-only compression experiment
+- local-only handoff summarization test
+- local-only QA artifact compression test
+- local-only context-pack comparison test
+
+Any future attempt must preserve the rule that compressed output is convenience context only and never source of truth.
 
 ## Recommended forbidden uses
+
+Forbidden:
 
 - FastAPI runtime
 - Streamlit runtime
@@ -138,9 +210,9 @@ Reason:
 
 ## Validation
 
-Required validation:
+Validation expected for the doc-only cleanup:
 
-``powershell
+```powershell
 git diff --check
 scripts/dev_commit_check.ps1 -Mode code
 python tools/dev_assistant.py memory-check
@@ -151,86 +223,18 @@ pytest tests/test_daily_coach_narrative_preview_service.py -q
 pytest tests/test_daily_next_action_service.py -q
 pytest tests/test_report_persistence_boundary.py -q
 pytest tests/test_full_report_section_registry.py -q
-``
+```
 
-## Final status recommendation
+## Recommended next milestone
 
-Do not mark full Headroom adoption yet.
+`Supercharger v1.1 - session-brief command`
 
-Recommended current status:
+Reason:
 
-`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_OPTIONAL_ONLY_PENDING_REAL_HEADROOM_RUN`
+The Headroom spike exposed a real workflow pain: manual PowerShell logging and copy/paste capture are clunky and encoding-prone.
 
-If Architecture wants this closed now, close as:
+Desired future command:
 
-`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_OPTIONAL_ONLY`
-
-If Architecture requires real Headroom output before closure, keep as:
-
-`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_IMPLEMENTED_PENDING_REVIEW`
-
-## Real Headroom Comparison Addendum
-
-Status: `HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REAL_HEADROOM_RUN_COMPLETE`
-
-Command/tool used:
-
-``text
-
-``
-
-Headroom help output was saved locally at:
-
-``text
-qa_artifacts/headroom_spike_v1/real_headroom/headroom_help.txt
-``
-
-Real Headroom outputs were saved locally under:
-
-``text
-qa_artifacts/headroom_spike_v1/real_headroom
-``
-
-These local artifacts are not committed.
-
-### Comparison results
-
-| Input | Original chars | Baseline chars | Baseline reduction | Real Headroom chars | Real reduction | Compression | Safety | Usefulness | Accuracy | Result |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-
-### What was preserved
-
-- Headroom remained developer-workflow only.
-- Compressed output remained convenience context, not source of truth.
-- No FastAPI runtime integration was added.
-- No Streamlit runtime integration was added.
-- No provider prompt compression was added.
-- No model-facing health context compression was added.
-- No validator, fallback, persistence, report, nutrition, training, food catalog, or exercise catalog behavior changed.
-- No Claude workflow was added.
-- Codex remains optional/scoped only.
-
-### What was lost or weakened
-
-- Automated boundary-term scan did not identify lost critical boundary terms.
-
-### Invention / hallucination findings
-
-- Automated review did not prove semantic accuracy.
-- Backend must still manually inspect the real Headroom outputs before Architecture final acceptance.
-- No repository files, runtime behavior, provider defaults, or validation behavior were changed by this test.
-
-### Boundary weakening findings
-
-- Real Headroom outputs did not meet the minimum automated safety threshold: Safety >= 4.
-- Real Headroom outputs did not meet the minimum automated accuracy threshold: Accuracy >= 4.
-
-### Final recommendation
-
-`HEADROOM_DEVELOPER_WORKFLOW_SPIKE_V1_REJECTED_FOR_NOW`
-
-Backend recommendation:
-
-Do not adopt Headroom yet. Safety or accuracy threshold was not met by the automated review.
-
-Do not use Headroom for runtime, provider prompts, model-facing health context, validation contracts, source-of-truth docs, reports, nutrition/training contracts, food/exercise catalog truth, or persisted user health facts.
+```powershell
+python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt
+```

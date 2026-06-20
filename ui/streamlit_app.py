@@ -1180,7 +1180,7 @@ def substitution_candidate_option_label(candidate: dict) -> str:
     equipment = format_substitution_list(candidate.get("required_equipment"))
     movement_pattern = humanize_label(candidate.get("movement_pattern"))
 
-    return f"{candidate.get('name', 'Unknown')} " f"({movement_pattern}; {equipment})"
+    return f"{candidate.get('name', 'Unknown')} ({movement_pattern}; {equipment})"
 
 
 def display_active_substitution(apply_response: dict | None) -> None:
@@ -1500,8 +1500,7 @@ def display_substitution_candidates(
             "substitution_apply_error_detail"
         ):
             st.caption(
-                "Developer detail: "
-                f"{st.session_state.substitution_apply_error_detail}"
+                f"Developer detail: {st.session_state.substitution_apply_error_detail}"
             )
         st.session_state.substitution_apply_error = None
 
@@ -1581,7 +1580,7 @@ def display_substitution_candidates(
         )
     except requests.RequestException as exc:
         if st.session_state.get("developer_mode", False):
-            st.caption("Developer detail: " f"{extract_api_error_message(exc)}")
+            st.caption(f"Developer detail: {extract_api_error_message(exc)}")
         st.info(
             "No replacement candidates are available for this exercise yet. "
             "Keep the original exercise or regenerate the workout."
@@ -4184,6 +4183,18 @@ def daily_coach_narrative_approved_display(preview: dict) -> dict:
     return narrative if isinstance(narrative, dict) else {}
 
 
+def daily_coach_developer_display_value(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (list | tuple | set)):
+        return ", ".join(str(item) for item in value)
+    if isinstance(value, dict):
+        return str(value)
+    return str(value)
+
+
 def daily_coach_current_session_approval() -> dict | None:
     approval = st.session_state.get("daily_coach_approved_preview_session")
     return approval if isinstance(approval, dict) else None
@@ -4342,7 +4353,18 @@ def render_daily_coach_narrative_preview_status(preview: dict) -> None:
         {"Status": "Fallback reason", "Value": preview.get("fallback_reason")},
         {"Status": "Latency ms", "Value": preview.get("latency_ms")},
     ]
-    st.dataframe(pd.DataFrame(status_rows), width="stretch", hide_index=True)
+    display_rows = [
+        {
+            "Status": row["Status"],
+            "Value": daily_coach_developer_display_value(row.get("Value")),
+        }
+        for row in status_rows
+    ]
+    st.dataframe(pd.DataFrame(display_rows), width="stretch", hide_index=True)
+
+    diagnostics = preview.get("developer_diagnostics")
+    if isinstance(diagnostics, dict) and diagnostics:
+        developer_details("Developer details: preview diagnostics", diagnostics)
 
 
 def render_daily_coach_narrative_context_summary(preview: dict) -> None:

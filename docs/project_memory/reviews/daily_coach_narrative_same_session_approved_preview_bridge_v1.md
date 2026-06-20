@@ -33,3 +33,13 @@ The implementation allows a validated preview to be explicitly approved for the 
 - narrative persistence
 - cache/persistence design
 - model QA matrix expansion
+
+
+## Runtime smoke fix
+
+Manual runtime smoke found two Developer Mode issues before acceptance:
+
+- Streamlit diagnostics could crash PyArrow when a mixed boolean/string `Value` column was rendered as a dataframe.
+- Some local Ollama/qwen responses can include common wrapper text such as thinking blocks or markdown fences around an otherwise valid JSON object.
+
+The follow-up fix keeps the strict parser and validator in place, but normalizes common wrappers before parsing and exposes only sanitized Developer Mode diagnostics. Raw provider text, rejected output, prompts, and model context remain excluded from normal UI.

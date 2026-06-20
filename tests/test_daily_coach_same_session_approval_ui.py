@@ -81,3 +81,11 @@ def test_rejected_preview_cannot_render_approval_controls_without_approved_narra
     assert "if not approved_narrative:" in function_source
     assert "return" in function_source
     assert "validate_preview_for_same_session_approval" in function_source
+
+
+def test_preview_status_coerces_mixed_values_before_dataframe_render():
+    function_source = _function_source("render_daily_coach_narrative_preview_status")
+
+    assert "daily_coach_developer_display_value" in function_source
+    assert "display_rows" in function_source
+    assert "pd.DataFrame(display_rows)" in function_source

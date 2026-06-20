@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 
 from models.daily_coach_narrative_models import (
@@ -108,7 +109,8 @@ def build_daily_coach_narrative_preview(
         )
 
     latency_ms = _elapsed_ms(started)
-    parse_result = parse_daily_coach_narrative_candidate(raw_output)
+    normalized_output = normalize_daily_coach_narrative_provider_output(raw_output)
+    parse_result = parse_daily_coach_narrative_candidate(normalized_output)
     if parse_result.candidate is None:
         return _fallback_result(
             context=context,
@@ -120,6 +122,10 @@ def build_daily_coach_narrative_preview(
             parse_success=False,
             validation_success=False,
             latency_ms=latency_ms,
+            developer_diagnostics=_developer_diagnostics(
+                parse_error=parse_result.error,
+                normalized_output_changed=normalized_output != raw_output.strip(),
+            ),
         )
 
     validation_result = validate_daily_coach_narrative_candidate(
@@ -137,6 +143,11 @@ def build_daily_coach_narrative_preview(
             parse_success=True,
             validation_success=False,
             latency_ms=latency_ms,
+            developer_diagnostics=_developer_diagnostics(
+                validation_messages=validation_result.validation_errors,
+                forbidden_claims=validation_result.forbidden_claims_found,
+                normalized_output_changed=normalized_output != raw_output.strip(),
+            ),
         )
 
     return DailyCoachNarrativePreviewResult(
@@ -158,6 +169,11 @@ def build_daily_coach_narrative_preview(
         approved_focus=context.approved_focus,
         context_summary=_context_summary(context),
         latency_ms=latency_ms,
+        developer_diagnostics=_developer_diagnostics(
+            parse_status="success",
+            validation_status="approved",
+            normalized_output_changed=normalized_output != raw_output.strip(),
+        ),
     )
 
 
@@ -172,6 +188,7 @@ def _fallback_result(
     parse_success: bool,
     validation_success: bool,
     latency_ms: int,
+    developer_diagnostics: dict[str, object] | None = None,
 ) -> DailyCoachNarrativePreviewResult:
     return DailyCoachNarrativePreviewResult(
         user_id=context.user_id,
@@ -192,7 +209,87 @@ def _fallback_result(
         approved_focus=context.approved_focus,
         context_summary=_context_summary(context),
         latency_ms=latency_ms,
+        developer_diagnostics=developer_diagnostics or {},
     )
+
+
+def normalize_daily_coach_narrative_provider_output(raw_output: str) -> str:
+    """Normalize common Ollama/qwen wrappers before the strict parser runs.
+
+    The parser remains strict and still validates one exact JSON object. This
+    runtime normalizer only removes common transport/model wrappers such as
+    qwen thinking blocks or markdown fences, then passes a single object string
+    to the existing parser. It never exposes raw provider text.
+    """
+
+    text = str(raw_output or "").strip()
+    text = re.sub(r"(?is)<think>.*?</think>", "", text).strip()
+
+    fence_match = re.fullmatch(
+        r"(?is)```(?:json)?\s*(.*?)\s*```",
+        text,
+    )
+    if fence_match:
+        text = fence_match.group(1).strip()
+
+    if text.startswith("{") and text.endswith("}"):
+        return text
+
+    first = text.find("{")
+    last = text.rfind("}")
+    if 0 <= first < last:
+        return text[first : last + 1].strip()
+
+    return text
+
+
+def _developer_diagnostics(
+    *,
+    parse_status: str | None = None,
+    validation_status: str | None = None,
+    parse_error: str | None = None,
+    validation_messages: list[str] | None = None,
+    forbidden_claims: list[str] | None = None,
+    normalized_output_changed: bool = False,
+) -> dict[str, object]:
+    diagnostics: dict[str, object] = {
+        "parse_status": parse_status or ("failed" if parse_error else None),
+        "validation_status": validation_status,
+        "parse_error": parse_error,
+        "validation_messages": [
+            _sanitize_developer_diagnostic_message(message)
+            for message in validation_messages or []
+        ],
+        "forbidden_claims": [
+            _sanitize_developer_diagnostic_message(claim)
+            for claim in forbidden_claims or []
+        ],
+        "normalized_output_changed": bool(normalized_output_changed),
+        "provider_text_visible": False,
+    }
+    return {
+        key: value for key, value in diagnostics.items() if value not in (None, [], "")
+    }
+
+
+def _sanitize_developer_diagnostic_message(message: str) -> str:
+    normalized = str(message or "").strip()
+    lower = normalized.lower()
+    if not normalized:
+        return "Diagnostic message unavailable."
+    if lower.startswith("meta/internal process language"):
+        return "Meta/internal process language was detected."
+    if lower.startswith("forbidden claim fragments found"):
+        return "Forbidden claim fragments were detected."
+    if lower.startswith("used_approved_facts contains unapproved fact"):
+        return "Used approved facts contained an unapproved fact."
+    if lower.startswith("invented numeric tokens found"):
+        return "Invented numeric tokens were detected."
+    if lower.startswith("output mentions a different daily next action"):
+        return "Output mentioned a different Daily Next Action."
+    if lower.startswith("output mentions a different workflow target"):
+        return "Output mentioned a different workflow target."
+    return normalized
 
 
 def _normalize_provider(provider: str | None) -> str:

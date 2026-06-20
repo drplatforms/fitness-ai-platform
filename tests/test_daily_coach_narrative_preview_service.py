@@ -197,9 +197,10 @@ def test_preview_falls_back_without_exposing_rejected_provider_text(monkeypatch)
     assert preview.approved_narrative is None
     assert rejected_phrase not in payload
     assert "backend-approved" not in payload
-    assert "validation_errors" not in payload
     assert "raw_output" not in payload
     assert "prompt" not in payload
+    assert "backend-approved" not in payload
+    assert preview.developer_diagnostics["validation_messages"]
 
 
 def test_preview_parse_failure_falls_back_without_raw_output(monkeypatch):
@@ -231,6 +232,43 @@ def test_preview_parse_failure_falls_back_without_raw_output(monkeypatch):
     assert preview.fallback_reason == PUBLIC_SAFE_FALLBACK_PROVIDER_PARSE_FAILED
     assert preview.approved_narrative is None
     assert "not json from provider" not in payload
+    assert preview.developer_diagnostics["parse_error"]
+
+
+def test_preview_normalizes_common_qwen_wrappers_before_strict_parse(monkeypatch):
+    context = _context()
+
+    def fake_build_context(user_id: int, *, target_date: str | None = None):
+        return context
+
+    def fake_generate(
+        model_name: str, prompt: str, timeout_seconds: float, base_url: str
+    ):
+        return (
+            "<think>planning hidden</think>\n```json\n"
+            + _approved_output(context)
+            + "\n```"
+        )
+
+    monkeypatch.setattr(
+        "services.daily_coach_narrative_preview_service."
+        "build_daily_coach_narrative_context",
+        fake_build_context,
+    )
+
+    preview = build_daily_coach_narrative_preview(
+        102,
+        provider=DAILY_COACH_NARRATIVE_PREVIEW_PROVIDER_DIRECT_OLLAMA,
+        generate=fake_generate,
+    )
+    payload = str(preview.to_dict()).lower()
+
+    assert preview.parse_success is True
+    assert preview.validation_success is True
+    assert preview.fallback_used is False
+    assert preview.approved_narrative is not None
+    assert preview.developer_diagnostics["normalized_output_changed"] is True
+    assert "planning hidden" not in payload
 
 
 def test_preview_keeps_training_action_from_drifting_to_nutrition(monkeypatch):

@@ -1,6 +1,6 @@
 # Open Questions
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Daily Coaching Product Loop
 
@@ -97,12 +97,30 @@ Open after contract tightening:
 
 ## Catalog Import Pipeline v1
 
-Open after implementation:
+Resolved by Catalog Import Pipeline v1:
 
-- Which food data sources are safe, legal, and reviewable for the first approved staged import batch?
-- Which exercise data sources are safe, legal, and reviewable for the first approved staged import batch?
-- What minimum human-review checklist should be required before staged rows can be promoted into canonical catalogs?
-- Should future batch imports require source-policy metadata for every row?
+- Deterministic staged food import tooling exists.
+- Deterministic staged exercise import tooling exists.
+- Staged CSV, Markdown report, and JSON findings outputs are generated under requested local out-dir paths.
+- Duplicate/suspicion findings are reviewable before any canonical merge.
+- Generated qa_artifacts remain local-only and uncommitted.
+
+Resolved by Catalog Source Evaluation v1:
+
+- USDA FoodData Central Foundation Foods / SR Legacy is the preferred first small food batch source.
+- USDA Branded Foods is rejected for now as too large and brand-heavy for the first batch.
+- Open Food Facts is deferred for future evaluation due ODbL attribution/share-alike and branded/crowdsourced quality risks.
+- Exercise batch work should start with manual curation; wger and Wikidata may be source-assist/cross-check inputs only until license/attribution handling is narrowed.
+- Scraped exercise libraries, commercial APIs, unclear mirrored datasets, copied descriptions/images, and AI-generated catalog truth are rejected for now.
+
+Open after Catalog Source Evaluation v1:
+
+- Should the first USDA food batch contain 10 rows or 20 rows?
+- Should Foundation Foods or SR Legacy be the first exact USDA subset?
+- What exact row-review checklist is required before staged rows can be promoted into canonical catalogs?
+- Should Open Food Facts require a formal ODbL attribution/share-alike policy before any import batch?
+- Should wger per-entry license metadata be reviewed before any copied exercise data is considered?
+- Should Wikidata be used only for cross-checking names, or should a tiny CC0 taxonomy sample be evaluated later?
 - Should duplicate detection eventually compare staged rows against canonical catalog rows, not only within the import file?
 - What size limit should apply to committed test fixtures versus local-only qa_artifacts?
 

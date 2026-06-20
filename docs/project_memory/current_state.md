@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Project
 
@@ -8,34 +8,20 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`feature/catalog-import-pipeline-v1`
+`feature/catalog-source-evaluation-v1`
 
 ## Latest accepted milestone
 
-`Supercharger v1.1 - Session Brief Command` is accepted and merged to `main`.
+`Catalog Import Pipeline v1` is accepted and merged to `main`.
 
-Final accepted status: `SUPERCHARGER_SESSION_BRIEF_V1_1_ACCEPTED`.
+Final accepted status: `CATALOG_IMPORT_PIPELINE_V1_ACCEPTED`.
 
-The normal uploadable handoff workflow is now:
+The project now has deterministic staged import tooling for food and exercise catalog candidate data.
 
-```powershell
-python tools/dev_assistant.py session-brief --out qa_artifacts/session_brief.txt
-```
-
-Headroom remains rejected for now. Aider is paused and not authorized. Codex remains optional/scoped only.
-
-## Current implementation milestone
-
-`Catalog Import Pipeline v1` is implemented pending review.
-
-Implementation status: `CATALOG_IMPORT_PIPELINE_V1_IMPLEMENTED_PENDING_REVIEW`.
-
-This milestone adds deterministic staged import tooling for food and exercise catalog candidate data. The tools accept local CSV/JSON inputs and write review artifacts under `qa_artifacts/catalog_import_v1/`.
-
-The pipeline is staging only:
+Approved staged flow:
 
 ```text
-Raw local source file
+Raw source file
 -> deterministic importer
 -> normalized staged catalog rows
 -> validation report
@@ -44,15 +30,24 @@ Raw local source file
 -> later approved merge into canonical catalog
 ```
 
-This milestone does not change canonical food rows, canonical exercise rows, nutrition calculations, workout generation, Streamlit product UI, FastAPI runtime behavior, provider behavior, validators/fallback behavior outside the import tools, persistence/database behavior, Headroom status, Aider status, Codex status, or Claude workflow status.
+No production catalog import has been approved yet.
+
+## Current implementation milestone
+
+`Catalog Source Evaluation v1` is implemented pending review.
+
+Implementation status: `CATALOG_SOURCE_EVALUATION_V1_IMPLEMENTED_PENDING_REVIEW`.
+
+This milestone evaluates candidate source data before any real import batch. It recommends USDA FoodData Central Foundation Foods / SR Legacy for a tiny reviewed generic-food batch and recommends manual exercise curation with optional wger/Wikidata cross-checking before any exercise import batch.
+
+This milestone changes project memory docs only. It does not import source rows, commit datasets, change canonical food rows, change canonical exercise rows, scrape websites, add API clients, use AI/provider calls, or change runtime product behavior.
 
 ## Next recommended milestone options
 
-- Architecture / QA review for Catalog Import Pipeline v1.
-- Catalog Source Evaluation v1 after staged tooling is accepted.
-- Food Catalog Import Batch v1 after a safe source file is approved.
-- Exercise Catalog Import Batch v1 after a safe source file is approved.
-- Daily Coach Narrative Limited Today UI Readiness v1 after product-readiness review.
+- Food Catalog Import Batch v1 using a tiny USDA FoodData Central Foundation/SR Legacy generic-food batch.
+- Exercise Catalog Import Batch v1 using manual curation and optional source cross-checking only.
+- Manual Catalog Curation Pack v1 if Architecture wants to avoid third-party exercise sources for now.
+- Daily Coach Narrative Limited Today UI Readiness v1 if Product chooses to pause catalog work.
 
 ---
 

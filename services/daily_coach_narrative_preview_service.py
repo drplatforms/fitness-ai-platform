@@ -81,6 +81,16 @@ def build_daily_coach_narrative_preview(
             parse_success=False,
             validation_success=False,
             latency_ms=0,
+            developer_diagnostics=_preview_developer_diagnostics(
+                provider_enabled=False,
+                provider_attempted=False,
+                selected_provider=selected_provider,
+                selected_model=None,
+                parse_success=False,
+                validation_success=False,
+                fallback_used=True,
+                fallback_reason=PUBLIC_SAFE_FALLBACK_PROVIDER_DISABLED,
+            ),
         )
 
     prompt = build_daily_coach_narrative_prompt(context)
@@ -105,6 +115,16 @@ def build_daily_coach_narrative_preview(
             parse_success=False,
             validation_success=False,
             latency_ms=latency_ms,
+            developer_diagnostics=_preview_developer_diagnostics(
+                provider_enabled=True,
+                provider_attempted=True,
+                selected_provider=selected_provider,
+                selected_model=selected_model,
+                parse_success=False,
+                validation_success=False,
+                fallback_used=True,
+                fallback_reason=_public_safe_exception_reason(exc),
+            ),
         )
 
     latency_ms = _elapsed_ms(started)
@@ -120,6 +140,17 @@ def build_daily_coach_narrative_preview(
             parse_success=False,
             validation_success=False,
             latency_ms=latency_ms,
+            developer_diagnostics=_preview_developer_diagnostics(
+                provider_enabled=True,
+                provider_attempted=True,
+                selected_provider=selected_provider,
+                selected_model=selected_model,
+                parse_success=False,
+                validation_success=False,
+                fallback_used=True,
+                fallback_reason=PUBLIC_SAFE_FALLBACK_PROVIDER_PARSE_FAILED,
+                parse_error=parse_result.error,
+            ),
         )
 
     validation_result = validate_daily_coach_narrative_candidate(
@@ -137,6 +168,18 @@ def build_daily_coach_narrative_preview(
             parse_success=True,
             validation_success=False,
             latency_ms=latency_ms,
+            developer_diagnostics=_preview_developer_diagnostics(
+                provider_enabled=True,
+                provider_attempted=True,
+                selected_provider=selected_provider,
+                selected_model=selected_model,
+                parse_success=True,
+                validation_success=False,
+                fallback_used=True,
+                fallback_reason=PUBLIC_SAFE_FALLBACK_PROVIDER_VALIDATION_FAILED,
+                validation_errors=validation_result.validation_errors,
+                forbidden_claims_found=validation_result.forbidden_claims_found,
+            ),
         )
 
     return DailyCoachNarrativePreviewResult(
@@ -158,6 +201,17 @@ def build_daily_coach_narrative_preview(
         approved_focus=context.approved_focus,
         context_summary=_context_summary(context),
         latency_ms=latency_ms,
+        developer_diagnostics=_preview_developer_diagnostics(
+            provider_enabled=True,
+            provider_attempted=True,
+            selected_provider=selected_provider,
+            selected_model=selected_model,
+            parse_success=True,
+            validation_success=True,
+            fallback_used=False,
+            fallback_reason=None,
+            approved_narrative_returned=True,
+        ),
     )
 
 
@@ -172,6 +226,7 @@ def _fallback_result(
     parse_success: bool,
     validation_success: bool,
     latency_ms: int,
+    developer_diagnostics: dict[str, object] | None = None,
 ) -> DailyCoachNarrativePreviewResult:
     return DailyCoachNarrativePreviewResult(
         user_id=context.user_id,
@@ -192,6 +247,17 @@ def _fallback_result(
         approved_focus=context.approved_focus,
         context_summary=_context_summary(context),
         latency_ms=latency_ms,
+        developer_diagnostics=developer_diagnostics
+        or _preview_developer_diagnostics(
+            provider_enabled=provider_enabled,
+            provider_attempted=provider_attempted,
+            selected_provider=selected_provider,
+            selected_model=selected_model,
+            parse_success=parse_success,
+            validation_success=validation_success,
+            fallback_used=True,
+            fallback_reason=fallback_reason,
+        ),
     )
 
 
@@ -251,3 +317,58 @@ def _context_summary(context: DailyCoachNarrativeContext) -> dict[str, object]:
         "forbidden_claim_categories_count": len(context.forbidden_claims),
         "forbidden_claim_categories_summary": list(context.forbidden_claims[:5]),
     }
+
+
+def _preview_developer_diagnostics(
+    *,
+    provider_enabled: bool,
+    provider_attempted: bool,
+    selected_provider: str,
+    selected_model: str | None,
+    parse_success: bool,
+    validation_success: bool,
+    fallback_used: bool,
+    fallback_reason: str | None,
+    approved_narrative_returned: bool = False,
+    parse_error: str | None = None,
+    validation_errors: list[str] | None = None,
+    forbidden_claims_found: list[str] | None = None,
+) -> dict[str, object]:
+    """Return sanitized diagnostics for Developer Mode preview inspection.
+
+    This intentionally excludes raw provider output, prompts, stack traces, and
+    rejected text. The fields are stable enough for QA scripts and Streamlit
+    Developer Mode rendering, but they do not change normal Today behavior.
+    """
+
+    diagnostics: dict[str, object] = {
+        "provider_enabled": provider_enabled,
+        "provider_attempted": provider_attempted,
+        "selected_provider": selected_provider,
+        "selected_model": selected_model,
+        "parse_success": parse_success,
+        "validation_success": validation_success,
+        "fallback_used": fallback_used,
+        "fallback_reason": fallback_reason,
+        "approved_narrative_returned": approved_narrative_returned,
+    }
+
+    if parse_error:
+        diagnostics["parse_error"] = _sanitize_diagnostic_text(parse_error)
+    if validation_errors:
+        diagnostics["validation_errors"] = [
+            _sanitize_diagnostic_text(error) for error in validation_errors
+        ]
+    if forbidden_claims_found:
+        diagnostics["forbidden_claims_found"] = [
+            _sanitize_diagnostic_text(error) for error in forbidden_claims_found
+        ]
+
+    return diagnostics
+
+
+def _sanitize_diagnostic_text(value: object) -> str:
+    text = str(value).strip()
+    if not text:
+        return ""
+    return text.replace("\n", " ").replace("\r", " ")[:500]

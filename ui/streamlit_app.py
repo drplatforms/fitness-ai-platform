@@ -4186,6 +4186,22 @@ def fetch_daily_coach_narrative_preview(
     return response.get("daily_coach_narrative_preview") or {}
 
 
+def daily_coach_preview_table_value(value: object) -> str:
+    """Return an Arrow-safe string for mixed Developer Mode diagnostics."""
+
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if value is None:
+        return ""
+    if isinstance(value, list | tuple | set):
+        return ", ".join(str(item) for item in value)
+    if isinstance(value, dict):
+        return ", ".join(f"{key}: {item}" for key, item in value.items())
+    return str(value)
+
+
 def render_daily_coach_narrative_preview_status(preview: dict) -> None:
     status_rows = [
         {"Status": "Provider attempted", "Value": preview.get("provider_attempted")},
@@ -4197,7 +4213,22 @@ def render_daily_coach_narrative_preview_status(preview: dict) -> None:
         {"Status": "Fallback reason", "Value": preview.get("fallback_reason")},
         {"Status": "Latency ms", "Value": preview.get("latency_ms")},
     ]
-    st.dataframe(pd.DataFrame(status_rows), width="stretch", hide_index=True)
+    status_df = pd.DataFrame(status_rows)
+    status_df["Value"] = status_df["Value"].map(daily_coach_preview_table_value)
+    st.dataframe(status_df, width="stretch", hide_index=True)
+
+    developer_diagnostics = preview.get("developer_diagnostics") or {}
+    if developer_diagnostics:
+        with st.expander("Sanitized preview diagnostics", expanded=False):
+            diagnostic_rows = [
+                {"Diagnostic": key, "Value": daily_coach_preview_table_value(value)}
+                for key, value in developer_diagnostics.items()
+            ]
+            st.dataframe(
+                pd.DataFrame(diagnostic_rows),
+                width="stretch",
+                hide_index=True,
+            )
 
 
 def render_daily_coach_narrative_context_summary(preview: dict) -> None:

@@ -210,6 +210,7 @@ class DailyCoachNarrativePreviewResult:
     approved_focus: str
     context_summary: dict[str, Any]
     latency_ms: int | None = None
+    developer_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

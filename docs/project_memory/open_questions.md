@@ -435,3 +435,13 @@ Open after implementation:
 - Should a future Workout History polish distinguish expired uncompleted plans from completed workout history more clearly?
 - Should Workout Session Preference Persistence v1 store the user's Quick/Standard/Full preference once lifecycle behavior is accepted?
 - Does the Workout tab still need performance profiling after lifecycle cleanup and fuller workouts?
+
+## Daily Coach Developer Preview Stabilization v1
+
+Open after implementation:
+
+- Does Windows runtime smoke confirm FastAPI + Streamlit startup is stable from accepted main?
+- Does Linux import/startup smoke confirm Streamlit can start without `ModuleNotFoundError: services`?
+- Does QA 102 show `Coach’s Read for Today`, Today Coach Note, Daily Next Action, and Developer Preview in the intended order?
+- Do qwen/Ollama preview lanes return useful sanitized diagnostics when parse or validation fails?
+- After stabilization is accepted, should the same-session approval bridge be retried from this stable baseline or redesigned into smaller backend/UI phases?

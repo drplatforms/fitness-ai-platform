@@ -8,46 +8,54 @@ AI Health Coach / fitness-ai
 
 ## Current branch
 
-`feature/catalog-source-evaluation-v1`
+`feature/food-catalog-import-batch-v1`
 
 ## Latest accepted milestone
 
-`Catalog Import Pipeline v1` is accepted and merged to `main`.
+`Catalog Source Evaluation v1` is accepted and merged to `main`.
 
-Final accepted status: `CATALOG_IMPORT_PIPELINE_V1_ACCEPTED`.
+Final accepted status: `CATALOG_SOURCE_EVALUATION_V1_ACCEPTED_WITH_APPROVED_SMALL_BATCH_CANDIDATES`.
 
-The project now has deterministic staged import tooling for food and exercise catalog candidate data.
-
-Approved staged flow:
-
-```text
-Raw source file
--> deterministic importer
--> normalized staged catalog rows
--> validation report
--> duplicate/suspicion report
--> human review
--> later approved merge into canonical catalog
-```
-
-No production catalog import has been approved yet.
+USDA FoodData Central is accepted as the first source candidate for a tiny reviewed generic food batch.
 
 ## Current implementation milestone
 
-`Catalog Source Evaluation v1` is implemented pending review.
+`Food Catalog Import Batch v1` is implemented pending review.
 
-Implementation status: `CATALOG_SOURCE_EVALUATION_V1_IMPLEMENTED_PENDING_REVIEW`.
+Implementation status: `FOOD_CATALOG_IMPORT_BATCH_V1_IMPLEMENTED_PENDING_REVIEW`.
 
-This milestone evaluates candidate source data before any real import batch. It recommends USDA FoodData Central Foundation Foods / SR Legacy for a tiny reviewed generic-food batch and recommends manual exercise curation with optional wger/Wikidata cross-checking before any exercise import batch.
+This milestone adds exactly 20 reviewed USDA/FDC Foundation Foods generic rows to the canonical food seed list. The batch is small, per-100g clear, source-noted, and limited to practical generic staples not already well-covered by the starter catalog.
 
-This milestone changes project memory docs only. It does not import source rows, commit datasets, change canonical food rows, change canonical exercise rows, scrape websites, add API clients, use AI/provider calls, or change runtime product behavior.
+Canonical additions include fish/protein options, vegetables, fruits, dry grains, and a few high-value staples:
+
+- Alaska Pollock, Raw
+- Apricot, Raw
+- Arugula, Raw
+- Beets, Raw
+- Beet Greens, Raw
+- Bok Choy, Raw
+- Red Cabbage, Raw
+- Collard Greens, Raw
+- Fennel Bulb, Raw
+- Figs, Dried
+- Haddock, Raw
+- Catfish, Raw
+- Plantain, Raw
+- Mandarin, Raw
+- Black Rice, Dry
+- Red Rice, Dry
+- Fonio Grain, Dry
+- Khorasan Grain, Dry
+- Parsnips, Raw
+- Radishes, Raw
+
+No raw USDA/FDC dataset is committed. No staged qa_artifacts are committed. No scraping, API client, AI-generated nutrition facts, runtime behavior, provider behavior, nutrition calculation behavior, food logging behavior, or exercise catalog behavior changed.
 
 ## Next recommended milestone options
 
-- Food Catalog Import Batch v1 using a tiny USDA FoodData Central Foundation/SR Legacy generic-food batch.
-- Exercise Catalog Import Batch v1 using manual curation and optional source cross-checking only.
-- Manual Catalog Curation Pack v1 if Architecture wants to avoid third-party exercise sources for now.
-- Daily Coach Narrative Limited Today UI Readiness v1 if Product chooses to pause catalog work.
+- Exercise Catalog Import Batch v1 using manual curation and/or CC0 structured-name inspiration only.
+- Food Catalog Import Batch v1.1 if the first batch review identifies obvious missing generic staples.
+- Daily Coach Narrative Limited Today UI Readiness v1 if Product chooses to return to product-facing work.
 
 ---
 

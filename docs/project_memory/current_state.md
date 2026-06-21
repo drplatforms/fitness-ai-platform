@@ -161,6 +161,15 @@ Accepted report provider boundaries include:
 - Full-report provider execution remains gated and background-safe where applicable.
 - Provider metadata and persistence boundaries remain explicit.
 
+
+### Daily Coach Same-Session Approved Preview Bridge v1 Retry
+
+Current branch: `feature/daily-coach-same-session-approved-preview-bridge-v1-retry`
+
+Status: implementation ready for Architecture review.
+
+The retry is limited to manual Developer Mode session approval. `qwen2.5:3b` is the only bridge baseline candidate. Approved provider narrative may display in Today Coach Note only after explicit session approval and only for the active Streamlit session. No provider call occurs on normal Today load, no provider text is persisted, and no model is promoted.
+
 ## Current provider doctrine
 
 - Deterministic paths remain the default.

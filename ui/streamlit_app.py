@@ -10,6 +10,13 @@ import requests
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
+from ui.daily_coach_session_approval import (
+    clear_daily_coach_session_approved_narrative,
+    daily_coach_preview_approval_eligibility,
+    get_daily_coach_session_approved_narrative,
+    store_daily_coach_session_approved_narrative,
+)
+
 API_BASE_URL = "http://127.0.0.1:8000"
 
 
@@ -3371,6 +3378,7 @@ SESSION_DEFAULTS = {
     "daily_recommendation_error_by_user": {},
     "daily_coach_narrative_preview_by_user": {},
     "daily_coach_narrative_preview_error_by_user": {},
+    "daily_coach_session_approved_narratives": {},
     "workout_explanation_by_user": {},
     "workout_explanation_error_by_user": {},
 }
@@ -4079,7 +4087,7 @@ DAILY_COACH_NARRATIVE_LANES = {
         "model": "qwen3:8b",
         "timeout_seconds": 180,
         "request_timeout": 210,
-        "description": "Lower-latency developer preview lane.",
+        "description": "Lower-latency developer preview lane. Probe only; not bridge approval eligible.",
     },
     "qwen3_32b_premium": {
         "label": "Premium preview: qwen3:32b",
@@ -4087,7 +4095,7 @@ DAILY_COACH_NARRATIVE_LANES = {
         "model": "qwen3:32b",
         "timeout_seconds": 420,
         "request_timeout": 450,
-        "description": "Higher-quality slow/manual preview lane.",
+        "description": "Higher-quality slow/manual preview lane. Probe only; not bridge approval eligible.",
         "warning": (
             "Premium preview may take several minutes. The deterministic fallback "
             "remains available while generation runs."
@@ -4099,7 +4107,7 @@ DAILY_COACH_NARRATIVE_LANES = {
         "model": "qwen2.5:3b",
         "timeout_seconds": 180,
         "request_timeout": 210,
-        "description": "Small-model validator and regression lane.",
+        "description": "Small-model validator and same-session bridge baseline lane.",
     },
 }
 
@@ -4164,6 +4172,37 @@ def daily_coach_narrative_fallback_display(preview: dict) -> str:
 def daily_coach_narrative_approved_display(preview: dict) -> dict:
     narrative = preview.get("approved_narrative")
     return narrative if isinstance(narrative, dict) else {}
+
+
+def build_daily_coach_session_approval_context(
+    user_id: int, today_card_date: str | None = None
+) -> dict[str, object] | None:
+    """Build the deterministic active context used to invalidate session approval."""
+
+    try:
+        response = api_get(f"/daily-coach/{user_id}/next-action", request_timeout=30)
+    except requests.RequestException:
+        return None
+
+    action = response.get("daily_next_action") or {}
+    next_action_id = action.get("action_id")
+    workflow_target = action.get("workflow_target")
+    if not next_action_id or not workflow_target:
+        return None
+
+    return {
+        "user_id": user_id,
+        "date": today_card_date or datetime.today().date().isoformat(),
+        "next_action_id": next_action_id,
+        "workflow_target": workflow_target,
+    }
+
+
+def daily_coach_session_approved_card_text(record: dict) -> str:
+    return (
+        record.get("coach_note")
+        or "Session-approved coach note is not available for this context."
+    )
 
 
 def fetch_daily_coach_narrative_preview(
@@ -4344,6 +4383,43 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
         with st.expander("Public-safe context summary", expanded=False):
             render_daily_coach_narrative_context_summary(preview)
 
+        eligibility = daily_coach_preview_approval_eligibility(preview)
+        if eligibility.eligible:
+            st.success("This qwen2.5:3b preview is eligible for session-only approval.")
+            if st.button(
+                "Approve for this session",
+                key=f"approve_daily_coach_narrative_session_{user_id}",
+            ):
+                store_daily_coach_session_approved_narrative(st.session_state, preview)
+                st.success(
+                    "Session-approved coach note is active for this user/date/action until the session or context changes."
+                )
+        else:
+            st.info("Session approval is not available for this preview.")
+            with st.expander("Why approval is blocked", expanded=False):
+                for reason in eligibility.reasons:
+                    st.write(f"- {reason}")
+
+        active_record = get_daily_coach_session_approved_narrative(
+            st.session_state,
+            {
+                "user_id": preview.get("user_id"),
+                "date": preview.get("date"),
+                "next_action_id": preview.get("next_action_id"),
+                "workflow_target": preview.get("workflow_target"),
+            },
+        )
+        if active_record:
+            st.caption("Session approval is active for this preview context.")
+            if st.button(
+                "Clear session-approved coach note",
+                key=f"clear_daily_coach_narrative_session_{user_id}",
+            ):
+                clear_daily_coach_session_approved_narrative(
+                    st.session_state, active_record["approval_key"]
+                )
+                st.info("Session-approved coach note cleared.")
+
 
 def render_daily_coach_today_card(user_id: int) -> None:
     st.subheader("Today’s Coach Note")
@@ -4377,12 +4453,25 @@ def render_daily_coach_today_card(user_id: int) -> None:
     cta_label = card.get("cta_label") or f"Next action: {next_action_title}"
     supporting_reason = card.get("supporting_reason")
 
+    approval_context = build_daily_coach_session_approval_context(
+        user_id, today_card_date=card.get("date")
+    )
+    session_record = (
+        get_daily_coach_session_approved_narrative(st.session_state, approval_context)
+        if approval_context
+        else None
+    )
+    chips = [portfolio_chip(cta_label, "green")]
+    if session_record:
+        coach_note = daily_coach_session_approved_card_text(session_record)
+        chips.append(portfolio_chip("Session-approved coach note", "purple"))
+
     st.markdown(
         portfolio_card_html(
             "Daily Coach",
             card_title,
             coach_note,
-            [portfolio_chip(cta_label, "green")],
+            chips,
             "portfolio-card-purple",
         ),
         unsafe_allow_html=True,
@@ -4390,6 +4479,11 @@ def render_daily_coach_today_card(user_id: int) -> None:
 
     if supporting_reason:
         st.caption(f"Why this today: {supporting_reason}")
+
+    if st.session_state.get("developer_mode", False) and session_record:
+        st.caption(
+            "Developer Mode: session-only Daily Coach narrative approval is active."
+        )
 
     developer_details("Developer details: Today Coach Note response", response)
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -167,7 +168,23 @@ def test_validation_failure_returns_sanitized_errors_without_rejected_text(monke
     assert "raw_output" not in str(result).lower()
 
 
-def test_normal_today_ui_has_no_provider_approval_controls() -> None:
+def test_normal_today_ui_has_no_automatic_provider_approval_controls() -> None:
     source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
-    assert "Approve for this session" not in source
+    module = ast.parse(source)
+    today_card_source = ""
+    preview_source = ""
+    for node in module.body:
+        if (
+            isinstance(node, ast.FunctionDef)
+            and node.name == "render_daily_coach_today_card"
+        ):
+            today_card_source = ast.get_source_segment(source, node) or ""
+        if (
+            isinstance(node, ast.FunctionDef)
+            and node.name == "render_daily_coach_narrative_developer_panel"
+        ):
+            preview_source = ast.get_source_segment(source, node) or ""
+
+    assert "Approve for this session" not in today_card_source
+    assert "Approve for this session" in preview_source
     assert "same_session_approved_provider_preview" not in source

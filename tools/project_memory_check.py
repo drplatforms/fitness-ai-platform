@@ -35,6 +35,8 @@ REQUIRED_FILES = [
     "docs/project_memory/reviews/developer_delivery_workflow_contract_v1.md",
     "docs/project_memory/milestones/developer_delivery_workflow_script_safety_addendum_v1.md",
     "docs/project_memory/reviews/developer_delivery_workflow_script_safety_addendum_v1.md",
+    "docs/project_memory/milestones/daily_coach_same_session_approved_preview_bridge_v1_retry.md",
+    "docs/project_memory/reviews/daily_coach_same_session_approved_preview_bridge_v1_retry.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
 ]
@@ -147,6 +149,18 @@ REQUIRED_PHRASES = {
         "DEVELOPER_DELIVERY_WORKFLOW_SCRIPT_SAFETY_ADDENDUM_V1_ACCEPTED",
         "Docs/tooling only",
     ],
+    "docs/project_memory/milestones/daily_coach_same_session_approved_preview_bridge_v1_retry.md": [
+        "Daily Coach Same-Session Approved Preview Bridge v1 Retry",
+        "qwen2.5:3b",
+        "session-state",
+        "nothing is persisted",
+    ],
+    "docs/project_memory/reviews/daily_coach_same_session_approved_preview_bridge_v1_retry.md": [
+        "Daily Coach Same-Session Approved Preview Bridge v1 Retry",
+        "DAILY_COACH_SAME_SESSION_APPROVED_PREVIEW_BRIDGE_V1_RETRY_ACCEPTED",
+        "session-only",
+        "no provider call occurs on normal Today load",
+    ],
     "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md": [
         "Provider Narrative QA Matrix v2",
         "qwen2.5:3b",
@@ -170,6 +184,7 @@ REQUIRED_PHRASES = {
         "reference-only",
         "No provider may run on normal Today page load",
         "Provider Narrative QA Matrix v2",
+        "Daily Coach Same-Session Approved Preview Bridge v1 Retry",
     ],
     "docs/project_memory/ai_boundaries.md": [
         "Deterministic fallback remains the default",

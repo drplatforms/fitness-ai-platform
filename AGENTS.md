@@ -139,3 +139,5 @@ Provider-selection env vars such as `RECOMMENDATION_CANDIDATE_PROVIDER` and `NUT
 Every meaningful milestone or feature branch that changes user-visible behavior, backend behavior, architecture boundaries, provider behavior, persistence, routes, UI, tests, project scope, or accepted status must update project memory in the same branch.
 
 A milestone is not done if project memory still describes older project truth.
+
+- Daily Coach same-session bridge retry memory: `docs/project_memory/milestones/daily_coach_same_session_approved_preview_bridge_v1_retry.md` and `docs/project_memory/reviews/daily_coach_same_session_approved_preview_bridge_v1_retry.md`.

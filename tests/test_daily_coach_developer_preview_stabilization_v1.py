@@ -69,6 +69,7 @@ def test_coachs_read_card_is_visible_and_separate_from_developer_preview() -> No
     assert "Developer Preview: Daily Coach Narrative" not in synthesis_source
     assert "Approve for this session" not in synthesis_source
     assert "Developer Preview: Daily Coach Narrative" in preview_source
+    assert "Approve for this session" in preview_source
 
 
 def test_normal_today_card_source_does_not_call_provider_preview() -> None:
@@ -76,10 +77,9 @@ def test_normal_today_card_source_does_not_call_provider_preview() -> None:
 
     assert "/daily-coach/{user_id}/today-card" in function_source
     assert "narrative-preview" not in function_source
-    assert "provider" not in function_source.lower()
-    assert "Approve for this session" not in Path("ui/streamlit_app.py").read_text(
-        encoding="utf-8"
-    )
+    assert "direct_ollama" not in function_source
+    assert "qwen2.5:3b" not in function_source
+    assert "Approve for this session" not in function_source
 
 
 def test_preview_parse_failure_returns_sanitized_developer_diagnostics(

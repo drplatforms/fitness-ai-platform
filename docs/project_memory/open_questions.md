@@ -17,6 +17,12 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 - Which stale milestone phrases should be flagged in `tools/project_memory_check.py` without creating noisy false positives?
 - Should each future merge require a short post-merge project-memory closeout note?
 
+### Developer delivery workflow
+
+- Should project-memory checks eventually fail when `docs/project_memory/developer_delivery_workflow_contract.md` is missing or stale? Initial enforcement requires the doc to exist and be referenced by future agents.
+- Should future handoff templates include an explicit "delivery workflow used" line?
+- Should high-risk provider/UI milestones include an optional snapshot fallback artifact, while still keeping patch-first as the default?
+
 ### Daily Coach provider preview
 
 - Daily Coach Provider Preview Contract Reliability v1 is accepted on main; `qwen2.5:3b` reached `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` in manual preview runtime smoke.

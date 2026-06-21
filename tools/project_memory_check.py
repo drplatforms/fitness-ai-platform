@@ -25,10 +25,13 @@ REQUIRED_FILES = [
     "docs/project_memory/section_registry_summary.md",
     "docs/project_memory/future_architecture_ledger.md",
     "docs/project_memory/premium_platform_blueprint.md",
+    "docs/project_memory/developer_delivery_workflow_contract.md",
     "docs/project_memory/open_questions.md",
     "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md",
     "docs/project_memory/reviews/provider_narrative_qa_matrix_v2.md",
     "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md",
+    "docs/project_memory/milestones/developer_delivery_workflow_contract_v1.md",
+    "docs/project_memory/reviews/developer_delivery_workflow_contract_v1.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
 ]
@@ -68,6 +71,7 @@ REQUIRED_PHRASES = {
         "Deterministic fallback remains the default",
         "Do not add `CLAUDE.md`",
         "Project memory update requirement",
+        "developer_delivery_workflow_contract.md",
     ],
     ".github/copilot-instructions.md": [
         "Backend owns facts",
@@ -104,6 +108,25 @@ REQUIRED_PHRASES = {
         "qwen3:32b",
         "This document is aspirational. It does not authorize implementation of all features.",
     ],
+    "docs/project_memory/developer_delivery_workflow_contract.md": [
+        "Patch-first delivery is the default",
+        "Snapshot restore is a fallback, not the normal path",
+        "When Dustin provides a snapshot filename",
+        "C:\\projects\\fitness_ai",
+        "~/projects/fitness-ai-platform",
+        "OLLAMA_BASE_URL=",
+        "http://192.168.1.104:11434",
+    ],
+    "docs/project_memory/milestones/developer_delivery_workflow_contract_v1.md": [
+        "Developer Delivery Workflow Contract v1",
+        "patch-first delivery is default",
+        "Linux pull-after-snapshot is a hard rule",
+    ],
+    "docs/project_memory/reviews/developer_delivery_workflow_contract_v1.md": [
+        "Developer Delivery Workflow Contract v1",
+        "DEVELOPER_DELIVERY_WORKFLOW_CONTRACT_V1_ACCEPTED",
+        "docs/tooling only",
+    ],
     "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md": [
         "Provider Narrative QA Matrix v2",
         "qwen2.5:3b",
@@ -118,8 +141,8 @@ REQUIRED_PHRASES = {
     ],
     "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md": [
         "Provider Narrative QA Matrix v2 Results",
-        "does not promote any model",
-        "does not approve same-session display",
+        "No model is promoted by this report.",
+        "No same-session approval was added by this matrix.",
     ],
     "docs/project_memory/current_state.md": [
         "Project Memory Alignment + North Star Architecture v1",

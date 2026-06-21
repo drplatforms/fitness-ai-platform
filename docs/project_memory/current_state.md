@@ -12,11 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Provider Narrative QA Matrix v2`
+`Developer Delivery Workflow Contract v1`
 
-Status: `IMPLEMENTED / AWAITING_RUNTIME_MATRIX_RESULTS`
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-Purpose: characterize local model behavior through the stabilized manual Developer Mode Daily Coach provider-preview lane before any same-session approval retry.
+Purpose: create a repo-level delivery workflow contract so implementation handoffs use patch-first delivery by default, snapshot fallback only when needed, and Linux pull immediately after every snapshot filename.
 
 North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
@@ -43,6 +43,7 @@ The accepted main baseline before this provider-reliability branch includes:
 - Project Memory Alignment + North Star Architecture v1
 - Future Architecture Ledger
 - Premium Platform Blueprint
+- Provider Narrative QA Matrix v2 runtime results
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
@@ -65,6 +66,31 @@ Any meaningful commit that changes behavior, architecture boundaries, provider b
 
 Memory drift is architecture drift.
 
+
+## Developer Delivery Workflow Contract v1 status
+
+Developer Delivery Workflow Contract v1 is a docs/tooling-only milestone.
+
+Primary doc:
+
+`docs/project_memory/developer_delivery_workflow_contract.md`
+
+Standing workflow rules:
+
+- patch-first delivery is the default implementation path
+- snapshot restore is fallback only
+- commands start from `C:\projects\fitness_ai` unless stated otherwise
+- branch/path verification is required before applying changes
+- validation is required before commit
+- staging is explicit
+- snapshot creation follows the standard PowerShell command
+- when Dustin provides a snapshot filename, Linux pull must be provided immediately
+- Linux mirror path is `~/projects/fitness-ai-platform`
+- Ollama runs on Windows by default
+- Linux-to-Windows provider runtime uses `OLLAMA_BASE_URL=http://192.168.1.104:11434`
+
+This contract does not change runtime behavior.
+
 ## Provider Narrative QA Matrix v2 status
 
 The matrix tooling is available at `tools/provider_narrative_qa_matrix.py`.
@@ -73,7 +99,7 @@ The sanitized runtime matrix result doc is:
 
 `docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md`
 
-Final acceptance requires runtime matrix results from the manual debug route. `qwen2.5:3b` should remain the bridge baseline candidate if it stays contract-approved. qwen3-family models remain probes only unless a future Architecture decision promotes a model after QA evidence.
+Runtime matrix results are recorded. `qwen2.5:3b` remains the recommended bridge baseline candidate. `qwen2.5:7b`, `qwen3:8b`, and `qwen3:14b` are approved probes only. `qwen3:32b` and `qwen3:30b-a3b` are not bridge-ready. No model is promoted.
 
 ## Current product surfaces
 

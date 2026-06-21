@@ -12,11 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Daily Coach Provider Preview Contract Reliability v1`
+`Provider Narrative QA Matrix v2`
 
-Status: `IMPLEMENTED / READY_FOR_ARCHITECTURE_REVIEW`
+Status: `IMPLEMENTED / AWAITING_RUNTIME_MATRIX_RESULTS`
 
-Purpose: make the manual Developer Mode Daily Coach provider-preview lane reliable, inspectable, and safe before any same-session approval retry.
+Purpose: characterize local model behavior through the stabilized manual Developer Mode Daily Coach provider-preview lane before any same-session approval retry.
 
 North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
@@ -39,13 +39,14 @@ The accepted main baseline before this provider-reliability branch includes:
 - Workout Exercise Count Preference v1
 - Workout Daily State Lifecycle v1
 - Daily Coach Developer Preview Stabilization v1
+- Daily Coach Provider Preview Contract Reliability v1
 - Project Memory Alignment + North Star Architecture v1
 - Future Architecture Ledger
 - Premium Platform Blueprint
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
-Daily Coach Provider Preview Contract Reliability v1 is implemented on this branch and ready for Architecture review. It improves only the manual Developer Mode provider-preview contract and does not affect normal Today behavior.
+Provider Narrative QA Matrix v2 is implemented on this branch as developer-only QA tooling and project memory. It characterizes model behavior through the existing manual Developer Mode provider-preview debug route and does not affect normal Today behavior.
 
 ## Definition of Done update
 
@@ -63,6 +64,16 @@ A feature branch or milestone is not done until the relevant project memory docs
 Any meaningful commit that changes behavior, architecture boundaries, provider behavior, persistence, routing, UI, tests, accepted status, or project scope must update project memory in the same branch.
 
 Memory drift is architecture drift.
+
+## Provider Narrative QA Matrix v2 status
+
+The matrix tooling is available at `tools/provider_narrative_qa_matrix.py`.
+
+The sanitized runtime matrix result doc is:
+
+`docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md`
+
+Final acceptance requires runtime matrix results from the manual debug route. `qwen2.5:3b` should remain the bridge baseline candidate if it stays contract-approved. qwen3-family models remain probes only unless a future Architecture decision promotes a model after QA evidence.
 
 ## Current product surfaces
 
@@ -85,6 +96,8 @@ Daily Coach Provider Preview Contract Reliability v1 adds deterministic normaliz
 - validation failures return sanitized diagnostics without exposing rejected provider text
 - `approved_narrative_returned` is true only when parse and validation both succeed
 - normal Today page load remains deterministic and must not call the provider
+
+Provider Narrative QA Matrix v2 adds developer-only matrix tooling for comparing local models. It does not promote any model and does not add provider output to normal Today UI.
 
 ### Workout
 

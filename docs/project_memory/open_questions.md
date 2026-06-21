@@ -19,10 +19,10 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 ### Daily Coach provider preview
 
-- Daily Coach Provider Preview Contract Reliability v1 is implemented for Architecture review; manual runtime smoke must still identify whether `qwen2.5:3b` reaches `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` for QA 102.
-- Should `qwen2.5:3b` remain the baseline for JSON/contract reliability even if its copy quality is plain?
-- Which qwen3 model should be evaluated first for voice quality once the preview contract is reliable?
-- What manual smoke evidence is required before retrying same-session approval?
+- Daily Coach Provider Preview Contract Reliability v1 is accepted on main; `qwen2.5:3b` reached `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` in manual preview runtime smoke.
+- Provider Narrative QA Matrix v2 must characterize `qwen2.5:3b`, qwen3 probes, latency, safe rejection behavior, and voice quality before same-session approval is retried.
+- Should `qwen2.5:3b` remain the bridge retry baseline if larger qwen3 models sound better but fail more often?
+- Which qwen3 model, if any, is promising enough for a future premium async voice lane?
 
 ### Today product loop
 

@@ -48,12 +48,42 @@ def write_required_project_memory(root: Path) -> None:
                 "premium\nRAG\nvector\nMoE\nMCP\nqwen3:32b\n"
                 "This document is aspirational. It does not authorize implementation of all features.\n"
             )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2\n"
+                "qwen2.5:3b\n"
+                "not a provider promotion milestone\n"
+                "no provider output to normal Today UI\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/provider_narrative_qa_matrix_v2.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2\n"
+                "AWAITING RUNTIME MATRIX RESULTS\n"
+                "Do not accept this milestone until the runtime matrix results are present\n"
+                "no model promotion\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2 Results\n"
+                "does not promote any model\n"
+                "does not approve same-session display\n"
+            )
         elif relative_path == "docs/project_memory/current_state.md":
             text = (
                 "Project Memory Alignment + North Star Architecture v1\n"
                 "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1\n"
                 "reference-only\n"
                 "No provider may run on normal Today page load\n"
+                "Provider Narrative QA Matrix v2\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (

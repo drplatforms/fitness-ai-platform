@@ -26,6 +26,9 @@ REQUIRED_FILES = [
     "docs/project_memory/future_architecture_ledger.md",
     "docs/project_memory/premium_platform_blueprint.md",
     "docs/project_memory/open_questions.md",
+    "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md",
+    "docs/project_memory/reviews/provider_narrative_qa_matrix_v2.md",
+    "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
 ]
@@ -101,11 +104,29 @@ REQUIRED_PHRASES = {
         "qwen3:32b",
         "This document is aspirational. It does not authorize implementation of all features.",
     ],
+    "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md": [
+        "Provider Narrative QA Matrix v2",
+        "qwen2.5:3b",
+        "not a provider promotion milestone",
+        "no provider output to normal Today UI",
+    ],
+    "docs/project_memory/reviews/provider_narrative_qa_matrix_v2.md": [
+        "Provider Narrative QA Matrix v2",
+        "AWAITING RUNTIME MATRIX RESULTS",
+        "Do not accept this milestone until the runtime matrix results are present",
+        "no model promotion",
+    ],
+    "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md": [
+        "Provider Narrative QA Matrix v2 Results",
+        "does not promote any model",
+        "does not approve same-session display",
+    ],
     "docs/project_memory/current_state.md": [
         "Project Memory Alignment + North Star Architecture v1",
         "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1",
         "reference-only",
         "No provider may run on normal Today page load",
+        "Provider Narrative QA Matrix v2",
     ],
     "docs/project_memory/ai_boundaries.md": [
         "Deterministic fallback remains the default",

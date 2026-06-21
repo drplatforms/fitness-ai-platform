@@ -1,66 +1,60 @@
-# Current Handoff: Backend Development
+# Current Handoff: Backend Development / AI Provider Integration
 
 Project: AI Health Coach / fitness-ai
 
-Source of truth:
-
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/ai_boundaries.md`
-- `docs/project_memory/section_registry_summary.md`
-- `docs/project_memory/future_architecture_ledger.md`
-- `docs/project_memory/developer_delivery_workflow_contract.md`
-- relevant milestone/review docs
-
-## Current accepted baseline
-
-Accepted main includes deterministic daily product surfaces, provider-integrated Training and Nutrition report sections with strict fallback, workout substitution/count/daily lifecycle improvements, catalog foundations, Daily Coach Developer Preview Stabilization v1, Daily Coach Provider Preview Contract Reliability v1, Provider Narrative QA Matrix v2 results, north-star project memory docs, and project-memory checks.
-
 ## Current active milestone
 
-`Local Developer Command Menu Audit + Repo-Owned Commands v1`
+`Async Daily Coach Narrative Design v1`
 
-This is a docs/tooling/local command workflow-stability milestone. Do not change app runtime behavior.
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-## Next likely provider milestone
+Primary design doc:
 
-`Daily Coach Same-Session Approved Preview Bridge v1 Retry`, only after Architecture accepts the provider QA matrix and confirms qwen2.5:3b as the bridge baseline candidate.
+`docs/project_memory/designs/async_daily_coach_narrative_design_v1.md`
 
-## Reference-only branch
+## Backend meaning
 
-`feature/daily-coach-narrative-same-session-approved-preview-bridge-v1` is not accepted and must not be merged. It remains useful only as a learning artifact.
+This milestone documents a future async architecture. It does not authorize backend implementation.
 
+Backend should not add:
 
-## Delivery workflow requirement
+- async provider execution
+- background worker
+- queue
+- scheduler
+- provider cache
+- database table
+- schema migration
+- route behavior change
+- normal Today provider call
+- model routing change
+- qwen3 bridge eligibility
+- provider default change
 
-All implementation handoffs must follow `docs/project_memory/developer_delivery_workflow_contract.md`:
+## Future backend design concepts
 
-- patch-first delivery is the default
-- snapshot restore is fallback only
-- Windows source repo is `C:\projects\fitness_ai`
-- Linux mirror repo is `~/projects/fitness-ai-platform`
-- Linux pull is provided immediately after every snapshot filename
-- Ollama runs on Windows by default
-- Linux provider runtime uses `OLLAMA_BASE_URL=http://192.168.1.104:11434` when reaching Windows Ollama
+The design proposes future concepts only:
 
-## Non-negotiable boundaries
+- async narrative lifecycle
+- context hash / identity
+- validation gates
+- stale output rejection
+- optional future `daily_coach_narrative_jobs` table
+- storing approved/sanitized narrative only if persistence is later approved
+- sanitized failure classification instead of raw rejected output
 
-- Backend owns facts.
-- Deterministic fallback remains the default.
-- No provider call on normal Today load.
-- No same-session approval unless explicitly reauthorized.
-- No provider narrative persistence for Daily Coach.
-- No qwen3 model is promoted.
-- No raw/rejected provider output in normal UI.
-- No schema/persistence/report/workout/nutrition/catalog changes unless scoped.
-- No Aider, Headroom, Claude workflow, or `CLAUDE.md`.
+## Current source of truth
 
-## Team focus
+Until a future implementation milestone is accepted:
 
-Implement scoped services/routes/tests and follow the developer delivery workflow contract for patch-first handoffs, validation, explicit staging, snapshot creation, and Linux pull after snapshot.
+- deterministic Today Coach Note remains immediate
+- manual Developer Mode provider preview remains the only provider path
+- explicit session approval remains session-only
+- no provider text is persisted
+- `qwen2.5:3b` remains bridge baseline only
+- qwen3 remains not bridge-enabled
+- `qwen3:32b` is not product default and not promoted
 
+## Handoff to future backend implementers
 
-## Local command menu guidance for Backend Development / DevOps & Tooling
-
-Use `docs/project_memory/local_developer_command_menu.md` and `scripts/fitness_commands.ps1` as the source of truth for local helper commands.
-
-The profile should dot-source the repo-owned script instead of hiding project command logic in user profile state. Commands now include `fitness`, `app`, `lstop`, `lrestart`, `lupdate`, `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`.
+Do not infer approval from the presence of the design document. Build only from a later accepted implementation plan.

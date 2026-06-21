@@ -200,6 +200,72 @@ def write_required_project_memory(root: Path) -> None:
                 "LOCAL_DEVELOPER_COMMAND_MENU_V1_ACCEPTED\n"
                 "PowerShell load smoke\n"
             )
+
+        elif (
+            relative_path
+            == "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Design v1\n"
+                "design-only milestone\n"
+                "deterministic fallback remains always available\n"
+                "qwen2.5:3b\n"
+                "qwen3:32b\n"
+                "future premium async candidate only\n"
+                "not bridge-enabled\n"
+                "not promoted\n"
+                "not_requested\nqueued\ngenerating\nprovider_succeeded_pending_validation\n"
+                "approved\nrejected_validation\nrejected_parse\nprovider_timeout\n"
+                "provider_error\nstale\nfallback_available\n"
+                "daily_coach_narrative_jobs\n"
+                "raw rejected output is not persisted by default\n"
+                "No output displays unless all required gates pass.\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/async_daily_coach_narrative_design_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Design v1\n"
+                "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW\n"
+                "ASYNC_DAILY_COACH_NARRATIVE_DESIGN_V1_ACCEPTED\n"
+                "No provider call occurs on normal Today load.\n"
+                "Persistence is proposed only, not implemented.\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/async_daily_coach_narrative_design_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Design v1 Review\n"
+                "READY FOR ARCHITECTURE REVIEW\n"
+                "ASYNC_DAILY_COACH_NARRATIVE_DESIGN_V1_ACCEPTED\n"
+                "No async runtime implemented.\n"
+                "qwen3 remains not bridge-enabled.\n"
+                "Workflow contract followed.\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/handoffs/architecture_handoff_current.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Design v1\n"
+                "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md\n"
+                "No provider call on normal Today load.\n"
+                "qwen3 remains not bridge-enabled.\n"
+            )
+        elif relative_path == "docs/project_memory/handoffs/backend_handoff_current.md":
+            text = (
+                "Async Daily Coach Narrative Design v1\n"
+                "This milestone documents a future async architecture.\n"
+                "Do not infer approval from the presence of the design document.\n"
+            )
+        elif relative_path == "docs/project_memory/handoffs/qa_handoff_current.md":
+            text = (
+                "Async Daily Coach Narrative Design v1\n"
+                "This is a docs/design milestone.\n"
+                "Persistence is proposed only, not implemented.\n"
+            )
         elif relative_path == "scripts/fitness_commands.ps1":
             text = (
                 "function fitness\nfunction app\nfunction lstop\nfunction lrestart\n"
@@ -217,6 +283,7 @@ def write_required_project_memory(root: Path) -> None:
                 "C:\\projects\\fitness_ai\\scripts\\fitness_commands.ps1\n"
                 ". `$PROFILE\n"
             )
+
         elif relative_path == "docs/project_memory/current_state.md":
             text = (
                 "Project Memory Alignment + North Star Architecture v1\n"
@@ -229,6 +296,9 @@ def write_required_project_memory(root: Path) -> None:
                 "sound right and be right\n"
                 "Local Developer Command Menu Audit + Repo-Owned Commands v1\n"
                 "scripts/fitness_commands.ps1\n"
+                "Async Daily Coach Narrative Design v1\n"
+                "future premium async candidate only\n"
+                "no model is promoted\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (
@@ -446,5 +516,25 @@ def test_project_memory_check_requires_local_developer_command_menu_docs(
     assert any(
         result.status == "FAIL"
         and result.path == "docs/project_memory/local_developer_command_menu.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_async_daily_coach_design_docs(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (
+        tmp_path
+        / "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md"
+    ).unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path
+        == "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md"
         for result in results
     )

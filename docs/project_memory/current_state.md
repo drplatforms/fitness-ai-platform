@@ -12,16 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Local Developer Command Menu Audit + Repo-Owned Commands v1`
+`Async Daily Coach Narrative Design v1`
 
-Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
+Status: `DESIGN IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-Purpose: move local AI Health Coach helper commands into repo-owned PowerShell tooling so Windows, Linux, snapshot, merge-safety, memory-check, and app-start workflows are documented, versioned, and refreshable.
-
-North-star references remain preserved in repo memory:
-- Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
-- Premium product/backend blueprint: `docs/project_memory/premium_platform_blueprint.md`
-
+Purpose: document the future async Daily Coach Narrative architecture without implementing runtime provider execution. The design defines model lanes, async lifecycle, validation boundaries, invalidation rules, UI states, raw-output policy, persistence options, and phased implementation while preserving deterministic Today availability.
 ## Latest accepted main baseline
 
 The accepted main baseline before this provider-reliability branch includes:
@@ -354,3 +349,26 @@ No new catalog import, scraping, external API ingestion, or AI-generated catalog
 - no Claude workflow
 - no `CLAUDE.md`
 - `qa_artifacts/` remains local-only and uncommitted
+
+## Async Daily Coach Narrative Design v1 status
+
+Async Daily Coach Narrative Design v1 is implemented as a design-only milestone and ready for Architecture review.
+
+Primary design doc:
+
+`docs/project_memory/designs/async_daily_coach_narrative_design_v1.md`
+
+The design defines the future async Daily Coach Narrative lifecycle, model lanes, state machine, validation gates, invalidation rules, raw output policy, UI display priority, persistence options, and phased implementation plan.
+
+Current runtime behavior remains unchanged:
+
+- normal Today load remains deterministic
+- no provider call occurs on normal Today load
+- Developer Mode provider preview remains manual
+- explicit approval remains session-only
+- `qwen2.5:3b` remains bridge baseline only
+- qwen3 remains not bridge-enabled
+- `qwen3:32b` is future premium async candidate only
+- no model is promoted
+- no DB schema change or provider cache is added
+- deterministic fallback remains always available

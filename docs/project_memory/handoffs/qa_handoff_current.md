@@ -2,65 +2,55 @@
 
 Project: AI Health Coach / fitness-ai
 
-Source of truth:
-
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/ai_boundaries.md`
-- `docs/project_memory/section_registry_summary.md`
-- `docs/project_memory/future_architecture_ledger.md`
-- `docs/project_memory/developer_delivery_workflow_contract.md`
-- relevant milestone/review docs
-
-## Current accepted baseline
-
-Accepted main includes deterministic daily product surfaces, provider-integrated Training and Nutrition report sections with strict fallback, workout substitution/count/daily lifecycle improvements, catalog foundations, Daily Coach Developer Preview Stabilization v1, Daily Coach Provider Preview Contract Reliability v1, Provider Narrative QA Matrix v2 results, north-star project memory docs, and project-memory checks.
-
 ## Current active milestone
 
-`Local Developer Command Menu Audit + Repo-Owned Commands v1`
+`Async Daily Coach Narrative Design v1`
 
-This is a docs/tooling/local command workflow-stability milestone. Do not change app runtime behavior.
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-## Next likely provider milestone
+Primary design doc:
 
-`Daily Coach Same-Session Approved Preview Bridge v1 Retry`, only after Architecture accepts the provider QA matrix and confirms qwen2.5:3b as the bridge baseline candidate.
+`docs/project_memory/designs/async_daily_coach_narrative_design_v1.md`
 
-## Reference-only branch
+## QA scope
 
-`feature/daily-coach-narrative-same-session-approved-preview-bridge-v1` is not accepted and must not be merged. It remains useful only as a learning artifact.
+This is a docs/design milestone. QA should confirm documentation and boundary preservation, not async runtime behavior.
 
+QA should verify:
 
-## Delivery workflow requirement
+- design doc exists
+- milestone doc exists
+- review doc exists
+- handoffs were updated
+- current state mentions Async Daily Coach Narrative Design v1
+- project memory checks pass
+- artifact sweep is clean
+- no runtime/provider/UI/database behavior changed
+- no qa_artifacts or snapshots are committed
 
-All implementation handoffs must follow `docs/project_memory/developer_delivery_workflow_contract.md`:
+## Runtime boundaries to protect
 
-- patch-first delivery is the default
-- snapshot restore is fallback only
-- Windows source repo is `C:\projects\fitness_ai`
-- Linux mirror repo is `~/projects/fitness-ai-platform`
-- Linux pull is provided immediately after every snapshot filename
-- Ollama runs on Windows by default
-- Linux provider runtime uses `OLLAMA_BASE_URL=http://192.168.1.104:11434` when reaching Windows Ollama
-
-## Non-negotiable boundaries
-
-- Backend owns facts.
-- Deterministic fallback remains the default.
 - No provider call on normal Today load.
-- No same-session approval unless explicitly reauthorized.
-- No provider narrative persistence for Daily Coach.
-- No qwen3 model is promoted.
-- No raw/rejected provider output in normal UI.
-- No schema/persistence/report/workout/nutrition/catalog changes unless scoped.
-- No Aider, Headroom, Claude workflow, or `CLAUDE.md`.
+- Deterministic Today Coach Note remains always available.
+- Developer Mode provider preview remains manual.
+- Same-session approval remains explicit and session-only.
+- `qwen2.5:3b` remains bridge baseline only.
+- qwen3 remains not bridge-enabled.
+- `qwen3:32b` remains future premium async candidate only.
+- Raw/rejected output is not approved for normal UI.
+- Persistence is proposed only, not implemented.
 
-## Team focus
+## Suggested validation
 
-Validate deterministic fallback, provider boundaries, Streamlit behavior, project-memory accuracy, and that delivery handoffs follow the documented workflow contract.
+```powershell
+cd C:\projects\fitness_ai
 
+git diff --check
+scripts/dev_commit_check.ps1 -Mode code
+pytest tests/test_project_memory_check.py -q
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+git grep -n -E "contentReference|oaicite|filecite|turn[0-9]+|utm_source=chatgpt|chatgpt.com|<paste latest commit>|<paste snapshot filename>" -- .
+```
 
-## Local command menu guidance for QA
-
-Use `docs/project_memory/local_developer_command_menu.md` and `scripts/fitness_commands.ps1` as the source of truth for local helper commands.
-
-The profile should dot-source the repo-owned script instead of hiding project command logic in user profile state. Commands now include `fitness`, `app`, `lstop`, `lrestart`, `lupdate`, `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`.
+Expected artifact sweep: no output.

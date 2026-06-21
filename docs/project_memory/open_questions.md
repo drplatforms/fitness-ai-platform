@@ -147,3 +147,15 @@ Lesson:
 - Aider
 - Headroom reintroduction
 - Claude workflow or `CLAUDE.md`
+
+## Async Daily Coach Narrative open questions
+
+These questions are intentionally left for a future implementation-planning milestone. Async Daily Coach Narrative Design v1 does not implement runtime behavior.
+
+- Should Phase 1 remain session/dev-only, or should the first implementation introduce persisted jobs?
+- Should `daily_coach_narrative_jobs` be created in SQLite, or should persistence wait until provider behavior is more stable?
+- What exact expiration policy should apply to approved async narratives?
+- Should explicit session-approved notes outrank async approved premium notes in all cases?
+- What timeout tier should be used for `qwen3:32b` on the Windows Ollama host?
+- What sanitized diagnostics are useful in Developer Mode without storing raw rejected output?
+- What model quality bar should a premium async candidate meet before product UI surfacing?

@@ -11,56 +11,56 @@ Source of truth:
 - `docs/project_memory/developer_delivery_workflow_contract.md`
 - relevant milestone/review docs
 
-## Current accepted baseline
-
-Accepted main includes deterministic daily product surfaces, provider-integrated Training and Nutrition report sections with strict fallback, workout substitution/count/daily lifecycle improvements, catalog foundations, Daily Coach Developer Preview Stabilization v1, Daily Coach Provider Preview Contract Reliability v1, Provider Narrative QA Matrix v2 results, north-star project memory docs, and project-memory checks.
-
 ## Current active milestone
 
-`Local Developer Command Menu Audit + Repo-Owned Commands v1`
+`Async Daily Coach Narrative Design v1`
 
-This is a docs/tooling/local command workflow-stability milestone. Do not change app runtime behavior.
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-## Next likely provider milestone
+Primary design doc:
 
-`Daily Coach Same-Session Approved Preview Bridge v1 Retry`, only after Architecture accepts the provider QA matrix and confirms qwen2.5:3b as the bridge baseline candidate.
+`docs/project_memory/designs/async_daily_coach_narrative_design_v1.md`
 
-## Reference-only branch
+## Review focus
 
-`feature/daily-coach-narrative-same-session-approved-preview-bridge-v1` is not accepted and must not be merged. It remains useful only as a learning artifact.
+Architecture should review whether the proposed async Daily Coach Narrative design correctly preserves deterministic Today availability while defining a safe path for future slow premium model narratives.
 
+Review these areas:
 
-## Delivery workflow requirement
+- async lifecycle
+- state machine
+- context identity and invalidation
+- validation gates
+- raw output policy
+- model lanes
+- UI display priority
+- persistence phases
+- implementation milestone breakdown
 
-All implementation handoffs must follow `docs/project_memory/developer_delivery_workflow_contract.md`:
+## Key boundary
 
-- patch-first delivery is the default
-- snapshot restore is fallback only
-- Windows source repo is `C:\projects\fitness_ai`
-- Linux mirror repo is `~/projects/fitness-ai-platform`
-- Linux pull is provided immediately after every snapshot filename
-- Ollama runs on Windows by default
-- Linux provider runtime uses `OLLAMA_BASE_URL=http://192.168.1.104:11434` when reaching Windows Ollama
+This is design-only. Do not treat it as approval for async runtime, background workers, queues, scheduler behavior, database tables, provider cache, qwen3 bridge eligibility, model promotion, or normal Today provider calls.
+
+## Current accepted baseline
+
+Accepted main includes deterministic daily product surfaces, provider-integrated Training and Nutrition report sections with strict fallback, workout substitution/count/daily lifecycle improvements, catalog foundations, Daily Coach Developer Preview Stabilization v1, Daily Coach Provider Preview Contract Reliability v1, Provider Narrative QA Matrix v2 results, Daily Coach Same-Session Approved Preview Bridge v1 Retry, Same-Session Bridge Runtime QA v1, Daily Coach Narrative Product Voice Runtime QA v1, Local Developer Command Menu Audit + Repo-Owned Commands v1, north-star project memory docs, and project-memory checks.
 
 ## Non-negotiable boundaries
 
 - Backend owns facts.
 - Deterministic fallback remains the default.
 - No provider call on normal Today load.
-- No same-session approval unless explicitly reauthorized.
-- No provider narrative persistence for Daily Coach.
-- No qwen3 model is promoted.
+- Current provider preview remains Developer Mode/manual only.
+- Same-session approval remains explicit and session-only.
+- No provider narrative persistence for Daily Coach is approved by this milestone.
+- `qwen2.5:3b` remains bridge baseline only.
+- qwen3 remains not bridge-enabled.
+- `qwen3:32b` remains future premium async candidate only.
+- No model is promoted.
 - No raw/rejected provider output in normal UI.
-- No schema/persistence/report/workout/nutrition/catalog changes unless scoped.
+- No schema/persistence/report/workout/nutrition/catalog changes.
 - No Aider, Headroom, Claude workflow, or `CLAUDE.md`.
 
-## Team focus
+## Delivery workflow requirement
 
-Maintain boundaries, accept/reject milestones, protect deterministic truth, and keep project memory plus developer delivery workflow aligned with accepted status.
-
-
-## Local command menu guidance for Architecture
-
-Use `docs/project_memory/local_developer_command_menu.md` and `scripts/fitness_commands.ps1` as the source of truth for local helper commands.
-
-The profile should dot-source the repo-owned script instead of hiding project command logic in user profile state. Commands now include `fitness`, `app`, `lstop`, `lrestart`, `lupdate`, `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`.
+All implementation handoffs must follow `docs/project_memory/developer_delivery_workflow_contract.md` and `docs/project_memory/developer_delivery_workflow_script_safety_addendum_v1.md`.

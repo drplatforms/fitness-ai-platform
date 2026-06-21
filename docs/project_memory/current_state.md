@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 2026-06-20
+Last updated: 2026-06-21
 
 ## Project
 
@@ -12,11 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Developer Delivery Workflow Script Safety Addendum v1`
+`Same-Session Bridge Runtime QA v1`
 
-Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
+Status: `RUNTIME QA PASS / DOCS CLOSEOUT READY FOR ARCHITECTURE REVIEW`
 
-Purpose: extend the repo-level delivery workflow contract so future generated scripts are phase-separated and merge scripts verify the accepted final feature commit is actually an ancestor of `main` before push, snapshot, or Linux pull.
+Purpose: record accepted runtime QA evidence for the manual Daily Coach same-session approval bridge and keep the result in repo memory instead of chat-only handoff text.
 
 North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
@@ -44,6 +44,10 @@ The accepted main baseline before this provider-reliability branch includes:
 - Future Architecture Ledger
 - Premium Platform Blueprint
 - Provider Narrative QA Matrix v2 runtime results
+- Developer Delivery Workflow Contract v1
+- Developer Delivery Workflow Script Safety Addendum v1
+- Daily Coach Same-Session Approved Preview Bridge v1 Retry
+- Same-Session Bridge Runtime QA v1 results
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
@@ -163,12 +167,32 @@ Accepted report provider boundaries include:
 
 
 ### Daily Coach Same-Session Approved Preview Bridge v1 Retry
+Status: accepted on `main` as the controlled manual bridge.
+The bridge is limited to manual Developer Mode session approval. `qwen2.5:3b` is the only bridge baseline. Approved provider narrative may display in Today Coach Note only after explicit session approval and only for the active Streamlit session. No provider call occurs on normal Today load, no provider text is persisted, and no model is promoted.
+### Same-Session Bridge Runtime QA v1
+Current branch: `feature/same-session-bridge-runtime-qa-v1`
 
-Current branch: `feature/daily-coach-same-session-approved-preview-bridge-v1-retry`
+Status: `PASS / DOCS CLOSEOUT READY FOR ARCHITECTURE REVIEW`
 
-Status: implementation ready for Architecture review.
+Runtime QA result doc:
 
-The retry is limited to manual Developer Mode session approval. `qwen2.5:3b` is the only bridge baseline candidate. Approved provider narrative may display in Today Coach Note only after explicit session approval and only for the active Streamlit session. No provider call occurs on normal Today load, no provider text is persisted, and no model is promoted.
+`docs/project_memory/runtime_qa/same_session_bridge_runtime_qa_v1_results.md`
+
+Runtime QA recorded the accepted bridge as safe across the required manual QA conditions:
+
+- QA 102 `qwen2.5:3b` happy path passed.
+- Normal Today load remained deterministic.
+- No provider call occurred on normal Today load.
+- Developer Mode provider preview remained manual only.
+- Explicit session approval worked.
+- Approval remained session-only and did not persist.
+- Non-bridge model approval was blocked.
+- Fallback/rejected provider paths were blocked.
+- Context/session boundaries were safe.
+- No raw/rejected/provider/debug leakage appeared in normal UI.
+- No DB/report/file persistence was observed.
+- Diagnostics remained sanitized/readable.
+- No PyArrow diagnostic rendering issue was observed.
 
 ## Current provider doctrine
 

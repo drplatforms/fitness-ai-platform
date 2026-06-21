@@ -1,6 +1,6 @@
 # Open Questions
 
-Last updated: 2026-06-20
+Last updated: 2026-06-21
 
 This file separates active work from parked future ideas, resolved historical questions, and rejected/reference-only branches.
 
@@ -19,6 +19,7 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 ### Developer delivery workflow
 
+- Tooling command-menu docs cleanup remains a non-blocking backlog item; it does not block Same-Session Bridge Runtime QA v1 acceptance.
 - Should project-memory checks eventually fail when `docs/project_memory/developer_delivery_workflow_contract.md` is missing or stale? Initial enforcement requires the doc to exist and be referenced by future agents.
 - Should future handoff templates include an explicit "delivery workflow used" line?
 - Should high-risk provider/UI milestones include an optional snapshot fallback artifact, while still keeping patch-first as the default?
@@ -27,7 +28,8 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 - Daily Coach Provider Preview Contract Reliability v1 is accepted on main; `qwen2.5:3b` reached `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` in manual preview runtime smoke.
 - Provider Narrative QA Matrix v2 must characterize `qwen2.5:3b`, qwen3 probes, latency, safe rejection behavior, and voice quality before same-session approval is retried.
-- Same-Session Approved Preview Bridge v1 Retry uses `qwen2.5:3b` as the bridge baseline only; manual QA must confirm session approval, stale-context invalidation, and no persistence before acceptance.
+- Same-Session Approved Preview Bridge v1 Retry is accepted as a manual Developer Mode, session-only bridge using `qwen2.5:3b` only.
+- Same-Session Bridge Runtime QA v1 is PASS; no broader model/provider promotion is implied.
 - Which qwen3 model, if any, is promising enough for a future premium async voice lane?
 
 ### Today product loop
@@ -93,7 +95,8 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 ### Daily Coach stabilization
 
 - Daily Coach Developer Preview Stabilization v1 fixed Developer Mode diagnostics rendering and clarified Coach's Read visibility.
-- The same-session approval bridge was not accepted and should not be treated as current behavior.
+- Daily Coach Same-Session Approved Preview Bridge v1 Retry was accepted as manual Developer Mode, session-only display only.
+- Same-Session Bridge Runtime QA v1 passed and documented the manual bridge boundary.
 
 ### Provider boundaries
 
@@ -121,7 +124,8 @@ Lesson:
 
 ## Explicitly not approved
 
-- same-session approval display in normal Today UI
+- automatic same-session approval display without explicit Developer Mode action
+- persistent Daily Coach provider narrative display
 - Daily Coach provider narrative persistence
 - normal Today provider calls
 - qwen3 model promotion

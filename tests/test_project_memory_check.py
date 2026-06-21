@@ -143,6 +143,7 @@ def write_required_project_memory(root: Path) -> None:
                 "reference-only\n"
                 "No provider may run on normal Today page load\n"
                 "Provider Narrative QA Matrix v2\n"
+                "Same-Session Bridge Runtime QA v1\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (
@@ -284,5 +285,25 @@ def test_project_memory_check_requires_script_safety_addendum(
         result.status == "FAIL"
         and result.path
         == "docs/project_memory/developer_delivery_workflow_script_safety_addendum_v1.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_same_session_bridge_runtime_qa_results(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (
+        tmp_path
+        / "docs/project_memory/runtime_qa/same_session_bridge_runtime_qa_v1_results.md"
+    ).unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path
+        == "docs/project_memory/runtime_qa/same_session_bridge_runtime_qa_v1_results.md"
         for result in results
     )

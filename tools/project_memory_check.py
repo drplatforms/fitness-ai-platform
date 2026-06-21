@@ -37,6 +37,9 @@ REQUIRED_FILES = [
     "docs/project_memory/reviews/developer_delivery_workflow_script_safety_addendum_v1.md",
     "docs/project_memory/milestones/daily_coach_same_session_approved_preview_bridge_v1_retry.md",
     "docs/project_memory/reviews/daily_coach_same_session_approved_preview_bridge_v1_retry.md",
+    "docs/project_memory/milestones/same_session_bridge_runtime_qa_v1.md",
+    "docs/project_memory/reviews/same_session_bridge_runtime_qa_v1.md",
+    "docs/project_memory/runtime_qa/same_session_bridge_runtime_qa_v1_results.md",
     "docs/project_memory/development_workflow.md",
     "docs/project_memory/agent_workflow.md",
 ]
@@ -161,6 +164,25 @@ REQUIRED_PHRASES = {
         "session-only",
         "no provider call occurs on normal Today load",
     ],
+    "docs/project_memory/milestones/same_session_bridge_runtime_qa_v1.md": [
+        "Same-Session Bridge Runtime QA v1",
+        "RUNTIME QA PASS",
+        "qwen2.5:3b",
+        "No provider call occurred on normal Today load",
+    ],
+    "docs/project_memory/reviews/same_session_bridge_runtime_qa_v1.md": [
+        "Same-Session Bridge Runtime QA v1",
+        "SAME_SESSION_BRIDGE_RUNTIME_QA_V1_ACCEPTED",
+        "session-only",
+        "no persistence",
+    ],
+    "docs/project_memory/runtime_qa/same_session_bridge_runtime_qa_v1_results.md": [
+        "Same-Session Bridge Runtime QA v1 Results",
+        "Status: PASS",
+        "RUNTIME_APPROVED_SESSION_DISPLAY",
+        "No provider call occurred on normal Today load",
+        "No DB/report/file persistence was observed",
+    ],
     "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md": [
         "Provider Narrative QA Matrix v2",
         "qwen2.5:3b",
@@ -185,6 +207,7 @@ REQUIRED_PHRASES = {
         "No provider may run on normal Today page load",
         "Provider Narrative QA Matrix v2",
         "Daily Coach Same-Session Approved Preview Bridge v1 Retry",
+        "Same-Session Bridge Runtime QA v1",
     ],
     "docs/project_memory/ai_boundaries.md": [
         "Deterministic fallback remains the default",

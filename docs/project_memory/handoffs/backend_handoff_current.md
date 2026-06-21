@@ -1,60 +1,40 @@
-# Current Handoff: Backend Development / AI Provider Integration
+# Backend Handoff Current
 
-Project: AI Health Coach / fitness-ai
+Updated: 2026-06-21
+Current milestone: Async Daily Coach Narrative Implementation Plan v1
+Backend role: Future recipient only
 
-## Current active milestone
+## Backend Status
 
-`Async Daily Coach Narrative Design v1`
+Backend should not implement async Daily Coach runtime yet.
 
-Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
+Architecture has created the implementation plan that Backend may execute later after formal acceptance.
 
-Primary design doc:
+## Not Authorized Yet
 
-`docs/project_memory/designs/async_daily_coach_narrative_design_v1.md`
+Backend is not yet authorized to add:
 
-## Backend meaning
-
-This milestone documents a future async architecture. It does not authorize backend implementation.
-
-Backend should not add:
-
-- async provider execution
+- async runtime
 - background worker
 - queue
 - scheduler
-- provider cache
-- database table
-- schema migration
-- route behavior change
-- normal Today provider call
-- model routing change
+- DB schema changes
+- provider cache table
+- provider call on normal Today load
 - qwen3 bridge eligibility
-- provider default change
+- model promotion
+- normal UI async display
 
-## Future backend design concepts
+## Likely Next Backend-Executable Milestone
 
-The design proposes future concepts only:
+Daily Coach Async Contracts + Data Model v1
 
-- async narrative lifecycle
-- context hash / identity
-- validation gates
-- stale output rejection
-- optional future `daily_coach_narrative_jobs` table
-- storing approved/sanitized narrative only if persistence is later approved
-- sanitized failure classification instead of raw rejected output
+Likely scope when authorized:
 
-## Current source of truth
+- job status enum
+- narrative job contract/model
+- context identity/hash contract
+- safe metadata shape
+- tests
 
-Until a future implementation milestone is accepted:
-
-- deterministic Today Coach Note remains immediate
-- manual Developer Mode provider preview remains the only provider path
-- explicit session approval remains session-only
-- no provider text is persisted
-- `qwen2.5:3b` remains bridge baseline only
-- qwen3 remains not bridge-enabled
-- `qwen3:32b` is not product default and not promoted
-
-## Handoff to future backend implementers
-
-Do not infer approval from the presence of the design document. Build only from a later accepted implementation plan.
+No provider runtime should be included in that first implementation milestone unless Architecture explicitly changes scope.

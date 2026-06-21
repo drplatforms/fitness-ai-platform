@@ -562,3 +562,25 @@ Each phase must still be implemented through a scoped milestone.
 This ledger records direction. It does not authorize implementation.
 
 Future systems must be promoted through explicit Architecture approval, tests, validation, QA, project-memory updates, and user acceptance.
+
+<!-- START ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+## Async Daily Coach Narrative Roadmap
+
+Date: 2026-06-21
+
+Accepted design direction:
+The Daily Coach Narrative premium lane should move toward async generation so larger models can be explored without blocking Today page load.
+
+Current planned sequence:
+
+1. Implementation Plan v1
+2. Async Contracts + Data Model v1
+3. Async Service Shell / No Worker v1
+4. Developer-Only Async Prototype v1
+5. Validated Async Result Surface v1
+6. Premium Model Research Lane v1
+7. Product Eligibility Review v1
+
+Architecture rule:
+No model promotion or normal-load provider generation happens without explicit Architecture acceptance.
+<!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->

@@ -159,3 +159,20 @@ These questions are intentionally left for a future implementation-planning mile
 - What timeout tier should be used for `qwen3:32b` on the Windows Ollama host?
 - What sanitized diagnostics are useful in Developer Mode without storing raw rejected output?
 - What model quality bar should a premium async candidate meet before product UI surfacing?
+
+<!-- START ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+## Async Daily Coach Narrative Open Questions
+
+Date: 2026-06-21
+
+Open questions carried forward from the implementation plan:
+
+- Should the first runtime prototype use in-process background tasks, a simple polling service, or wait for an external queue?
+- When should SQLite persistence be authorized?
+- How long should approved async narratives live?
+- Should generation be user-triggered, scheduled, or opportunistic?
+- Should qwen3:32b voice research happen before the service shell or after the service shell?
+- How should persona versions be named and validated?
+- Should the premium async note replace the standard note or sit as an expandable enhancement?
+- What is the minimum product-quality voice rubric for coach persona acceptance?
+<!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->

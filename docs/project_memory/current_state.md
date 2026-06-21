@@ -372,3 +372,35 @@ Current runtime behavior remains unchanged:
 - no model is promoted
 - no DB schema change or provider cache is added
 - deterministic fallback remains always available
+
+<!-- START ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+## Async Daily Coach Narrative Implementation Plan v1
+
+Status: Implemented for Architecture review
+Date: 2026-06-21
+Branch: feature/async-daily-coach-narrative-implementation-plan-v1
+
+Architecture has documented the implementation plan for the future async Daily Coach Narrative system.
+
+The plan keeps deterministic Today behavior as the always-available baseline and breaks future async work into phased milestones:
+
+1. Async Contracts + Data Model
+2. Async Service Shell / No Worker
+3. Developer-Only Async Prototype
+4. Validated Async Result Surface
+5. Premium Model Research Lane
+6. Product Eligibility Review
+
+Current boundaries remain unchanged:
+
+- no async runtime implemented
+- no provider call on normal Today load
+- no DB schema change
+- no worker, queue, or scheduler
+- no provider cache table
+- no model promoted
+- qwen2.5:3b remains bridge baseline only
+- qwen3 remains not bridge-enabled
+- qwen3:32b remains future premium async candidate only
+- deterministic fallback remains always available
+<!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->

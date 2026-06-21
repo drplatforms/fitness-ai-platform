@@ -461,3 +461,15 @@ It does not authorize implementation of all features.
 It does not change current runtime behavior, provider behavior, persistence, schema, reports, workouts, nutrition, catalogs, model defaults, or UI behavior.
 
 Every feature must still be implemented through scoped milestones, tests, validation, project-memory updates, and Architecture acceptance.
+
+<!-- START ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+## Premium Daily Coach Narrative Path
+
+Date: 2026-06-21
+
+The premium coach voice path should use async generation rather than page-load generation.
+
+qwen3:32b is documented as a future premium async candidate because it has shown promising language quality during manual Developer Preview. It remains research-only and is not bridge-approved.
+
+Premium voice must remain bounded by backend-approved truth, validation gates, context identity checks, and deterministic fallback.
+<!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->

@@ -19,7 +19,7 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 ### Developer delivery workflow
 
-- Tooling command-menu docs cleanup remains a non-blocking backlog item; it does not block Same-Session Bridge Runtime QA v1 acceptance.
+- Local Developer Command Menu Audit + Repo-Owned Commands v1 addresses the prior tooling command-menu docs cleanup backlog by moving `fitness`, `app`, `lstop`, `lrestart`, and `lupdate` into repo-owned tooling.
 - Should project-memory checks eventually fail when `docs/project_memory/developer_delivery_workflow_contract.md` is missing or stale? Initial enforcement requires the doc to exist and be referenced by future agents.
 - Should future handoff templates include an explicit "delivery workflow used" line?
 - Should high-risk provider/UI milestones include an optional snapshot fallback artifact, while still keeping patch-first as the default?
@@ -32,6 +32,12 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 - Same-Session Bridge Runtime QA v1 is PASS; no broader model/provider promotion is implied.
 - Daily Coach Narrative Product Voice Runtime QA v1 is PASS_WITH_NOTE: qwen2.5:3b copy is acceptable for the manual bridge baseline but not yet premium.
 - Which qwen3 model, if any, is promising enough for a future premium async voice lane?
+
+
+### Local developer command menu
+
+- Should `scripts/fitness_commands.ps1` eventually gain a lightweight self-test command after manual QA confirms the first repo-owned command set?
+- Should Linux runtime ports remain aligned to Windows `8510`, or should a later DevOps milestone split Windows and Linux Streamlit port defaults explicitly?
 
 ### Today product loop
 

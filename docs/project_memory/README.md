@@ -18,7 +18,8 @@ Agents and humans should read these files before changing architecture, provider
 10. `developer_delivery_workflow_contract.md`
 11. `developer_delivery_workflow_script_safety_addendum_v1.md`
 12. `agent_workflow.md`
-13. `open_questions.md`
+13. `local_developer_command_menu.md`
+14. `open_questions.md`
 
 ## Project memory update requirement
 
@@ -34,6 +35,15 @@ Implementation delivery is patch-first by default. Snapshot restore is fallback 
 All future agents should follow `developer_delivery_workflow_contract.md` for branch checks, patch application, validation, explicit staging, snapshot creation, and the hard rule that Linux pull is provided immediately after a snapshot filename.
 
 `developer_delivery_workflow_script_safety_addendum_v1.md` extends the contract with script hard-stop gates, including the mandatory post-merge ancestry check that proves the accepted final feature commit is an ancestor of `main` before push, snapshot, or Linux pull.
+
+
+## Local developer command menu
+
+Local helper commands are repo-owned in `scripts/fitness_commands.ps1`.
+
+Installation and reload guidance live in `local_developer_command_menu.md`. The PowerShell profile should only dot-source the repo script; project command logic should not live only in a hidden user profile.
+
+The command menu preserves `fitness`, `app`, `lstop`, `lrestart`, and `lupdate`, and adds workflow safety commands including `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`.
 
 ## Active Daily Coach provider docs
 

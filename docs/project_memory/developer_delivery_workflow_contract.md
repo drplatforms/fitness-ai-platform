@@ -376,3 +376,12 @@ Final Architecture handoffs should confirm:
 This document records workflow discipline only.
 
 It does not authorize runtime behavior changes, provider behavior changes, UI changes, schema changes, persistence changes, same-session approval, model promotion, RAG/vector/MoE/MCP implementation, frontend rewrite, or deployment changes.
+
+
+## Repo-owned command menu support
+
+Local workflow helper commands are maintained in `scripts/fitness_commands.ps1` and documented in `docs/project_memory/local_developer_command_menu.md`.
+
+The command menu exists to encode this contract in reusable local commands. Relevant helpers include `fbranch` for clean feature branch creation, `fsnap` for standard snapshots, `fsweep` for artifact contamination checks, `fmem` for project-memory checks, and `fpull`/`lpull` for Windows/Linux sync.
+
+The PowerShell profile should only dot-source the repo script; project command logic should not live only in hidden local profile state.

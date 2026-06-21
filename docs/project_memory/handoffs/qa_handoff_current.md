@@ -17,9 +17,9 @@ Accepted main includes deterministic daily product surfaces, provider-integrated
 
 ## Current active milestone
 
-`Developer Delivery Workflow Contract v1`
+`Local Developer Command Menu Audit + Repo-Owned Commands v1`
 
-This is a docs/tooling workflow-stability milestone. Do not change app runtime behavior.
+This is a docs/tooling/local command workflow-stability milestone. Do not change app runtime behavior.
 
 ## Next likely provider milestone
 
@@ -57,3 +57,10 @@ All implementation handoffs must follow `docs/project_memory/developer_delivery_
 ## Team focus
 
 Validate deterministic fallback, provider boundaries, Streamlit behavior, project-memory accuracy, and that delivery handoffs follow the documented workflow contract.
+
+
+## Local command menu guidance for QA
+
+Use `docs/project_memory/local_developer_command_menu.md` and `scripts/fitness_commands.ps1` as the source of truth for local helper commands.
+
+The profile should dot-source the repo-owned script instead of hiding project command logic in user profile state. Commands now include `fitness`, `app`, `lstop`, `lrestart`, `lupdate`, `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`.

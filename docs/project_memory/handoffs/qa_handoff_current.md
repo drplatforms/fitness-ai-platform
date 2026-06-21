@@ -1,4 +1,4 @@
-# Current Handoff: QA
+﻿# Current Handoff: QA
 
 Project: AI Health Coach / fitness-ai
 
@@ -50,7 +50,7 @@ scripts/dev_commit_check.ps1 -Mode code
 pytest tests/test_project_memory_check.py -q
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
-git grep -n -E "contentReference|oaicite|filecite|turn[0-9]+|utm_source=chatgpt|chatgpt.com|<paste latest commit>|<paste snapshot filename>" -- .
+fsweep
 ```
 
 Expected artifact sweep: no output.

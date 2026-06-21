@@ -22,6 +22,8 @@ def write_required_project_memory(root: Path) -> None:
                 "Deterministic fallback remains the default\n"
                 "Do not add `CLAUDE.md`\n"
                 "Project memory update requirement\n"
+                "developer_delivery_workflow_contract.md\n"
+                "developer_delivery_workflow_script_safety_addendum_v1.md\n"
             )
         elif relative_path == ".github/copilot-instructions.md":
             text = (
@@ -29,6 +31,8 @@ def write_required_project_memory(root: Path) -> None:
                 "Preserve deterministic fallback behavior\n"
                 "Do not add Claude workflow files\n"
                 "Project memory update requirement\n"
+                "developer_delivery_workflow_contract.md\n"
+                "developer_delivery_workflow_script_safety_addendum_v1.md\n"
             )
         elif relative_path == "docs/project_memory/agent_workflow.md":
             text = "ChatGPT\nCodex\nDev Assistant\nClaude\nOut of scope\n"
@@ -166,6 +170,53 @@ def write_required_project_memory(root: Path) -> None:
                 "qwen2.5:3b\n"
                 "No provider call occurs on normal Today load\n"
             )
+
+        elif relative_path == "docs/project_memory/local_developer_command_menu.md":
+            text = (
+                "scripts/fitness_commands.ps1\n"
+                "install_fitness_commands_profile.ps1\n"
+                "C:\\projects\\fitness_ai\n"
+                "~/projects/fitness-ai-platform\n"
+                "http://127.0.0.1:11434\n"
+                "http://192.168.1.104:11434\n"
+                "fitness\napp\nlstop\nlrestart\nlupdate\nfmerge\n"
+                "git merge-base --is-ancestor\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/local_developer_command_menu_v1.md"
+        ):
+            text = (
+                "Local Developer Command Menu Audit + Repo-Owned Commands v1\n"
+                "scripts/fitness_commands.ps1\n"
+                "docs/tooling/local command changes only\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/local_developer_command_menu_v1.md"
+        ):
+            text = (
+                "Local Developer Command Menu Audit + Repo-Owned Commands v1\n"
+                "LOCAL_DEVELOPER_COMMAND_MENU_V1_ACCEPTED\n"
+                "PowerShell load smoke\n"
+            )
+        elif relative_path == "scripts/fitness_commands.ps1":
+            text = (
+                "function fitness\nfunction app\nfunction lstop\nfunction lrestart\n"
+                "function lupdate\nfunction fsnap\nfunction fbranch\nfunction fmerge\n"
+                "git merge-base --is-ancestor\n"
+                "C:\\projects\\fitness_ai\n"
+                "~/projects/fitness-ai-platform\n"
+                "http://127.0.0.1:11434\n"
+                "http://192.168.1.104:11434\n"
+            )
+        elif relative_path == "scripts/install_fitness_commands_profile.ps1":
+            text = (
+                "AI Health Coach command menu\n"
+                "Copy-Item\n"
+                "C:\\projects\\fitness_ai\\scripts\\fitness_commands.ps1\n"
+                ". `$PROFILE\n"
+            )
         elif relative_path == "docs/project_memory/current_state.md":
             text = (
                 "Project Memory Alignment + North Star Architecture v1\n"
@@ -176,6 +227,8 @@ def write_required_project_memory(root: Path) -> None:
                 "Same-Session Bridge Runtime QA v1\n"
                 "Daily Coach Narrative Product Voice Polish v1\n"
                 "sound right and be right\n"
+                "Local Developer Command Menu Audit + Repo-Owned Commands v1\n"
+                "scripts/fitness_commands.ps1\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (
@@ -377,5 +430,21 @@ def test_project_memory_check_requires_product_voice_runtime_qa_docs(
         result.status == "FAIL"
         and result.path
         == "docs/project_memory/runtime_qa/daily_coach_narrative_product_voice_runtime_qa_v1_results.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_local_developer_command_menu_docs(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (tmp_path / "docs/project_memory/local_developer_command_menu.md").unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path == "docs/project_memory/local_developer_command_menu.md"
         for result in results
     )

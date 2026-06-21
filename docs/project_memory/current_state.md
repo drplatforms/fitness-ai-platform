@@ -12,11 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Daily Coach Narrative Product Voice Runtime QA v1`
+`Local Developer Command Menu Audit + Repo-Owned Commands v1`
 
-Status: `PASS / DOCS CLOSEOUT READY FOR ARCHITECTURE REVIEW`
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-Purpose: record the accepted runtime QA result for Daily Coach Narrative Product Voice Polish v1 while preserving the accepted manual same-session bridge boundary. The current qwen2.5:3b voice is acceptable for the manual bridge baseline, but premium voice remains a later Architecture-approved milestone.
+Purpose: move local AI Health Coach helper commands into repo-owned PowerShell tooling so Windows, Linux, snapshot, merge-safety, memory-check, and app-start workflows are documented, versioned, and refreshable.
 
 North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
@@ -50,6 +50,7 @@ The accepted main baseline before this provider-reliability branch includes:
 - Same-Session Bridge Runtime QA v1 results
 - Daily Coach Narrative Product Voice Polish v1
 - Daily Coach Narrative Product Voice Runtime QA v1 results
+- Local Developer Command Menu Audit + Repo-Owned Commands v1
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
@@ -72,6 +73,25 @@ Any meaningful commit that changes behavior, architecture boundaries, provider b
 
 Memory drift is architecture drift.
 
+
+
+## Local Developer Command Menu Audit + Repo-Owned Commands v1 status
+
+Local helper commands now live in `scripts/fitness_commands.ps1`, with optional profile installation through `scripts/install_fitness_commands_profile.ps1`.
+
+The command menu is documented in `docs/project_memory/local_developer_command_menu.md`.
+
+This milestone preserves existing commands including `fitness`, `app`, `lstop`, `lrestart`, and `lupdate`, adds workflow safety helpers including `fsnap`, `fbranch`, `fmerge`, `fsweep`, `fmem`, `fports`, `fkill`, `fdoctor`, `lpull`, `lvalidate`, and `lollama`, and keeps command logic out of hidden profile-only state.
+
+Runtime truth encoded by the command menu:
+
+- Windows source repo: `C:\projects\fitness_ai`
+- Linux mirror repo: `~/projects/fitness-ai-platform`
+- Windows Ollama: `http://127.0.0.1:11434`
+- Linux-to-Windows Ollama: `OLLAMA_BASE_URL=http://192.168.1.104:11434`
+- Windows Streamlit default: `http://127.0.0.1:8510`
+
+This is docs/tooling/local command work only. It does not change provider, runtime, Streamlit app, FastAPI, schema, persistence, reports, Daily Next Action, nutrition, workout, catalog, or model eligibility behavior.
 
 ## Developer Delivery Workflow Contract v1 status
 ## Developer Delivery Workflow Script Safety Addendum v1 status

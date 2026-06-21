@@ -273,3 +273,16 @@ The script should print:
 This addendum is binding project workflow guidance once accepted.
 
 It exists to prevent clean-but-wrong Git history, incomplete milestone merges, and scripts that appear successful while omitting the accepted final feature commit.
+
+
+## Command-menu safety helpers
+
+`scripts/fitness_commands.ps1` includes `fmerge <branch-name> <accepted-final-commit>` as a local helper for accepted merge workflows.
+
+The helper must preserve the required safety check:
+
+```text
+git merge-base --is-ancestor <accepted-final-feature-commit> main
+```
+
+If the accepted final feature commit is not an ancestor of `main`, the helper must stop before push, snapshot, or Linux pull.

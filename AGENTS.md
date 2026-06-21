@@ -15,7 +15,8 @@ Read project memory before making changes:
 7. `docs/project_memory/development_workflow.md`
 8. `docs/project_memory/developer_delivery_workflow_contract.md`
 9. `docs/project_memory/developer_delivery_workflow_script_safety_addendum_v1.md`
-10. `docs/project_memory/open_questions.md`
+10. `docs/project_memory/local_developer_command_menu.md`
+11. `docs/project_memory/open_questions.md`
 11. `docs/project_memory/future_architecture_ledger.md`
 12. `docs/project_memory/premium_platform_blueprint.md`
 13. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
@@ -84,6 +85,15 @@ Script safety addendum requirements from `docs/project_memory/developer_delivery
 - Scripts must stop on branch/base/path assumption failures.
 - Merge scripts must verify the accepted final feature commit is an ancestor of `main` after merge with `git merge-base --is-ancestor <accepted-final-feature-commit> main` before push, snapshot, or Linux pull.
 - A clean working tree is not proof that the correct milestone was merged.
+
+
+## Repo-owned local commands
+
+AI Health Coach helper commands live in `scripts/fitness_commands.ps1` and are documented in `docs/project_memory/local_developer_command_menu.md`.
+
+The user PowerShell profile should only dot-source the repo script. Do not move project command logic back into hidden profile-only state. Preserve `fitness`, `app`, `lstop`, `lrestart`, and `lupdate` behavior when updating commands.
+
+Command updates are docs/tooling/local workflow changes only unless a milestone explicitly authorizes runtime behavior changes.
 
 ## Artifact and staging rules
 

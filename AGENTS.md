@@ -13,10 +13,11 @@ Read project memory before making changes:
 5. `docs/project_memory/ai_boundaries.md`
 6. `docs/project_memory/section_registry_summary.md`
 7. `docs/project_memory/development_workflow.md`
-8. `docs/project_memory/open_questions.md`
-9. `docs/project_memory/future_architecture_ledger.md`
-10. `docs/project_memory/premium_platform_blueprint.md`
-11. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
+8. `docs/project_memory/developer_delivery_workflow_contract.md`
+9. `docs/project_memory/open_questions.md`
+10. `docs/project_memory/future_architecture_ledger.md`
+11. `docs/project_memory/premium_platform_blueprint.md`
+12. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
 
 When project memory and a pasted prompt disagree, stop and ask for the latest source-of-truth snapshot or Architecture handoff.
 
@@ -58,6 +59,23 @@ Before editing, identify:
 - validation commands
 
 Prefer narrow patches. Do not invent endpoints, models, services, schemas, or UI surfaces that are not scoped.
+
+
+## Developer delivery workflow contract
+
+All future implementation handoffs must follow `docs/project_memory/developer_delivery_workflow_contract.md`.
+
+Required defaults:
+
+- Patch-first delivery is the normal implementation path.
+- Snapshot restore is fallback only when patch application or branch state fails.
+- Commands must verify branch/path state before applying changes.
+- Validation must run before commit.
+- Staging must be explicit.
+- After Dustin provides a snapshot filename, the next assistant response must provide the Linux pull command first.
+- Windows source repo is `C:\projects\fitness_ai`.
+- Linux mirror repo is `~/projects/fitness-ai-platform`.
+- Ollama runs on Windows by default; Linux provider runtime must use `OLLAMA_BASE_URL=http://192.168.1.104:11434` unless Dustin says otherwise.
 
 ## Artifact and staging rules
 

@@ -48,12 +48,73 @@ def write_required_project_memory(root: Path) -> None:
                 "premium\nRAG\nvector\nMoE\nMCP\nqwen3:32b\n"
                 "This document is aspirational. It does not authorize implementation of all features.\n"
             )
+        elif (
+            relative_path
+            == "docs/project_memory/developer_delivery_workflow_contract.md"
+        ):
+            text = (
+                "Patch-first delivery is the default\n"
+                "Snapshot restore is a fallback, not the normal path\n"
+                "When Dustin provides a snapshot filename\n"
+                "C:\\projects\\fitness_ai\n"
+                "~/projects/fitness-ai-platform\n"
+                "OLLAMA_BASE_URL=\n"
+                "http://192.168.1.104:11434\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/developer_delivery_workflow_contract_v1.md"
+        ):
+            text = (
+                "Developer Delivery Workflow Contract v1\n"
+                "patch-first delivery is default\n"
+                "Linux pull-after-snapshot is a hard rule\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/developer_delivery_workflow_contract_v1.md"
+        ):
+            text = (
+                "Developer Delivery Workflow Contract v1\n"
+                "DEVELOPER_DELIVERY_WORKFLOW_CONTRACT_V1_ACCEPTED\n"
+                "docs/tooling only\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/provider_narrative_qa_matrix_v2.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2\n"
+                "qwen2.5:3b\n"
+                "not a provider promotion milestone\n"
+                "no provider output to normal Today UI\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/provider_narrative_qa_matrix_v2.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2\n"
+                "AWAITING RUNTIME MATRIX RESULTS\n"
+                "Do not accept this milestone until the runtime matrix results are present\n"
+                "no model promotion\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md"
+        ):
+            text = (
+                "Provider Narrative QA Matrix v2 Results\n"
+                "No model is promoted by this report.\n"
+                "No same-session approval was added by this matrix.\n"
+            )
         elif relative_path == "docs/project_memory/current_state.md":
             text = (
                 "Project Memory Alignment + North Star Architecture v1\n"
                 "feature/daily-coach-narrative-same-session-approved-preview-bridge-v1\n"
                 "reference-only\n"
                 "No provider may run on normal Today page load\n"
+                "Provider Narrative QA Matrix v2\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (
@@ -159,5 +220,21 @@ def test_project_memory_check_fails_on_forbidden_provider_claim(
         result.status == "FAIL"
         and result.path == "docs/project_memory/current_state.md"
         and "Forbidden current-state claim" in result.message
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_developer_delivery_workflow_contract(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (tmp_path / "docs/project_memory/developer_delivery_workflow_contract.md").unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path == "docs/project_memory/developer_delivery_workflow_contract.md"
         for result in results
     )

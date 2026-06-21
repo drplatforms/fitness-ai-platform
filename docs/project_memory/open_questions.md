@@ -17,12 +17,18 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 - Which stale milestone phrases should be flagged in `tools/project_memory_check.py` without creating noisy false positives?
 - Should each future merge require a short post-merge project-memory closeout note?
 
+### Developer delivery workflow
+
+- Should project-memory checks eventually fail when `docs/project_memory/developer_delivery_workflow_contract.md` is missing or stale? Initial enforcement requires the doc to exist and be referenced by future agents.
+- Should future handoff templates include an explicit "delivery workflow used" line?
+- Should high-risk provider/UI milestones include an optional snapshot fallback artifact, while still keeping patch-first as the default?
+
 ### Daily Coach provider preview
 
-- Daily Coach Provider Preview Contract Reliability v1 is implemented for Architecture review; manual runtime smoke must still identify whether `qwen2.5:3b` reaches `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` for QA 102.
-- Should `qwen2.5:3b` remain the baseline for JSON/contract reliability even if its copy quality is plain?
-- Which qwen3 model should be evaluated first for voice quality once the preview contract is reliable?
-- What manual smoke evidence is required before retrying same-session approval?
+- Daily Coach Provider Preview Contract Reliability v1 is accepted on main; `qwen2.5:3b` reached `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` in manual preview runtime smoke.
+- Provider Narrative QA Matrix v2 must characterize `qwen2.5:3b`, qwen3 probes, latency, safe rejection behavior, and voice quality before same-session approval is retried.
+- Should `qwen2.5:3b` remain the bridge retry baseline if larger qwen3 models sound better but fail more often?
+- Which qwen3 model, if any, is promising enough for a future premium async voice lane?
 
 ### Today product loop
 

@@ -12,11 +12,11 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Daily Coach Provider Preview Contract Reliability v1`
+`Developer Delivery Workflow Contract v1`
 
-Status: `IMPLEMENTED / READY_FOR_ARCHITECTURE_REVIEW`
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
 
-Purpose: make the manual Developer Mode Daily Coach provider-preview lane reliable, inspectable, and safe before any same-session approval retry.
+Purpose: create a repo-level delivery workflow contract so implementation handoffs use patch-first delivery by default, snapshot fallback only when needed, and Linux pull immediately after every snapshot filename.
 
 North-star references remain preserved in repo memory:
 - Technical future architecture ledger: `docs/project_memory/future_architecture_ledger.md`
@@ -39,13 +39,15 @@ The accepted main baseline before this provider-reliability branch includes:
 - Workout Exercise Count Preference v1
 - Workout Daily State Lifecycle v1
 - Daily Coach Developer Preview Stabilization v1
+- Daily Coach Provider Preview Contract Reliability v1
 - Project Memory Alignment + North Star Architecture v1
 - Future Architecture Ledger
 - Premium Platform Blueprint
+- Provider Narrative QA Matrix v2 runtime results
 
 The prior same-session approval bridge branch is not accepted and is reference-only.
 
-Daily Coach Provider Preview Contract Reliability v1 is implemented on this branch and ready for Architecture review. It improves only the manual Developer Mode provider-preview contract and does not affect normal Today behavior.
+Provider Narrative QA Matrix v2 is implemented on this branch as developer-only QA tooling and project memory. It characterizes model behavior through the existing manual Developer Mode provider-preview debug route and does not affect normal Today behavior.
 
 ## Definition of Done update
 
@@ -63,6 +65,41 @@ A feature branch or milestone is not done until the relevant project memory docs
 Any meaningful commit that changes behavior, architecture boundaries, provider behavior, persistence, routing, UI, tests, accepted status, or project scope must update project memory in the same branch.
 
 Memory drift is architecture drift.
+
+
+## Developer Delivery Workflow Contract v1 status
+
+Developer Delivery Workflow Contract v1 is a docs/tooling-only milestone.
+
+Primary doc:
+
+`docs/project_memory/developer_delivery_workflow_contract.md`
+
+Standing workflow rules:
+
+- patch-first delivery is the default implementation path
+- snapshot restore is fallback only
+- commands start from `C:\projects\fitness_ai` unless stated otherwise
+- branch/path verification is required before applying changes
+- validation is required before commit
+- staging is explicit
+- snapshot creation follows the standard PowerShell command
+- when Dustin provides a snapshot filename, Linux pull must be provided immediately
+- Linux mirror path is `~/projects/fitness-ai-platform`
+- Ollama runs on Windows by default
+- Linux-to-Windows provider runtime uses `OLLAMA_BASE_URL=http://192.168.1.104:11434`
+
+This contract does not change runtime behavior.
+
+## Provider Narrative QA Matrix v2 status
+
+The matrix tooling is available at `tools/provider_narrative_qa_matrix.py`.
+
+The sanitized runtime matrix result doc is:
+
+`docs/project_memory/runtime_qa/provider_narrative_qa_matrix_v2_results.md`
+
+Runtime matrix results are recorded. `qwen2.5:3b` remains the recommended bridge baseline candidate. `qwen2.5:7b`, `qwen3:8b`, and `qwen3:14b` are approved probes only. `qwen3:32b` and `qwen3:30b-a3b` are not bridge-ready. No model is promoted.
 
 ## Current product surfaces
 
@@ -85,6 +122,8 @@ Daily Coach Provider Preview Contract Reliability v1 adds deterministic normaliz
 - validation failures return sanitized diagnostics without exposing rejected provider text
 - `approved_narrative_returned` is true only when parse and validation both succeed
 - normal Today page load remains deterministic and must not call the provider
+
+Provider Narrative QA Matrix v2 adds developer-only matrix tooling for comparing local models. It does not promote any model and does not add provider output to normal Today UI.
 
 ### Workout
 

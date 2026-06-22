@@ -36,7 +36,6 @@ from services.daily_coach_narrative_context_service import (
     build_daily_coach_narrative_context,
 )
 from services.daily_coach_narrative_provider_service import (
-    DEFAULT_OLLAMA_BASE_URL,
     build_daily_coach_narrative_prompt,
     call_ollama_generate,
 )
@@ -129,42 +128,56 @@ class DailyCoachAsyncProviderRuntimeResult:
 
 
 def resolve_daily_coach_async_provider_runtime_config(
-    environ: Mapping[str, str] | None = None,
+    environ=None,
 ) -> DailyCoachAsyncProviderRuntimeConfig:
-    env = environ or os.environ
-    configured_provider = (
-        (
-            env.get(DAILY_COACH_ASYNC_PROVIDER_ENV)
-            or DAILY_COACH_ASYNC_PROVIDER_DIRECT_OLLAMA
-        )
-        .strip()
-        .lower()
-    )
-    configured_model = (
-        env.get(DAILY_COACH_ASYNC_PROVIDER_MODEL_ENV)
-        or DAILY_COACH_ASYNC_PROVIDER_DEFAULT_MODEL
-    ).strip()
-    timeout_seconds = _safe_timeout_seconds(
-        env.get(DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_ENV)
-    )
-    base_url = (env.get(OLLAMA_BASE_URL_ENV) or DEFAULT_OLLAMA_BASE_URL).strip()
-    enabled = _truthy(env.get(DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED_ENV))
+    """Resolve Developer Mode provider runtime config.
 
-    selected_provider = (
-        configured_provider
-        if configured_provider == DAILY_COACH_ASYNC_PROVIDER_DIRECT_OLLAMA
-        else "disabled"
+    Important test/runtime contract:
+    - environ=None reads the real process environment.
+    - environ={} is an explicitly empty isolated environment.
+    - provider runtime is disabled by default.
+    """
+    env = os.environ if environ is None else environ
+
+    def _get_env(name: str, default: str) -> str:
+        value = env.get(name)
+        if value is None or value == "":
+            return default
+        return str(value)
+
+    def _get_bool(name: str, default: bool = False) -> bool:
+        value = env.get(name)
+        if value is None or value == "":
+            return default
+        return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+    def _get_float(name: str, default: float) -> float:
+        value = env.get(name)
+        if value is None or value == "":
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    configured_provider = _get_env("DAILY_COACH_ASYNC_PROVIDER", "direct_ollama")
+    configured_model = _get_env("DAILY_COACH_ASYNC_PROVIDER_MODEL", "qwen2.5:3b")
+
+    ollama_base_url = (
+        env.get("DAILY_COACH_ASYNC_PROVIDER_OLLAMA_BASE_URL")
+        or env.get("DAILY_COACH_ASYNC_OLLAMA_BASE_URL")
+        or env.get("OLLAMA_BASE_URL")
+        or "http://localhost:11434"
     )
-    selected_model = configured_model
 
     return DailyCoachAsyncProviderRuntimeConfig(
-        enabled=enabled,
+        enabled=_get_bool("DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED", False),
         configured_provider=configured_provider,
-        selected_provider=selected_provider,
+        selected_provider=configured_provider,
         configured_model=configured_model,
-        selected_model=selected_model,
-        timeout_seconds=timeout_seconds,
-        ollama_base_url=base_url,
+        selected_model=configured_model,
+        timeout_seconds=_get_float("DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_SECONDS", 60.0),
+        ollama_base_url=str(ollama_base_url),
     )
 
 

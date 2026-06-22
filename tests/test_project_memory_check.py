@@ -261,6 +261,32 @@ def write_required_project_memory(root: Path) -> None:
             )
         elif (
             relative_path
+            == "docs/project_memory/milestones/daily_coach_async_persistence_contracts_schema_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Persistence Contracts + Schema v1\n"
+                "daily_coach_async_jobs\n"
+                "daily_coach_approved_narratives\n"
+                "daily_coach_job_events deferred\n"
+                "raw provider output must not be persisted\n"
+                "rejected provider output must not be persisted\n"
+                "no provider runtime\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_persistence_contracts_schema_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Persistence Contracts + Schema v1\n"
+                "DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED\n"
+                "daily_coach_async_jobs\n"
+                "daily_coach_approved_narratives\n"
+                "no provider runtime\n"
+                "no raw provider output persistence\n"
+                "no rejected provider output persistence\n"
+            )
+        elif (
+            relative_path
             == "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md"
         ):
             text = (
@@ -770,6 +796,28 @@ def test_project_memory_check_requires_daily_coach_async_service_shell_docs(
         and result.path
         == "docs/project_memory/milestones/daily_coach_async_service_shell_no_worker_v1.md"
         for result in results
+    )
+
+
+def test_daily_coach_async_persistence_contracts_schema_memory_is_required() -> None:
+    milestone_path = (
+        "docs/project_memory/milestones/"
+        "daily_coach_async_persistence_contracts_schema_v1.md"
+    )
+    review_path = (
+        "docs/project_memory/reviews/"
+        "daily_coach_async_persistence_contracts_schema_v1.md"
+    )
+
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "daily_coach_async_jobs"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert (
+        "DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
     )
 
 

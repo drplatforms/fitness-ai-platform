@@ -8,7 +8,7 @@ This file is the project-wide continuity landing packet for future AI Health Coa
 
 Use it before making Architecture, Backend Development, QA, DevOps / Tooling, Product, or TPM-style decisions. It exists so future chats can rehydrate from repo truth instead of scattered transcript memory.
 
-Project Continuity System v2 adds an active continuity control layer around this packet:
+Project Continuity System v2 added an active continuity control layer around this packet:
 
 - `docs/project_memory/project_state.json`
 - `docs/project_memory/current_workflow_contract.md`
@@ -21,41 +21,43 @@ Project Continuity System v2 adds an active continuity control layer around this
 
 Current accepted baseline:
 
-`Project Continuity System v2`
+`Daily Coach Async Persistence Design v1`
 
 Accepted status:
 
-`PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
+`DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
 
 Accepted commit/snapshot:
 
-- Feature commit: `4195f55 Add project continuity system v2`
-- Main merge commit: `c30c833 Merge feature/project-continuity-system-v2`
-- Main snapshot: `fitness_ai_snapshot_2026-06-22_c30c833_merge-feature-project-continuity-system-v2.zip`
+- Main merge commit: `898abe0 Merge feature/daily-coach-async-persistence-design-v1`
+- Main snapshot: `fitness_ai_snapshot_2026-06-22_898abe0_merge-feature-daily-coach-async-persistence-design-v1.zip`
 
-Project Continuity System v2 is docs + tooling only. It did not implement provider runtime, persistence, public UI display, worker execution, model promotion, or normal Today provider calls.
+Daily Coach Async Persistence Design v1 is design only. It did not implement provider runtime, DB schema, repositories, services, API routes, Streamlit behavior, worker execution, model promotion, public async narrative display, or normal Today provider calls.
 
 ## 3. Current authorized milestone
 
-`Daily Coach Async Persistence Design v1`
+`Daily Coach Async Persistence Contracts + Schema v1`
 
 Status:
 
-`AUTHORIZED FOR ARCHITECTURE / DESIGN`
+`AUTHORIZED / CODEX-ASSISTED IMPLEMENTATION`
 
 Required branch:
 
-`feature/daily-coach-async-persistence-design-v1`
+`feature/daily-coach-async-persistence-contracts-schema-v1`
 
-Required deliverable:
+Required deliverables:
 
-- `docs/project_memory/designs/daily_coach_async_persistence_design_v1.md`
+- `daily_coach_async_jobs`
+- `daily_coach_approved_narratives`
+- `daily_coach_job_events` deferred
+- Daily Coach async persistence contract constants
+- focused schema/contract tests
+- project-memory updates and checks
 
-This milestone must define durable async job/narrative storage boundaries before any provider runtime implementation begins.
+This milestone creates storage foundation only. It must not implement provider runtime, repositories/services, workers, queues, schedulers, polling, API behavior, Streamlit behavior, public async narrative display, or normal Today behavior changes.
 
-It must not implement DB schema, migrations, tables, repositories, services, API routes, Streamlit behavior, provider runtime, worker/queue/scheduler/polling, or model changes.
-
-## 4. Current accepted milestone stack
+## 4. Current Accepted Milestone Stack
 
 Accepted Daily Coach async / runtime-control / continuity stack:
 
@@ -68,6 +70,7 @@ Accepted Daily Coach async / runtime-control / continuity stack:
 7. Daily Coach Async Developer-Only Prototype v1
 8. Daily Coach Async Provider Runtime Design v1
 9. Project Continuity System v2
+10. Daily Coach Async Persistence Design v1
 
 ## 5. Current product vision
 
@@ -162,28 +165,47 @@ Current state:
 - accepted Developer Mode-only manual lifecycle prototype
 - accepted provider runtime design
 - Project Continuity System v2 accepted
-- persistence design authorized
+- Daily Coach Async Persistence Design v1 accepted
+- Daily Coach Async Persistence Contracts + Schema v1 authorized
 
-Not implemented / not authorized:
+In current scope:
 
+- `daily_coach_async_jobs` schema
+- `daily_coach_approved_narratives` schema
+- persistence contract constants
+- schema/contract tests
+- project-memory updates
+
+Deferred / not implemented:
+
+- `daily_coach_job_events`
 - provider runtime implementation
 - direct Ollama Daily Coach async runtime
 - CrewAI Daily Coach async runtime
 - qwen3 call or qwen3 bridge
+- qwen3:32b promotion
 - worker
 - queue
 - scheduler
 - polling
-- DB persistence implementation
-- `daily_coach_async_jobs` table
-- `daily_coach_approved_narratives` table
-- provider cache table
+- repositories
+- services
+- API route behavior
+- Streamlit behavior
 - normal Today provider call
 - public async narrative display
 - raw provider output persistence
 - rejected provider output persistence
 
-## 10. What future chats must do first
+## 10. Codex-assisted implementation boundary
+
+Codex is implementation worker only.
+
+Codex cannot decide architecture, merge, push main, snapshot, touch Linux, use `git add .`, or broaden scope.
+
+Backend/user owns review, validation, explicit staging, commit, push, snapshot, Linux pull, and final Architecture handoff.
+
+## 11. What Future Chats Must Do First
 
 Every new chat should read:
 

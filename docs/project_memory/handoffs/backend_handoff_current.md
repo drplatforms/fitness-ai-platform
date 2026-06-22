@@ -1,45 +1,60 @@
 # Backend Handoff Current
 
-Current milestone: Daily Coach Async Persistence Design v1
+Current milestone: Daily Coach Async Persistence Contracts + Schema v1
 
-Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
+Status: IMPLEMENTED / READY FOR BACKEND REVIEW
 
-Branch: `feature/daily-coach-async-persistence-design-v1`
+Branch: `feature/daily-coach-async-persistence-contracts-schema-v1`
+
+Latest accepted milestone: Daily Coach Async Persistence Design v1
+
+Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
 
 ## Backend scope
 
-This is a design-only persistence milestone.
+This is a schema/contracts foundation milestone.
 
-Backend must not implement schema, migrations, repositories, services, API routes, provider runtime, workers, queues, schedulers, polling, or Streamlit behavior during this milestone.
+Backend should review the SQLite schema and model constants only. This branch must not add repositories, services, API routes, provider runtime, workers, queues, schedulers, polling, Streamlit behavior, public async narrative display, or normal Today behavior changes.
 
 ## Files expected to change
 
-- `docs/project_memory/designs/daily_coach_async_persistence_design_v1.md`
+- `database.py`
+- `models/async_daily_coach_narrative_models.py`
+- `tests/test_daily_coach_async_persistence_contracts_schema_v1.py`
+- `tests/test_async_daily_coach_narrative_contracts_v1.py`
+- `tests/test_project_memory_check.py`
+- `tools/project_memory_check.py`
 - `docs/project_memory/project_state.json`
 - `docs/project_memory/next_milestone.md`
 - `docs/project_memory/current_state.md`
 - `docs/project_memory/project_continuity_bootstrap.md`
 - `docs/project_memory/open_questions.md`
-- current handoff docs
-- project-memory checks if required
+- `docs/project_memory/handoffs/architecture_handoff_current.md`
+- `docs/project_memory/handoffs/backend_handoff_current.md`
+- `docs/project_memory/handoffs/qa_handoff_current.md`
+- `docs/project_memory/milestones/daily_coach_async_persistence_contracts_schema_v1.md`
+- `docs/project_memory/reviews/daily_coach_async_persistence_contracts_schema_v1.md`
 
 ## Validation expectation
 
-Use docs-only validation:
+Use focused code validation:
 
 - `git diff --check`
+- `pytest tests/test_daily_coach_async_persistence_contracts_schema_v1.py -q`
+- `pytest tests/test_async_daily_coach_narrative_contracts_v1.py -q`
 - `pytest tests/test_project_memory_check.py -q`
 - `python tools/dev_assistant.py memory-check`
 - `python tools/dev_assistant.py stale-doc-check`
 - `python tools/project_memory_check.py`
 - `python tools/dev_assistant.py continuity-brief`
+- `scripts/dev_commit_check.ps1 -Mode code`
+- focused `ruff check`
+- focused `black --check`
+- focused `python -m py_compile`
 - `fsweep`
-- `scripts/dev_commit_check.ps1 -Mode docs-only`
-
-If Python project-memory tooling changed, use targeted checks only.
-
-Do not run broad repo formatters for docs-only work.
 
 ## Boundary reminder
 
-No product/runtime behavior should change.
+No product/runtime behavior should change. No provider output, rejected provider output, full prompt, raw context, scratchpad, traceback, secrets, or environment values should be persisted.
+
+Codex is implementation worker only and cannot merge, push main, snapshot, touch Linux, use `git add .`, or decide architecture.

@@ -4,11 +4,11 @@ Last updated: 2026-06-22
 
 ## Latest accepted milestone
 
-Project Continuity System v2
+Daily Coach Async Persistence Design v1
 
 ## Latest accepted status
 
-`PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
+`DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
 
 ## Current source branch
 
@@ -16,43 +16,59 @@ Project Continuity System v2
 
 Latest accepted main merge snapshot:
 
-`fitness_ai_snapshot_2026-06-22_c30c833_merge-feature-project-continuity-system-v2.zip`
+`fitness_ai_snapshot_2026-06-22_898abe0_merge-feature-daily-coach-async-persistence-design-v1.zip`
+
+Prior accepted milestone:
+
+- Project Continuity System v2
+- `PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
 
 ## Current authorized milestone
 
-Daily Coach Async Persistence Design v1
+Daily Coach Async Persistence Contracts + Schema v1
 
 Status:
 
-`AUTHORIZED_FOR_ARCHITECTURE_DESIGN`
+`AUTHORIZED / CODEX-ASSISTED IMPLEMENTATION`
 
-Required starting branch:
+Required implementation branch:
 
-`feature/daily-coach-async-persistence-design-v1`
+`feature/daily-coach-async-persistence-contracts-schema-v1`
 
 Milestone type:
 
-Design-only / persistence architecture
+schema/contracts foundation only
 
 Expected recipient:
 
-Architecture / Backend Development
+Codex implementation worker, then Backend Development review, then Architecture review.
 
 Expected validation type:
 
-Docs-only validation plus project-memory checks. Targeted Python tooling checks only if project-memory tooling changes.
+Focused schema/contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, and `scripts/dev_commit_check.ps1 -Mode code`.
 
-## Recommended next milestone after Daily Coach Async Persistence Design v1
+## Why this is current
 
-Daily Coach Async Persistence Contracts + Schema v1
+Daily Coach Async Persistence Design v1 is accepted. The next bounded step is to create the durable storage foundation for future async Daily Coach jobs and approved narratives, without implementing any provider runtime, worker, queue, scheduler, repository/service behavior, API behavior, Streamlit behavior, or normal Today behavior.
 
-## Why this is next
+This milestone is intentionally narrow:
 
-The accepted Daily Coach Async Provider Runtime Design v1 raised the sequencing question: provider runtime should not proceed until durable async job/narrative storage boundaries are designed.
+- add `daily_coach_async_jobs`
+- add `daily_coach_approved_narratives`
+- keep `daily_coach_job_events` deferred
+- add persistence contract constants
+- add schema/contract tests
+- update project memory
 
-This persistence design milestone answers what should be persisted, what must never be persisted, stale/expired/displayable behavior, context hash/versioning, Developer Mode inspection boundaries, and normal Today restrictions.
+## Recommended next milestone after acceptance
 
-After this design is accepted, the next safest implementation step is schema/contracts only, not provider runtime.
+Daily Coach Async Persistence Service Shell v1
+
+Status:
+
+`NOT_AUTHORIZED_YET`
+
+The service shell milestone should remain blocked until Daily Coach Async Persistence Contracts + Schema v1 is reviewed and accepted.
 
 ## Not authorized yet
 
@@ -63,10 +79,7 @@ After this design is accepted, the next safest implementation step is schema/con
 - qwen3 promotion
 - qwen3:32b promotion
 - worker / queue / scheduler / polling
-- DB persistence implementation before design acceptance
-- `daily_coach_async_jobs` table implementation before explicit schema milestone
-- `daily_coach_approved_narratives` table implementation before explicit schema milestone
-- repositories / services
+- repository/service write behavior
 - API routes
 - Streamlit behavior changes
 - normal Today provider call
@@ -74,3 +87,7 @@ After this design is accepted, the next safest implementation step is schema/con
 - raw provider output persistence
 - rejected provider output persistence
 - debug/provider metadata in normal UI
+
+## Codex-assisted flow reminder
+
+Codex is implementation worker only. Codex cannot decide architecture, merge, push main, snapshot, touch Linux, use `git add .`, or broaden scope beyond the implementation packet.

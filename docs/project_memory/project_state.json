@@ -8,20 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Project Continuity System v2",
-    "latest_final_status": "PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED",
-    "latest_accepted_commit": "4195f55",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_4195f55_add-project-continuity-system-v2.zip",
-    "latest_main_merge_commit": "c30c833",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_c30c833_merge-feature-project-continuity-system-v2.zip"
+    "latest_accepted_milestone": "Daily Coach Async Persistence Design v1",
+    "latest_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED",
+    "latest_accepted_commit": "898abe0",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_898abe0_merge-feature-daily-coach-async-persistence-design-v1.zip",
+    "latest_main_merge_commit": "898abe0",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_898abe0_merge-feature-daily-coach-async-persistence-design-v1.zip",
+    "prior_accepted_milestone": "Project Continuity System v2",
+    "prior_final_status": "PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED",
+    "prior_main_merge_commit": "c30c833"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Persistence Design v1",
-    "current_authorized_branch": "feature/daily-coach-async-persistence-design-v1",
-    "current_authorized_status": "AUTHORIZED_FOR_ARCHITECTURE_DESIGN",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Persistence Contracts + Schema v1",
+    "current_authorized_milestone": "Daily Coach Async Persistence Contracts + Schema v1",
+    "current_authorized_branch": "feature/daily-coach-async-persistence-contracts-schema-v1",
+    "current_authorized_status": "AUTHORIZED / CODEX-ASSISTED IMPLEMENTATION",
+    "current_authorized_scope": "schema/contracts",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Persistence Service Shell v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Implement durable async job/narrative schema and contract tests only after persistence design acceptance."
+    "next_milestone_reason": "Add repository/service shell behavior only after schema/contracts are reviewed and accepted."
   },
   "runtime_split": {
     "windows": [
@@ -43,7 +47,7 @@
     "commands": {
       "app": "launches/manages Linux FastAPI + Streamlit runtime",
       "wapp": "Windows-local only",
-      "fports": "Windows-side ports only"
+      "fports": "Windows-side visibility only"
     }
   },
   "model_provider_policy": {
@@ -55,8 +59,19 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "contracts + service shell + developer-only lifecycle prototype + provider runtime design + persistence design authorized",
+    "current": "contracts + service shell + developer-only lifecycle prototype + provider runtime design + persistence design accepted; schema/contracts implementation authorized on the current feature branch",
     "normal_today_behavior": "unchanged",
+    "in_current_scope": [
+      "daily_coach_async_jobs schema",
+      "daily_coach_approved_narratives schema",
+      "Daily Coach async persistence contract constants",
+      "schema/contract tests",
+      "project-memory updates"
+    ],
+    "deferred": [
+      "daily_coach_job_events",
+      "Daily Coach Async Persistence Service Shell v1"
+    ],
     "not_authorized": [
       "provider runtime implementation",
       "direct_ollama Daily Coach async runtime",
@@ -67,9 +82,7 @@
       "worker",
       "queue",
       "scheduler",
-      "DB persistence implementation",
-      "daily_coach_async_jobs table",
-      "daily_coach_approved_narratives table",
+      "polling",
       "repositories",
       "services",
       "API routes",
@@ -81,6 +94,18 @@
       "debug/provider metadata in normal UI"
     ]
   },
+  "codex_assisted_flow": {
+    "codex_role": "implementation worker only",
+    "codex_must_not": [
+      "decide architecture",
+      "merge",
+      "push main",
+      "snapshot",
+      "touch Linux",
+      "use git add ."
+    ],
+    "backend_user_role": "review, validate, stage explicit files, commit, push, snapshot, Linux pull, and hand off to Architecture after Codex finishes"
+  },
   "workflow_rules": {
     "phase_separated_delivery": true,
     "no_git_add_dot": true,
@@ -88,7 +113,7 @@
     "temporary_apply_artifacts_outside_repo": true,
     "temporary_apply_artifact_root": "C:\\projects",
     "run_apply_scripts_from_repo_as": "python ..\\<script>.py",
-    "apply_raw_patches_from_repo_as": "git apply --check ..\\<patch>.patch && git apply ..\\<patch>.patch",
+    "apply_raw_patches_from_repo_as": "git apply --check ..\\<patch>.patch",
     "no_broad_formatters_for_docs_only": true,
     "feature_flow": "commit -> push -> snapshot -> Linux pull feature",
     "main_flow": "merge -> validate -> push -> snapshot -> Linux pull main",

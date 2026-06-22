@@ -598,6 +598,97 @@ def initialize_database():
     )
     """)
 
+    # -----------------------------
+    # Daily Coach Async Jobs
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS daily_coach_async_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id TEXT NOT NULL UNIQUE,
+        user_id INTEGER NOT NULL,
+        target_date TEXT NOT NULL,
+        workflow_target TEXT NOT NULL,
+        next_action_id TEXT NOT NULL,
+        context_hash TEXT NOT NULL,
+        context_version TEXT NOT NULL,
+        prompt_contract_version TEXT NOT NULL,
+        validator_version TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (
+            status IN (
+                'not_requested',
+                'queued',
+                'generating',
+                'provider_succeeded_pending_validation',
+                'approved',
+                'rejected_parse',
+                'rejected_validation',
+                'provider_timeout',
+                'provider_error',
+                'stale',
+                'expired',
+                'fallback_available'
+            )
+        ),
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        started_at TEXT,
+        completed_at TEXT,
+        expires_at TEXT,
+        stale_after TEXT,
+        stale INTEGER NOT NULL DEFAULT 0,
+        expired INTEGER NOT NULL DEFAULT 0,
+        displayable INTEGER NOT NULL DEFAULT 0,
+        public_safe INTEGER NOT NULL DEFAULT 0,
+        fallback_used INTEGER NOT NULL DEFAULT 0,
+        fallback_reason TEXT,
+        provider_attempted INTEGER NOT NULL DEFAULT 0,
+        provider_name TEXT,
+        provider_model TEXT,
+        parse_status TEXT,
+        validation_status TEXT,
+        final_narrative_source TEXT,
+        sanitized_error_category TEXT,
+        raw_output_length INTEGER,
+        raw_output_preview_truncated INTEGER NOT NULL DEFAULT 0,
+        markdown_wrapper_detected INTEGER NOT NULL DEFAULT 0,
+
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+    """)
+
+    # -----------------------------
+    # Daily Coach Approved Narratives
+    # -----------------------------
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS daily_coach_approved_narratives (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        narrative_id TEXT NOT NULL UNIQUE,
+        job_id TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        target_date TEXT NOT NULL,
+        context_hash TEXT NOT NULL,
+        context_version TEXT NOT NULL,
+        approved_narrative_json TEXT NOT NULL,
+        approved_text TEXT NOT NULL,
+        reason_codes_json TEXT,
+        action_refs_json TEXT,
+        validator_version TEXT NOT NULL,
+        prompt_contract_version TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT,
+        stale INTEGER NOT NULL DEFAULT 0,
+        expired INTEGER NOT NULL DEFAULT 0,
+        displayable INTEGER NOT NULL DEFAULT 0,
+        public_safe INTEGER NOT NULL DEFAULT 1,
+        final_narrative_source TEXT NOT NULL,
+
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (job_id) REFERENCES daily_coach_async_jobs(job_id)
+    )
+    """)
+
     conn.commit()
     conn.close()
 

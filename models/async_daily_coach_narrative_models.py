@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class DailyCoachNarrativeJobStatus(str, Enum):
+class DailyCoachNarrativeJobStatus(StrEnum):
     """Allowed lifecycle states for a future async Daily Coach narrative job."""
 
     NOT_REQUESTED = "not_requested"
@@ -18,10 +18,11 @@ class DailyCoachNarrativeJobStatus(str, Enum):
     PROVIDER_TIMEOUT = "provider_timeout"
     PROVIDER_ERROR = "provider_error"
     STALE = "stale"
+    EXPIRED = "expired"
     FALLBACK_AVAILABLE = "fallback_available"
 
 
-class DailyCoachNarrativeModelLane(str, Enum):
+class DailyCoachNarrativeModelLane(StrEnum):
     """Model lane contract for Daily Coach narrative work."""
 
     DETERMINISTIC = "deterministic"
@@ -36,6 +37,91 @@ DAILY_COACH_NARRATIVE_JOB_STATUSES: tuple[str, ...] = tuple(
 
 DAILY_COACH_NARRATIVE_MODEL_LANES: tuple[str, ...] = tuple(
     lane.value for lane in DailyCoachNarrativeModelLane
+)
+
+DAILY_COACH_ASYNC_JOB_TABLE = "daily_coach_async_jobs"
+DAILY_COACH_APPROVED_NARRATIVE_TABLE = "daily_coach_approved_narratives"
+
+DAILY_COACH_ASYNC_JOB_REQUIRED_COLUMNS = (
+    "id",
+    "job_id",
+    "user_id",
+    "target_date",
+    "workflow_target",
+    "next_action_id",
+    "context_hash",
+    "context_version",
+    "prompt_contract_version",
+    "validator_version",
+    "status",
+    "created_at",
+    "updated_at",
+    "started_at",
+    "completed_at",
+    "expires_at",
+    "stale_after",
+    "stale",
+    "expired",
+    "displayable",
+    "public_safe",
+    "fallback_used",
+    "fallback_reason",
+    "provider_attempted",
+    "provider_name",
+    "provider_model",
+    "parse_status",
+    "validation_status",
+    "final_narrative_source",
+    "sanitized_error_category",
+    "raw_output_length",
+    "raw_output_preview_truncated",
+    "markdown_wrapper_detected",
+)
+
+DAILY_COACH_APPROVED_NARRATIVE_REQUIRED_COLUMNS = (
+    "id",
+    "narrative_id",
+    "job_id",
+    "user_id",
+    "target_date",
+    "context_hash",
+    "context_version",
+    "approved_narrative_json",
+    "approved_text",
+    "reason_codes_json",
+    "action_refs_json",
+    "validator_version",
+    "prompt_contract_version",
+    "created_at",
+    "expires_at",
+    "stale",
+    "expired",
+    "displayable",
+    "public_safe",
+    "final_narrative_source",
+)
+
+DAILY_COACH_ASYNC_PERSISTENCE_FORBIDDEN_COLUMNS = frozenset(
+    {
+        "raw_provider_output",
+        "provider_raw_output",
+        "rejected_provider_output",
+        "raw_model_output",
+        "raw_llm_output",
+        "full_prompt",
+        "prompt_text",
+        "raw_prompt",
+        "raw_context",
+        "raw_database_rows",
+        "raw_user_notes",
+        "scratchpad",
+        "chain_of_thought",
+        "validation_bypass",
+        "secrets",
+        "environment_values",
+        "stack_trace",
+        "traceback",
+    }
 )
 
 DAILY_COACH_NARRATIVE_BRIDGE_BASELINE_MODEL = "qwen2.5:3b"

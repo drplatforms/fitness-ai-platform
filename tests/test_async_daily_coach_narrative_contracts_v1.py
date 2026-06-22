@@ -34,6 +34,7 @@ REQUIRED_STATUS_VALUES = {
     "provider_timeout",
     "provider_error",
     "stale",
+    "expired",
     "fallback_available",
 }
 

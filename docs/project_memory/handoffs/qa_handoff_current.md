@@ -1,43 +1,43 @@
 # QA Handoff Current
 
-Current milestone: Daily Coach Async Persistence Design v1
+Current milestone: Daily Coach Async Persistence Contracts + Schema v1
 
-Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
+Status: IMPLEMENTED / READY FOR QA REVIEW
 
-Branch: `feature/daily-coach-async-persistence-design-v1`
+Branch: `feature/daily-coach-async-persistence-contracts-schema-v1`
+
+Latest accepted milestone: Daily Coach Async Persistence Design v1
+
+Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
 
 ## QA focus
 
-QA should review the persistence design and confirm boundary preservation.
+QA should review the schema/contracts diff and confirm boundary preservation.
 
-PASS if the design defines:
+PASS if:
 
-- what should be persisted
-- what must never be persisted
-- job lifecycle storage model
-- approved narrative storage model
-- rejected/raw provider output policy
-- public-safe metadata policy
-- stale/expired/displayable policy
-- context hash/versioning strategy
-- Developer Mode vs normal Today boundary
-- future implementation sequencing
+- `daily_coach_async_jobs` exists
+- `daily_coach_approved_narratives` exists
+- `daily_coach_job_events` is deferred
+- required columns exist
+- `expired` is part of the job status contract and DB CHECK constraint
+- stale/expired/displayable/public_safe fields exist
+- context hash/version fields exist
+- fallback and sanitized provider metadata fields exist
+- forbidden raw/rejected provider output fields do not exist
+- full prompt/raw context/scratchpad fields do not exist
+- no provider runtime, API, Streamlit, worker, queue, scheduler, or polling behavior is added
 
 FAIL if the branch implements or authorizes:
 
-- DB schema
-- migrations
-- tables
-- repositories
-- services
-- API routes
-- Streamlit behavior
 - provider runtime
-- direct_ollama calls
-- CrewAI calls
+- direct_ollama Daily Coach async runtime
+- CrewAI Daily Coach async runtime
 - qwen3 calls or bridge
 - qwen3:32b promotion
 - worker / queue / scheduler / polling
+- API route behavior changes
+- Streamlit behavior changes
 - normal Today provider calls
 - public async narrative display
 - raw provider output persistence
@@ -45,6 +45,6 @@ FAIL if the branch implements or authorizes:
 
 ## QA validation expectation
 
-Automated validation should remain docs-only/project-memory scoped.
+Automated validation should be focused on schema/contracts, project-memory checks, and boundary tests.
 
 Manual runtime restart is not required unless product/runtime files changed unexpectedly.

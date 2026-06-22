@@ -13,19 +13,28 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 
 ## Active current questions
 
-### Daily Coach async persistence
+### Daily Coach Async Persistence Contracts + Schema v1
 
-Daily Coach Async Persistence Design v1 is authorized to answer:
+Daily Coach Async Persistence Design v1 is accepted with final status:
 
-- What should be persisted for future async jobs?
-- What should be persisted for approved narratives?
-- What must never be persisted?
-- Should failed jobs persist only allowlisted metadata?
-- How should stale, expired, and displayable states work?
-- How should context hash/versioning determine whether a persisted approved narrative remains displayable?
-- What may Developer Mode inspect?
-- What must normal Today UI continue to hide?
-- What implementation sequence should follow design acceptance?
+`DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
+
+The current authorized implementation milestone is:
+
+`Daily Coach Async Persistence Contracts + Schema v1`
+
+Required branch:
+
+`feature/daily-coach-async-persistence-contracts-schema-v1`
+
+This milestone answers only:
+
+- Does `database.initialize_database()` create `daily_coach_async_jobs`?
+- Does `database.initialize_database()` create `daily_coach_approved_narratives`?
+- Is `daily_coach_job_events` deferred?
+- Do contract constants enumerate the required persisted columns?
+- Do tests prove forbidden raw/rejected provider output fields are absent?
+- Do tests prove `expired` is part of the job status contract?
 
 Current architecture bias:
 
@@ -34,10 +43,15 @@ Current architecture bias:
 - deterministic fallback remains mandatory
 - normal Today provider call remains unauthorized
 - public async narrative display remains unauthorized
+- no provider runtime is authorized
 
-Likely next implementation after design acceptance:
+Likely next implementation after acceptance:
 
-- Daily Coach Async Persistence Contracts + Schema v1
+- Daily Coach Async Persistence Service Shell v1
+
+Status:
+
+`NOT_AUTHORIZED_YET`
 
 ### Project memory and continuity
 
@@ -66,7 +80,7 @@ Provider runtime remains not authorized.
 Open questions before provider runtime implementation:
 
 - Should provider execution use subprocess isolation or a separate local worker process?
-- Should provider runtime wait until persistence schema/contracts are accepted?
+- Should provider runtime wait until persistence schema/contracts and service shell are accepted?
 - What timeout tier should be used for larger research models?
 - What sanitized diagnostics are useful in Developer Mode without storing raw rejected output?
 - What model quality bar should a premium async candidate meet before product UI surfacing?
@@ -117,6 +131,20 @@ Open questions before provider runtime implementation:
 - What authentication and backup strategy is needed before household/LAN use?
 
 ## Resolved historical questions
+
+### Daily Coach async persistence
+
+Daily Coach Async Persistence Design v1 resolved the design questions around:
+
+- what should be persisted for future async jobs
+- what should be persisted for approved narratives
+- what must never be persisted
+- allowlisted failure metadata
+- stale, expired, and displayable states
+- context hash/versioning displayability
+- Developer Mode inspection limits
+- normal Today UI restrictions
+- implementation sequencing
 
 ### Catalogs
 
@@ -169,8 +197,8 @@ Lesson:
 
 - automatic same-session approval display without explicit Developer Mode action
 - persistent Daily Coach provider narrative display
-- Daily Coach provider narrative persistence implementation
-- Daily Coach async persistence implementation before explicit schema milestone
+- Daily Coach provider narrative runtime implementation
+- Daily Coach async repository/service write behavior before explicit service shell milestone
 - raw provider output persistence
 - rejected provider output persistence
 - normal Today provider calls

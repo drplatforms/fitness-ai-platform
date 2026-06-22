@@ -1,6 +1,6 @@
 # Local Developer Command Menu
 
-Status: `LOCAL_COMMAND_MENU_APP_LINUX_RUNTIME_HOTFIX_V1_IMPLEMENTED_FOR_REVIEW`
+Status: `LOCAL_COMMAND_MENU_APP_LINUX_RUNTIME_CORRECTION_V1_ACCEPTED`
 
 AI Health Coach helper commands are repo-owned developer tooling.
 

@@ -189,6 +189,26 @@ def write_required_project_memory(root: Path) -> None:
 
         elif (
             relative_path
+            == "docs/project_memory/designs/daily_coach_async_provider_runtime_design_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Provider Runtime Design v1\n"
+                "design-only milestone\n"
+                "Provider output must never be rendered directly.\n"
+                "strict parser\n"
+                "schema validation\n"
+                "claim validation\n"
+                "deterministic fallback remains mandatory\n"
+                "qwen3 is not bridge-enabled\n"
+                "qwen3:32b is research / future premium async candidate only\n"
+                "same-process hard-timeout provider execution is treated as risky\n"
+                "Daily Coach Async Persistence Design v1\n"
+                "no provider execution implemented\n"
+                "no normal Today provider call added\n"
+                "no public async narrative display added\n"
+            )
+        elif (
+            relative_path
             == "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md"
         ):
             text = (

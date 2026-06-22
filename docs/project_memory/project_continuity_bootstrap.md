@@ -25,7 +25,7 @@ Accepted status:
 
 `DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED`
 
-The accepted baseline before the current branch is a service shell only. The current implementation branch adds a Developer Mode-only manual lifecycle prototype. It still does not authorize provider runtime, public UI display, persistence, worker execution, model promotion, or normal Today provider calls.
+The accepted baseline before the current branch includes the service shell and Developer Mode-only manual lifecycle prototype. The current branch is design-only for provider runtime. It still does not authorize provider execution, public UI display, persistence, worker execution, model promotion, or normal Today provider calls.
 
 ## 3. Current Accepted Milestone Stack
 
@@ -37,7 +37,7 @@ Accepted Daily Coach async / runtime-control stack:
 4. Daily Coach Async Contracts + Data Model v1
 5. Daily Coach Async Service Shell / No Worker v1
 
-The latest accepted implementation baseline before the current branch is Daily Coach Async Service Shell / No Worker v1. Daily Coach Async Developer-Only Prototype v1 is implemented for review on the current feature branch and is not a provider runtime milestone.
+The latest accepted implementation baseline before the current branch is Daily Coach Async Developer-Only Prototype v1. Daily Coach Async Provider Runtime Design v1 is designed for review on the current feature branch and is not a provider runtime implementation milestone.
 
 ## 4. Current Product Vision
 
@@ -444,3 +444,17 @@ Before giving implementation instructions, patches, scripts, staging commands, o
    - whether the task is safe to proceed
 
 If docs appear contradictory, stop and resolve the contradiction before implementation.
+
+
+## Current Provider Runtime Design Boundary
+
+Daily Coach Async Provider Runtime Design v1 defines the future provider execution boundary only.
+
+It does not authorize provider execution, direct_ollama calls, CrewAI calls, qwen3 calls, workers, queues, schedulers, polling, DB persistence, normal Today provider calls, public async narrative display, model promotion, or qwen3 bridge behavior.
+
+Recommended future sequence after acceptance:
+
+1. Daily Coach Async Persistence Design v1
+2. isolated/developer-only provider runtime prototype
+3. validated Developer Mode approved narrative preview
+4. public Today integration only after explicit Architecture acceptance

@@ -1,74 +1,74 @@
 # Architecture Handoff Current
 
-Current milestone: Daily Coach Async Developer-Only Prototype v1
+Current milestone: Daily Coach Async Provider Runtime Design v1
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: DAILY_COACH_ASYNC_DEVELOPER_ONLY_PROTOTYPE_V1_ACCEPTED
+Proposed final status: DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED
 
-Branch: `feature/daily-coach-async-developer-only-prototype-v1`
+Branch: `feature/daily-coach-async-provider-runtime-design-v1`
 
-Baseline accepted before this milestone: Daily Coach Async Service Shell / No Worker v1
+Baseline accepted before this milestone: Daily Coach Async Developer-Only Prototype v1
 
-Baseline main commit: `54131ea Merge project memory transition packet v1`
+Baseline main commit: `439b7a3 Merge feature-daily-coach-async-developer-only-prototype-v1`
 
 ## Summary
 
-Daily Coach Async Developer-Only Prototype v1 adds a manual Developer Mode lifecycle harness around the accepted Daily Coach async service shell.
+Daily Coach Async Provider Runtime Design v1 defines the safe future runtime boundary for Daily Coach async provider execution.
 
-The prototype can create, inspect, and safely simulate in-memory async narrative job shell state for QA/developer inspection.
+This is a design-only milestone. It does not implement provider execution.
 
-Normal Today behavior remains unchanged.
+## Design deliverable
 
-## Implemented
+- `docs/project_memory/designs/daily_coach_async_provider_runtime_design_v1.md`
 
-- Developer-only FastAPI route to create an async narrative job shell.
-- Developer-only FastAPI route to inspect latest/job status.
-- Developer-only FastAPI route to simulate deterministic lifecycle transitions:
-  - `approve_deterministic`
-  - `mark_stale`
-  - `expire`
-- Streamlit Developer Mode panel:
-  - `Developer Prototype: Async Daily Coach Lifecycle`
-- Sanitized job/context diagnostics for Developer Mode only.
-- Focused tests for API lifecycle behavior, service-shell boundary, normal Today response shape, and Streamlit Developer Mode visibility.
-- Project memory milestone/review docs.
+## Designed
+
+- provider execution model and recommended isolation strategy
+- future async job lifecycle statuses and allowed/forbidden transitions
+- provider input contract
+- provider output contract
+- parser / schema / validation / approval flow
+- timeout, provider error, stale context, expiration, and fallback behavior
+- sanitized runtime metadata for Developer Mode/debug only
+- Developer Mode vs normal Today UI boundary
+- model/provider policy
+- persistence decision points and recommended future sequencing
+
+## Architecture recommendation
+
+The design recommends that Daily Coach async provider runtime should not proceed to a product-like path until Daily Coach Async Persistence Design v1 resolves durable job/narrative storage.
+
+If provider runtime is implemented before persistence, it should remain Developer Mode-only and isolated from normal Today behavior.
+
+Same-process hard-timeout provider execution is treated as risky because prior provider timeout experimentation destabilized provider runtime internals.
 
 ## Boundary confirmation
 
-- developer-only path only: CONFIRMED
-- normal Today behavior unchanged: CONFIRMED
-- service shell reused: CONFIRMED
-- no provider execution: CONFIRMED
-- no direct_ollama call: CONFIRMED
-- no CrewAI call: CONFIRMED
-- no qwen3 call: CONFIRMED
-- no qwen3:32b call: CONFIRMED
-- no worker: CONFIRMED
-- no queue: CONFIRMED
-- no scheduler: CONFIRMED
-- no polling: CONFIRMED
-- no DB schema: CONFIRMED
-- no async persistence: CONFIRMED
-- no normal Today provider call: CONFIRMED
-- no public async narrative display: CONFIRMED
-- no model promoted: CONFIRMED
-- qwen3 remains not bridge-enabled: CONFIRMED
-- deterministic Daily Next Action remains primary: CONFIRMED
+- design only: CONFIRMED
+- no provider execution implemented: CONFIRMED
+- no direct_ollama call added: CONFIRMED
+- no CrewAI call added: CONFIRMED
+- no qwen3 call added: CONFIRMED
+- no qwen3 bridge added: CONFIRMED
+- no qwen3:32b promotion: CONFIRMED
+- no worker added: CONFIRMED
+- no queue added: CONFIRMED
+- no scheduler added: CONFIRMED
+- no polling added: CONFIRMED
+- no DB schema added: CONFIRMED
+- no normal Today provider call added: CONFIRMED
+- no public async narrative display added: CONFIRMED
+- deterministic fallback preserved: CONFIRMED
+- validation boundary preserved: CONFIRMED
 - app/wapp runtime split preserved: CONFIRMED
 
 ## Files changed
 
-- `api/routes/daily_coach.py`
-- `ui/streamlit_app.py`
-- `tests/test_daily_coach_async_developer_only_prototype_v1.py`
-- `tests/test_daily_coach_async_service_shell_v1.py`
-- `tests/test_streamlit_daily_coach_narrative_developer_panel.py`
+- `docs/project_memory/designs/daily_coach_async_provider_runtime_design_v1.md`
 - `docs/project_memory/current_state.md`
 - `docs/project_memory/project_continuity_bootstrap.md`
 - `docs/project_memory/open_questions.md`
-- `docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md`
-- `docs/project_memory/reviews/daily_coach_async_developer_only_prototype_v1.md`
 - `docs/project_memory/handoffs/architecture_handoff_current.md`
 - `docs/project_memory/handoffs/backend_handoff_current.md`
 - `docs/project_memory/handoffs/qa_handoff_current.md`
@@ -79,39 +79,19 @@ Normal Today behavior remains unchanged.
 
 ```powershell
 git diff --check
-pytest tests/test_daily_coach_async_developer_only_prototype_v1.py -q
-pytest tests/test_daily_coach_async_service_shell_v1.py -q
-pytest tests/test_async_daily_coach_narrative_contracts_v1.py -q
-pytest tests/test_streamlit_daily_coach_narrative_developer_panel.py -q
-pytest tests/test_local_developer_command_menu_v1.py -q
 pytest tests/test_project_memory_check.py -q
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
+python tools/project_memory_check.py
 . .\scripts\fitness_commands.ps1
 fsweep
-scripts/dev_commit_check.ps1 -Mode code
+scripts/dev_commit_check.ps1 -Mode docs-only
 ```
-
-## Non-goals preserved
-
-- no provider runtime
-- no direct Ollama async runtime
-- no CrewAI async runtime
-- no qwen3 bridge
-- no model promotion
-- no DB persistence
-- no worker / queue / scheduler
-- no normal Today provider call
-- no public async narrative display
-- no report/nutrition/workout changes
-- no command-menu behavior changes
 
 ## Recommended next milestone after acceptance
 
-Architecture should choose one of:
+1. Daily Coach Async Persistence Design v1
+2. Daily Coach Async Provider Runtime Prototype v1
+3. Daily Coach Narrative Premium Voice Research v1
 
-1. Daily Coach Async Provider Runtime Design v1
-2. Daily Coach Narrative Premium Voice Research v1
-3. Daily Coach Async Persistence Design v1
-
-None are authorized by this handoff.
+Architecture recommendation: complete persistence design before provider runtime implementation.

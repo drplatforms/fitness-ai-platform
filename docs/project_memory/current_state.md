@@ -8,23 +8,33 @@ AI Health Coach / fitness-ai
 
 ## Current source-of-truth branch
 
-`feature/project-continuity-system-v2`
+`feature/daily-coach-async-persistence-design-v1`
 
 ## Current active milestone
 
-`Project Continuity System v2`
+`Daily Coach Async Persistence Design v1`
 
-Status: `AUTHORIZED FOR BACKEND / DEVOPS TOOLING IMPLEMENTATION`
+Status: `AUTHORIZED FOR ARCHITECTURE / DESIGN`
 
-Purpose: create an active role-aware continuity/onboarding system so new chats can rehydrate from repo truth and follow the correct delivery workflow.
+Purpose: define the durable persistence boundary for future Daily Coach async jobs and approved narratives before any provider runtime implementation begins.
 
-Current accepted baseline before this branch: `Daily Coach Async Provider Runtime Design v1`.
+This is design only. It does not implement tables, migrations, repositories, services, API routes, Streamlit behavior, provider runtime, workers, queues, schedulers, polling, or persistence code.
 
-Continuity control layer: `docs/project_memory/project_state.json`, `docs/project_memory/project_continuity_bootstrap.md`, `docs/project_memory/current_workflow_contract.md`, and role-specific bootstraps.
+## Latest accepted baseline
+
+Latest accepted milestone: `Project Continuity System v2`
+
+Latest accepted status: `PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
+
+Latest accepted feature commit: `4195f55 Add project continuity system v2`
+
+Latest accepted main merge commit: `c30c833 Merge feature/project-continuity-system-v2`
+
+Latest accepted main snapshot: `fitness_ai_snapshot_2026-06-22_c30c833_merge-feature-project-continuity-system-v2.zip`
 
 ## Current Accepted Milestone Stack
 
-Accepted Daily Coach async / runtime-control stack:
+Accepted Daily Coach async / runtime-control / continuity stack:
 
 1. Local Developer Command Menu App Runtime Correction v1
 2. Async Daily Coach Narrative Design v1
@@ -34,8 +44,7 @@ Accepted Daily Coach async / runtime-control stack:
 6. Project Memory Transition Packet v1
 7. Daily Coach Async Developer-Only Prototype v1
 8. Daily Coach Async Provider Runtime Design v1
-
-Latest accepted baseline: `Daily Coach Async Provider Runtime Design v1`.
+9. Project Continuity System v2
 
 `docs/project_memory/project_state.json` is the compact machine-readable current-state control file.
 
@@ -43,16 +52,72 @@ Latest accepted baseline: `Daily Coach Async Provider Runtime Design v1`.
 
 `docs/project_memory/current_workflow_contract.md` is the canonical phase-separated delivery workflow contract.
 
-Current Daily Coach async boundary: contracts plus service shell plus Developer Mode-only manual lifecycle prototype plus provider runtime design. Normal Today behavior remains unchanged. There is still no provider runtime implementation, no worker, no queue, no scheduler, no DB persistence implementation, no normal Today provider call, no public Streamlit async display, no qwen3 promotion, and no qwen3 bridge.
+## Daily Coach Async Persistence Design v1 status
 
+Daily Coach Async Persistence Design v1 is authorized on `feature/daily-coach-async-persistence-design-v1`.
+
+Required deliverable:
+
+- `docs/project_memory/designs/daily_coach_async_persistence_design_v1.md`
+
+Required project-memory updates:
+
+- `docs/project_memory/project_state.json`
+- `docs/project_memory/next_milestone.md`
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/project_continuity_bootstrap.md`
+- `docs/project_memory/open_questions.md`
+- current Architecture / Backend / QA handoffs
+- project-memory checks if required
+
+Design must define:
+
+- what should be persisted
+- what must never be persisted
+- job lifecycle storage model
+- approved narrative storage model
+- rejected/raw provider output policy
+- public-safe metadata policy
+- stale/expired/displayable state handling
+- context hash/versioning strategy
+- cleanup/retention considerations
+- migration sequencing
+- Developer Mode vs normal Today boundary
+
+Boundary preserved:
+
+- design only
+- no DB schema implementation
+- no migrations
+- no tables
+- no repositories
+- no services
+- no API routes
+- no Streamlit behavior changes
+- no provider runtime
+- no direct_ollama call
+- no CrewAI call
+- no qwen3 call
+- no qwen3 bridge
+- no qwen3:32b promotion
+- no worker / queue / scheduler / polling
+- no normal Today provider call
+- no public async narrative display
+- deterministic fallback remains mandatory
+- raw provider output persistence is forbidden
+- rejected provider output persistence is forbidden
+
+## Daily Coach async current boundary
+
+Current Daily Coach async boundary: contracts plus service shell plus Developer Mode-only manual lifecycle prototype plus provider runtime design. Persistence design is now authorized, but persistence implementation is not.
+
+Normal Today behavior remains unchanged. There is still no provider runtime implementation, no worker, no queue, no scheduler, no DB persistence implementation, no normal Today provider call, no public Streamlit async display, no qwen3 promotion, and no qwen3 bridge.
 
 ## Project Continuity System v2 status
 
-Project Continuity System v2 is authorized on `feature/project-continuity-system-v2`.
+Project Continuity System v2 is accepted.
 
-This is a docs + tooling milestone, not product feature work.
-
-Deliverables:
+It added an active continuity/onboarding system for AI Health Coach / fitness_ai:
 
 - `docs/project_memory/project_state.json`
 - `docs/project_memory/role_bootstrap_architecture.md`
@@ -65,123 +130,19 @@ Deliverables:
 - `python tools/dev_assistant.py continuity-brief`
 - strengthened project-memory checks
 
-Boundary preserved:
-
-- docs + tooling only
-- no Daily Coach provider runtime implementation
-- no Daily Coach persistence implementation
-- no direct_ollama call
-- no CrewAI call
-- no qwen3 call
-- no qwen3 bridge
-- no qwen3:32b promotion
-- no worker / queue / scheduler
-- no DB schema
-- no FastAPI behavior change
-- no Streamlit behavior change
-- no normal Today behavior change
-- no app/wapp command behavior change
-- no nutrition / workout / report behavior change
-
+The continuity system is docs + tooling only. It did not change product/runtime behavior.
 
 ## Daily Coach Async Provider Runtime Design v1 status
 
-Daily Coach Async Provider Runtime Design v1 is a design-only milestone on `feature/daily-coach-async-provider-runtime-design-v1`.
+Daily Coach Async Provider Runtime Design v1 is accepted as a design-only milestone.
 
-Design deliverable:
+The design defines provider input/output contracts, parser/validator/approval flow, timeout/failure behavior, deterministic fallback behavior, sanitized runtime metadata, Developer Mode diagnostics, public UI restrictions, model policy, persistence considerations, and future implementation sequencing.
 
-`docs/project_memory/designs/daily_coach_async_provider_runtime_design_v1.md`
-
-The design defines:
-
-- recommended provider execution model
-- future async job lifecycle statuses and transitions
-- provider input contract
-- provider output contract
-- parser / schema / validation / approval flow
-- timeout and failure handling
-- deterministic fallback behavior
-- sanitized runtime metadata
-- Developer Mode vs normal Today UI boundary
-- model/provider policy
-- persistence considerations and recommended sequencing
-
-Boundary preserved:
-
-- design only
-- no provider execution
-- no direct_ollama call
-- no CrewAI call
-- no qwen3 call
-- no qwen3:32b call
-- no background worker
-- no queue
-- no scheduler
-- no polling
-- no DB schema or persistence
-- no `daily_coach_narrative_jobs` table
-- no provider cache
-- no normal Today provider call
-- no public async narrative display
-- no model promotion
-- qwen3 remains not bridge-enabled
-- deterministic Daily Next Action and Today Coach Note remain primary
-
-## Recommended next milestone after design acceptance
-
-Recommended next milestone: `Daily Coach Async Persistence Design v1`.
-
-Reason: the provider runtime design recommends resolving durable job/narrative storage before implementing a provider runtime that could outlive a single Developer Mode session.
-
-Alternative future options remain parked until Architecture authorizes them:
-
-- Daily Coach Async Provider Runtime Prototype v1
-- Daily Coach Narrative Premium Voice Research v1
-
-## Latest accepted main baseline
-
-The accepted main baseline includes:
-
-- Project Memory Transition Packet v1
-- Daily Coach Async Developer-Only Prototype v1
-- Local Developer Command Menu App Runtime Correction v1
-- Async Daily Coach Narrative Design v1
-- Async Daily Coach Narrative Implementation Plan v1
-- Daily Coach Async Contracts + Data Model v1
-- Daily Coach Async Service Shell / No Worker v1
-- Supercharger / session-brief developer tooling
-- Catalog Import Pipeline v1
-- Catalog Source Evaluation v1
-- Food Catalog Import Batch v1
-- Exercise Catalog Import Batch v1
-- Daily Next Action deterministic service
-- Coach's Read / Daily Coach Synthesis
-- Today Coach Note deterministic path
-- Today UX Polish v1, with global theme cleanup still parked
-- Workout Substitution UX v1
-- Workout Exercise Count Preference v1
-- Workout Daily State Lifecycle v1
-- Daily Coach Developer Preview Stabilization v1
-- Daily Coach Provider Preview Contract Reliability v1
-- Project Memory Alignment + North Star Architecture v1
-- Future Architecture Ledger
-- Premium Platform Blueprint
-- Provider Narrative QA Matrix v2 runtime results
-- Developer Delivery Workflow Contract v1
-- Developer Delivery Workflow Script Safety Addendum v1
-- Daily Coach Same-Session Approved Preview Bridge v1 Retry
-- Same-Session Bridge Runtime QA v1 results
-- Daily Coach Narrative Product Voice Polish v1
-- Daily Coach Narrative Product Voice Runtime QA v1 results
-- Local Developer Command Menu Audit + Repo-Owned Commands v1
-
-The prior same-session approval bridge branch is not accepted and is reference-only.
-
-Provider Narrative QA Matrix v2 is implemented as developer-only QA tooling and project memory. It characterizes model behavior through the existing manual Developer Mode provider-preview debug route and does not affect normal Today behavior.
+It did not implement provider execution.
 
 ## Definition of Done update
 
-Project memory is now a first-class system component.
+Project memory is a first-class system component.
 
 A feature branch or milestone is not done until the relevant project memory docs reflect:
 
@@ -218,51 +179,12 @@ Local helper commands now live in `scripts/fitness_commands.ps1`, with optional 
 
 The command menu is documented in `docs/project_memory/local_developer_command_menu.md`.
 
-Runtime truth encoded by the command menu:
+`app` is the canonical Linux runtime launcher. `wapp` is Windows-local only. `fports` is Windows-side visibility only.
 
-- Windows source repo: `C:\projects\fitness_ai`
-- Linux mirror repo: `~/projects/fitness-ai-platform`
-- Windows Ollama: `http://127.0.0.1:11434`
-- Linux-to-Windows Ollama: `OLLAMA_BASE_URL=http://192.168.1.104:11434`
-- Windows Streamlit default: `http://127.0.0.1:8510`
+## Historical notes
 
-## Current product surfaces
+Older accepted and reference-only milestones remain documented in milestone/review/runtime QA files under `docs/project_memory/`.
 
-### Today
+The prior `feature/daily-coach-narrative-same-session-approved-preview-bridge-v1` branch remains reference-only and is not accepted.
 
-The Today flow contains distinct surfaces:
-
-- Daily Next Action: deterministic backend decision and CTA.
-- Today Coach Note: deterministic, short, user-facing note based on the Daily Next Action.
-- Coach's Read / Daily Coach Synthesis: deterministic explanatory layer.
-- Developer Mode panels: manual/debug-only tools that must not imply normal Today provider behavior.
-
-Normal Today must not trigger Daily Coach async provider execution.
-
-### Daily Coach async
-
-Current Daily Coach async state is design/prototype-only:
-
-- contracts exist
-- service shell exists
-- Developer Mode lifecycle prototype exists
-- provider runtime design exists for review
-- provider execution does not exist
-- persistence does not exist
-- public async narrative display does not exist
-
-### Runtime and command menu
-
-- Linux is the canonical FastAPI + Streamlit runtime.
-- `app` starts/restarts Linux FastAPI + Streamlit.
-- `wapp` is Windows-local only.
-- `fports` is Windows-side ports only.
-
-## Current model policy
-
-- `qwen2.5:3b` is a bridge baseline only.
-- `qwen3:32b` is a research / future premium async candidate only.
-- qwen3 is not bridge-enabled.
-- No model is promoted without Architecture approval.
-- Deterministic fallback remains mandatory.
-- Validation must not be loosened to make a model pass.
+Provider Narrative QA Matrix v2 is developer-only QA tooling and project memory. It characterizes model behavior through the existing manual Developer Mode provider-preview debug route and does not affect normal Today behavior.

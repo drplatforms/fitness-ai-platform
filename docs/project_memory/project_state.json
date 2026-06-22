@@ -8,20 +8,20 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Provider Runtime Design v1",
-    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED",
-    "latest_accepted_commit": "b36241d",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_b36241d_design-daily-coach-async-provider-runtime.zip",
-    "latest_main_merge_commit": "0d3ab6a",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_0d3ab6a_merge-feature-daily-coach-async-provider-runtime-design-v1.zip"
+    "latest_accepted_milestone": "Project Continuity System v2",
+    "latest_final_status": "PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED",
+    "latest_accepted_commit": "4195f55",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_4195f55_add-project-continuity-system-v2.zip",
+    "latest_main_merge_commit": "c30c833",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_c30c833_merge-feature-project-continuity-system-v2.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Project Continuity System v2",
-    "current_authorized_branch": "feature/project-continuity-system-v2",
-    "current_authorized_status": "AUTHORIZED_FOR_BACKEND_DEVOPS_TOOLING_IMPLEMENTATION",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Persistence Design v1",
+    "current_authorized_milestone": "Daily Coach Async Persistence Design v1",
+    "current_authorized_branch": "feature/daily-coach-async-persistence-design-v1",
+    "current_authorized_status": "AUTHORIZED_FOR_ARCHITECTURE_DESIGN",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Persistence Contracts + Schema v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Define durable async job/narrative storage before implementing Daily Coach async provider runtime."
+    "next_milestone_reason": "Implement durable async job/narrative schema and contract tests only after persistence design acceptance."
   },
   "runtime_split": {
     "windows": [
@@ -55,7 +55,7 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "contracts + service shell + developer-only lifecycle prototype + provider runtime design",
+    "current": "contracts + service shell + developer-only lifecycle prototype + provider runtime design + persistence design authorized",
     "normal_today_behavior": "unchanged",
     "not_authorized": [
       "provider runtime implementation",
@@ -67,9 +67,18 @@
       "worker",
       "queue",
       "scheduler",
-      "DB persistence",
+      "DB persistence implementation",
+      "daily_coach_async_jobs table",
+      "daily_coach_approved_narratives table",
+      "repositories",
+      "services",
+      "API routes",
+      "Streamlit behavior changes",
       "normal Today provider call",
-      "public async narrative display"
+      "public async narrative display",
+      "raw provider output persistence",
+      "rejected provider output persistence",
+      "debug/provider metadata in normal UI"
     ]
   },
   "workflow_rules": {

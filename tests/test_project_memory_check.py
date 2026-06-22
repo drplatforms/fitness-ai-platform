@@ -238,6 +238,29 @@ def write_required_project_memory(root: Path) -> None:
             )
         elif (
             relative_path
+            == "docs/project_memory/designs/daily_coach_async_persistence_design_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Persistence Design v1\n"
+                "design-only milestone\n"
+                "durable persistence boundary\n"
+                "daily_coach_async_jobs\n"
+                "daily_coach_approved_narratives\n"
+                "raw provider output must never be persisted\n"
+                "rejected provider output must never be persisted\n"
+                "Persist allowlisted failure metadata only\n"
+                "stale\nexpired\ndisplayable\ncontext_hash\n"
+                "Developer Mode\n"
+                "Normal Today UI must not show persisted async narrative yet\n"
+                "deterministic fallback remains mandatory\n"
+                "qwen3 is not bridge-enabled\n"
+                "qwen3:32b remains research / future premium async candidate only\n"
+                "no DB schema implemented\n"
+                "no provider runtime implemented\n"
+                "Daily Coach Async Persistence Contracts + Schema v1\n"
+            )
+        elif (
+            relative_path
             == "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md"
         ):
             text = (

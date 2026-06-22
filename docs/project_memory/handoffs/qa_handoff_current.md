@@ -1,58 +1,50 @@
 # QA Handoff Current
 
-Current milestone: Project Continuity System v2
+Current milestone: Daily Coach Async Persistence Design v1
 
-Status: DOCS + TOOLING / READY FOR QA REVIEW
+Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
 
-Branch: `feature/project-continuity-system-v2`
-
-Previous accepted milestone: Daily Coach Async Provider Runtime Design v1
+Branch: `feature/daily-coach-async-persistence-design-v1`
 
 ## QA focus
 
-QA should verify this is a docs + tooling continuity milestone only.
+QA should review the persistence design and confirm boundary preservation.
 
-## Expected artifacts
+PASS if the design defines:
 
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/role_bootstrap_architecture.md`
-- `docs/project_memory/role_bootstrap_backend.md`
-- `docs/project_memory/role_bootstrap_qa.md`
-- `docs/project_memory/role_bootstrap_devops_tooling.md`
-- `docs/project_memory/current_workflow_contract.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/chat_onboarding_test.md`
-- `python tools/dev_assistant.py continuity-brief`
+- what should be persisted
+- what must never be persisted
+- job lifecycle storage model
+- approved narrative storage model
+- rejected/raw provider output policy
+- public-safe metadata policy
+- stale/expired/displayable policy
+- context hash/versioning strategy
+- Developer Mode vs normal Today boundary
+- future implementation sequencing
 
-## QA checks
+FAIL if the branch implements or authorizes:
 
-- continuity files exist
-- `project_state.json` is valid JSON
-- role bootstraps preserve lane-specific responsibilities
-- workflow contract includes phase-separated delivery
-- workflow contract forbids `git add .`
-- workflow contract forbids broad formatters for docs-only work
-- workflow contract documents temporary apply artifacts in `C:\projects`
-- workflow contract requires Linux pull after snapshot
-- model/provider policy is preserved
-- Daily Coach async boundary is preserved
+- DB schema
+- migrations
+- tables
+- repositories
+- services
+- API routes
+- Streamlit behavior
+- provider runtime
+- direct_ollama calls
+- CrewAI calls
+- qwen3 calls or bridge
+- qwen3:32b promotion
+- worker / queue / scheduler / polling
+- normal Today provider calls
+- public async narrative display
+- raw provider output persistence
+- rejected provider output persistence
 
-## Runtime behavior expected
+## QA validation expectation
 
-Runtime behavior should remain unchanged.
+Automated validation should remain docs-only/project-memory scoped.
 
-No manual runtime QA is required unless Architecture requests it.
-
-## Boundary checks
-
-- no provider runtime
-- no persistence implementation
-- no direct_ollama call
-- no CrewAI call
-- no qwen3 bridge
-- no worker / queue / scheduler
-- no DB schema
-- no FastAPI behavior change
-- no Streamlit behavior change
-- no normal Today behavior change
-- no app/wapp command behavior change
+Manual runtime restart is not required unless product/runtime files changed unexpectedly.

@@ -1,68 +1,45 @@
 # Backend Handoff Current
 
-Current milestone: Project Continuity System v2
+Current milestone: Daily Coach Async Persistence Design v1
 
-Status: DOCS + TOOLING / READY FOR ARCHITECTURE REVIEW
+Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
 
-Branch: `feature/project-continuity-system-v2`
+Branch: `feature/daily-coach-async-persistence-design-v1`
 
-Previous accepted milestone: Daily Coach Async Provider Runtime Design v1
+## Backend scope
 
-## Backend / DevOps status
+This is a design-only persistence milestone.
 
-Implemented an active continuity/onboarding system.
+Backend must not implement schema, migrations, repositories, services, API routes, provider runtime, workers, queues, schedulers, polling, or Streamlit behavior during this milestone.
 
-No backend product/runtime behavior was implemented.
+## Files expected to change
 
-## New first-read continuity files
-
+- `docs/project_memory/designs/daily_coach_async_persistence_design_v1.md`
 - `docs/project_memory/project_state.json`
-- `docs/project_memory/current_workflow_contract.md`
 - `docs/project_memory/next_milestone.md`
-- `docs/project_memory/chat_onboarding_test.md`
-- role-specific bootstrap files
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/project_continuity_bootstrap.md`
+- `docs/project_memory/open_questions.md`
+- current handoff docs
+- project-memory checks if required
 
-## New dev assistant command
+## Validation expectation
 
-```powershell
-python tools/dev_assistant.py continuity-brief
-```
+Use docs-only validation:
 
-## Backend workflow preserved
+- `git diff --check`
+- `pytest tests/test_project_memory_check.py -q`
+- `python tools/dev_assistant.py memory-check`
+- `python tools/dev_assistant.py stale-doc-check`
+- `python tools/project_memory_check.py`
+- `python tools/dev_assistant.py continuity-brief`
+- `fsweep`
+- `scripts/dev_commit_check.ps1 -Mode docs-only`
 
-- phase-separated delivery
-- temporary apply scripts outside repo, usually `C:\projects`
-- run apply scripts from repo as `python ..\<script>.py`
-- no `git add .`
-- no broad formatters for docs-only work
-- snapshot only after commit + push + clean tree
-- Linux pull immediately after snapshot
+If Python project-memory tooling changed, use targeted checks only.
 
-## Expected validation
+Do not run broad repo formatters for docs-only work.
 
-```powershell
-git diff --check
-pytest tests/test_project_memory_check.py -q
-python tools/dev_assistant.py memory-check
-python tools/dev_assistant.py stale-doc-check
-python tools/project_memory_check.py
-python tools/dev_assistant.py continuity-brief
-. .\scripts\fitness_commands.ps1
-fsweep
-scripts/dev_commit_check.ps1 -Mode docs-only
-ruff check tools/dev_assistant.py tools/project_memory_check.py tests/test_project_memory_check.py
-black --check tools/dev_assistant.py tools/project_memory_check.py tests/test_project_memory_check.py
-python -m py_compile tools/dev_assistant.py tools/project_memory_check.py
-```
+## Boundary reminder
 
-## Preserved non-goals
-
-- No provider runtime.
-- No persistence implementation.
-- No direct_ollama call.
-- No CrewAI call.
-- No qwen3 bridge.
-- No worker / queue / scheduler.
-- No DB schema.
-- No FastAPI or Streamlit behavior changes.
-- No normal Today behavior changes.
+No product/runtime behavior should change.

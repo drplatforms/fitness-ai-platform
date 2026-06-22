@@ -57,6 +57,7 @@ REQUIRED_FILES = [
     "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md",
     "docs/project_memory/reviews/daily_coach_async_developer_only_prototype_v1.md",
     "docs/project_memory/designs/daily_coach_async_provider_runtime_design_v1.md",
+    "docs/project_memory/designs/daily_coach_async_persistence_design_v1.md",
     "docs/project_memory/handoffs/architecture_handoff_current.md",
     "docs/project_memory/handoffs/backend_handoff_current.md",
     "docs/project_memory/handoffs/qa_handoff_current.md",
@@ -98,6 +99,9 @@ FORBIDDEN_CURRENT_CLAIMS = {
         "qwen3:32b is promoted",
         "qwen3:32b is production",
         "Daily Coach provider narrative persistence is approved",
+        "Daily Coach async persistence implementation is approved",
+        "raw provider output persistence is approved",
+        "rejected provider output persistence is approved",
     ],
     "docs/project_memory/ai_boundaries.md": [
         "qwen3:32b is promoted",

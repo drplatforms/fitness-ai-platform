@@ -1,67 +1,80 @@
 # Architecture Handoff Current
 
-Current milestone: Project Continuity System v2
+Current milestone: Daily Coach Async Persistence Design v1
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+Status: DESIGNED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: `PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
+Proposed final status: `DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
 
-Branch: `feature/project-continuity-system-v2`
+Branch: `feature/daily-coach-async-persistence-design-v1`
 
-Previous accepted milestone: Daily Coach Async Provider Runtime Design v1
+Previous accepted milestone: Project Continuity System v2
+
+Previous final status: `PROJECT_CONTINUITY_SYSTEM_V2_ACCEPTED`
 
 ## Summary
 
-Project Continuity System v2 adds an active continuity/onboarding system for AI Health Coach / fitness_ai.
+Daily Coach Async Persistence Design v1 defines the durable persistence boundary for future Daily Coach async jobs and approved narratives.
 
-This milestone is docs + tooling only. It does not implement product/runtime behavior.
+This milestone is design only. It does not implement product/runtime behavior.
 
-## Deliverables
+## Deliverable
 
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/role_bootstrap_architecture.md`
-- `docs/project_memory/role_bootstrap_backend.md`
-- `docs/project_memory/role_bootstrap_qa.md`
-- `docs/project_memory/role_bootstrap_devops_tooling.md`
-- `docs/project_memory/current_workflow_contract.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/chat_onboarding_test.md`
-- `python tools/dev_assistant.py continuity-brief`
-- strengthened project-memory checks
+- `docs/project_memory/designs/daily_coach_async_persistence_design_v1.md`
+
+## Design covers
+
+- persistence goals and non-goals
+- proposed future data boundaries
+- job lifecycle storage model
+- approved narrative storage model
+- data that must never be persisted
+- rejection/failure metadata policy
+- stale/expired/displayable policy
+- context hash/versioning strategy
+- Developer Mode boundary
+- normal Today UI boundary
+- cleanup/retention considerations
+- migration sequencing
+- validation gates before implementation
 
 ## Architecture review focus
 
-Confirm that the continuity system correctly preserves:
+Confirm that the design correctly preserves:
 
-- latest accepted state
-- phase-separated workflow
-- temporary patch/apply artifact location rule
-- no `git add .`
-- no broad formatters for docs-only work
-- snapshot and Linux pull rules
-- long handoff formatting
-- model/provider policy
-- Daily Coach async boundary
-- Developer Mode vs normal Today restrictions
+- no raw provider output persistence
+- no rejected provider output persistence
+- deterministic fallback
+- current model/provider policy
+- Developer Mode vs normal Today separation
+- no provider runtime implementation
+- no schema/migration implementation
+- no normal Today behavior change
 
 ## Boundary confirmation
 
-- docs + tooling only: CONFIRMED
-- no Daily Coach provider runtime implemented: CONFIRMED
-- no Daily Coach persistence implemented: CONFIRMED
+- design only: CONFIRMED
+- no DB schema implemented: CONFIRMED
+- no migrations added: CONFIRMED
+- no tables created: CONFIRMED
+- no repositories added: CONFIRMED
+- no services added: CONFIRMED
+- no API routes added: CONFIRMED
+- no Streamlit behavior changed: CONFIRMED
+- no provider runtime implemented: CONFIRMED
 - no direct_ollama call added: CONFIRMED
 - no CrewAI call added: CONFIRMED
 - no qwen3 call added: CONFIRMED
 - no qwen3 bridge added: CONFIRMED
 - no qwen3:32b promotion: CONFIRMED
-- no worker / queue / scheduler added: CONFIRMED
-- no DB schema added: CONFIRMED
-- no FastAPI behavior changed: CONFIRMED
-- no Streamlit behavior changed: CONFIRMED
-- no normal Today behavior changed: CONFIRMED
-- no app/wapp command behavior changed: CONFIRMED
-- no nutrition / workout / report behavior changed: CONFIRMED
+- no worker / queue / scheduler / polling added: CONFIRMED
+- no normal Today provider call added: CONFIRMED
+- no public async narrative display added: CONFIRMED
+- deterministic fallback preserved: CONFIRMED
+- model/provider policy preserved: CONFIRMED
+- raw provider output persistence forbidden: CONFIRMED
+- rejected provider output persistence forbidden: CONFIRMED
 
 ## Recommended next milestone after acceptance
 
-Daily Coach Async Persistence Design v1.
+Daily Coach Async Persistence Contracts + Schema v1.

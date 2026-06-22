@@ -112,3 +112,15 @@ def test_daily_coach_narrative_preview_copy_helpers_hide_missing_narrative() -> 
         helpers["daily_coach_narrative_approved_display"]({"approved_narrative": None})
         == {}
     )
+
+
+def test_daily_coach_async_lifecycle_developer_panel_is_present_and_manual() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    assert "Developer Prototype: Async Daily Coach Lifecycle" in source
+    assert "Create async job shell" in source
+    assert "Inspect latest async job shell" in source
+    assert "Run lifecycle simulation" in source
+    assert "No provider is called" in source
+    assert "normal Today behavior is unchanged" in source
+    assert "/async-narrative/developer/jobs" in source

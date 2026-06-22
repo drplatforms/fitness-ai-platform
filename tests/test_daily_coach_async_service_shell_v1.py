@@ -316,23 +316,30 @@ def test_no_provider_or_background_runtime_tokens_added() -> None:
         assert token not in service_source
 
 
-def test_no_fastapi_routes_added_for_async_service_shell() -> None:
-    route_text = "\n".join(
-        path.read_text(encoding="utf-8") for path in Path("api/routes").rglob("*.py")
-    )
+def test_fastapi_async_lifecycle_path_is_developer_only() -> None:
+    route_text = Path("api/routes/daily_coach.py").read_text(encoding="utf-8")
 
-    assert "DailyCoachAsyncNarrativeService" not in route_text
-    assert "daily_coach_async" not in route_text
-    assert "async narrative job" not in route_text.lower()
+    assert "/async-narrative/developer/jobs" in route_text
+    assert "developer-only async narrative job shell" in route_text.lower()
+    assert '"provider_execution": "not_attempted"' in route_text
+    assert '"worker_queue_scheduler": "not_added"' in route_text
+    assert '"persistence": "in_memory_only"' in route_text
+    assert "BackgroundTasks" not in route_text
+    assert "asyncio.create_task" not in route_text
+    assert "threading.Thread" not in route_text
+    assert "CREATE TABLE daily_coach_narrative_jobs" not in route_text
 
 
-def test_no_streamlit_async_display_added() -> None:
+def test_streamlit_async_lifecycle_path_is_developer_mode_only() -> None:
     ui_text = "\n".join(
         path.read_text(encoding="utf-8") for path in Path("ui").rglob("*.py")
     )
 
+    assert "Developer Prototype: Async Daily Coach Lifecycle" in ui_text
+    assert "/async-narrative/developer/jobs" in ui_text
+    assert "No provider is called" in ui_text
+    assert "normal Today behavior is unchanged" in ui_text
     assert "DailyCoachAsyncNarrativeService" not in ui_text
-    assert "daily_coach_async" not in ui_text
     assert "validated_async_candidate" not in ui_text
 
 

@@ -96,17 +96,22 @@ Do not default to Linux-local Ollama commands for provider runtime work.
 
 Use this path for normal implementation milestones.
 
-1. Assistant provides one patch file as the primary artifact.
-2. User downloads the patch to the project root:
+1. Assistant provides one patch file or generated apply script as the primary artifact.
+2. User saves temporary delivery artifacts outside the repo, normally here:
+
+   ```text
+   C:\projects
+   ```
+
+3. Commands run from the project root unless explicitly stated:
 
    ```text
    C:\projects\fitness_ai
    ```
 
-3. Commands assume project root unless explicitly stated.
 4. Commands verify the expected branch before applying changes.
-5. Commands run `git apply --check <patch>` before `git apply <patch>`.
-6. Commands apply the patch.
+5. Raw patch commands run `git apply --check ..\<patch>` before `git apply ..\<patch>`.
+6. Apply-script commands run `python ..\<apply_script>.py` and remove the script from `C:\projects` after it runs.
 7. Commands validate.
 8. Commands stage only expected files.
 9. Commands show staged files with `git diff --cached --name-only`.
@@ -133,8 +138,8 @@ if ($currentBranch -ne $expectedBranch) {
 }
 
 git status --short
-git apply --check .\example.patch
-git apply .\example.patch
+git apply --check ..\example.patch
+git apply ..\example.patch
 git status --short
 ```
 
@@ -149,8 +154,8 @@ git pull --ff-only origin main
 
 git switch -c feature/example-branch
 
-git apply --check .\example.patch
-git apply .\example.patch
+git apply --check ..\example.patch
+git apply ..\example.patch
 ```
 
 ## Validation before commit

@@ -1,71 +1,94 @@
 # Backend Handoff Current
 
-Current milestone: Project Memory Transition Packet v1
+Current milestone: Daily Coach Async Developer-Only Prototype v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+
+Branch: `feature/daily-coach-async-developer-only-prototype-v1`
 
 Baseline accepted before this milestone: Daily Coach Async Service Shell / No Worker v1
 
 ## Backend implementation summary
 
-This milestone is docs/project-memory only. It adds a project-wide continuity bootstrap packet and corrects stale current project-memory state.
+Backend implemented a developer-only manual lifecycle harness around the accepted Daily Coach async service shell.
 
-Files changed by this milestone:
+This is not a provider runtime milestone. It does not change normal Today behavior.
 
-- `docs/project_memory/project_continuity_bootstrap.md`
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/local_developer_command_menu.md`
-- `docs/project_memory/handoffs/architecture_handoff_current.md`
-- `docs/project_memory/handoffs/backend_handoff_current.md`
-- `docs/project_memory/handoffs/qa_handoff_current.md`
-- `tools/project_memory_check.py`
-- `tests/test_project_memory_check.py`
+## Backend behavior added
 
-## Current accepted implementation baseline
+- `POST /daily-coach/{user_id}/async-narrative/developer/jobs`
+  - creates an in-memory async narrative job shell
+  - uses deterministic Daily Next Action context identity
+  - does not call a provider
 
-Daily Coach Async Service Shell / No Worker v1 remains the latest accepted implementation baseline.
+- `GET /daily-coach/{user_id}/async-narrative/developer/jobs/latest`
+  - inspects latest matching in-memory developer job shell
 
-Service-shell boundary already accepted:
+- `GET /daily-coach/{user_id}/async-narrative/developer/jobs/{job_id}`
+  - inspects one developer job shell and displayability against current context identity
 
-- Added internal Daily Coach async narrative service shell.
-- Added in-memory repository/protocol boundary for tests.
-- Added deterministic create/read/list/latest behavior.
-- Added latest displayable approved job selection.
-- Added stale/context-valid/expiration/displayability helpers.
-- Added explicit status transition helper.
-- Added focused tests for stale, expired, context mismatch, rejected, timeout, error, queued, and generating states.
+- `POST /daily-coach/{user_id}/async-narrative/developer/jobs/{job_id}/simulate`
+  - supports manual developer-only simulation actions:
+    - `approve_deterministic`
+    - `mark_stale`
+    - `expire`
+
+## Streamlit Developer Mode behavior added
+
+Added Developer Mode panel:
+
+`Developer Prototype: Async Daily Coach Lifecycle`
+
+The panel can manually:
+
+- create a job shell
+- inspect latest job shell
+- view display state
+- view sanitized job/context metadata
+- simulate deterministic approval/stale/expired state
 
 ## Runtime boundary
 
 - No provider execution.
 - No direct_ollama call.
 - No CrewAI call.
+- No qwen3 call.
+- No qwen3:32b call.
 - No background worker.
 - No queue.
 - No scheduler.
+- No polling.
 - No DB schema or persistence.
-- No FastAPI route.
-- No Streamlit async display behavior.
+- No FastAPI provider runtime.
 - No normal Today provider call.
+- No public Streamlit async display behavior.
 - No model promotion.
-- app/wapp Linux runtime hotfix remains intact.
+- app/wapp Linux runtime split remains intact.
 
-## Runtime hotfix continuity
+## Expected validation
 
-- Local Command Menu App Runtime Correction v1 remains intact.
-- `app` restarts Linux FastAPI + Streamlit through SSH.
-- wapp remains the explicit Windows-local escape hatch.
-- No backend app runtime code changed.
-
-## Backend behavior changes
-
-None.
-
-This milestone does not change FastAPI, Streamlit, database, provider runtime, reports, nutrition, workouts, command behavior, or async execution behavior.
+```powershell
+git diff --check
+pytest tests/test_daily_coach_async_developer_only_prototype_v1.py -q
+pytest tests/test_daily_coach_async_service_shell_v1.py -q
+pytest tests/test_async_daily_coach_narrative_contracts_v1.py -q
+pytest tests/test_streamlit_daily_coach_narrative_developer_panel.py -q
+pytest tests/test_local_developer_command_menu_v1.py -q
+pytest tests/test_project_memory_check.py -q
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+. .\scripts\fitness_commands.ps1
+fsweep
+scripts/dev_commit_check.ps1 -Mode code
+```
 
 ## Next after Architecture acceptance
 
-Recommended: Daily Coach Async Developer-Only Prototype v1.
+Recommended options:
+
+1. Daily Coach Async Provider Runtime Design v1
+2. Daily Coach Narrative Premium Voice Research v1
+3. Daily Coach Async Persistence Design v1
 
 Not authorized by this handoff:
 
@@ -75,4 +98,4 @@ Not authorized by this handoff:
 - worker / queue / scheduler
 - DB persistence
 - normal Today provider call
-- Streamlit async display
+- public Streamlit async display

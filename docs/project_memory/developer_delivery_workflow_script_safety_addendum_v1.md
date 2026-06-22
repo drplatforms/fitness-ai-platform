@@ -80,18 +80,22 @@ if ($localMain -ne $originMain) {
 
 Patch-based scripts must:
 
-- assume the patch is downloaded to `C:\projects\fitness_ai` unless stated otherwise
-- verify the patch file exists
-- run `git apply --check <patch>` before `git apply <patch>`
+- assume temporary patch/apply artifacts are saved outside the repo, normally under `C:\projects`, unless stated otherwise
+- verify the patch or apply-script file exists
+- run `git apply --check <patch>` before `git apply <patch>` when using raw patch files
 - stop immediately if `git apply --check` fails
 - apply the patch only after the check passes
-- show changed files after the patch
+- run generated apply scripts from the repo root via `python ..\<script>.py`
+- remove temporary apply scripts from `C:\projects` after they run
+- show changed files after the patch/apply script
 - not stage automatically until validation passes
 
-Recommended check pattern:
+Recommended raw patch pattern:
 
 ```powershell
-$patch = "C:\projects\fitness_ai\example.patch"
+cd C:\projects\fitness_ai
+
+$patch = "C:\projects\example.patch"
 if (-not (Test-Path $patch)) {
     throw "Missing patch: $patch"
 }
@@ -100,6 +104,23 @@ git apply --check $patch
 git apply $patch
 git status --short
 ```
+
+Recommended apply-script pattern:
+
+```powershell
+cd C:\projects\fitness_ai
+
+$script = "C:\projects\apply_example.py"
+if (-not (Test-Path $script)) {
+    throw "Missing apply script: $script"
+}
+
+python $script
+Remove-Item $script -Force
+git status --short
+```
+
+Do not place temporary apply scripts in the repo root when clean-tree guards are used. The untracked script will make the repo dirty and should stop the apply phase.
 
 Use `--ignore-whitespace` only when explicitly justified, such as CRLF-heavy docs patches, and state why.
 

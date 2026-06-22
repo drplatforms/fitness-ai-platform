@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tools import project_memory_check
 from tools.project_memory_check import (
     REQUIRED_FILES,
     has_failures,
@@ -182,7 +183,34 @@ def write_required_project_memory(root: Path) -> None:
                 "service shell only\n"
                 "no provider runtime yet\n"
                 "Daily Coach Async Developer-Only Prototype v1\n"
+                "Developer Mode-only manual lifecycle prototype\n"
                 "What Future Chats Must Do First\n"
+            )
+
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Developer-Only Prototype v1\n"
+                "Developer Mode\n"
+                "manual lifecycle harness\n"
+                "no provider execution\n"
+                "no DB persistence\n"
+                "normal Today behavior remains unchanged\n"
+                "DAILY_COACH_ASYNC_DEVELOPER_ONLY_PROTOTYPE_V1_ACCEPTED\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_developer_only_prototype_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Developer-Only Prototype v1\n"
+                "READY FOR ARCHITECTURE REVIEW\n"
+                "DAILY_COACH_ASYNC_DEVELOPER_ONLY_PROTOTYPE_V1_ACCEPTED\n"
+                "no provider execution\n"
+                "no qwen3 call\n"
+                "no normal Today provider call\n"
             )
 
         elif relative_path == "docs/project_memory/local_developer_command_menu.md":
@@ -670,4 +698,21 @@ def test_project_memory_check_requires_daily_coach_async_service_shell_docs(
         and result.path
         == "docs/project_memory/milestones/daily_coach_async_service_shell_no_worker_v1.md"
         for result in results
+    )
+
+
+def test_daily_coach_async_developer_only_prototype_memory_is_required() -> None:
+    assert (
+        "docs/project_memory/milestones/daily_coach_async_developer_only_prototype_v1.md"
+        in project_memory_check.REQUIRED_FILES
+    )
+    assert (
+        "docs/project_memory/reviews/daily_coach_async_developer_only_prototype_v1.md"
+        in project_memory_check.REQUIRED_FILES
+    )
+    assert (
+        "Daily Coach Async Developer-Only Prototype v1"
+        in project_memory_check.REQUIRED_PHRASES[
+            "docs/project_memory/project_continuity_bootstrap.md"
+        ]
     )

@@ -86,3 +86,13 @@ Use focused code validation:
 No product/runtime behavior should change. No provider output, rejected provider output, full prompt, raw context, scratchpad, traceback, secrets, or environment values should be persisted.
 
 Codex is implementation worker only and cannot merge, push main, snapshot, touch Linux, use `git add .`, or decide architecture.
+
+---
+
+## Daily Coach Async Provider Runtime Prototype v1
+
+Status: AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION
+
+Branch: `feature/daily-coach-async-provider-runtime-prototype-v1`
+
+Developer Mode-only manual provider runtime prototype. Provider runtime is disabled by default, manual-trigger only, and must not run on normal Today render or page load. Approved public-safe narrative persistence is allowed only after strict JSON parse and safety validation. Failure paths may persist sanitized metadata only. No qwen3 bridge, qwen3 promotion, qwen3:32b promotion, worker, queue, scheduler, polling, public async narrative display, raw provider output persistence, rejected provider output persistence, full prompt/raw context/scratchpad persistence, or debug/provider metadata in normal UI. Codex do not use by default.

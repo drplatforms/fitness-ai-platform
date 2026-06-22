@@ -218,6 +218,39 @@ def write_required_project_memory(root: Path) -> None:
             )
         elif (
             relative_path
+            == "docs/project_memory/milestones/daily_coach_async_provider_runtime_prototype_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Provider Runtime Prototype v1\n"
+                "Developer Mode\n"
+                "manual provider trigger\n"
+                "provider disabled by default\n"
+                "strict JSON parser\n"
+                "approved public-safe narrative persistence\n"
+                "sanitized failure/fallback metadata only\n"
+                "no normal Today provider call\n"
+                "no public async narrative display\n"
+                "no qwen3 bridge\n"
+                "qwen3:32b promotion\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_provider_runtime_prototype_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Provider Runtime Prototype v1\n"
+                "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED\n"
+                "Developer Mode-only provider runtime prototype\n"
+                "manual trigger only\n"
+                "provider disabled by default\n"
+                "raw provider output not persisted\n"
+                "rejected provider output not persisted\n"
+                "full prompt/raw context/scratchpad not persisted\n"
+                "no qwen3 call\n"
+                "no public async narrative display\n"
+            )
+        elif (
+            relative_path
             == "docs/project_memory/reviews/developer_mode_persistence_inspection_v1.md"
         ):
             text = (

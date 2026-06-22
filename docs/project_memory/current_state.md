@@ -1,3 +1,17 @@
+## Current Implementation Update — Daily Coach Async Provider Runtime Prototype v1
+
+Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`
+
+Branch: `feature/daily-coach-async-provider-runtime-prototype-v1`
+
+Latest accepted milestone: `Developer Mode Persistence Inspection v1`
+
+Latest accepted status: `DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED`
+
+This milestone adds the first bounded Daily Coach async provider runtime prototype. It is Developer Mode-only, disabled by default, and manual-trigger only. It may use direct_ollama with qwen2.5:3b as the bridge baseline when explicitly configured. It must parse strict JSON, validate safety, persist approved public-safe narrative content only, and persist sanitized failure/fallback metadata only. It must not add provider execution on page load, normal Today provider calls, public async narrative display, worker/queue/scheduler/polling, qwen3 bridge/promotion, qwen3:32b promotion, raw provider output persistence, rejected provider output persistence, or debug/provider metadata in normal UI.
+
+Codex do not use by default.
+
 ## Current Implementation Update — Developer Mode Persistence Inspection v1
 
 Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`

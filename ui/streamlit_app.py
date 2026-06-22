@@ -17,6 +17,11 @@ from services.daily_coach_async_persistence_service import (
     get_latest_async_jobs,
     get_latest_displayable_approved_narrative,
 )
+from services.daily_coach_async_provider_runtime_service import (
+    create_developer_mode_provider_runtime_job,
+    resolve_daily_coach_async_provider_runtime_config,
+    run_daily_coach_async_provider_runtime_prototype,
+)
 from ui.daily_coach_session_approval import (
     clear_daily_coach_session_approved_narrative,
     daily_coach_preview_approval_eligibility,
@@ -3387,6 +3392,9 @@ SESSION_DEFAULTS = {
     "daily_coach_narrative_preview_error_by_user": {},
     "daily_coach_async_developer_job_by_user": {},
     "daily_coach_async_developer_error_by_user": {},
+    "daily_coach_async_provider_runtime_result_by_user": {},
+    "daily_coach_async_provider_runtime_error_by_user": {},
+    "daily_coach_async_provider_runtime_job_id_by_user": {},
     "daily_coach_session_approved_narratives": {},
     "workout_explanation_by_user": {},
     "workout_explanation_error_by_user": {},
@@ -4659,6 +4667,136 @@ def render_daily_coach_async_developer_lifecycle_panel(user_id: int) -> None:
             st.json(response)
 
 
+def render_daily_coach_async_provider_runtime_panel(user_id: int) -> None:
+    if not st.session_state.get("developer_mode", False):
+        return
+
+    with st.expander(
+        "Developer Prototype: Daily Coach Async Provider Runtime",
+        expanded=False,
+    ):
+        st.caption(
+            "Developer Mode-only manual provider prototype. It never runs on page load, "
+            "never changes normal Today behavior, and never displays raw provider output. "
+            "Rejected provider output, full prompts, raw context, and scratchpad text are never shown."
+        )
+
+        config = resolve_daily_coach_async_provider_runtime_config()
+        config_payload = config.to_dict()
+        st.write("**Runtime configuration**")
+        render_daily_coach_async_persistence_table(config_payload)
+
+        if not config.enabled:
+            st.info(
+                "Provider runtime is disabled. Set "
+                "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED=true for manual "
+                "Developer Mode provider QA."
+            )
+
+        target_date = st.text_input(
+            "Provider runtime target date",
+            value=datetime.today().date().isoformat(),
+            key=f"daily_coach_provider_runtime_target_date_{user_id}",
+            help="Used only when creating a persisted Developer Mode provider job.",
+        )
+
+        first_col, second_col = st.columns([1, 1])
+        with first_col:
+            if st.button(
+                "Create persisted provider job",
+                key=f"daily_coach_provider_runtime_create_job_{user_id}",
+            ):
+                try:
+                    job = create_developer_mode_provider_runtime_job(
+                        user_id=user_id,
+                        target_date=target_date or None,
+                    )
+                    st.session_state.daily_coach_async_provider_runtime_job_id_by_user[
+                        user_id
+                    ] = job.job_id
+                    st.session_state.daily_coach_async_provider_runtime_result_by_user[
+                        user_id
+                    ] = {
+                        "created_job": daily_coach_async_persistence_safe_job_payload(
+                            job
+                        ),
+                        "provider_runtime": "not_attempted",
+                    }
+                    st.session_state.daily_coach_async_provider_runtime_error_by_user.pop(
+                        user_id,
+                        None,
+                    )
+                except Exception as exc:
+                    st.session_state.daily_coach_async_provider_runtime_error_by_user[
+                        user_id
+                    ] = str(exc)
+        stored_job_id = (
+            st.session_state.daily_coach_async_provider_runtime_job_id_by_user.get(
+                user_id,
+                "",
+            )
+        )
+        job_id = st.text_input(
+            "Provider runtime job_id",
+            value=stored_job_id,
+            key=f"daily_coach_provider_runtime_job_id_{user_id}",
+            help="Manual trigger requires an existing persisted Daily Coach async job_id.",
+        ).strip()
+        if job_id:
+            st.session_state.daily_coach_async_provider_runtime_job_id_by_user[
+                user_id
+            ] = job_id
+
+        with second_col:
+            if st.button(
+                "Run manual provider attempt",
+                key=f"daily_coach_provider_runtime_run_{user_id}",
+            ):
+                if not job_id:
+                    st.session_state.daily_coach_async_provider_runtime_error_by_user[
+                        user_id
+                    ] = "A persisted job_id is required before provider runtime can run."
+                else:
+                    try:
+                        result = run_daily_coach_async_provider_runtime_prototype(
+                            job_id
+                        )
+                        st.session_state.daily_coach_async_provider_runtime_result_by_user[
+                            user_id
+                        ] = result.to_dict()
+                        st.session_state.daily_coach_async_provider_runtime_error_by_user.pop(
+                            user_id,
+                            None,
+                        )
+                    except Exception as exc:
+                        st.session_state.daily_coach_async_provider_runtime_error_by_user[
+                            user_id
+                        ] = str(exc)
+
+        error = st.session_state.daily_coach_async_provider_runtime_error_by_user.get(
+            user_id
+        )
+        if error:
+            st.warning(f"Provider runtime prototype failed safely: {error}")
+
+        result_payload = (
+            st.session_state.daily_coach_async_provider_runtime_result_by_user.get(
+                user_id
+            )
+        )
+        if result_payload:
+            st.write("**Sanitized provider runtime result**")
+            render_daily_coach_async_persistence_table(result_payload)
+            with st.expander("Sanitized provider runtime JSON", expanded=False):
+                st.json(result_payload)
+
+        st.caption(
+            "Boundary: manual Developer Mode action only. No qwen3/qwen3:32b, "
+            "no worker/queue/scheduler, no normal Today provider call, and no "
+            "public async narrative display."
+        )
+
+
 def render_daily_coach_async_persistence_inspection_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -5509,6 +5647,7 @@ def render_today_section(user_id: int) -> None:
         with st.expander("Daily Grounded Recommendation", expanded=True):
             render_daily_recommendation_snapshot(user_id)
         render_daily_coach_narrative_developer_panel(user_id)
+        render_daily_coach_async_provider_runtime_panel(user_id)
         render_daily_coach_async_persistence_inspection_panel(user_id)
 
     st.divider()

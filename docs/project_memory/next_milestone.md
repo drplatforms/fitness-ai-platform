@@ -4,11 +4,11 @@ Last updated: 2026-06-22
 
 ## Latest accepted milestone
 
-Daily Coach Async Persistence Service Shell v1
+Developer Mode Persistence Inspection v1
 
 ## Latest accepted status
 
-`DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
+`DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED`
 
 ## Current source branch
 
@@ -16,16 +16,16 @@ Daily Coach Async Persistence Service Shell v1
 
 Latest accepted main merge snapshot:
 
-`fitness_ai_snapshot_2026-06-22_469750c_merge-feature-daily-coach-async-persistence-service-shell-v1.zip`
+`fitness_ai_snapshot_2026-06-22_df088f9_merge-developer-mode-persistence-inspection-closeout.zip`
 
 Prior accepted milestone:
 
-- Daily Coach Async Persistence Contracts + Schema v1
-- `DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED`
+- Daily Coach Async Persistence Service Shell v1
+- `DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
 
 ## Current authorized milestone
 
-Developer Mode Persistence Inspection v1
+Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
 
 Status:
 
@@ -37,61 +37,55 @@ Codex:
 
 Required implementation branch:
 
-`feature/developer-mode-persistence-inspection-v1`
+`feature/daily-coach-async-provider-runtime-prototype-v1`
 
 Milestone type:
 
-Developer Mode-only read-only inspection.
-
-Expected recipient:
-
-Backend Development and Streamlit UI.
+Developer Mode-only manual provider runtime prototype.
 
 Expected validation type:
 
-Focused Developer Mode inspection tests, Streamlit developer panel tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, and `scripts/dev_commit_check.ps1 -Mode code`.
+Focused provider runtime prototype tests, Streamlit Developer Mode provider tests, Developer Mode persistence inspection tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, `scripts/dev_commit_check.ps1 -Mode code`, fsweep, Linux pull, and manual app smoke.
 
 ## Why this is current
 
-Daily Coach Async Persistence Service Shell v1 is accepted. The next bounded step is to expose sanitized persisted Daily Coach async job and approved narrative state inside Developer Mode only, without introducing provider runtime, worker, queue, scheduler, polling, automatic async job creation, normal Today provider calls, or public async narrative display.
+Developer Mode Persistence Inspection v1 is accepted. The next safe layer is a manual Developer Mode-only provider runtime prototype that uses the accepted persistence schema, service shell, and inspection surface.
 
 This milestone is intentionally narrow:
 
-- Developer Mode-only inspection
-- read-only persisted job inspection
-- read-only approved narrative inspection
-- sanitized metadata only
-- display approved narrative content only when displayable and public_safe
-- empty/error states are safe and clear
-- update project memory
+- Developer Mode-only
+- manual trigger only
+- provider disabled by default
+- strict JSON parser
+- safety validator before persistence
+- approved public-safe narrative persistence only
+- sanitized failure/fallback metadata only
+- no normal Today behavior change
+- no public async narrative display
 
 ## Recommended next milestone after acceptance
 
-Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
+Daily Coach Async Provider Runtime QA Hardening v1
 
 Status:
 
 `NOT_AUTHORIZED_YET`
 
-The provider runtime prototype should remain blocked until Developer Mode Persistence Inspection v1 is reviewed and accepted.
+## Not authorized
 
-## Not authorized yet
-
-- provider runtime implementation
-- direct_ollama Daily Coach async runtime
-- CrewAI Daily Coach async runtime
+- provider runtime outside Developer Mode
+- provider call on page load
+- normal Today provider call
+- public async narrative display
+- worker / queue / scheduler / polling
 - qwen3 bridge
 - qwen3 promotion
 - qwen3:32b promotion
-- worker / queue / scheduler / polling
-- FastAPI provider execution routes
-- normal Today provider call
-- public async narrative display
-- raw provider output display
-- rejected provider output display
-- full prompt/raw context/scratchpad display
+- raw provider output persistence
+- rejected provider output persistence
+- full prompt/raw context/scratchpad persistence
 - debug/provider metadata in normal UI
 
 ## Codex reminder
 
-Codex do not use by default. This project has returned to chat-driven Backend implementation unless the user explicitly opts into a tightly bounded exceptional Codex task.
+Codex do not use by default. This project uses chat-driven Backend implementation with apply scripts unless the user explicitly opts into a tightly bounded exceptional Codex task.

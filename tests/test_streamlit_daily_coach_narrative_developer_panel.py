@@ -140,6 +140,7 @@ def test_streamlit_daily_coach_persistence_inspection_is_visible_sibling() -> No
     source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
     expected = (
         "render_daily_coach_narrative_developer_panel(user_id)\n"
+        "        render_daily_coach_async_provider_runtime_panel(user_id)\n"
         "        render_daily_coach_async_persistence_inspection_panel(user_id)"
     )
 

@@ -76,3 +76,13 @@ FAIL if the branch implements or authorizes:
 Automated validation should be focused on schema/contracts, project-memory checks, and boundary tests.
 
 Manual runtime restart is not required unless product/runtime files changed unexpectedly.
+
+---
+
+## Daily Coach Async Provider Runtime Prototype v1
+
+Status: AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION
+
+Branch: `feature/daily-coach-async-provider-runtime-prototype-v1`
+
+Developer Mode-only manual provider runtime prototype. Provider runtime is disabled by default, manual-trigger only, and must not run on normal Today render or page load. Approved public-safe narrative persistence is allowed only after strict JSON parse and safety validation. Failure paths may persist sanitized metadata only. No qwen3 bridge, qwen3 promotion, qwen3:32b promotion, worker, queue, scheduler, polling, public async narrative display, raw provider output persistence, rejected provider output persistence, full prompt/raw context/scratchpad persistence, or debug/provider metadata in normal UI. Codex do not use by default.

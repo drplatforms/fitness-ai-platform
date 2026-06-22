@@ -24,6 +24,15 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 - Should future handoff templates include an explicit "delivery workflow used" line?
 - Should high-risk provider/UI milestones include an optional snapshot fallback artifact, while still keeping patch-first as the default?
 
+
+### Daily Coach async provider runtime
+
+- Daily Coach Async Provider Runtime Design v1 is designed for Architecture review.
+- Should Daily Coach Async Persistence Design v1 be completed before any provider runtime implementation?
+- Should the first provider runtime prototype use subprocess isolation rather than same-process provider execution?
+- Which runtime metadata fields are safe to persist, and which must remain Developer Mode-only?
+- What QA gate is required before an approved async narrative can move from Developer Mode preview to normal Today UI?
+
 ### Daily Coach provider preview
 
 - Daily Coach Provider Preview Contract Reliability v1 is accepted on main; `qwen2.5:3b` reached `parse_success=true`, `validation_success=true`, and `approved_narrative_returned=true` in manual preview runtime smoke.

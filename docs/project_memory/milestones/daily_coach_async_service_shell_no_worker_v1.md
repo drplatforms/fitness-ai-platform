@@ -1,30 +1,27 @@
-# Architecture Handoff Current
+# Daily Coach Async Service Shell / No Worker v1 Milestone
 
-Current milestone: Daily Coach Async Service Shell / No Worker v1
-
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
-
-Proposed final status: DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED
-
+Status: Implemented for Architecture review
+Date: 2026-06-21
 Branch: feature/daily-coach-async-service-shell-no-worker-v1
 
-Summary:
+Daily Coach Async Service Shell / No Worker v1 adds an internal backend service shell for future async Daily Coach narrative jobs.
 
-Daily Coach Async Service Shell / No Worker v1 implements an internal service-layer shell for future async Daily Coach narrative jobs using the accepted async contracts.
+This milestone uses the accepted Daily Coach Async Contracts + Data Model v1 contracts and keeps normal Today behavior deterministic.
 
-Implemented:
+Implemented scope:
 
 - `DailyCoachAsyncNarrativeService`
 - `DailyCoachNarrativeJobRepositoryProtocol`
 - `InMemoryDailyCoachNarrativeJobRepository`
-- create/read/list/latest behavior
-- latest displayable approved-job selection
-- stale/context-valid behavior
-- expiration/displayability behavior
+- deterministic create/read/list/latest job behavior
+- deterministic latest displayable job selection
 - explicit status transition helper
-- focused tests proving service-shell boundaries
+- stale/context-valid helpers
+- expiration/displayability helpers
+- no-provider-execution service boundary tests
+- no FastAPI route / no Streamlit display / no DB schema guard tests
 
-Boundary confirmation:
+Boundary preserved:
 
 - service shell only
 - no async runtime implemented
@@ -52,14 +49,12 @@ Boundary confirmation:
 - `app` means Linux canonical app runtime
 - wapp remains the explicit Windows-local escape hatch
 - fports remains Windows-side port visibility only
+- docs/project memory updated
+- no qa_artifacts committed
+- no snapshots committed
+- workflow contract followed
+- script safety addendum followed
 
-Runtime hotfix continuity:
+Acceptance target:
 
-- Local Command Menu App Runtime Correction v1 remains intact.
-- `app` is now the canonical Linux runtime launcher.
-- Linux is the canonical FastAPI + Streamlit app runtime.
-- wapp remains the explicit Windows-local escape hatch.
-
-Request:
-
-Please review and accept as `DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED`.
+`DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED`

@@ -1,59 +1,41 @@
 # Backend Handoff Current
 
-Updated: 2026-06-21
+Current milestone: Daily Coach Async Service Shell / No Worker v1
 
-## Current State
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Daily Coach Async Contracts + Data Model v1 has been accepted.
+Backend implementation summary:
 
-Backend now has foundational contracts for future async Daily Coach narrative job handling.
+- Added internal Daily Coach async narrative service shell.
+- Added in-memory repository/protocol boundary for tests.
+- Added deterministic create/read/list/latest behavior.
+- Added latest displayable approved job selection.
+- Added stale/context-valid/expiration/displayability helpers.
+- Added explicit status transition helper.
+- Added focused tests for stale, expired, context mismatch, rejected, timeout, error, queued, and generating states.
 
-Accepted files include:
+Runtime boundary:
 
-- models/async_daily_coach_narrative_models.py
-- services/async_daily_coach_context_identity.py
-- tests/test_async_daily_coach_narrative_contracts_v1.py
+- No provider execution.
+- No direct_ollama call.
+- No CrewAI call.
+- No background worker.
+- No queue.
+- No scheduler.
+- No DB schema or persistence.
+- No FastAPI route.
+- No Streamlit async display behavior.
+- No normal Today provider call.
+- No model promotion.
+- app/wapp Linux runtime hotfix remains intact.
 
-## Important Runtime Boundary
+Runtime hotfix continuity:
 
-The canonical app runtime is Linux.
+- Local Command Menu App Runtime Correction v1 remains intact.
+- `app` restarts Linux FastAPI + Streamlit through SSH.
+- wapp remains the explicit Windows-local escape hatch.
+- No backend app runtime code changed.
 
-- `app` launches Linux FastAPI + Streamlit through SSH/tmux.
-- `wapp` is Windows-local only.
-- Windows hosts Ollama.
-- Linux runtime uses Windows Ollama through LAN URL.
+Next after Architecture acceptance:
 
-## Current Async Boundary
-
-Not authorized yet:
-
-- provider runtime execution
-- background worker
-- queue
-- scheduler
-- DB schema change
-- daily_coach_narrative_jobs table
-- provider cache
-- normal Today provider call
-- UI async display
-- model promotion
-- qwen3 bridge eligibility
-
-## Recommended Next Backend Milestone
-
-Daily Coach Async Service Shell / No Worker v1
-
-Expected scope:
-
-- create/read/latest service behavior
-- stale/context-valid behavior
-- in-memory or repository-shell behavior only if Architecture authorizes it
-- tests proving no provider execution and no normal Today provider call
-
-Still excluded:
-
-- provider runtime
-- worker
-- queue
-- scheduler
-- normal UI display
+Recommended: Daily Coach Async Developer-Only Prototype v1.

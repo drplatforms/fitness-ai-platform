@@ -375,6 +375,9 @@ def write_required_project_memory(root: Path) -> None:
                 "Local Command Menu App Runtime Correction v1\n"
                 "Linux is the canonical\n"
                 "wapp\n"
+                "Daily Coach Async Service Shell / No Worker v1\n"
+                "service shell only\n"
+                "no provider execution added\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (
@@ -632,5 +635,25 @@ def test_project_memory_check_requires_daily_coach_async_contract_docs(
         result.status == "FAIL"
         and result.path
         == "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_daily_coach_async_service_shell_docs(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (
+        tmp_path
+        / "docs/project_memory/milestones/daily_coach_async_service_shell_no_worker_v1.md"
+    ).unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path
+        == "docs/project_memory/milestones/daily_coach_async_service_shell_no_worker_v1.md"
         for result in results
     )

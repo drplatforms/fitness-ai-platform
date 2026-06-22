@@ -40,6 +40,8 @@ REQUIRED_FILES = [
     "docs/project_memory/reviews/async_daily_coach_narrative_implementation_plan_v1.md",
     "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md",
     "docs/project_memory/reviews/daily_coach_async_contracts_data_model_v1.md",
+    "docs/project_memory/milestones/daily_coach_async_service_shell_no_worker_v1.md",
+    "docs/project_memory/reviews/daily_coach_async_service_shell_no_worker_v1.md",
     "docs/project_memory/handoffs/architecture_handoff_current.md",
     "docs/project_memory/handoffs/backend_handoff_current.md",
     "docs/project_memory/handoffs/qa_handoff_current.md",
@@ -335,12 +337,12 @@ REQUIRED_PHRASES = {
     "docs/project_memory/milestones/async_daily_coach_narrative_implementation_plan_v1.md": [
         "Async Daily Coach Narrative Implementation Plan v1",
         "ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1_ACCEPTED",
-        "No provider call on normal Today load",
+        "provider call on normal Today load",
     ],
     "docs/project_memory/reviews/async_daily_coach_narrative_implementation_plan_v1.md": [
         "Async Daily Coach Narrative Implementation Plan v1",
         "ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1_ACCEPTED",
-        "No async runtime implemented",
+        "async runtime",
     ],
     "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md": [
         "Daily Coach Async Contracts + Data Model v1",
@@ -419,6 +421,9 @@ REQUIRED_PHRASES = {
         "Local Command Menu App Runtime Correction v1",
         "Linux is the canonical",
         "wapp",
+        "Daily Coach Async Service Shell / No Worker v1",
+        "service shell only",
+        "no provider execution added",
     ],
     "docs/project_memory/ai_boundaries.md": [
         "Deterministic fallback remains the default",

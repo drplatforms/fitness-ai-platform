@@ -202,3 +202,21 @@ Open questions carried forward:
 - Should premium voice research happen before the service shell or after the service shell?
 - What exact persona/versioning rubric should be used before qwen3:32b advances beyond research-only?
 <!-- END DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->
+
+## Daily Coach Async Service Shell / No Worker v1 Open Questions
+
+Resolved by this milestone:
+
+- Service shell can create/read jobs without provider execution.
+- Latest displayable job selection is deterministic.
+- Stale, expired, rejected, timeout, error, queued, and generating jobs are not displayable.
+- Context hash, target date, next action, workflow target, provider/model, prompt contract, and validator mismatches are rejected for displayability.
+- No FastAPI route, Streamlit display behavior, provider runtime, worker, queue, scheduler, DB schema, or provider cache is introduced.
+
+Still open for future milestones:
+
+- Developer-only async prototype trigger design.
+- Future async runtime execution boundary.
+- Future persistence decision for async jobs.
+- Future validated async result surface.
+- Premium voice/model research lane.

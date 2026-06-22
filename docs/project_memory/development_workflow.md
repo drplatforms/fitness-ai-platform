@@ -16,7 +16,7 @@ Windows is the source-of-truth development machine.
 cd C:\projects\fitness_ai
 ```
 
-Patch and snapshot files are normally downloaded to this project root.
+Temporary delivery artifacts are saved outside the repo, normally in `C:\projects`, and commands are run from the repo root. Do not place temporary patches, apply scripts, changed-files zips, or snapshots inside `C:\projects\fitness_ai` unless a milestone explicitly adds a reusable repo tool.
 
 ## Windows vs Linux responsibility split
 
@@ -79,19 +79,38 @@ git log --oneline -5
 Clean unrelated drift before applying feature work.
 Do not stage patch files, zip files, temporary artifacts, local DB copies, or runtime outputs.
 
-## Applying a patch from project root
+## Applying a patch or apply script from project root
 
-Most project patches should apply from project root with:
+Run patch/application commands from the repo root, but store temporary delivery artifacts outside the repo.
+
+Default artifact location:
+
+```text
+C:\projects
+```
+
+For raw patch files:
 
 ```powershell
 cd C:\projects\fitness_ai
 
-git apply --check .\some_patch.patch
-git apply .\some_patch.patch
+git apply --check ..\some_patch.patch
+git apply ..\some_patch.patch
 ```
 
+For generated apply scripts:
+
+```powershell
+cd C:\projects\fitness_ai
+
+python ..\apply_some_milestone.py
+Remove-Item ..\apply_some_milestone.py -Force
+```
+
+Do not save temporary apply scripts in the repo root when clean-tree guards are used. An untracked repo-root script makes the tree dirty and should correctly stop the apply phase.
+
 If a patch was generated with `/mnt/data/...` paths, use the strip level provided with that patch.
-Do not guess. Run `Get-Content .\some_patch.patch -TotalCount 8` and inspect the paths before applying.
+Do not guess. Run `Get-Content ..\some_patch.patch -TotalCount 8` and inspect the paths before applying.
 
 ## Commit validation helper
 

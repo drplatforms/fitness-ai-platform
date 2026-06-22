@@ -1,6 +1,6 @@
 # Open Questions
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 This file separates active work from parked future ideas, resolved historical questions, and rejected/reference-only branches.
 
@@ -220,3 +220,21 @@ Still open for future milestones:
 - Future persistence decision for async jobs.
 - Future validated async result surface.
 - Premium voice/model research lane.
+
+
+## Daily Coach Async Developer-Only Prototype v1
+
+Resolved by this milestone:
+
+- Developer-only manual lifecycle trigger can create an in-memory async narrative job shell.
+- Developer-only manual inspection can read latest/job status and displayability.
+- Developer-only manual simulation can exercise deterministic approval, stale, and expired states.
+- Normal Today behavior remains unchanged.
+- No provider runtime, direct_ollama call, CrewAI call, qwen3 call, worker, queue, scheduler, polling, DB persistence, or public async narrative display is introduced.
+
+Still open for future milestones:
+
+- Should provider runtime be designed before any implementation attempt?
+- Should qwen3:32b voice research happen before provider runtime design?
+- Should async persistence be designed before provider runtime, or after manual lifecycle QA?
+- What is the exact manual QA checklist for the Developer Mode lifecycle harness?

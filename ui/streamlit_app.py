@@ -3378,6 +3378,8 @@ SESSION_DEFAULTS = {
     "daily_recommendation_error_by_user": {},
     "daily_coach_narrative_preview_by_user": {},
     "daily_coach_narrative_preview_error_by_user": {},
+    "daily_coach_async_developer_job_by_user": {},
+    "daily_coach_async_developer_error_by_user": {},
     "daily_coach_session_approved_narratives": {},
     "workout_explanation_by_user": {},
     "workout_explanation_error_by_user": {},
@@ -4296,6 +4298,223 @@ def render_daily_coach_narrative_context_summary(preview: dict) -> None:
     st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
 
 
+def fetch_daily_coach_async_developer_latest(
+    user_id: int,
+    *,
+    target_date: str | None = None,
+    provider: str = "deterministic",
+    model: str = "deterministic",
+) -> dict | None:
+    errors = st.session_state.daily_coach_async_developer_error_by_user
+    params = {
+        "provider": provider,
+        "model": model,
+    }
+    if target_date:
+        params["target_date"] = target_date
+
+    try:
+        response = api_get(
+            f"/daily-coach/{user_id}/async-narrative/developer/jobs/latest",
+            params=params,
+            request_timeout=30,
+        )
+    except requests.RequestException as exc:
+        errors[user_id] = extract_api_error_message(exc)
+        return None
+
+    errors.pop(user_id, None)
+    return response
+
+
+def create_daily_coach_async_developer_job(
+    user_id: int,
+    *,
+    target_date: str | None = None,
+    provider: str = "deterministic",
+    model: str = "deterministic",
+) -> dict | None:
+    errors = st.session_state.daily_coach_async_developer_error_by_user
+    params = {
+        "provider": provider,
+        "model": model,
+        "expires_seconds": 3600,
+    }
+    if target_date:
+        params["target_date"] = target_date
+
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/daily-coach/{user_id}" "/async-narrative/developer/jobs",
+            params=params,
+            json={},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        errors[user_id] = extract_api_error_message(exc)
+        return None
+
+    errors.pop(user_id, None)
+    return response.json()
+
+
+def simulate_daily_coach_async_developer_job(
+    user_id: int,
+    job_id: str,
+    *,
+    action: str,
+    target_date: str | None = None,
+    provider: str = "deterministic",
+    model: str = "deterministic",
+) -> dict | None:
+    errors = st.session_state.daily_coach_async_developer_error_by_user
+    params = {
+        "provider": provider,
+        "model": model,
+    }
+    if target_date:
+        params["target_date"] = target_date
+
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/daily-coach/{user_id}"
+            f"/async-narrative/developer/jobs/{job_id}/simulate",
+            params=params,
+            json={"action": action},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        errors[user_id] = extract_api_error_message(exc)
+        return None
+
+    errors.pop(user_id, None)
+    return response.json()
+
+
+def render_daily_coach_async_developer_lifecycle_panel(user_id: int) -> None:
+    with st.expander(
+        "Developer Prototype: Async Daily Coach Lifecycle",
+        expanded=False,
+    ):
+        st.caption(
+            "Developer-only lifecycle harness around the async service shell. "
+            "No provider is called, no worker runs, no job is persisted, and "
+            "normal Today behavior is unchanged."
+        )
+
+        target_date = st.text_input(
+            "Async prototype target date",
+            value=datetime.today().date().isoformat(),
+            key=f"daily_coach_async_developer_target_date_{user_id}",
+            help="Manual Developer Mode context identity date only.",
+        )
+        provider = st.text_input(
+            "Requested provider metadata",
+            value="deterministic",
+            key=f"daily_coach_async_developer_provider_{user_id}",
+            help="Metadata only for this prototype. No provider call is made.",
+        )
+        model = st.text_input(
+            "Requested model metadata",
+            value="deterministic",
+            key=f"daily_coach_async_developer_model_{user_id}",
+            help="Metadata only for lane/context inspection. No model call is made.",
+        )
+
+        first_col, second_col = st.columns(2)
+        with first_col:
+            if st.button(
+                "Create async job shell",
+                key=f"create_daily_coach_async_developer_job_{user_id}",
+            ):
+                response = create_daily_coach_async_developer_job(
+                    user_id,
+                    target_date=target_date,
+                    provider=provider,
+                    model=model,
+                )
+                if response:
+                    st.session_state.daily_coach_async_developer_job_by_user[
+                        user_id
+                    ] = response
+        with second_col:
+            if st.button(
+                "Inspect latest async job shell",
+                key=f"inspect_daily_coach_async_developer_job_{user_id}",
+            ):
+                response = fetch_daily_coach_async_developer_latest(
+                    user_id,
+                    target_date=target_date,
+                    provider=provider,
+                    model=model,
+                )
+                if response:
+                    st.session_state.daily_coach_async_developer_job_by_user[
+                        user_id
+                    ] = response
+
+        error = st.session_state.daily_coach_async_developer_error_by_user.get(user_id)
+        if error:
+            st.warning(f"Async lifecycle prototype call failed safely: {error}")
+
+        response = st.session_state.daily_coach_async_developer_job_by_user.get(user_id)
+        if not response:
+            return
+
+        job = response.get("async_narrative_job") or {}
+        display_state = response.get("display_state") or "fallback_available"
+        st.write(f"**Display state:** {display_state}")
+        st.write(
+            "**Boundary:** developer-only, provider execution "
+            f"{response.get('provider_execution')}, persistence {response.get('persistence')}."
+        )
+
+        if job:
+            status_rows = [
+                {"Field": "job_id", "Value": job.get("job_id")},
+                {"Field": "status", "Value": job.get("status")},
+                {"Field": "target_date", "Value": job.get("target_date")},
+                {"Field": "next_action_id", "Value": job.get("next_action_id")},
+                {"Field": "workflow_target", "Value": job.get("workflow_target")},
+                {"Field": "context_hash", "Value": job.get("context_hash")},
+                {"Field": "model_lane", "Value": job.get("model_lane")},
+                {"Field": "bridge_approved", "Value": job.get("bridge_approved")},
+                {"Field": "approval_eligible", "Value": job.get("approval_eligible")},
+                {"Field": "expires_at", "Value": job.get("expires_at")},
+            ]
+            status_df = pd.DataFrame(status_rows)
+            status_df["Value"] = status_df["Value"].map(daily_coach_preview_table_value)
+            st.dataframe(status_df, width="stretch", hide_index=True)
+
+            simulation_action = st.selectbox(
+                "Safe lifecycle simulation",
+                options=["approve_deterministic", "mark_stale", "expire"],
+                key=f"daily_coach_async_developer_simulation_{user_id}",
+                help="Manual Developer Mode simulation only. This is not provider output.",
+            )
+            if st.button(
+                "Run lifecycle simulation",
+                key=f"simulate_daily_coach_async_developer_job_{user_id}",
+            ):
+                simulated = simulate_daily_coach_async_developer_job(
+                    user_id,
+                    str(job.get("job_id")),
+                    action=simulation_action,
+                    target_date=target_date,
+                    provider=provider,
+                    model=model,
+                )
+                if simulated:
+                    st.session_state.daily_coach_async_developer_job_by_user[
+                        user_id
+                    ] = simulated
+
+        with st.expander("Sanitized async lifecycle payload", expanded=False):
+            st.json(response)
+
+
 def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -4355,6 +4574,8 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
 
         if preview_error:
             st.warning(f"Narrative preview call failed safely: {preview_error}")
+
+        render_daily_coach_async_developer_lifecycle_panel(user_id)
 
         if not preview:
             return

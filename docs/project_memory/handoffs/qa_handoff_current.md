@@ -1,60 +1,89 @@
 # QA Handoff Current
 
-Current milestone: Project Memory Transition Packet v1
+Current milestone: Daily Coach Async Developer-Only Prototype v1
 
 Status: IMPLEMENTED / READY FOR QA REVIEW
+
+Branch: `feature/daily-coach-async-developer-only-prototype-v1`
 
 Baseline accepted before this milestone: Daily Coach Async Service Shell / No Worker v1
 
 ## QA focus
 
-This is a docs/project-memory continuity milestone. QA should verify consistency and boundary preservation, not new runtime behavior.
+QA should verify that the developer-only async lifecycle harness works while normal Today behavior remains unchanged.
 
-Required checks:
+This is not a provider runtime milestone.
 
-- Verify `docs/project_memory/project_continuity_bootstrap.md` exists and is project-wide, not Architecture-only.
-- Verify `current_state.md` no longer claims Async Daily Coach Narrative Design v1 is the current active milestone.
-- Verify the Current Accepted Milestone Stack lists:
-  1. Local Developer Command Menu App Runtime Correction v1
-  2. Async Daily Coach Narrative Design v1
-  3. Async Daily Coach Narrative Implementation Plan v1
-  4. Daily Coach Async Contracts + Data Model v1
-  5. Daily Coach Async Service Shell / No Worker v1
-- Verify project-memory checks pass.
-- Verify no snapshots or `qa_artifacts` are committed.
-- Verify `fsweep` is clean locally if available.
+## Expected Developer Mode behavior
 
-## Daily Coach Async Service Shell expected behavior remains unchanged
+The Developer Mode panel:
 
-- Approved matching job can be selected as displayable.
-- queued/generating/provider_succeeded_pending_validation jobs are not displayable.
-- rejected_parse/rejected_validation/provider_timeout/provider_error/stale/fallback_available jobs are not displayable.
-- approved job without payload is not displayable.
-- expired job is not displayable.
-- context hash mismatch is not displayable.
-- target date, next action, workflow target, prompt contract, validator version, provider, and model mismatches are not displayable.
+`Developer Prototype: Async Daily Coach Lifecycle`
+
+should allow manual testing of:
+
+- create async job shell
+- inspect latest async job shell
+- inspect display state
+- inspect context identity/hash metadata
+- inspect requested provider/model metadata as metadata only
+- simulate deterministic approval
+- simulate stale state
+- simulate expired state
+
+## Expected normal Today behavior
+
+Normal Today behavior should remain unchanged:
+
+- Daily Next Action remains deterministic and primary.
+- Today Coach Note remains deterministic unless an existing accepted session-only bridge approval is active.
+- Normal Today page load must not create an async job.
+- Normal Today page load must not call a provider.
+- Normal Today card response must not expose async job metadata, context identity, provider execution metadata, or runtime/debug internals.
 
 ## Boundary checks
 
 - no provider execution
-- no FastAPI route addition
-- no Streamlit async display addition
+- no direct_ollama call
+- no CrewAI call
+- no qwen3 call
+- no qwen3:32b call
+- no worker
+- no queue
+- no scheduler
+- no polling
 - no DB/schema creation
-- no worker/queue/scheduler
+- no async persistence
+- no provider cache
 - no normal Today provider call
+- no public async narrative display
 - no model promotion
-- app/wapp Linux runtime hotfix remains intact
-- Local Command Menu App Runtime Correction v1 remains intact
-- `app` means Linux canonical app runtime
-- wapp remains the explicit Windows-local escape hatch
-- fports remains Windows-side port visibility only
+- qwen3 remains not bridge-enabled
+- app/wapp Linux runtime split remains intact
 
 ## Recommended validation
 
 ```powershell
 git diff --check
+pytest tests/test_daily_coach_async_developer_only_prototype_v1.py -q
+pytest tests/test_daily_coach_async_service_shell_v1.py -q
+pytest tests/test_async_daily_coach_narrative_contracts_v1.py -q
+pytest tests/test_streamlit_daily_coach_narrative_developer_panel.py -q
+pytest tests/test_local_developer_command_menu_v1.py -q
 pytest tests/test_project_memory_check.py -q
-pytest -q
 python tools/project_memory_check.py
 python -m py_compile ui/streamlit_app.py
 ```
+
+Manual QA suggestion:
+
+1. Start app normally.
+2. Confirm Today loads without async job creation.
+3. Turn on Developer Mode.
+4. Open `Developer Preview: Daily Coach Narrative`.
+5. Open `Developer Prototype: Async Daily Coach Lifecycle`.
+6. Create job shell.
+7. Inspect display state and context hash.
+8. Simulate deterministic approval.
+9. Simulate stale/expired state.
+10. Confirm no provider runtime is attempted.

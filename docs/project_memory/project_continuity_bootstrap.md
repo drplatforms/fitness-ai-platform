@@ -1,6 +1,6 @@
 # Project Continuity Bootstrap
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 ## 1. Purpose
 
@@ -25,7 +25,7 @@ Accepted status:
 
 `DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED`
 
-The current Daily Coach async implementation is a service shell only. It does not authorize provider runtime, UI display, persistence, worker execution, model promotion, or normal Today provider calls.
+The accepted baseline before the current branch is a service shell only. The current implementation branch adds a Developer Mode-only manual lifecycle prototype. It still does not authorize provider runtime, public UI display, persistence, worker execution, model promotion, or normal Today provider calls.
 
 ## 3. Current Accepted Milestone Stack
 
@@ -37,7 +37,7 @@ Accepted Daily Coach async / runtime-control stack:
 4. Daily Coach Async Contracts + Data Model v1
 5. Daily Coach Async Service Shell / No Worker v1
 
-The latest accepted implementation baseline is Daily Coach Async Service Shell / No Worker v1.
+The latest accepted implementation baseline before the current branch is Daily Coach Async Service Shell / No Worker v1. Daily Coach Async Developer-Only Prototype v1 is implemented for review on the current feature branch and is not a provider runtime milestone.
 
 ## 4. Current Product Vision
 
@@ -188,26 +188,30 @@ Do not:
 
 ## 8. Current Daily Coach Async Boundary
 
-Current state after Daily Coach Async Service Shell / No Worker v1:
+Current state after Daily Coach Async Developer-Only Prototype v1 implementation branch:
 
-- service shell only
+- accepted service shell remains the core lifecycle boundary
+- Developer Mode-only manual route/panel can create and inspect in-memory job shell state
+- Developer Mode-only manual simulation can mark stale/expired or approve deterministic test payloads
+- normal Today behavior remains unchanged
 - no provider runtime yet
 - no direct Ollama runtime
 - no CrewAI runtime
+- no qwen3 call
 - no worker
 - no queue
 - no scheduler
+- no polling
 - no DB persistence
 - no `daily_coach_narrative_jobs` table
 - no provider cache table
-- no FastAPI route
 - no normal Today provider call
-- no Streamlit async display
+- no public Streamlit async display
 - no qwen3 promotion
 - no qwen3 bridge
 - no public async narrative display
 
-The accepted service shell can create/read/list jobs and evaluate latest/displayable candidates through deterministic service-layer logic. It is not a runtime execution system.
+The service shell and Developer Mode prototype can create/read/list jobs and evaluate latest/displayable candidates through deterministic service-layer logic. They are not a provider runtime execution system.
 
 ## 9. Current Development Doctrine
 
@@ -286,6 +290,14 @@ Never commit:
 Snapshot must never be in the same script as commit.
 
 After a snapshot is created or received, provide the Linux pull command immediately before long handoff text.
+
+Temporary patch/apply artifacts should be saved outside the repo, normally under:
+
+```text
+C:\projects
+```
+
+Run apply commands from `C:\projects\fitness_ai`, but reference artifacts outside the repo, for example `..\example.patch` or `..\apply_example.py`. Do not leave temporary apply scripts, patch files, or changed-file zips in the repo root.
 
 Expected snapshot naming pattern:
 

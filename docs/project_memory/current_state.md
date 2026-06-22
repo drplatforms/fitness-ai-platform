@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 ## Project
 
@@ -8,17 +8,17 @@ AI Health Coach / fitness-ai
 
 ## Current source-of-truth branch
 
-`main`
+`feature/daily-coach-async-developer-only-prototype-v1`
 
 ## Current active milestone
 
-`Project Memory Transition Packet v1`
+`Daily Coach Async Developer-Only Prototype v1`
 
-Status: `AUTHORIZED / DOCS CONTINUITY CLEANUP`
+Status: `AUTHORIZED / IMPLEMENTED FOR REVIEW`
 
-Purpose: create a project-wide continuity/bootstrap packet and clean current project-memory state so future Architecture, Backend Development, QA, DevOps / Tooling, Product, or TPM-style coordination chats can rehydrate from repo truth without relying on scattered transcript memory.
+Purpose: add a manual Developer Mode harness around the accepted async service shell so developers can create, inspect, and safely simulate Daily Coach async narrative job lifecycle state without enabling provider runtime or normal Today-page async behavior.
 
-Current accepted implementation baseline: `Daily Coach Async Service Shell / No Worker v1`.
+Current accepted implementation baseline before this branch: `Daily Coach Async Service Shell / No Worker v1`.
 
 Continuity landing packet: `docs/project_memory/project_continuity_bootstrap.md`.
 
@@ -36,7 +36,39 @@ Latest accepted implementation baseline: `Daily Coach Async Service Shell / No W
 
 `docs/project_memory/project_continuity_bootstrap.md` is the project-wide continuity landing packet for future Architecture, Backend Development, QA, DevOps / Tooling, Product, and TPM-style coordination chats.
 
-Current Daily Coach async boundary remains service-shell only: no provider runtime, no worker, no queue, no scheduler, no DB persistence, no FastAPI route, no normal Today provider call, no Streamlit async display, no qwen3 promotion, and no qwen3 bridge.
+Current Daily Coach async boundary: service shell plus a Developer Mode-only manual lifecycle prototype. Normal Today behavior remains unchanged. There is still no provider runtime, no worker, no queue, no scheduler, no DB persistence, no normal Today provider call, no public Streamlit async display, no qwen3 promotion, and no qwen3 bridge.
+
+
+## Daily Coach Async Developer-Only Prototype v1 status
+
+Daily Coach Async Developer-Only Prototype v1 is implemented for Architecture review on `feature/daily-coach-async-developer-only-prototype-v1`.
+
+Implemented developer-only behavior:
+
+- manual FastAPI developer/debug route for creating an in-memory async narrative job shell
+- manual FastAPI developer/debug route for inspecting latest/job status
+- manual FastAPI developer/debug simulation for deterministic approval, stale, and expired states
+- Streamlit Developer Mode panel for manual lifecycle inspection
+- sanitized job metadata only: job id, status, user/date/action identity, context hash, prompt/validator versions, requested provider/model metadata, model lane, bridge eligibility, display state, expiration, and deterministic simulated payload when explicitly requested
+
+Boundary preserved:
+
+- no provider execution
+- no direct_ollama call
+- no CrewAI call
+- no qwen3 call
+- no background worker
+- no queue
+- no scheduler
+- no polling
+- no DB schema or persistence
+- no `daily_coach_narrative_jobs` table
+- no provider cache
+- no normal Today provider call
+- no public async narrative display
+- no model promotion
+- qwen3 remains not bridge-enabled
+- deterministic Daily Next Action and Today Coach Note remain primary
 
 ## Latest accepted main baseline
 
@@ -112,6 +144,23 @@ This is docs/tooling/local command work only. It does not change provider, runti
 Hotfix status before acceptance: local smoke found Linux command-script issues in `lstatus`, `lpull`, and `lollama`. The command-menu hotfix updates safe Bash payloads, uses `git log -5 --oneline --decorate`, removes escaped `find` parentheses from `lstatus`, and uses `printf` so `lollama` does not print a literal `\n`.
 
 ## Developer Delivery Workflow Contract v1 status
+
+## Developer Delivery Artifact Location Correction v1 status
+
+Temporary patch/apply artifacts should be saved outside the repo, normally in `C:\projects`, while commands still run from `C:\projects\fitness_ai`.
+
+Examples:
+
+```powershell
+cd C:\projects\fitness_ai
+
+git apply --check ..\example.patch
+git apply ..\example.patch
+python ..\apply_example.py
+```
+
+Do not save temporary apply scripts in the repo root when clean-tree guards are used. The untracked script correctly makes the tree dirty and should stop the apply phase.
+
 ## Developer Delivery Workflow Script Safety Addendum v1 status
 
 Developer Delivery Workflow Script Safety Addendum v1 is a docs/tooling-only hardening milestone.

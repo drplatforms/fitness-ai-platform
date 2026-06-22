@@ -404,3 +404,41 @@ Current boundaries remain unchanged:
 - qwen3:32b remains future premium async candidate only
 - deterministic fallback remains always available
 <!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+
+## Local Command Menu App Runtime Correction v1 status
+
+Status: `AUTHORIZED HOTFIX / IMPLEMENTED FOR REVIEW`
+
+The repo-owned command menu now treats Linux as the canonical app runtime.
+
+Runtime split confirmed:
+
+- Windows is the source-of-truth development/control machine.
+- Windows hosts Ollama.
+- Linux is the canonical FastAPI + Streamlit runtime.
+- Linux runtime uses Windows Ollama through `OLLAMA_BASE_URL=http://192.168.1.104:11434`.
+
+Command behavior:
+
+- `app` restarts the Linux app runtime through SSH and opens the Linux-hosted Streamlit URL from Windows.
+- `app` no longer launches Windows-local `uvicorn` or Windows-local Streamlit shells by default.
+- `wapp` is the explicit Windows-local developer escape hatch for the old local launcher behavior.
+- `fports` is Windows-side port visibility only.
+- `lstatus` remains Linux-side Git/app/process/port status.
+
+This is command-wrapper/docs/test work only. It does not change FastAPI routes, Streamlit UI behavior, provider behavior, database schema, async Daily Coach work, model policy, Ollama hosting, or Linux service architecture.
+
+## Local Command Menu Linux tmux runtime correction
+
+Status: `AUTHORIZED HOTFIX / IMPLEMENTED FOR REVIEW`
+
+The `app` command is Linux-canonical and must launch the Linux tmux runtime, not Windows-local app shells and not Linux `nohup` processes.
+
+Canonical command runtime:
+
+- Linux FastAPI tmux session: `fitness-api` on port `8000`.
+- Linux Streamlit tmux session: `fitness-ui` on port `8501`.
+- Windows-local Streamlit remains port `8510` and is available only through `wapp`.
+- Linux FastAPI exports `OLLAMA_BASE_URL=http://192.168.1.104:11434` so Linux reaches Windows-hosted Ollama.
+
+This hotfix does not change FastAPI routes, Streamlit UI behavior, provider behavior, database schema, async Daily Coach contracts, model policy, persistence, or Ollama hosting.

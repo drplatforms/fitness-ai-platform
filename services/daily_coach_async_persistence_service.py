@@ -359,6 +359,39 @@ def get_async_job(job_id: str) -> PersistedDailyCoachAsyncJob | None:
     return _job_from_row(row) if row is not None else None
 
 
+def get_latest_async_jobs(
+    *,
+    user_id: int,
+    target_date: str | None = None,
+    limit: int = 5,
+) -> list[PersistedDailyCoachAsyncJob]:
+    """Return recent persisted Daily Coach async jobs for read-only inspection."""
+
+    safe_limit = max(1, min(int(limit), 20))
+    values: list[Any] = [user_id]
+    where = ["user_id = ?"]
+    if target_date is not None:
+        where.append("target_date = ?")
+        values.append(target_date)
+    values.append(safe_limit)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT *
+        FROM {DAILY_COACH_ASYNC_JOB_TABLE}
+        WHERE {" AND ".join(where)}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        """,
+        tuple(values),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [_job_from_row(row) for row in rows]
+
+
 def update_async_job_status(
     job_id: str,
     status: DailyCoachNarrativeJobStatus | str,

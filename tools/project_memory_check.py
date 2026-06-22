@@ -62,6 +62,8 @@ REQUIRED_FILES = [
     "docs/project_memory/reviews/daily_coach_async_persistence_contracts_schema_v1.md",
     "docs/project_memory/milestones/daily_coach_async_persistence_service_shell_v1.md",
     "docs/project_memory/reviews/daily_coach_async_persistence_service_shell_v1.md",
+    "docs/project_memory/reviews/developer_mode_persistence_inspection_v1.md",
+    "docs/project_memory/milestones/developer_mode_persistence_inspection_v1.md",
     "docs/project_memory/handoffs/architecture_handoff_current.md",
     "docs/project_memory/handoffs/backend_handoff_current.md",
     "docs/project_memory/handoffs/qa_handoff_current.md",
@@ -94,6 +96,14 @@ STALE_MARKERS = {
         "Current implementation milestone\n\n`Daily Coach Narrative Async Today Preview Design v1`",
         "`Exercise Catalog Import Batch v1` is accepted.\n\nFinal accepted status",
         "feature/daily-coach-narrative-limited-today-ui-readiness-v1",
+        "Daily Coach Async Persistence Service Shell v1",
+        "DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED",
+        "Developer Mode Persistence Inspection v1",
+        "feature/developer-mode-persistence-inspection-v1",
+        "Developer Mode-only read-only inspection",
+        "raw provider output display",
+        "rejected provider output display",
+        "full prompt/raw context/scratchpad display",
     ],
 }
 

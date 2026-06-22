@@ -10,6 +10,13 @@ import requests
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
+from services.daily_coach_async_persistence_service import (
+    DailyCoachAsyncPersistenceError,
+    get_approved_narrative_by_job_id,
+    get_async_job,
+    get_latest_async_jobs,
+    get_latest_displayable_approved_narrative,
+)
 from ui.daily_coach_session_approval import (
     clear_daily_coach_session_approved_narrative,
     daily_coach_preview_approval_eligibility,
@@ -4298,6 +4305,143 @@ def render_daily_coach_narrative_context_summary(preview: dict) -> None:
     st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
 
 
+DAILY_COACH_ASYNC_PERSISTENCE_JOB_DISPLAY_FIELDS = (
+    "job_id",
+    "user_id",
+    "target_date",
+    "workflow_target",
+    "next_action_id",
+    "status",
+    "context_hash",
+    "context_version",
+    "prompt_contract_version",
+    "validator_version",
+    "created_at",
+    "updated_at",
+    "started_at",
+    "completed_at",
+    "expires_at",
+    "stale_after",
+    "stale",
+    "expired",
+    "displayable",
+    "public_safe",
+    "fallback_used",
+    "fallback_reason",
+    "provider_attempted",
+    "provider_name",
+    "provider_model",
+    "parse_status",
+    "validation_status",
+    "final_narrative_source",
+    "sanitized_error_category",
+    "raw_output_length",
+    "raw_output_preview_truncated",
+    "markdown_wrapper_detected",
+)
+
+DAILY_COACH_ASYNC_PERSISTENCE_NARRATIVE_DISPLAY_FIELDS = (
+    "narrative_id",
+    "job_id",
+    "user_id",
+    "target_date",
+    "context_hash",
+    "context_version",
+    "approved_text",
+    "approved_narrative_json",
+    "reason_codes_json",
+    "action_refs_json",
+    "validator_version",
+    "prompt_contract_version",
+    "created_at",
+    "expires_at",
+    "stale",
+    "expired",
+    "displayable",
+    "public_safe",
+    "final_narrative_source",
+)
+
+DAILY_COACH_ASYNC_PERSISTENCE_FORBIDDEN_UI_FIELDS = frozenset(
+    {
+        "raw_provider_output",
+        "provider_raw_output",
+        "rejected_provider_output",
+        "raw_model_output",
+        "raw_llm_output",
+        "full_prompt",
+        "prompt_text",
+        "raw_prompt",
+        "raw_context",
+        "raw_database_rows",
+        "raw_user_notes",
+        "scratchpad",
+        "chain_of_thought",
+        "validation_bypass",
+        "secrets",
+        "environment_values",
+        "stack_trace",
+        "traceback",
+    }
+)
+
+
+def daily_coach_async_persistence_table_value(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    return str(value)
+
+
+def daily_coach_async_persistence_forbidden_fields_present(
+    payload: dict[str, object],
+) -> list[str]:
+    return sorted(
+        field_name
+        for field_name in payload
+        if field_name.lower() in DAILY_COACH_ASYNC_PERSISTENCE_FORBIDDEN_UI_FIELDS
+    )
+
+
+def daily_coach_async_persistence_safe_job_payload(job: object) -> dict[str, object]:
+    payload = job.to_dict() if hasattr(job, "to_dict") else dict(job or {})
+    return {
+        field_name: payload.get(field_name)
+        for field_name in DAILY_COACH_ASYNC_PERSISTENCE_JOB_DISPLAY_FIELDS
+    }
+
+
+def daily_coach_async_persistence_safe_narrative_payload(
+    narrative: object,
+) -> dict[str, object] | None:
+    payload = (
+        narrative.to_dict() if hasattr(narrative, "to_dict") else dict(narrative or {})
+    )
+    if not payload.get("displayable") or not payload.get("public_safe"):
+        return None
+    return {
+        field_name: payload.get(field_name)
+        for field_name in DAILY_COACH_ASYNC_PERSISTENCE_NARRATIVE_DISPLAY_FIELDS
+    }
+
+
+def render_daily_coach_async_persistence_table(payload: dict[str, object]) -> None:
+    unsafe_fields = daily_coach_async_persistence_forbidden_fields_present(payload)
+    if unsafe_fields:
+        st.error(
+            "Developer persistence inspection blocked unsafe field(s): "
+            + ", ".join(unsafe_fields)
+        )
+        return
+
+    rows = [
+        {"Field": field_name, "Value": daily_coach_async_persistence_table_value(value)}
+        for field_name, value in payload.items()
+    ]
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+
 def fetch_daily_coach_async_developer_latest(
     user_id: int,
     *,
@@ -4515,6 +4659,125 @@ def render_daily_coach_async_developer_lifecycle_panel(user_id: int) -> None:
             st.json(response)
 
 
+def render_daily_coach_async_persistence_inspection_panel(user_id: int) -> None:
+    if not st.session_state.get("developer_mode", False):
+        return
+
+    with st.expander(
+        "Developer Persistence Inspection: Daily Coach Async",
+        expanded=False,
+    ):
+        st.caption(
+            "Developer Mode-only read-only inspection of persisted Daily Coach "
+            "async jobs and approved narratives. No provider is called, no job "
+            "is created, and normal Today behavior is unchanged."
+        )
+
+        target_date = st.text_input(
+            "Persistence inspection target date",
+            value=datetime.today().date().isoformat(),
+            key=f"daily_coach_persistence_inspection_target_date_{user_id}",
+            help="Read-only Developer Mode filter for persisted async records.",
+        )
+        job_id = st.text_input(
+            "Inspect specific job_id",
+            value="",
+            key=f"daily_coach_persistence_inspection_job_id_{user_id}",
+            help="Optional read-only lookup by persisted async job_id.",
+        ).strip()
+
+        try:
+            latest_jobs = get_latest_async_jobs(
+                user_id=user_id,
+                target_date=target_date or None,
+                limit=5,
+            )
+        except DailyCoachAsyncPersistenceError as exc:
+            st.warning(f"Persistence inspection failed safely: {exc}")
+            return
+
+        st.write("**Latest persisted async jobs**")
+        if latest_jobs:
+            latest_job_rows = [
+                daily_coach_async_persistence_safe_job_payload(job)
+                for job in latest_jobs
+            ]
+            compact_fields = [
+                "job_id",
+                "target_date",
+                "status",
+                "stale",
+                "expired",
+                "displayable",
+                "public_safe",
+                "fallback_used",
+                "provider_attempted",
+                "parse_status",
+                "validation_status",
+                "final_narrative_source",
+            ]
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            field_name: row.get(field_name)
+                            for field_name in compact_fields
+                        }
+                        for row in latest_job_rows
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.info("No persisted Daily Coach async jobs found for this user/date.")
+
+        if job_id:
+            st.write("**Specific persisted async job**")
+            job = get_async_job(job_id)
+            if job is None:
+                st.info("No persisted Daily Coach async job found for that job_id.")
+            else:
+                render_daily_coach_async_persistence_table(
+                    daily_coach_async_persistence_safe_job_payload(job)
+                )
+
+                narrative = get_approved_narrative_by_job_id(job_id)
+                safe_narrative = (
+                    daily_coach_async_persistence_safe_narrative_payload(narrative)
+                    if narrative
+                    else None
+                )
+                st.write("**Approved narrative for job_id**")
+                if safe_narrative:
+                    render_daily_coach_async_persistence_table(safe_narrative)
+                elif narrative:
+                    st.info(
+                        "Approved narrative exists but is not displayable/public_safe, "
+                        "so content is withheld."
+                    )
+                else:
+                    st.info("No approved narrative exists for this job_id.")
+
+        st.write("**Latest displayable approved narrative for user/date**")
+        latest_narrative = get_latest_displayable_approved_narrative(
+            user_id=user_id,
+            target_date=target_date or None,
+        )
+        safe_latest_narrative = (
+            daily_coach_async_persistence_safe_narrative_payload(latest_narrative)
+            if latest_narrative
+            else None
+        )
+        if safe_latest_narrative:
+            render_daily_coach_async_persistence_table(safe_latest_narrative)
+        else:
+            st.info(
+                "No displayable public-safe approved Daily Coach async narrative "
+                "found for this user/date."
+            )
+
+
 def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -4576,6 +4839,7 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
             st.warning(f"Narrative preview call failed safely: {preview_error}")
 
         render_daily_coach_async_developer_lifecycle_panel(user_id)
+        render_daily_coach_async_persistence_inspection_panel(user_id)
 
         if not preview:
             return

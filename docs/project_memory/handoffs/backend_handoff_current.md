@@ -1,3 +1,17 @@
+## Current Implementation Update — Developer Mode Persistence Inspection v1
+
+Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`
+
+Branch: `feature/developer-mode-persistence-inspection-v1`
+
+Latest accepted milestone: `Daily Coach Async Persistence Service Shell v1`
+
+Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
+
+This milestone adds Developer Mode-only read-only inspection of persisted Daily Coach async job and approved narrative state. It may show sanitized persistence metadata and displayable/public_safe approved narrative content inside Developer Mode only. It must not add provider runtime, worker/queue/scheduler/polling, automatic async job creation, normal Today provider calls, public async narrative display, raw provider output display, rejected provider output display, full prompt/raw context/scratchpad display, or debug/provider metadata in normal UI.
+
+Codex do not use by default.
+
 ## Current Implementation Update — Daily Coach Async Persistence Service Shell v1
 
 Status: `AUTHORIZED FOR BACKEND IMPLEMENTATION`

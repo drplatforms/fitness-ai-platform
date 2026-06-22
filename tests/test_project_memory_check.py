@@ -172,6 +172,67 @@ def write_required_project_memory(root: Path) -> None:
                 "No provider call occurs on normal Today load\n"
             )
 
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/daily_coach_async_persistence_service_shell_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Persistence Service Shell v1\n"
+                "daily_coach_async_jobs\n"
+                "daily_coach_approved_narratives\n"
+                "service/repository shell only\n"
+                "raw provider output persistence\n"
+                "rejected provider output persistence\n"
+                "no provider runtime\n"
+                "Codex do not use by default\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_persistence_service_shell_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Persistence Service Shell v1\n"
+                "DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED\n"
+                "daily_coach_async_jobs\n"
+                "daily_coach_approved_narratives\n"
+                "service/repository shell only\n"
+                "no provider runtime\n"
+                "no raw provider output persistence\n"
+                "no rejected provider output persistence\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/developer_mode_persistence_inspection_v1.md"
+        ):
+            text = (
+                "Developer Mode Persistence Inspection v1\n"
+                "feature/developer-mode-persistence-inspection-v1\n"
+                "Developer Mode-only\n"
+                "read-only\n"
+                "sanitized metadata\n"
+                "displayable and public_safe\n"
+                "no provider runtime\n"
+                "no raw provider output display\n"
+                "no rejected provider output display\n"
+                "no full prompt/raw context/scratchpad display\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/developer_mode_persistence_inspection_v1.md"
+        ):
+            text = (
+                "Developer Mode Persistence Inspection v1\n"
+                "DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED\n"
+                "Developer Mode-only\n"
+                "read-only inspection\n"
+                "no provider runtime\n"
+                "no normal Today behavior change\n"
+                "no public async narrative display\n"
+                "no raw provider output visible\n"
+                "no rejected provider output visible\n"
+                "no full prompt/raw context/scratchpad visible\n"
+            )
+
         elif relative_path == "docs/project_memory/project_state.json":
             text = (
                 "{\n"

@@ -124,3 +124,13 @@ def test_daily_coach_async_lifecycle_developer_panel_is_present_and_manual() -> 
     assert "No provider is called" in source
     assert "normal Today behavior is unchanged" in source
     assert "/async-narrative/developer/jobs" in source
+
+
+def test_streamlit_daily_coach_developer_panel_includes_persistence_inspection() -> (
+    None
+):
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    assert "Developer Persistence Inspection: Daily Coach Async" in source
+    assert "render_daily_coach_async_persistence_inspection_panel(user_id)" in source
+    assert "No provider is called" in source

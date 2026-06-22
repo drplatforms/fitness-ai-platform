@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Persistence Contracts + Schema v1",
-    "latest_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED",
-    "latest_accepted_commit": "45522b1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_45522b1_merge-feature-daily-coach-async-persistence-contracts-schema-v1.zip",
-    "latest_main_merge_commit": "45522b1",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_45522b1_merge-feature-daily-coach-async-persistence-contracts-schema-v1.zip",
-    "prior_accepted_milestone": "Daily Coach Async Persistence Design v1",
-    "prior_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED",
-    "prior_main_merge_commit": "898abe0"
+    "latest_accepted_milestone": "Daily Coach Async Persistence Service Shell v1",
+    "latest_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED",
+    "latest_accepted_commit": "469750c",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_469750c_merge-feature-daily-coach-async-persistence-service-shell-v1.zip",
+    "latest_main_merge_commit": "469750c",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_469750c_merge-feature-daily-coach-async-persistence-service-shell-v1.zip",
+    "prior_accepted_milestone": "Daily Coach Async Persistence Contracts + Schema v1",
+    "prior_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED",
+    "prior_main_merge_commit": "45522b1"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Persistence Service Shell v1",
-    "current_authorized_branch": "feature/daily-coach-async-persistence-service-shell-v1",
-    "current_authorized_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
-    "current_authorized_scope": "service/repository shell only",
-    "recommended_next_milestone_after_acceptance": "Developer Mode Persistence Inspection v1",
+    "current_authorized_milestone": "Developer Mode Persistence Inspection v1",
+    "current_authorized_branch": "feature/developer-mode-persistence-inspection-v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION",
+    "current_authorized_scope": "Developer Mode-only read-only inspection",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Provider Runtime Prototype v1 \u2014 Developer Mode Only",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Expose sanitized persisted job/narrative state in Developer Mode only after the service shell is reviewed and accepted.",
+    "next_milestone_reason": "Only authorize provider runtime after Developer Mode persistence inspection passes manual QA.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "runtime_split": {
@@ -60,30 +60,29 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "contracts + service shell + developer-only lifecycle prototype + provider runtime design + persistence design accepted; persistence service shell implementation authorized on the current feature branch",
+    "current": "contracts + service shell + Developer Mode-only inspection authorized; normal Today behavior remains unchanged and no provider runtime is authorized",
     "normal_today_behavior": "unchanged",
     "in_current_scope": [
-      "Daily Coach async persistence service shell",
-      "create/read daily_coach_async_jobs",
-      "update allowed lifecycle/status fields",
-      "mark stale/expired/displayable/public_safe state explicitly",
-      "record sanitized fallback/failure/provider metadata",
-      "create/read daily_coach_approved_narratives from approved/public-safe input only",
-      "service-shell tests",
+      "Developer Mode-only persistence inspection",
+      "read-only persisted async job inspection",
+      "read-only approved narrative inspection",
+      "sanitized metadata only",
+      "display approved narrative content only when displayable and public_safe",
+      "Developer Mode empty/error states",
       "project-memory updates"
     ],
     "deferred": [
-      "daily_coach_job_events",
-      "Developer Mode Persistence Inspection v1",
-      "provider runtime implementation"
+      "provider runtime implementation",
+      "Daily Coach async provider runtime prototype",
+      "normal Today provider call",
+      "public async narrative display"
     ],
     "not_authorized": [
-      "API routes",
+      "automatic async job creation",
       "CrewAI Daily Coach async runtime",
-      "FastAPI provider execution routes",
-      "Streamlit behavior changes",
       "debug/provider metadata in normal UI",
       "direct_ollama Daily Coach async runtime",
+      "full prompt/raw context/scratchpad display",
       "normal Today provider call",
       "polling",
       "provider runtime implementation",
@@ -92,11 +91,11 @@
       "qwen3 bridge",
       "qwen3 promotion",
       "qwen3:32b promotion",
+      "raw provider output display",
       "raw provider output persistence",
+      "rejected provider output display",
       "rejected provider output persistence",
-      "repositories",
       "scheduler",
-      "services",
       "worker"
     ]
   },

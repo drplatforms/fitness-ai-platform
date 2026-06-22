@@ -4,11 +4,11 @@ Last updated: 2026-06-22
 
 ## Latest accepted milestone
 
-Daily Coach Async Persistence Contracts + Schema v1
+Daily Coach Async Persistence Service Shell v1
 
 ## Latest accepted status
 
-`DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED`
+`DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
 
 ## Current source branch
 
@@ -16,20 +16,20 @@ Daily Coach Async Persistence Contracts + Schema v1
 
 Latest accepted main merge snapshot:
 
-`fitness_ai_snapshot_2026-06-22_45522b1_merge-feature-daily-coach-async-persistence-contracts-schema-v1.zip`
+`fitness_ai_snapshot_2026-06-22_469750c_merge-feature-daily-coach-async-persistence-service-shell-v1.zip`
 
 Prior accepted milestone:
 
-- Daily Coach Async Persistence Design v1
-- `DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
+- Daily Coach Async Persistence Contracts + Schema v1
+- `DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED`
 
 ## Current authorized milestone
 
-Daily Coach Async Persistence Service Shell v1
+Developer Mode Persistence Inspection v1
 
 Status:
 
-`AUTHORIZED FOR BACKEND IMPLEMENTATION`
+`AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`
 
 Codex:
 
@@ -37,44 +37,43 @@ Codex:
 
 Required implementation branch:
 
-`feature/daily-coach-async-persistence-service-shell-v1`
+`feature/developer-mode-persistence-inspection-v1`
 
 Milestone type:
 
-service/repository shell only
+Developer Mode-only read-only inspection.
 
 Expected recipient:
 
-Backend Development.
+Backend Development and Streamlit UI.
 
 Expected validation type:
 
-Focused service-shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, and `scripts/dev_commit_check.ps1 -Mode code`.
+Focused Developer Mode inspection tests, Streamlit developer panel tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, and `scripts/dev_commit_check.ps1 -Mode code`.
 
 ## Why this is current
 
-Daily Coach Async Persistence Contracts + Schema v1 is accepted. The next bounded step is to exercise the durable storage foundation through deterministic backend-owned persistence methods, without implementing provider runtime, worker, queue, scheduler, API behavior, Streamlit behavior, normal Today provider calls, or public async narrative display.
+Daily Coach Async Persistence Service Shell v1 is accepted. The next bounded step is to expose sanitized persisted Daily Coach async job and approved narrative state inside Developer Mode only, without introducing provider runtime, worker, queue, scheduler, polling, automatic async job creation, normal Today provider calls, or public async narrative display.
 
 This milestone is intentionally narrow:
 
-- create/read `daily_coach_async_jobs`
-- update allowed lifecycle/status fields
-- mark stale/expired/displayable/public_safe state explicitly
-- record sanitized fallback/failure/provider metadata
-- create/read `daily_coach_approved_narratives`
-- reject raw provider output persistence
-- reject rejected provider output persistence
+- Developer Mode-only inspection
+- read-only persisted job inspection
+- read-only approved narrative inspection
+- sanitized metadata only
+- display approved narrative content only when displayable and public_safe
+- empty/error states are safe and clear
 - update project memory
 
 ## Recommended next milestone after acceptance
 
-Developer Mode Persistence Inspection v1
+Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
 
 Status:
 
 `NOT_AUTHORIZED_YET`
 
-The Developer Mode inspection milestone should remain blocked until Daily Coach Async Persistence Service Shell v1 is reviewed and accepted.
+The provider runtime prototype should remain blocked until Developer Mode Persistence Inspection v1 is reviewed and accepted.
 
 ## Not authorized yet
 
@@ -86,11 +85,11 @@ The Developer Mode inspection milestone should remain blocked until Daily Coach 
 - qwen3:32b promotion
 - worker / queue / scheduler / polling
 - FastAPI provider execution routes
-- Streamlit behavior changes
 - normal Today provider call
 - public async narrative display
-- raw provider output persistence
-- rejected provider output persistence
+- raw provider output display
+- rejected provider output display
+- full prompt/raw context/scratchpad display
 - debug/provider metadata in normal UI
 
 ## Codex reminder

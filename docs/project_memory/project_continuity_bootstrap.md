@@ -246,3 +246,13 @@ Every new chat should read:
 7. `docs/project_memory/open_questions.md`
 
 Then answer the self-test in `docs/project_memory/chat_onboarding_test.md` before authorizing work or producing patches.
+
+---
+
+## Daily Coach Async Provider Runtime Prototype v1
+
+Status: AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION
+
+Branch: `feature/daily-coach-async-provider-runtime-prototype-v1`
+
+Developer Mode-only manual provider runtime prototype. Provider runtime is disabled by default, manual-trigger only, and must not run on normal Today render or page load. Approved public-safe narrative persistence is allowed only after strict JSON parse and safety validation. Failure paths may persist sanitized metadata only. No qwen3 bridge, qwen3 promotion, qwen3:32b promotion, worker, queue, scheduler, polling, public async narrative display, raw provider output persistence, rejected provider output persistence, full prompt/raw context/scratchpad persistence, or debug/provider metadata in normal UI. Codex do not use by default.

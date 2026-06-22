@@ -18,6 +18,7 @@ REQUIRED_FILES = [
     "AGENTS.md",
     ".github/copilot-instructions.md",
     "docs/project_memory/current_state.md",
+    "docs/project_memory/project_continuity_bootstrap.md",
     "docs/project_memory/product_vision.md",
     "docs/project_memory/architecture_principles.md",
     "docs/project_memory/backend_truth_contract.md",
@@ -97,6 +98,18 @@ FORBIDDEN_CURRENT_CLAIMS = {
 }
 
 REQUIRED_PHRASES = {
+    "docs/project_memory/project_continuity_bootstrap.md": [
+        "Project Continuity Bootstrap",
+        "Daily Coach Async Service Shell / No Worker v1",
+        "Current Accepted Milestone Stack",
+        "Sound right and be right",
+        "app` command launches Linux runtime",
+        "qwen3 is not bridge-enabled",
+        "service shell only",
+        "no provider runtime yet",
+        "Daily Coach Async Developer-Only Prototype v1",
+        "What Future Chats Must Do First",
+    ],
     "AGENTS.md": [
         "docs/project_memory",
         "Backend owns facts",

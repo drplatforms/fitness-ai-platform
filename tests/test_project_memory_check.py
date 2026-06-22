@@ -171,6 +171,20 @@ def write_required_project_memory(root: Path) -> None:
                 "No provider call occurs on normal Today load\n"
             )
 
+        elif relative_path == "docs/project_memory/project_continuity_bootstrap.md":
+            text = (
+                "Project Continuity Bootstrap\n"
+                "Daily Coach Async Service Shell / No Worker v1\n"
+                "Current Accepted Milestone Stack\n"
+                "Sound right and be right\n"
+                "app` command launches Linux runtime\n"
+                "qwen3 is not bridge-enabled\n"
+                "service shell only\n"
+                "no provider runtime yet\n"
+                "Daily Coach Async Developer-Only Prototype v1\n"
+                "What Future Chats Must Do First\n"
+            )
+
         elif relative_path == "docs/project_memory/local_developer_command_menu.md":
             text = (
                 "scripts/fitness_commands.ps1\n"

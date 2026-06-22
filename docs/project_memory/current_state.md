@@ -12,11 +12,32 @@ AI Health Coach / fitness-ai
 
 ## Current active milestone
 
-`Async Daily Coach Narrative Design v1`
+`Project Memory Transition Packet v1`
 
-Status: `DESIGN IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
+Status: `AUTHORIZED / DOCS CONTINUITY CLEANUP`
 
-Purpose: document the future async Daily Coach Narrative architecture without implementing runtime provider execution. The design defines model lanes, async lifecycle, validation boundaries, invalidation rules, UI states, raw-output policy, persistence options, and phased implementation while preserving deterministic Today availability.
+Purpose: create a project-wide continuity/bootstrap packet and clean current project-memory state so future Architecture, Backend Development, QA, DevOps / Tooling, Product, or TPM-style coordination chats can rehydrate from repo truth without relying on scattered transcript memory.
+
+Current accepted implementation baseline: `Daily Coach Async Service Shell / No Worker v1`.
+
+Continuity landing packet: `docs/project_memory/project_continuity_bootstrap.md`.
+
+## Current Accepted Milestone Stack
+
+Accepted Daily Coach async / runtime-control stack:
+
+1. Local Developer Command Menu App Runtime Correction v1
+2. Async Daily Coach Narrative Design v1
+3. Async Daily Coach Narrative Implementation Plan v1
+4. Daily Coach Async Contracts + Data Model v1
+5. Daily Coach Async Service Shell / No Worker v1
+
+Latest accepted implementation baseline: `Daily Coach Async Service Shell / No Worker v1`.
+
+`docs/project_memory/project_continuity_bootstrap.md` is the project-wide continuity landing packet for future Architecture, Backend Development, QA, DevOps / Tooling, Product, and TPM-style coordination chats.
+
+Current Daily Coach async boundary remains service-shell only: no provider runtime, no worker, no queue, no scheduler, no DB persistence, no FastAPI route, no normal Today provider call, no Streamlit async display, no qwen3 promotion, and no qwen3 bridge.
+
 ## Latest accepted main baseline
 
 The accepted main baseline before this provider-reliability branch includes:
@@ -330,9 +351,9 @@ No new catalog import, scraping, external API ingestion, or AI-generated catalog
 
 ## Safe next sequence
 
-1. Complete Daily Coach Narrative Product Voice Polish v1 local validation and manual QA.
-2. Run Daily Coach Narrative Product Voice Runtime QA v1 across QA users/contexts before any broader provider design.
-3. Keep Async Daily Coach Narrative Design v1 as a design-only future milestone unless Architecture explicitly authorizes implementation.
+1. Complete Project Memory Transition Packet v1 and keep `docs/project_memory/project_continuity_bootstrap.md` as the project-wide continuity landing packet.
+2. After Architecture accepts the continuity cleanup, the recommended next milestone is Daily Coach Async Developer-Only Prototype v1.
+3. Keep the prototype developer-only unless Architecture separately authorizes normal Today async display.
 4. Keep Global Visual Theme Cleanup v1 parked as non-blocking UI polish.
 
 ## Non-negotiable constraints
@@ -407,9 +428,9 @@ Current boundaries remain unchanged:
 
 ## Local Command Menu App Runtime Correction v1 status
 
-Status: `AUTHORIZED HOTFIX / IMPLEMENTED FOR REVIEW`
+Status: `LOCAL_COMMAND_MENU_APP_LINUX_RUNTIME_CORRECTION_V1_ACCEPTED`
 
-The repo-owned command menu now treats Linux as the canonical app runtime.
+The repo-owned command menu treats Linux as the canonical app runtime.
 
 Runtime split confirmed:
 
@@ -430,7 +451,7 @@ This is command-wrapper/docs/test work only. It does not change FastAPI routes, 
 
 ## Local Command Menu Linux tmux runtime correction
 
-Status: `AUTHORIZED HOTFIX / IMPLEMENTED FOR REVIEW`
+Status: `LOCAL_COMMAND_MENU_APP_LINUX_RUNTIME_CORRECTION_V1_ACCEPTED`
 
 The `app` command is Linux-canonical and must launch the Linux tmux runtime, not Windows-local app shells and not Linux `nohup` processes.
 
@@ -446,7 +467,7 @@ This hotfix does not change FastAPI routes, Streamlit UI behavior, provider beha
 <!-- START DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->
 ## Daily Coach Async Contracts + Data Model v1
 
-Status: Accepted / merging to main
+Status: Accepted on main
 Date: 2026-06-21
 Branch: feature/daily-coach-async-contracts-data-model-v1
 
@@ -483,9 +504,10 @@ Boundary preserved:
 <!-- START DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1 -->
 ## Daily Coach Async Service Shell / No Worker v1
 
-Status: Implemented for Architecture review
+Status: Accepted on main
 Date: 2026-06-21
 Branch: feature/daily-coach-async-service-shell-no-worker-v1
+Accepted status: `DAILY_COACH_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED`
 
 Daily Coach Async Service Shell / No Worker v1 implements the internal service-layer shell for future async Daily Coach narrative jobs.
 

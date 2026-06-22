@@ -8,7 +8,10 @@ import database
 from services.daily_coach_async_persistence_service import (
     create_approved_narrative,
     create_async_job,
+    get_approved_narrative_by_job_id,
+    get_async_job,
     get_latest_async_jobs,
+    get_latest_displayable_approved_narrative,
     mark_async_job_displayable,
 )
 
@@ -76,6 +79,24 @@ def test_latest_async_jobs_reads_recent_jobs_without_mutation(tmp_path, monkeypa
     count = conn.execute("SELECT COUNT(*) FROM daily_coach_async_jobs").fetchone()[0]
     conn.close()
     assert count == 2
+
+
+def test_missing_async_persistence_tables_return_safe_empty_state(
+    tmp_path, monkeypatch
+):
+    db_path = tmp_path / "fitness_ai_test.db"
+    monkeypatch.setattr(database, "DB_PATH", db_path)
+
+    assert get_latest_async_jobs(user_id=1, target_date="2026-06-22") == []
+    assert get_async_job("missing-job") is None
+    assert get_approved_narrative_by_job_id("missing-job") is None
+    assert (
+        get_latest_displayable_approved_narrative(
+            user_id=1,
+            target_date="2026-06-22",
+        )
+        is None
+    )
 
 
 def test_streamlit_inspection_helpers_exclude_forbidden_fields():

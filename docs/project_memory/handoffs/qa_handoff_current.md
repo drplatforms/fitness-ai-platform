@@ -1,36 +1,36 @@
 # QA Handoff Current
 
 Updated: 2026-06-21
-Current milestone: Async Daily Coach Narrative Implementation Plan v1
-QA role: Planning and future test strategy
+Current milestone: Daily Coach Async Contracts + Data Model v1
+QA role: Contract and invariant validation
 
 ## QA Summary
 
-Architecture has documented the planned async Daily Coach Narrative implementation phases and QA strategy.
+Async Daily Coach Narrative Design v1 remains the accepted design context.
 
-This milestone is planning-only and should not introduce runtime behavior to test.
+This is a docs/design milestone.
 
-## Future QA Areas
+Persistence is proposed only, not implemented.
 
-Future implementation phases should test:
+This milestone adds async Daily Coach narrative contracts only. There is no runtime provider execution and no UI display behavior to manually test.
 
-- contract/model behavior
-- context hash invalidation
-- stale output rejection
-- provider timeout classification
-- provider parse rejection
-- provider validation rejection
-- no provider call on normal Today load
-- deterministic fallback availability
-- raw output not displayed in normal UI
-- session-approved note priority
-- async approved note priority
-- model eligibility gates
-- rollback behavior
+## QA Focus
 
-## Current Expected Validation
+- required job statuses exist
+- model lanes exist
+- qwen2.5:3b remains bridge baseline only
+- qwen3:32b remains future premium async candidate / research-only
+- context hash is deterministic
+- context hash changes when meaningful context changes
+- context hash is insensitive to dictionary key ordering
+- raw prompt/output fields are rejected from context hash inputs
+- approved narrative payload has no raw-output fields
+- sanitized diagnostics has no raw prompt/output fields
+- no provider execution or DB schema is introduced by contract files
 
-- project memory checks pass
-- stale doc check passes
-- artifact sweep helper passes
-- no runtime tests required for async behavior because runtime is not implemented
+## Expected Tests
+
+- `pytest tests/test_async_daily_coach_narrative_contracts_v1.py -q`
+- `pytest tests/test_project_memory_check.py -q`
+- `python tools/dev_assistant.py memory-check`
+- `python tools/dev_assistant.py stale-doc-check`

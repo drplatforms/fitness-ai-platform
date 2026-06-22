@@ -266,6 +266,56 @@ def write_required_project_memory(root: Path) -> None:
                 "This is a docs/design milestone.\n"
                 "Persistence is proposed only, not implemented.\n"
             )
+        elif (
+            relative_path
+            == "docs/project_memory/plans/async_daily_coach_narrative_implementation_plan_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Implementation Plan v1\n"
+                "Daily Coach Async Contracts + Data Model v1\n"
+                "No provider call occurs during normal Today load.\n"
+                "qwen3:32b remains\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/async_daily_coach_narrative_implementation_plan_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Implementation Plan v1\n"
+                "ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1_ACCEPTED\n"
+                "No provider call on normal Today load\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/async_daily_coach_narrative_implementation_plan_v1.md"
+        ):
+            text = (
+                "Async Daily Coach Narrative Implementation Plan v1\n"
+                "ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1_ACCEPTED\n"
+                "No async runtime implemented\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Contracts + Data Model v1\n"
+                "contracts/data-model foundation only\n"
+                "DailyCoachNarrativeJobStatus\n"
+                "DailyCoachNarrativeModelLane\n"
+                "DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_contracts_data_model_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Contracts + Data Model v1 Review\n"
+                "DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED\n"
+                "no async runtime implemented\n"
+                "no provider execution added\n"
+                "no DB schema change\n"
+            )
         elif relative_path == "scripts/fitness_commands.ps1":
             text = (
                 "function fitness\nfunction app\nfunction lstop\nfunction lrestart\n"
@@ -536,5 +586,25 @@ def test_project_memory_check_requires_async_daily_coach_design_docs(
         result.status == "FAIL"
         and result.path
         == "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md"
+        for result in results
+    )
+
+
+def test_project_memory_check_requires_daily_coach_async_contract_docs(
+    tmp_path: Path,
+) -> None:
+    write_required_project_memory(tmp_path)
+    (
+        tmp_path
+        / "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md"
+    ).unlink()
+
+    results = run_project_memory_check(tmp_path)
+
+    assert has_failures(results)
+    assert any(
+        result.status == "FAIL"
+        and result.path
+        == "docs/project_memory/milestones/daily_coach_async_contracts_data_model_v1.md"
         for result in results
     )

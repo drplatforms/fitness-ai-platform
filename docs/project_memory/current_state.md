@@ -404,3 +404,41 @@ Current boundaries remain unchanged:
 - qwen3:32b remains future premium async candidate only
 - deterministic fallback remains always available
 <!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+
+<!-- START DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->
+## Daily Coach Async Contracts + Data Model v1 status
+
+Current milestone: `Daily Coach Async Contracts + Data Model v1`
+
+Status: `IMPLEMENTED / READY FOR ARCHITECTURE REVIEW`
+
+This milestone adds foundational backend contracts for future async Daily Coach Narrative jobs:
+
+- `DailyCoachNarrativeJobStatus`
+- `DailyCoachNarrativeModelLane`
+- `DailyCoachNarrativeContextIdentity`
+- `DailyCoachNarrativeJob`
+- `ApprovedDailyCoachNarrativePayload`
+- `SanitizedDailyCoachNarrativeDiagnostics`
+- deterministic context hash helper
+
+Boundary preserved:
+
+- contracts/data-model foundation only
+- no async runtime implemented
+- no provider execution added
+- no background worker added
+- no queue added
+- no scheduler added
+- no DB schema change
+- no `daily_coach_narrative_jobs` table created
+- no provider cache table
+- no provider call on normal Today load
+- no UI display behavior changed
+- no model promoted
+- `qwen2.5:3b` remains bridge baseline only
+- `qwen3` remains not bridge-enabled
+- `qwen3:32b` remains future premium async candidate / research-only
+- deterministic fallback remains always available
+- raw/rejected output remains forbidden in normal UI
+<!-- END DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->

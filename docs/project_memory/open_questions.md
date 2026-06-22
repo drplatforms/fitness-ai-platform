@@ -176,3 +176,18 @@ Open questions carried forward from the implementation plan:
 - Should the premium async note replace the standard note or sit as an expandable enhancement?
 - What is the minimum product-quality voice rubric for coach persona acceptance?
 <!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+
+<!-- START DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->
+## Daily Coach Async Contracts + Data Model v1 Open Questions
+
+Date: 2026-06-21
+
+Questions carried forward after the contracts/data-model foundation:
+
+- Should the next milestone be Daily Coach Async Service Shell / No Worker v1?
+- Should `DailyCoachNarrativeJob` remain in-memory until service shell acceptance, or should persistence wait until a separate SQLite milestone?
+- What exact validator version string should future runtime jobs use?
+- What context hash inputs should be required by the first service shell?
+- Should qwen3:32b voice research happen before any service shell runtime trigger?
+- What sanitized diagnostics are useful enough for Developer Mode without storing raw rejected output?
+<!-- END DAILY_COACH_ASYNC_CONTRACTS_DATA_MODEL_V1 -->

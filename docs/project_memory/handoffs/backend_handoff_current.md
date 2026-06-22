@@ -1,40 +1,36 @@
 # Backend Handoff Current
 
 Updated: 2026-06-21
-Current milestone: Async Daily Coach Narrative Implementation Plan v1
-Backend role: Future recipient only
+Current milestone: Daily Coach Async Contracts + Data Model v1
+Backend role: Implemented foundational contracts / awaiting Architecture review
 
-## Backend Status
+## Backend Summary
 
-Backend should not implement async Daily Coach runtime yet.
+Backend added importable contracts for future async Daily Coach narrative work.
 
-Architecture has created the implementation plan that Backend may execute later after formal acceptance.
+Implemented contract files:
 
-## Not Authorized Yet
+- `models/async_daily_coach_narrative_models.py`
+- `services/async_daily_coach_context_identity.py`
 
-Backend is not yet authorized to add:
+Implemented tests:
 
-- async runtime
-- background worker
-- queue
-- scheduler
-- DB schema changes
-- provider cache table
-- provider call on normal Today load
-- qwen3 bridge eligibility
-- model promotion
-- normal UI async display
+- `tests/test_async_daily_coach_narrative_contracts_v1.py`
 
-## Likely Next Backend-Executable Milestone
+## Previous Design Reference
 
-Daily Coach Async Contracts + Data Model v1
+Async Daily Coach Narrative Design v1 documents the future async architecture.
 
-Likely scope when authorized:
+This milestone documents a future async architecture.
 
-- job status enum
-- narrative job contract/model
-- context identity/hash contract
-- safe metadata shape
-- tests
+Do not infer approval from the presence of the design document.
 
-No provider runtime should be included in that first implementation milestone unless Architecture explicitly changes scope.
+## Important Boundary
+
+The implementation is contracts/data-model foundation only.
+
+It does not add provider execution, async runtime, workers, queues, schedulers, DB schema, provider cache, Today UI behavior, or normal-load provider calls.
+
+## Next Backend-Executable Milestone
+
+Daily Coach Async Service Shell / No Worker v1 may use these contracts to implement deterministic service-layer create/read/latest/stale behavior, still without provider runtime execution unless Architecture explicitly authorizes it.

@@ -1,36 +1,47 @@
 # QA Handoff Current
 
 Updated: 2026-06-21
-Current milestone: Async Daily Coach Narrative Implementation Plan v1
-QA role: Planning and future test strategy
+Current milestone: Local Command Menu App Runtime Correction v1
+QA role: Command menu runtime semantics validation
 
 ## QA Summary
 
-Architecture has documented the planned async Daily Coach Narrative implementation phases and QA strategy.
+This hotfix changes the repo-owned PowerShell command menu so `app` means Linux canonical app runtime, not Windows-local runtime.
 
-This milestone is planning-only and should not introduce runtime behavior to test.
+## QA Focus
 
-## Future QA Areas
+- `fitness` menu shows `app` as Linux FastAPI + Streamlit.
+- `fitness` menu shows `wapp` as Windows-local FastAPI + Streamlit.
+- `app` does not contain Windows `Start-Process powershell` launches for `uvicorn` or Streamlit.
+- `wapp` preserves the explicit Windows-local launcher.
+- `lrestart`, `lupdate`, `lstatus`, and `fports` still exist.
+- `fports` is clearly Windows-side only.
+- Linux runtime still uses Windows Ollama URL.
+- No app runtime code, provider code, routes, Streamlit UI, DB schema, or async Daily Coach work changed.
 
-Future implementation phases should test:
+## Expected Tests
 
-- contract/model behavior
-- context hash invalidation
-- stale output rejection
-- provider timeout classification
-- provider parse rejection
-- provider validation rejection
-- no provider call on normal Today load
-- deterministic fallback availability
-- raw output not displayed in normal UI
-- session-approved note priority
-- async approved note priority
-- model eligibility gates
-- rollback behavior
+- `pytest tests/test_local_developer_command_menu_v1.py -q`
+- `pytest tests/test_project_memory_check.py -q`
+- `python tools/dev_assistant.py memory-check`
+- `python tools/dev_assistant.py stale-doc-check`
+- `fsweep`
 
-## Current Expected Validation
+## Optional Manual Smoke
 
-- project memory checks pass
-- stale doc check passes
-- artifact sweep helper passes
-- no runtime tests required for async behavior because runtime is not implemented
+```powershell
+. .\scripts\fitness_commands.ps1
+fitness
+app
+lstatus
+wapp
+```
+
+
+## Linux tmux runtime correction
+
+- `app` / `lrestart` use Linux tmux sessions `fitness-api` and `fitness-ui`.
+- Linux FastAPI uses port `8000`.
+- Linux Streamlit uses port `8501`.
+- Windows-local Streamlit remains port `8510` through `wapp` only.
+- Do not replace this with `nohup` or Windows-local app shells.

@@ -1,40 +1,36 @@
 # Backend Handoff Current
 
 Updated: 2026-06-21
-Current milestone: Async Daily Coach Narrative Implementation Plan v1
-Backend role: Future recipient only
+Current milestone: Local Command Menu App Runtime Correction v1
+Backend role: Command-wrapper hotfix / awaiting Architecture review
 
-## Backend Status
+## Backend Summary
 
-Backend should not implement async Daily Coach runtime yet.
+The repo-owned PowerShell command menu now launches the canonical app runtime on Linux by default.
 
-Architecture has created the implementation plan that Backend may execute later after formal acceptance.
+Implemented behavior:
 
-## Not Authorized Yet
+- `app` restarts Linux FastAPI + Streamlit through SSH.
+- `app` opens the configured Linux-hosted Streamlit URL from Windows.
+- `wapp` preserves explicit Windows-local FastAPI + Streamlit launcher behavior.
+- `lrestart` remains the Linux restart path and exports the Linux runtime `OLLAMA_BASE_URL` pointing to Windows Ollama.
+- `fports` is labeled Windows-side port visibility only.
 
-Backend is not yet authorized to add:
+## Boundary
 
-- async runtime
-- background worker
-- queue
-- scheduler
-- DB schema changes
-- provider cache table
-- provider call on normal Today load
-- qwen3 bridge eligibility
-- model promotion
-- normal UI async display
+No backend app runtime code changed.
 
-## Likely Next Backend-Executable Milestone
+This hotfix does not change FastAPI routes, Streamlit UI, provider behavior, database schema, async Daily Coach contracts, model policy, persistence, or Linux service architecture.
 
-Daily Coach Async Contracts + Data Model v1
+## Validation Focus
 
-Likely scope when authorized:
+Run command-menu tests and project-memory checks. Manual smoke should confirm `fitness` menu wording and, if practical, `app`, `lstatus`, and `wapp` semantics.
 
-- job status enum
-- narrative job contract/model
-- context identity/hash contract
-- safe metadata shape
-- tests
 
-No provider runtime should be included in that first implementation milestone unless Architecture explicitly changes scope.
+## Linux tmux runtime correction
+
+- `app` / `lrestart` use Linux tmux sessions `fitness-api` and `fitness-ui`.
+- Linux FastAPI uses port `8000`.
+- Linux Streamlit uses port `8501`.
+- Windows-local Streamlit remains port `8510` through `wapp` only.
+- Do not replace this with `nohup` or Windows-local app shells.

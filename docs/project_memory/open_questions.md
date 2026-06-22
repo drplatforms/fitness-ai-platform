@@ -37,7 +37,7 @@ Future-only ideas in those files remain parked until scoped milestones approve i
 ### Local developer command menu
 
 - Should `scripts/fitness_commands.ps1` eventually gain a lightweight self-test command after manual QA confirms the first repo-owned command set?
-- Should Linux runtime ports remain aligned to Windows `8510`, or should a later DevOps milestone split Windows and Linux Streamlit port defaults explicitly?
+- Resolved by Local Command Menu Linux tmux runtime correction: Linux Streamlit defaults to `8501`; Windows-local Streamlit remains `8510` under `wapp`.
 
 ### Today product loop
 
@@ -176,3 +176,16 @@ Open questions carried forward from the implementation plan:
 - Should the premium async note replace the standard note or sit as an expandable enhancement?
 - What is the minimum product-quality voice rubric for coach persona acceptance?
 <!-- END ASYNC_DAILY_COACH_NARRATIVE_IMPLEMENTATION_PLAN_V1 -->
+
+## Local Command Menu App Runtime Correction v1
+
+Resolved by hotfix implementation for review:
+
+- `app` should mean canonical Linux app runtime.
+- `wapp` should be the explicit Windows-local escape hatch.
+- `fports` should be documented as Windows-side visibility only.
+
+Remaining QA confirmation:
+
+- Manual smoke should confirm `app` restarts Linux FastAPI + Streamlit and opens the Linux-hosted Streamlit URL.
+- Manual smoke should confirm `wapp` still starts Windows-local FastAPI + Streamlit only when explicitly requested.

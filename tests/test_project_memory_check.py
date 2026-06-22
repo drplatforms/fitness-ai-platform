@@ -179,7 +179,15 @@ def write_required_project_memory(root: Path) -> None:
                 "~/projects/fitness-ai-platform\n"
                 "http://127.0.0.1:11434\n"
                 "http://192.168.1.104:11434\n"
-                "fitness\napp\nlstop\nlrestart\nlupdate\nfmerge\n"
+                "fitness\n"
+                "app\n"
+                "wapp\n"
+                "Linux is the canonical\n"
+                "Windows-local\n"
+                "lstop\n"
+                "lrestart\n"
+                "lupdate\n"
+                "fmerge\n"
                 "git merge-base --is-ancestor\n"
             )
         elif (
@@ -249,32 +257,47 @@ def write_required_project_memory(root: Path) -> None:
             == "docs/project_memory/handoffs/architecture_handoff_current.md"
         ):
             text = (
-                "Async Daily Coach Narrative Design v1\n"
-                "docs/project_memory/designs/async_daily_coach_narrative_design_v1.md\n"
-                "No provider call on normal Today load.\n"
-                "qwen3 remains not bridge-enabled.\n"
+                "Local Command Menu App Runtime Correction v1\n"
+                "app` is now the canonical Linux runtime launcher\n"
+                "wapp\n"
+                "Linux is the canonical FastAPI + Streamlit app runtime\n"
             )
         elif relative_path == "docs/project_memory/handoffs/backend_handoff_current.md":
             text = (
-                "Async Daily Coach Narrative Design v1\n"
-                "This milestone documents a future async architecture.\n"
-                "Do not infer approval from the presence of the design document.\n"
+                "Local Command Menu App Runtime Correction v1\n"
+                "app` restarts Linux FastAPI + Streamlit through SSH\n"
+                "wapp\n"
+                "No backend app runtime code changed.\n"
             )
         elif relative_path == "docs/project_memory/handoffs/qa_handoff_current.md":
             text = (
-                "Async Daily Coach Narrative Design v1\n"
-                "This is a docs/design milestone.\n"
-                "Persistence is proposed only, not implemented.\n"
+                "Local Command Menu App Runtime Correction v1\n"
+                "app` means Linux canonical app runtime\n"
+                "wapp\n"
+                "fports\n"
             )
         elif relative_path == "scripts/fitness_commands.ps1":
             text = (
-                "function fitness\nfunction app\nfunction lstop\nfunction lrestart\n"
-                "function lupdate\nfunction fsnap\nfunction fbranch\nfunction fmerge\n"
+                "function fitness\n"
+                "function app\n"
+                "function wapp\n"
+                "function lstop\n"
+                "function lrestart\n"
+                "function lupdate\n"
+                "function fsnap\n"
+                "function fbranch\n"
+                "function fmerge\n"
                 "git merge-base --is-ancestor\n"
                 "C:\\projects\\fitness_ai\n"
                 "~/projects/fitness-ai-platform\n"
                 "http://127.0.0.1:11434\n"
                 "http://192.168.1.104:11434\n"
+                "FITNESS_LINUX_STREAMLIT_URL\n"
+                "FITNESS_LINUX_STREAMLIT_PORT\n"
+                "8501\n"
+                "fitness-ui\n"
+                "fitness-api\n"
+                "Windows-local FastAPI + Streamlit\n"
             )
         elif relative_path == "scripts/install_fitness_commands_profile.ps1":
             text = (
@@ -291,14 +314,17 @@ def write_required_project_memory(root: Path) -> None:
                 "reference-only\n"
                 "No provider may run on normal Today page load\n"
                 "Provider Narrative QA Matrix v2\n"
+                "Daily Coach Same-Session Approved Preview Bridge v1 Retry\n"
                 "Same-Session Bridge Runtime QA v1\n"
                 "Daily Coach Narrative Product Voice Polish v1\n"
+                "Daily Coach Narrative Product Voice Runtime QA v1\n"
+                "PASS_WITH_NOTE\n"
                 "sound right and be right\n"
                 "Local Developer Command Menu Audit + Repo-Owned Commands v1\n"
                 "scripts/fitness_commands.ps1\n"
-                "Async Daily Coach Narrative Design v1\n"
-                "future premium async candidate only\n"
-                "no model is promoted\n"
+                "Local Command Menu App Runtime Correction v1\n"
+                "Linux is the canonical\n"
+                "wapp\n"
             )
         elif relative_path == "docs/project_memory/ai_boundaries.md":
             text = (

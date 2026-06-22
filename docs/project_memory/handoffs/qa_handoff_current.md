@@ -1,3 +1,11 @@
+## QA Handoff — Daily Coach Async Provider Runtime QA Hardening v1
+
+Status: `AUTHORIZED FOR BACKEND / QA IMPLEMENTATION`
+
+Branch: `feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+
+Scope: harden Developer Mode-only provider runtime failure behavior. Preserve manual trigger only, disabled by default, no provider call on page load, no normal Today provider call, no public async narrative display, no worker/queue/scheduler/polling, no qwen3/qwen3:32b promotion, and no raw/rejected output or prompt/context/scratchpad persistence/display.
+
 ## Current Implementation Update — Developer Mode Persistence Inspection v1
 
 Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`

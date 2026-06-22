@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
@@ -66,15 +67,19 @@ FINAL_SOURCE_PROVIDER_APPROVED = "provider_approved"
 FINAL_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallback"
 
 FALLBACK_REASON_RUNTIME_DISABLED = "provider_runtime_disabled"
+FALLBACK_REASON_PROVIDER_CONFIG_MISSING = "provider_config_missing"
+FALLBACK_REASON_MODEL_CONFIG_MISSING = "model_config_missing"
 FALLBACK_REASON_INVALID_PROVIDER = "invalid_provider_config"
 FALLBACK_REASON_UNAPPROVED_MODEL = "unapproved_model"
 FALLBACK_REASON_MISSING_JOB = "missing_job"
 FALLBACK_REASON_STALE_JOB = "stale_job"
 FALLBACK_REASON_EXPIRED_JOB = "expired_job"
 FALLBACK_REASON_PROVIDER_TIMEOUT = "provider_timeout"
+FALLBACK_REASON_PROVIDER_UNAVAILABLE = "provider_unavailable"
 FALLBACK_REASON_PROVIDER_EXCEPTION = "provider_exception"
 FALLBACK_REASON_PARSE_FAILURE = "candidate_parse_failure"
 FALLBACK_REASON_VALIDATION_FAILURE = "candidate_validation_failure"
+FALLBACK_REASON_PERSISTENCE_FAILURE = "persistence_failure"
 
 DailyCoachAsyncProviderGenerateCallable = Callable[[str, str, float, str], str]
 
@@ -88,6 +93,8 @@ class DailyCoachAsyncProviderRuntimeConfig:
     selected_model: str
     timeout_seconds: float
     ollama_base_url: str
+    provider_configured: bool
+    model_configured: bool
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -160,8 +167,18 @@ def resolve_daily_coach_async_provider_runtime_config(
         except (TypeError, ValueError):
             return default
 
-    configured_provider = _get_env("DAILY_COACH_ASYNC_PROVIDER", "direct_ollama")
-    configured_model = _get_env("DAILY_COACH_ASYNC_PROVIDER_MODEL", "qwen2.5:3b")
+    raw_provider = env.get(DAILY_COACH_ASYNC_PROVIDER_ENV)
+    raw_model = env.get(DAILY_COACH_ASYNC_PROVIDER_MODEL_ENV)
+    provider_configured = raw_provider is not None and str(raw_provider).strip() != ""
+    model_configured = raw_model is not None and str(raw_model).strip() != ""
+    configured_provider = _get_env(
+        DAILY_COACH_ASYNC_PROVIDER_ENV,
+        DAILY_COACH_ASYNC_PROVIDER_DIRECT_OLLAMA,
+    )
+    configured_model = _get_env(
+        DAILY_COACH_ASYNC_PROVIDER_MODEL_ENV,
+        DAILY_COACH_ASYNC_PROVIDER_DEFAULT_MODEL,
+    )
 
     ollama_base_url = (
         env.get("DAILY_COACH_ASYNC_PROVIDER_OLLAMA_BASE_URL")
@@ -171,13 +188,15 @@ def resolve_daily_coach_async_provider_runtime_config(
     )
 
     return DailyCoachAsyncProviderRuntimeConfig(
-        enabled=_get_bool("DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED", False),
+        enabled=_get_bool(DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED_ENV, False),
         configured_provider=configured_provider,
         selected_provider=configured_provider,
         configured_model=configured_model,
         selected_model=configured_model,
-        timeout_seconds=_get_float("DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_SECONDS", 60.0),
+        timeout_seconds=_get_float(DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_ENV, 60.0),
         ollama_base_url=str(ollama_base_url),
+        provider_configured=provider_configured,
+        model_configured=model_configured,
     )
 
 
@@ -244,7 +263,16 @@ def run_daily_coach_async_provider_runtime_prototype(
     """
 
     config = resolve_daily_coach_async_provider_runtime_config(environ)
-    job = get_async_job(job_id)
+    try:
+        job = get_async_job(job_id)
+    except (DailyCoachAsyncPersistenceError, sqlite3.Error):
+        return _result(
+            config,
+            job=None,
+            fallback_reason=FALLBACK_REASON_PERSISTENCE_FAILURE,
+            sanitized_error_category=FALLBACK_REASON_PERSISTENCE_FAILURE,
+            message="Persistence lookup failed safely.",
+        )
     if job is None:
         return _result(
             config,
@@ -259,6 +287,38 @@ def run_daily_coach_async_provider_runtime_prototype(
             job=job,
             fallback_reason=FALLBACK_REASON_RUNTIME_DISABLED,
             message="Provider runtime is disabled by configuration.",
+        )
+    if not config.provider_configured:
+        _record_sanitized_failure(
+            job.job_id,
+            config=config,
+            fallback_reason=FALLBACK_REASON_PROVIDER_CONFIG_MISSING,
+            status=DailyCoachNarrativeJobStatus.PROVIDER_ERROR,
+            provider_attempted=False,
+            parse_status=PARSE_STATUS_NOT_ATTEMPTED,
+            validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
+        )
+        return _result(
+            config,
+            job=get_async_job(job.job_id) or job,
+            fallback_reason=FALLBACK_REASON_PROVIDER_CONFIG_MISSING,
+            message="Provider runtime is enabled but provider config is missing.",
+        )
+    if not config.model_configured:
+        _record_sanitized_failure(
+            job.job_id,
+            config=config,
+            fallback_reason=FALLBACK_REASON_MODEL_CONFIG_MISSING,
+            status=DailyCoachNarrativeJobStatus.PROVIDER_ERROR,
+            provider_attempted=False,
+            parse_status=PARSE_STATUS_NOT_ATTEMPTED,
+            validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
+        )
+        return _result(
+            config,
+            job=get_async_job(job.job_id) or job,
+            fallback_reason=FALLBACK_REASON_MODEL_CONFIG_MISSING,
+            message="Provider runtime is enabled but model config is missing.",
         )
     if config.selected_provider != DAILY_COACH_ASYNC_PROVIDER_DIRECT_OLLAMA:
         _record_sanitized_failure(
@@ -330,11 +390,29 @@ def run_daily_coach_async_provider_runtime_prototype(
         DailyCoachNarrativeJobStatus.GENERATING,
         started_at=datetime.now(UTC).isoformat(),
     )
-    context = build_daily_coach_narrative_context(
-        job.user_id,
-        target_date=job.target_date,
-    )
-    prompt = build_daily_coach_narrative_prompt(context)
+    try:
+        context = build_daily_coach_narrative_context(
+            job.user_id,
+            target_date=job.target_date,
+        )
+        prompt = build_daily_coach_narrative_prompt(context)
+    except Exception:
+        _record_sanitized_failure(
+            job.job_id,
+            config=config,
+            fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
+            status=DailyCoachNarrativeJobStatus.PROVIDER_ERROR,
+            provider_attempted=False,
+            parse_status=PARSE_STATUS_NOT_ATTEMPTED,
+            validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
+        )
+        return _result(
+            config,
+            job=get_async_job(job.job_id) or job,
+            fallback_reason=FALLBACK_REASON_PROVIDER_EXCEPTION,
+            sanitized_error_category=FALLBACK_REASON_PROVIDER_EXCEPTION,
+            message="Provider input construction failed safely.",
+        )
     selected_generate = generate or call_ollama_generate
     raw_output: str | None = None
     started = time.perf_counter()
@@ -362,6 +440,24 @@ def run_daily_coach_async_provider_runtime_prototype(
             provider_attempted=True,
             sanitized_error_category=FALLBACK_REASON_PROVIDER_TIMEOUT,
             message="Provider timed out safely.",
+        )
+    except (ConnectionError, OSError):
+        _record_sanitized_failure(
+            job.job_id,
+            config=config,
+            fallback_reason=FALLBACK_REASON_PROVIDER_UNAVAILABLE,
+            status=DailyCoachNarrativeJobStatus.PROVIDER_ERROR,
+            provider_attempted=True,
+            parse_status=PARSE_STATUS_NOT_ATTEMPTED,
+            validation_status=VALIDATION_STATUS_NOT_ATTEMPTED,
+        )
+        return _result(
+            config,
+            job=get_async_job(job.job_id) or job,
+            fallback_reason=FALLBACK_REASON_PROVIDER_UNAVAILABLE,
+            provider_attempted=True,
+            sanitized_error_category=FALLBACK_REASON_PROVIDER_UNAVAILABLE,
+            message="Provider was unavailable and failed safely.",
         )
     except Exception:
         _record_sanitized_failure(
@@ -450,48 +546,75 @@ def run_daily_coach_async_provider_runtime_prototype(
 
     candidate = parse_result.candidate
     approved_payload = candidate.to_dict()
-    create_approved_narrative(
-        job_id=job.job_id,
-        user_id=job.user_id,
-        target_date=job.target_date,
-        context_hash=job.context_hash,
-        context_version=job.context_version,
-        approved_narrative_json=approved_payload,
-        approved_text=candidate.coach_note,
-        reason_codes_json=[
-            "daily_coach_async_provider_approved",
-            *candidate.used_approved_facts[:2],
-        ],
-        action_refs_json=[
-            {
-                "next_action_id": job.next_action_id,
-                "workflow_target": job.workflow_target,
-            }
-        ],
-        validator_version=job.validator_version,
-        prompt_contract_version=job.prompt_contract_version,
-        final_narrative_source=FINAL_SOURCE_PROVIDER_APPROVED,
-        displayable=True,
-        public_safe=True,
-    )
-    update_async_job_status(
-        job.job_id,
-        DailyCoachNarrativeJobStatus.APPROVED,
-        completed_at=datetime.now(UTC).isoformat(),
-    )
-    mark_async_job_displayable(job.job_id)
-    record_async_job_failure_metadata(
-        job.job_id,
-        provider_attempted=True,
-        provider_name=config.selected_provider,
-        provider_model=config.selected_model,
-        parse_status=DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS,
-        validation_status=DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED,
-        final_narrative_source=FINAL_SOURCE_PROVIDER_APPROVED,
-        raw_output_length=raw_output_length,
-        raw_output_preview_truncated=raw_output_preview_truncated,
-        markdown_wrapper_detected=markdown_wrapper_detected,
-    )
+    try:
+        create_approved_narrative(
+            job_id=job.job_id,
+            user_id=job.user_id,
+            target_date=job.target_date,
+            context_hash=job.context_hash,
+            context_version=job.context_version,
+            approved_narrative_json=approved_payload,
+            approved_text=candidate.coach_note,
+            reason_codes_json=[
+                "daily_coach_async_provider_approved",
+                *candidate.used_approved_facts[:2],
+            ],
+            action_refs_json=[
+                {
+                    "next_action_id": job.next_action_id,
+                    "workflow_target": job.workflow_target,
+                }
+            ],
+            validator_version=job.validator_version,
+            prompt_contract_version=job.prompt_contract_version,
+            final_narrative_source=FINAL_SOURCE_PROVIDER_APPROVED,
+            displayable=True,
+            public_safe=True,
+        )
+        update_async_job_status(
+            job.job_id,
+            DailyCoachNarrativeJobStatus.APPROVED,
+            completed_at=datetime.now(UTC).isoformat(),
+        )
+        mark_async_job_displayable(job.job_id)
+        record_async_job_failure_metadata(
+            job.job_id,
+            provider_attempted=True,
+            provider_name=config.selected_provider,
+            provider_model=config.selected_model,
+            parse_status=DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS,
+            validation_status=DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED,
+            final_narrative_source=FINAL_SOURCE_PROVIDER_APPROVED,
+            raw_output_length=raw_output_length,
+            raw_output_preview_truncated=raw_output_preview_truncated,
+            markdown_wrapper_detected=markdown_wrapper_detected,
+        )
+    except (DailyCoachAsyncPersistenceError, sqlite3.Error):
+        _record_sanitized_failure(
+            job.job_id,
+            config=config,
+            fallback_reason=FALLBACK_REASON_PERSISTENCE_FAILURE,
+            status=DailyCoachNarrativeJobStatus.PROVIDER_ERROR,
+            provider_attempted=True,
+            parse_status=DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS,
+            validation_status=DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED,
+            raw_output_length=raw_output_length,
+            raw_output_preview_truncated=raw_output_preview_truncated,
+            markdown_wrapper_detected=markdown_wrapper_detected,
+        )
+        return _result(
+            config,
+            job=get_async_job(job.job_id) or job,
+            provider_attempted=True,
+            fallback_reason=FALLBACK_REASON_PERSISTENCE_FAILURE,
+            parse_status=DAILY_COACH_NARRATIVE_PARSE_STATUS_SUCCESS,
+            validation_status=DAILY_COACH_NARRATIVE_VALIDATION_STATUS_APPROVED,
+            raw_output_length=raw_output_length,
+            raw_output_preview_truncated=raw_output_preview_truncated,
+            markdown_wrapper_detected=markdown_wrapper_detected,
+            sanitized_error_category=FALLBACK_REASON_PERSISTENCE_FAILURE,
+            message="Approved provider output could not be persisted safely.",
+        )
     return _result(
         config,
         job=get_async_job(job.job_id),
@@ -543,7 +666,11 @@ def _record_sanitized_failure(
             raw_output_preview_truncated=raw_output_preview_truncated,
             markdown_wrapper_detected=markdown_wrapper_detected,
         )
-    except (DailyCoachAsyncJobNotFoundError, DailyCoachAsyncPersistenceError):
+    except (
+        DailyCoachAsyncJobNotFoundError,
+        DailyCoachAsyncPersistenceError,
+        sqlite3.Error,
+    ):
         return
 
 
@@ -586,7 +713,7 @@ def _result(
         raw_output_length=raw_output_length,
         raw_output_preview_truncated=raw_output_preview_truncated,
         markdown_wrapper_detected=markdown_wrapper_detected,
-        sanitized_error_category=sanitized_error_category,
+        sanitized_error_category=sanitized_error_category or fallback_reason,
         message=message,
     )
 

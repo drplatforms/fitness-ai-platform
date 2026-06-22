@@ -1,3 +1,17 @@
+## Current Implementation Update — Daily Coach Async Provider Runtime QA Hardening v1
+
+Status: `AUTHORIZED FOR BACKEND / QA IMPLEMENTATION`
+
+Branch: `feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+
+Latest accepted milestone: `Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only`
+
+Latest accepted status: `DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED`
+
+This milestone hardens the Developer Mode-only Daily Coach async provider runtime prototype. It adds deterministic sanitized handling for disabled config, missing provider/model config, missing job, stale/expired job, provider unavailable, timeout, malformed output, prose output, markdown-wrapped output, schema mismatch, validation rejection, and bounded persistence failure. It must not add normal Today provider calls, public async narrative display, automatic async job creation outside Developer Mode, worker/queue/scheduler/polling, qwen3 bridge/promotion, qwen3:32b promotion, raw provider output persistence/display, rejected provider output persistence/display, or full prompt/raw context/scratchpad persistence/display.
+
+Codex do not use by default.
+
 ## Current Implementation Update — Daily Coach Async Provider Runtime Prototype v1
 
 Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`

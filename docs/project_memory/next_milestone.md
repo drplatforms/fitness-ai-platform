@@ -4,11 +4,11 @@ Last updated: 2026-06-22
 
 ## Latest accepted milestone
 
-Developer Mode Persistence Inspection v1
+Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
 
 ## Latest accepted status
 
-`DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED`
+`DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED`
 
 ## Current source branch
 
@@ -16,20 +16,15 @@ Developer Mode Persistence Inspection v1
 
 Latest accepted main merge snapshot:
 
-`fitness_ai_snapshot_2026-06-22_df088f9_merge-developer-mode-persistence-inspection-closeout.zip`
-
-Prior accepted milestone:
-
-- Daily Coach Async Persistence Service Shell v1
-- `DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
+`fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip`
 
 ## Current authorized milestone
 
-Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
+Daily Coach Async Provider Runtime QA Hardening v1
 
 Status:
 
-`AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`
+`AUTHORIZED FOR BACKEND / QA IMPLEMENTATION`
 
 Codex:
 
@@ -37,35 +32,33 @@ Codex:
 
 Required implementation branch:
 
-`feature/daily-coach-async-provider-runtime-prototype-v1`
+`feature/daily-coach-async-provider-runtime-qa-hardening-v1`
 
 Milestone type:
 
-Developer Mode-only manual provider runtime prototype.
+Developer Mode-only provider runtime QA hardening.
 
 Expected validation type:
 
-Focused provider runtime prototype tests, Streamlit Developer Mode provider tests, Developer Mode persistence inspection tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, `scripts/dev_commit_check.ps1 -Mode code`, fsweep, Linux pull, and manual app smoke.
+Focused QA hardening tests, provider runtime prototype tests, Streamlit Developer Mode provider tests, Developer Mode persistence inspection tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, `scripts/dev_commit_check.ps1 -Mode code`, fsweep, Linux pull, and manual app smoke only if Developer Mode display changes.
 
 ## Why this is current
 
-Developer Mode Persistence Inspection v1 is accepted. The next safe layer is a manual Developer Mode-only provider runtime prototype that uses the accepted persistence schema, service shell, and inspection surface.
+Daily Coach Async Provider Runtime Prototype v1 is accepted. The next safe layer is hardening failure behavior before any live provider-enabled workflow is promoted or any Today preview bridge is designed.
 
 This milestone is intentionally narrow:
 
-- Developer Mode-only
-- manual trigger only
+- QA hardening only
+- Developer Mode-only runtime remains gated
+- manual trigger only remains preserved
 - provider disabled by default
-- strict JSON parser
-- safety validator before persistence
-- approved public-safe narrative persistence only
-- sanitized failure/fallback metadata only
+- deterministic sanitized failure result objects
 - no normal Today behavior change
 - no public async narrative display
 
 ## Recommended next milestone after acceptance
 
-Daily Coach Async Provider Runtime QA Hardening v1
+Daily Coach Async Approved Preview Bridge Design v1
 
 Status:
 
@@ -77,6 +70,7 @@ Status:
 - provider call on page load
 - normal Today provider call
 - public async narrative display
+- automatic async job creation outside Developer Mode
 - worker / queue / scheduler / polling
 - qwen3 bridge
 - qwen3 promotion

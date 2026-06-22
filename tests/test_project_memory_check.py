@@ -251,6 +251,39 @@ def write_required_project_memory(root: Path) -> None:
             )
         elif (
             relative_path
+            == "docs/project_memory/milestones/daily_coach_async_provider_runtime_qa_hardening_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Provider Runtime QA Hardening v1\n"
+                "feature/daily-coach-async-provider-runtime-qa-hardening-v1\n"
+                "disabled config handling\n"
+                "missing provider/model config handling\n"
+                "stale/expired job handling\n"
+                "provider unavailable handling\n"
+                "timeout handling\n"
+                "malformed/prose/markdown-wrapped output handling\n"
+                "validation rejection handling\n"
+                "no normal Today provider call\n"
+                "no public async narrative display\n"
+            )
+        elif (
+            relative_path
+            == "docs/project_memory/reviews/daily_coach_async_provider_runtime_qa_hardening_v1.md"
+        ):
+            text = (
+                "Daily Coach Async Provider Runtime QA Hardening v1\n"
+                "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED\n"
+                "QA hardening only\n"
+                "manual trigger only remains preserved\n"
+                "provider disabled by default\n"
+                "raw provider output not persisted or displayed\n"
+                "rejected provider output not persisted or displayed\n"
+                "full prompt/raw context/scratchpad not persisted or displayed\n"
+                "no qwen3 call or bridge added\n"
+                "no public async narrative display\n"
+            )
+        elif (
+            relative_path
             == "docs/project_memory/reviews/developer_mode_persistence_inspection_v1.md"
         ):
             text = (

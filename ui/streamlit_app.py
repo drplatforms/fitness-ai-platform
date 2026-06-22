@@ -4726,10 +4726,10 @@ def render_daily_coach_async_provider_runtime_panel(user_id: int) -> None:
                         user_id,
                         None,
                     )
-                except Exception as exc:
+                except Exception:
                     st.session_state.daily_coach_async_provider_runtime_error_by_user[
                         user_id
-                    ] = str(exc)
+                    ] = "sanitized_create_job_failure"
         stored_job_id = (
             st.session_state.daily_coach_async_provider_runtime_job_id_by_user.get(
                 user_id,
@@ -4768,16 +4768,21 @@ def render_daily_coach_async_provider_runtime_panel(user_id: int) -> None:
                             user_id,
                             None,
                         )
-                    except Exception as exc:
+                    except Exception:
                         st.session_state.daily_coach_async_provider_runtime_error_by_user[
                             user_id
-                        ] = str(exc)
+                        ] = "sanitized_provider_runtime_failure"
 
         error = st.session_state.daily_coach_async_provider_runtime_error_by_user.get(
             user_id
         )
         if error:
             st.warning(f"Provider runtime prototype failed safely: {error}")
+            st.caption(
+                "Sanitized Developer Mode failure only; raw provider output, rejected "
+                "output, prompts, raw context, scratchpad, stack traces, and secrets "
+                "are not displayed."
+            )
 
         result_payload = (
             st.session_state.daily_coach_async_provider_runtime_result_by_user.get(

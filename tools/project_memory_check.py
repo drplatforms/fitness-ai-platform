@@ -66,6 +66,8 @@ REQUIRED_FILES = [
     "docs/project_memory/milestones/developer_mode_persistence_inspection_v1.md",
     "docs/project_memory/milestones/daily_coach_async_provider_runtime_prototype_v1.md",
     "docs/project_memory/reviews/daily_coach_async_provider_runtime_prototype_v1.md",
+    "docs/project_memory/milestones/daily_coach_async_provider_runtime_qa_hardening_v1.md",
+    "docs/project_memory/reviews/daily_coach_async_provider_runtime_qa_hardening_v1.md",
     "docs/project_memory/handoffs/architecture_handoff_current.md",
     "docs/project_memory/handoffs/backend_handoff_current.md",
     "docs/project_memory/handoffs/qa_handoff_current.md",

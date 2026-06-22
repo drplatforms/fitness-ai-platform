@@ -42,3 +42,19 @@ def test_streamlit_provider_runtime_does_not_expose_raw_or_rejected_output() -> 
     assert "raw_provider_output" not in panel_source
     assert "full_prompt" not in panel_source
     assert "chain_of_thought" not in panel_source
+
+
+def test_streamlit_provider_runtime_uses_sanitized_exception_labels() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+    panel_start = source.index("def render_daily_coach_async_provider_runtime_panel")
+    panel_end = source.index(
+        "def render_daily_coach_async_persistence_inspection_panel"
+    )
+    panel_source = source[panel_start:panel_end]
+
+    assert "sanitized_create_job_failure" in panel_source
+    assert "sanitized_provider_runtime_failure" in panel_source
+    assert "stack traces" in panel_source
+    assert "secrets" in panel_source
+    assert "not displayed" in panel_source
+    assert "str(exc)" not in panel_source

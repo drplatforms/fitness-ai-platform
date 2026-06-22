@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Developer Mode Persistence Inspection v1",
-    "latest_final_status": "DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED",
-    "latest_accepted_commit": "df088f9",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_df088f9_merge-developer-mode-persistence-inspection-closeout.zip",
-    "latest_main_merge_commit": "df088f9",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_df088f9_merge-developer-mode-persistence-inspection-closeout.zip",
-    "prior_accepted_milestone": "Daily Coach Async Persistence Service Shell v1",
-    "prior_final_status": "DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED",
-    "prior_main_merge_commit": "469750c"
+    "latest_accepted_milestone": "Daily Coach Async Provider Runtime Prototype v1 \u2014 Developer Mode Only",
+    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED",
+    "latest_accepted_commit": "ea3f93f",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip",
+    "latest_main_merge_commit": "ea3f93f",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip",
+    "prior_accepted_milestone": "Developer Mode Persistence Inspection v1",
+    "prior_final_status": "DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED",
+    "prior_main_merge_commit": "df088f9"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Provider Runtime Prototype v1 \u2014 Developer Mode Only",
-    "current_authorized_branch": "feature/daily-coach-async-provider-runtime-prototype-v1",
-    "current_authorized_status": "AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION",
-    "current_authorized_scope": "Developer Mode-only manual provider runtime prototype",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Provider Runtime QA Hardening v1",
+    "current_authorized_milestone": "Daily Coach Async Provider Runtime QA Hardening v1",
+    "current_authorized_branch": "feature/daily-coach-async-provider-runtime-qa-hardening-v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND / QA IMPLEMENTATION",
+    "current_authorized_scope": "Developer Mode-only provider runtime QA hardening",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Approved Preview Bridge Design v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Only authorize QA hardening after the Developer Mode provider prototype passes manual runtime smoke.",
+    "next_milestone_reason": "Design the bridge before implementation; normal Today provider calls are still not authorized.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "runtime_split": {
@@ -60,23 +60,23 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Developer Mode-only manual provider runtime prototype authorized; normal Today behavior remains unchanged and no public async narrative display is authorized",
+    "current": "Developer Mode-only provider runtime QA hardening authorized; normal Today behavior remains unchanged and no public async narrative display is authorized",
     "normal_today_behavior": "unchanged",
     "in_current_scope": [
-      "Developer Mode-only manual provider trigger",
-      "provider disabled by default",
-      "strict provider input from backend-approved context only",
-      "strict JSON parse and safety validation",
-      "approved public-safe narrative persistence only after validation",
-      "sanitized failure/fallback metadata only",
-      "Developer Mode inspection of sanitized result state",
+      "deterministic sanitized failure result objects",
+      "disabled/missing config handling",
+      "missing/stale/expired job handling",
+      "provider unavailable/timeout handling",
+      "malformed/prose/markdown/schema/validation rejection handling",
+      "bounded persistence failure handling",
+      "Developer Mode-only sanitized status/error clarity",
       "project-memory updates"
     ],
     "deferred": [
       "normal Today provider call",
       "public async narrative display",
       "worker / queue / scheduler / polling",
-      "provider runtime QA hardening after prototype acceptance"
+      "approved preview bridge design after hardening acceptance"
     ],
     "not_authorized": [
       "CrewAI Daily Coach async runtime",

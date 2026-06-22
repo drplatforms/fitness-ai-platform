@@ -1,3 +1,17 @@
+## Current Implementation Update — Daily Coach Async Persistence Service Shell v1
+
+Status: `AUTHORIZED FOR BACKEND IMPLEMENTATION`
+
+Branch: `feature/daily-coach-async-persistence-service-shell-v1`
+
+Latest accepted milestone: `Daily Coach Async Persistence Contracts + Schema v1`
+
+Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED`
+
+This milestone adds a bounded deterministic service/repository shell around the accepted `daily_coach_async_jobs` and `daily_coach_approved_narratives` schema. It is service/repository shell only: no provider runtime, no worker/queue/scheduler, no FastAPI behavior change, no Streamlit behavior change, no normal Today provider call, no public async narrative display, no raw provider output persistence, and no rejected provider output persistence.
+
+Codex do not use by default.
+
 # Open Questions
 
 Last updated: 2026-06-22

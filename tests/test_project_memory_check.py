@@ -867,3 +867,15 @@ def test_project_state_json_valid_passes(tmp_path: Path) -> None:
         and "Machine-readable project state JSON is valid" in result.message
         for result in results
     )
+
+
+def test_daily_coach_async_persistence_service_shell_project_memory_files_exist():
+    project_root = Path.cwd()
+    assert (
+        project_root
+        / "docs/project_memory/milestones/daily_coach_async_persistence_service_shell_v1.md"
+    ).exists()
+    assert (
+        project_root
+        / "docs/project_memory/reviews/daily_coach_async_persistence_service_shell_v1.md"
+    ).exists()

@@ -1132,3 +1132,26 @@ def test_weekly_coach_summary_contracts_memory_is_required() -> None:
     assert (
         "no provider runtime" in project_memory_check.REQUIRED_PHRASES[milestone_path]
     )
+
+
+def test_weekly_coach_summary_service_shell_memory_is_required() -> None:
+    service_path = "services/weekly_coach_summary_service.py"
+    preview_path = "tools/dev_weekly_coach_summary_preview.py"
+    milestone_path = "docs/project_memory/milestones/weekly_coach_summary_async_service_shell_no_worker_v1.md"
+    review_path = "docs/project_memory/reviews/weekly_coach_summary_async_service_shell_no_worker_v1.md"
+
+    assert service_path in project_memory_check.REQUIRED_FILES
+    assert preview_path in project_memory_check.REQUIRED_FILES
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "Weekly Coach Summary Async Service Shell / No Worker v1"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert (
+        "WEEKLY_COACH_SUMMARY_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )
+    assert (
+        "No provider runtime" in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )

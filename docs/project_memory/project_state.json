@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix",
-    "latest_final_status": "NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED",
-    "latest_accepted_commit": "482cf35",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_482cf35_merge-feature-next-async-job-candidate-selection-v1.zip",
-    "latest_main_merge_commit": "482cf35",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_482cf35_merge-feature-next-async-job-candidate-selection-v1.zip",
-    "prior_accepted_milestone": "Async Job Delivery Pattern / Playbook v1",
-    "prior_final_status": "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED",
-    "prior_main_merge_commit": "a3bdb5c"
+    "latest_accepted_milestone": "Weekly Coach Summary Async Contracts + Data Model v1",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED",
+    "latest_accepted_commit": "38b7868",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
+    "latest_main_merge_commit": "38b7868",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
+    "prior_accepted_milestone": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix",
+    "prior_final_status": "NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED",
+    "prior_main_merge_commit": "482cf35"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary Async Contracts + Data Model v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-async-contracts-data-model-v1",
+    "current_authorized_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-async-service-shell-no-worker-v1",
     "current_authorized_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
-    "current_authorized_scope": "Define Weekly Coach Summary async contracts/data model only. No generation, persistence schema, provider runtime, UI, worker, queue, scheduler, polling, or public/default display is authorized.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
+    "current_authorized_scope": "Add deterministic Weekly Coach Summary service shell and developer-only preview. No persistence schema, provider runtime, UI, API, worker, queue, scheduler, polling, or automatic generation is authorized.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Async Persistence Design v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "After contracts/data model acceptance, Architecture may authorize a deterministic service shell with no persistence, provider runtime, worker, queue, scheduler, polling, API, or Streamlit UI.",
+    "next_milestone_reason": "After deterministic service shell acceptance, Architecture may authorize persistence design or Developer Mode inspection.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1"
@@ -64,31 +64,31 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Weekly Coach Summary Async Contracts + Data Model v1 defines the contracts and data model for the selected next async job. It is contracts/data-model only and deterministic-first.",
-    "normal_today_behavior": "unchanged; no Streamlit UI, API, provider runtime, or public/default display added",
+    "current": "Weekly Coach Summary Async Service Shell / No Worker v1 generates deterministic ApprovedWeeklyCoachSummary output from bounded fixture inputs. It is no-worker and does not persist, call providers, or touch UI.",
+    "normal_today_behavior": "unchanged; no Streamlit UI, API, provider runtime, persistence schema, automatic generation, or public/default display added",
     "in_current_scope": [
-      "models/weekly_coach_summary_models.py",
-      "tests/test_weekly_coach_summary_models.py",
-      "Weekly Coach Summary lifecycle/status vocabulary",
-      "Weekly Coach Summary period/context/candidate/approved summary contracts",
-      "sanitized runtime metadata contract",
+      "services/weekly_coach_summary_service.py",
+      "tests/test_weekly_coach_summary_service.py",
+      "tools/dev_weekly_coach_summary_preview.py",
+      "deterministic Weekly Coach Summary candidate generation",
+      "candidate approval into ApprovedWeeklyCoachSummary",
+      "deterministic fallback for limited data",
       "project-memory pointer updates"
     ],
     "deferred": [
-      "Weekly Coach Summary generation implementation",
-      "Weekly Coach Summary service shell until next milestone",
       "Weekly Coach Summary persistence design/schema/service shell",
       "Weekly Coach Summary Developer Mode inspection",
       "Weekly Coach Summary provider runtime, if later authorized",
+      "Weekly Coach Summary API/UI exposure",
       "worker / queue / scheduler / polling"
     ],
     "not_authorized": [
-      "Weekly Coach Summary generation in this milestone",
-      "provider runtime for Weekly Coach Summary",
-      "Ollama/CrewAI calls",
       "persistence schema/migration",
       "API endpoint",
       "Streamlit UI",
+      "Developer Mode UI",
+      "provider runtime for Weekly Coach Summary",
+      "Ollama/CrewAI calls",
       "normal Today behavior changes",
       "public/default weekly summary display",
       "automatic weekly summary generation",
@@ -104,7 +104,8 @@
     "recommended_first_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
     "lstop_crlf_hotfix": "implemented in scripts/fitness_commands.ps1 by LF-normalizing SSH command script content and transporting it as UTF-8/base64 before remote bash execution",
     "weekly_coach_summary_contracts_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
-    "weekly_coach_summary_posture": "deterministic-first; provider runtime deferred; persistence schema deferred; Developer Mode inspection later"
+    "weekly_coach_summary_posture": "deterministic service shell; provider runtime deferred; persistence schema deferred; Developer Mode inspection later",
+    "weekly_coach_summary_service_shell_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW"
   },
   "codex_assisted_flow": {
     "codex_role": "implementation worker only",
@@ -146,7 +147,11 @@
       "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md",
       "models/weekly_coach_summary_models.py",
       "docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md",
-      "docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md"
+      "docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md",
+      "services/weekly_coach_summary_service.py",
+      "tools/dev_weekly_coach_summary_preview.py",
+      "docs/project_memory/milestones/weekly_coach_summary_async_service_shell_no_worker_v1.md",
+      "docs/project_memory/reviews/weekly_coach_summary_async_service_shell_no_worker_v1.md"
     ],
     "architecture": [
       "docs/project_memory/role_bootstrap_architecture.md"

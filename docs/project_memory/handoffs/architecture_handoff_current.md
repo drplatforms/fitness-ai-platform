@@ -1,20 +1,21 @@
 # Architecture Handoff Current
 
-Milestone: Weekly Coach Summary Async Contracts + Data Model v1
+Milestone: Weekly Coach Summary Async Service Shell / No Worker v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED
+Proposed final status: WEEKLY_COACH_SUMMARY_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED
 
 Summary:
-- Added Weekly Coach Summary contracts/data model in `models/weekly_coach_summary_models.py`.
-- Added focused model tests in `tests/test_weekly_coach_summary_models.py`.
-- Contracts cover lifecycle/status vocabulary, period/context, fact boundary, candidate summary, approved/public-safe summary, sanitized runtime metadata, and contract-only job record.
-- Approved summary enforces public_safe/displayable consistency.
-- Confidence/source/status values are constrained.
-- Raw provider output, rejected output, full prompt, raw context, scratchpad, and chain-of-thought are not approved model fields.
-- No weekly summary generation was implemented.
-- No persistence schema, API endpoint, Streamlit UI, provider runtime, worker/queue/scheduler/polling, or public/default display was added.
+- Added deterministic Weekly Coach Summary service shell in `services/weekly_coach_summary_service.py`.
+- Added focused service tests in `tests/test_weekly_coach_summary_service.py`.
+- Added developer-only preview command in `tools/dev_weekly_coach_summary_preview.py`.
+- Service builds bounded weekly contexts from approved fixture inputs.
+- Service generates deterministic `CandidateWeeklyCoachSummary` objects.
+- Service approves safe candidates into public-safe `ApprovedWeeklyCoachSummary` objects.
+- Service returns deterministic fallback for low-data or unsafe candidate cases.
+- No weekly summary persistence schema was implemented.
+- No API endpoint, Streamlit UI, Developer Mode UI, provider runtime, worker/queue/scheduler/polling, automatic generation, or public/default display was added.
 
 Request:
-Please review and accept as WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED.
+Please review and accept as WEEKLY_COACH_SUMMARY_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED.

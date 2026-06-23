@@ -1,32 +1,25 @@
 # Next Milestone
 
 Current authorized milestone:
-Weekly Coach Summary Async Contracts + Data Model v1
+Weekly Coach Summary Async Service Shell / No Worker v1
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Proposed final status:
-WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED
+WEEKLY_COACH_SUMMARY_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED
 
 Purpose:
-Define the contracts and data model for the selected Weekly Coach Summary Async Job before implementation begins.
+Add deterministic backend service shell functions around the accepted Weekly Coach Summary contracts without persistence, provider runtime, worker, queue, scheduler, polling, API, or Streamlit UI.
 
 Recommended next milestone after acceptance:
-Weekly Coach Summary Async Service Shell / No Worker v1
+Weekly Coach Summary Async Persistence Design v1
+
+Alternative next milestone:
+Weekly Coach Summary Developer Mode Inspection v1
 
 Why:
-The accepted async playbook recommends service shell before persistence, provider runtime, worker/queue/scheduler, or UI exposure.
-
-Recommended next scope:
-
-- deterministic service shell functions around accepted weekly summary contracts
-- no persistence schema
-- no provider runtime
-- no API endpoint
-- no Streamlit UI
-- no worker / queue / scheduler / polling
-- no automatic weekly generation
+The deterministic preview output is now useful. The next durable architecture step should define safe persistence before UI exposure, unless Architecture decides the app needs Developer Mode inspection first.
 
 Still not authorized:
 

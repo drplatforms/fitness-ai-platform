@@ -1,23 +1,17 @@
-# Daily Coach Async Approved Preview Bridge Implementation v1
+# Architecture Handoff Current
+
+Milestone: Daily Coach Async Approved Preview Bridge QA v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED
+Proposed final status: DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED
 
-Implementation summary:
-
-- Added disabled-by-default feature flag `DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED`.
-- Added read-only approved preview eligibility helper.
-- Added secondary Today preview rendering only when flag is enabled and all gates pass.
-- Preserved deterministic Daily Next Action as primary.
-- Kept Developer Mode diagnostics gated and sanitized.
-
-Boundaries preserved:
-
-- no provider call from Today
-- no provider call on page load
-- no async job creation from Today
-- no worker / queue / scheduler / polling
-- no qwen3 or qwen3:32b behavior
-- no raw/rejected output display
-- no debug/provider metadata in normal UI
+Summary:
+- Hard-tested the feature-flagged approved preview bridge.
+- Added QA coverage for disabled/enabled behavior, eligibility gates, persistence states, no-provider-call guarantees, no-async-job-creation guarantees, normal UI metadata boundaries, and Developer Mode diagnostic boundaries.
+- Added a small Streamlit safety refinement so normal UI rendering uses `to_normal_ui_dict()`.
+- No provider execution from Today was added.
+- No async job creation from Today was added.
+- No public/default async narrative display was added.
+- No worker / queue / scheduler / polling was added.
+- qwen3 and qwen3:32b remain unauthorized.

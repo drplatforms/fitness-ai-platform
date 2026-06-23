@@ -116,7 +116,7 @@ def test_qa_user_options_return_known_users_and_presence() -> None:
     assert by_id[102].present is True
     assert by_id[102].scenario == "aligned_managed"
     assert by_id[105].present is False
-    assert by_id[101].label == "101 â€” recovery_limited"
+    assert by_id[101].label == "101 - recovery_limited"
 
 
 def test_date_bounds_for_seeded_user_are_safe_aggregates() -> None:

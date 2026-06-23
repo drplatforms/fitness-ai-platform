@@ -264,7 +264,7 @@ def get_qa_user_options(
         WeeklyCoachSummaryQAUserOption(
             user_id=user_id,
             scenario=scenario,
-            label=f"{user_id} — {scenario}",
+            label=f"{user_id} - {scenario}",
             present=user_id in present_user_ids,
         )
         for user_id, scenario in QA_USER_SCENARIOS.items()

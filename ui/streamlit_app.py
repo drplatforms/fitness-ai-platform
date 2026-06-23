@@ -9124,50 +9124,6 @@ def _weekly_coach_summary_qa_key(
     return f"qa:{int(user_id)}:{start_date.isoformat()}:{end_date.isoformat()}"
 
 
-def _weekly_coach_summary_safe_qa_label(label: object) -> str:
-    text = str(label or "Unknown").strip()
-    replacements = {
-        "\u00e2\u20ac\u201d": " - ",
-        "\u00e2\u20ac\u201c": " - ",
-        "\u2014": " - ",
-        "\u2013": " - ",
-    }
-    for bad, good in replacements.items():
-        text = text.replace(bad, good)
-    while "  " in text:
-        text = text.replace("  ", " ")
-    return text
-
-
-def _weekly_coach_summary_qa_user_option_labels(
-    qa_options: list[object],
-) -> dict[str, object]:
-    labels: dict[str, object] = {}
-    for option in qa_options:
-        base_label = _weekly_coach_summary_safe_qa_label(
-            getattr(option, "label", "Unknown")
-        )
-        label = base_label
-        duplicate_index = 2
-        while label in labels:
-            label = f"{base_label} ({duplicate_index})"
-            duplicate_index += 1
-        labels[label] = option
-    return labels
-
-
-def _weekly_coach_summary_default_qa_user_index(
-    option_labels: list[str],
-    option_by_label: dict[str, object],
-    default_user_id: int = 102,
-) -> int:
-    for index, label in enumerate(option_labels):
-        option = option_by_label[label]
-        if getattr(option, "user_id", None) == default_user_id:
-            return index
-    return 0
-
-
 def _render_weekly_coach_summary_qa_inventory(inventory) -> None:
     inventory_rows = [
         {"Metric": "Selected User", "Value": inventory.user_id},
@@ -9207,24 +9163,18 @@ def render_weekly_coach_summary_qa_data_range_debug() -> None:
     )
 
     qa_options = get_qa_user_options()
-    option_by_label = _weekly_coach_summary_qa_user_option_labels(qa_options)
-    option_labels = list(option_by_label.keys())
-
-    if not option_labels:
-        st.warning("No Weekly Coach Summary QA users are available.")
-        return
-
+    option_labels = [option.label for option in qa_options]
     selected_label = st.selectbox(
         "Weekly Coach Summary QA user",
         options=option_labels,
-        index=_weekly_coach_summary_default_qa_user_index(
-            option_labels,
-            option_by_label,
+        index=(
+            option_labels.index("102 â€” aligned_managed")
+            if "102 â€” aligned_managed" in option_labels
+            else 0
         ),
         key="weekly_coach_summary_qa_user_selector",
     )
-    selected_option = option_by_label[selected_label]
-    selected_user_id = int(selected_option.user_id)
+    selected_user_id = int(selected_label.split("â€”", 1)[0].strip())
 
     quick_range_label = st.selectbox(
         "Weekly Coach Summary QA quick range",
@@ -9670,6 +9620,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             "panel_render_ms": _weekly_coach_summary_elapsed_ms(panel_start),
         },
     )
+    render_weekly_coach_summary_qa_data_range_debug()
     _render_weekly_coach_summary_timing(user_id)
 
 
@@ -9702,7 +9653,6 @@ def render_developer_section(user_id: int) -> None:
         }
     )
 
-    render_weekly_coach_summary_qa_data_range_debug()
     render_weekly_coach_summary_developer_inspection(user_id)
 
     st.subheader("Quick Endpoint Checks")

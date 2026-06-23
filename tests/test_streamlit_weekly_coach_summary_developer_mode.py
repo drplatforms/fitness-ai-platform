@@ -138,12 +138,10 @@ def test_weekly_coach_summary_timing_is_not_in_normal_today_ui() -> None:
 
 def test_weekly_coach_summary_qa_data_range_controls_are_developer_only() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
-    developer_source = _function_source("render_developer_section")
     qa_source = _function_source("render_weekly_coach_summary_qa_data_range_debug")
     today_source = _function_source("render_today_section")
 
-    assert "render_weekly_coach_summary_qa_data_range_debug()" in developer_source
-    assert "render_weekly_coach_summary_qa_data_range_debug()" not in panel_source
+    assert "render_weekly_coach_summary_qa_data_range_debug()" in panel_source
     assert "Weekly Coach Summary QA Data Range" in qa_source
     assert "Weekly Coach Summary QA user" in qa_source
     assert "Inspect QA data range" in qa_source

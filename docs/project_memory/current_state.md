@@ -1,43 +1,46 @@
-
 # Current State
 
 Latest accepted milestone:
-Async Job Delivery Pattern / Playbook v1
+Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
 
 Current milestone:
-Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
+Weekly Coach Summary Async Contracts + Data Model v1
 
 Current status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Proposed final status:
-NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED
+WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED
 
 Current behavior:
 
-- `lstop` SSH command transport now LF-normalizes Linux command script content before remote Bash execution.
-- `lstop`, `app`, and `lrestart` remain Windows PowerShell helper commands that SSH into Linux.
-- No runtime product behavior changed.
-- No provider behavior changed.
-- No Streamlit behavior changed.
+- Weekly Coach Summary Async Job is the selected next async candidate.
+- Weekly Coach Summary contracts/data model now exist in `models/weekly_coach_summary_models.py`.
+- Contracts define lifecycle/status vocabulary, weekly period/context, candidate summary, approved/public-safe summary, sanitized runtime metadata, and a contract-only job record.
+- This is deterministic-first and contract-only.
+- No weekly summary generation is implemented.
+- No persistence schema/migration is added.
+- No API endpoint is added.
+- No Streamlit UI is added.
+- No provider runtime is added.
+- No Ollama/CrewAI call is added.
+- No worker/queue/scheduler/polling is added.
 - No normal Today behavior changed.
-- No selected async job was implemented.
-- Weekly Coach Summary Async Job is selected as the recommended next async job candidate.
-- Recommended first implementation milestone is Weekly Coach Summary Async Contracts + Data Model v1.
 
 Important docs:
 
 - `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`
-- `docs/project_memory/reviews/next_async_job_candidate_selection_v1.md`
-- `docs/project_memory/milestones/next_async_job_candidate_selection_v1.md`
+- `docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md`
+- `docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md`
 
 Still not authorized:
 
-- Weekly Coach Summary implementation
-- provider execution from Today
-- provider execution on page load
-- automatic async job generation
-- public/default async narrative display
+- Weekly Coach Summary generation
+- Weekly Coach Summary persistence schema/service
+- Weekly Coach Summary Developer Mode UI
+- Weekly Coach Summary provider runtime
+- automatic weekly summary generation
+- public/default weekly summary display
 - worker / queue / scheduler / polling
 - qwen3 bridge or promotion
 - qwen3:32b promotion

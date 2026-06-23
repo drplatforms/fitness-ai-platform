@@ -1,36 +1,42 @@
-
 # Next Milestone
 
 Current authorized milestone:
-Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
+Weekly Coach Summary Async Contracts + Data Model v1
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Proposed final status:
-NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED
+WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED
 
 Purpose:
-Fix the known `lstop` SSH CRLF issue and use the accepted Async Job Delivery Pattern / Playbook to select the next async job candidate before implementation begins.
+Define the contracts and data model for the selected Weekly Coach Summary Async Job before implementation begins.
 
-Selected next async job candidate:
-Weekly Coach Summary Async Job
-
-Recommended first implementation milestone after acceptance:
-Weekly Coach Summary Async Contracts + Data Model v1
+Recommended next milestone after acceptance:
+Weekly Coach Summary Async Service Shell / No Worker v1
 
 Why:
-Weekly Coach Summary is naturally async, deterministic-first, high product value, lower risk to normal Today behavior, and strong portfolio/demo value.
+The accepted async playbook recommends service shell before persistence, provider runtime, worker/queue/scheduler, or UI exposure.
+
+Recommended next scope:
+
+- deterministic service shell functions around accepted weekly summary contracts
+- no persistence schema
+- no provider runtime
+- no API endpoint
+- no Streamlit UI
+- no worker / queue / scheduler / polling
+- no automatic weekly generation
 
 Still not authorized:
 
-- Weekly Coach Summary implementation
-- provider runtime changes
+- Weekly Coach Summary persistence schema/service
+- Weekly Coach Summary provider runtime
 - normal Today provider execution
 - provider execution on page load
 - automatic async job generation
 - worker / queue / scheduler / polling
-- public/default async narrative display
+- public/default weekly summary display
 - qwen3 bridge
 - qwen3 promotion
 - qwen3:32b promotion

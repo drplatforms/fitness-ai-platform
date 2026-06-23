@@ -1,31 +1,22 @@
-
 # Open Questions
 
-## Next Async Job Candidate Selection v1
+## Weekly Coach Summary Async Contracts + Data Model v1
 
 Current status:
-Next Async Job Candidate Selection v1 + lstop Tooling Hotfix is implemented and ready for Architecture review.
-
-Selected next async job candidate:
-Weekly Coach Summary Async Job
-
-Recommended first milestone:
-Weekly Coach Summary Async Contracts + Data Model v1
+Weekly Coach Summary Async Contracts + Data Model v1 is implemented and ready for Architecture review.
 
 Open after acceptance:
 
-- Architecture should approve or revise the Weekly Coach Summary recommendation.
-- Architecture should decide whether the first milestone is contracts/data model only or service shell/no worker.
-- QA should review the candidate matrix and the no-provider/no-normal-Today boundaries.
+- Architecture should authorize or revise Weekly Coach Summary Async Service Shell / No Worker v1.
+- Backend should keep the next milestone deterministic-only and avoid persistence/provider/UI work unless explicitly authorized.
+- QA should review model constraints, public_safe/displayable consistency, and absence of raw provider/debug/internal fields.
 
-## Tooling backlog
+## Deferred Weekly Coach Summary decisions
 
-Completed in this milestone:
-`lstop` SSH CRLF command handling was fixed by LF-normalizing Linux command text and transporting it safely to remote Bash.
-
-Still watch:
-- Confirm `app` behavior remains preserved when validating the shared SSH helper path.
-- Confirm `lrestart` behavior remains preserved if directly tested.
+- When should persistence schema be introduced?
+- What exact Developer Mode inspection surface will weekly summaries need?
+- Should any normal UI preview exist later, and behind what feature flag?
+- Provider runtime remains deferred until deterministic service/persistence boundaries are accepted.
 
 ## Portfolio / LinkedIn / GitHub
 

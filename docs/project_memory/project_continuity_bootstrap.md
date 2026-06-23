@@ -1,8 +1,7 @@
-
 # Project Continuity Bootstrap
 
 Current milestone:
-Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
+Weekly Coach Summary Async Contracts + Data Model v1
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
@@ -13,20 +12,21 @@ Start here:
 2. Read `docs/project_memory/current_state.md`.
 3. Read `docs/project_memory/next_milestone.md`.
 4. Read `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`.
-5. Read `docs/project_memory/reviews/next_async_job_candidate_selection_v1.md`.
-6. Read `docs/project_memory/milestones/next_async_job_candidate_selection_v1.md`.
+5. Read `models/weekly_coach_summary_models.py`.
+6. Read `docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md`.
+7. Read `docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md`.
 
 Current boundary:
 
-- This is a tooling hotfix plus planning/project-memory milestone.
-- `lstop` CRLF SSH command handling was fixed through LF-normalized command transport.
-- `app` and `lrestart` remain Windows PowerShell helpers that SSH into Linux.
-- Weekly Coach Summary Async Job is selected as the next candidate.
-- No selected async job was implemented.
-- No runtime product behavior changed.
-- No provider behavior changed.
-- No Streamlit behavior changed.
+- Weekly Coach Summary is the selected next async job candidate.
+- This milestone defines contracts/data model only.
+- Deterministic-first posture is required.
+- Provider runtime is deferred.
+- Persistence schema/service is deferred.
+- Developer Mode inspection is a later required stage before normal UI exposure.
 - No normal Today behavior changed.
+- No Streamlit UI changed.
+- No provider behavior changed.
 
 Workflow reminder:
 

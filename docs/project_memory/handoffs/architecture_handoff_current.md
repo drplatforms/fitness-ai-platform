@@ -1,21 +1,20 @@
-
 # Architecture Handoff Current
 
-Milestone: Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
+Milestone: Weekly Coach Summary Async Contracts + Data Model v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED
+Proposed final status: WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED
 
 Summary:
-- Fixed `lstop` SSH CRLF command handling in `scripts/fitness_commands.ps1` by LF-normalizing command script content and transporting it as UTF-8/base64 to remote Bash.
-- Used `docs/project_memory/patterns/async_job_delivery_pattern_v1.md` to evaluate async candidates.
-- Selected Weekly Coach Summary Async Job as the recommended next async job candidate.
-- Recommended first milestone: Weekly Coach Summary Async Contracts + Data Model v1.
-- No selected async job was implemented.
-- No runtime product behavior changed.
-- No provider behavior changed.
-- No Streamlit behavior changed.
-- No normal Today behavior changed.
-- No worker/queue/scheduler/polling was added.
-- No qwen3/qwen3:32b promotion occurred.
+- Added Weekly Coach Summary contracts/data model in `models/weekly_coach_summary_models.py`.
+- Added focused model tests in `tests/test_weekly_coach_summary_models.py`.
+- Contracts cover lifecycle/status vocabulary, period/context, fact boundary, candidate summary, approved/public-safe summary, sanitized runtime metadata, and contract-only job record.
+- Approved summary enforces public_safe/displayable consistency.
+- Confidence/source/status values are constrained.
+- Raw provider output, rejected output, full prompt, raw context, scratchpad, and chain-of-thought are not approved model fields.
+- No weekly summary generation was implemented.
+- No persistence schema, API endpoint, Streamlit UI, provider runtime, worker/queue/scheduler/polling, or public/default display was added.
+
+Request:
+Please review and accept as WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED.

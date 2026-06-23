@@ -1,15 +1,14 @@
-
 # QA Handoff Current
 
-Milestone: Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
+Milestone: Weekly Coach Summary Async Contracts + Data Model v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 QA focus:
-- Validate `lstop` from Windows PowerShell.
-- Validate `app` still restarts Linux FastAPI + Streamlit if the shared SSH helper path needs smoke coverage.
-- Confirm no runtime product behavior changed.
-- Confirm no Streamlit behavior changed.
-- Confirm no provider behavior changed.
-- Confirm no selected async job was implemented.
-- Review `docs/project_memory/reviews/next_async_job_candidate_selection_v1.md` and confirm the Weekly Coach Summary recommendation follows the accepted async job playbook.
+- Verify valid weekly period can be constructed.
+- Verify invalid/overlong weekly periods are rejected.
+- Verify candidate/approved summary required user-facing sections are non-empty.
+- Verify approved summary cannot be displayable when public_safe is false.
+- Verify confidence/source/status values are constrained.
+- Verify raw provider output, rejected provider output, full prompt, raw context, scratchpad, and chain-of-thought are not approved model fields.
+- Verify no provider runtime, persistence schema, API endpoint, Streamlit UI, normal Today behavior, worker/queue/scheduler, or polling was added.

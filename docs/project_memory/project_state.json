@@ -8,27 +8,27 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Async Job Delivery Pattern / Playbook v1",
-    "latest_final_status": "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED",
-    "latest_accepted_commit": "a3bdb5c",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_a3bdb5c_merge-feature-async-job-delivery-pattern-playbook-v1.zip",
-    "latest_main_merge_commit": "a3bdb5c",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_a3bdb5c_merge-feature-async-job-delivery-pattern-playbook-v1.zip",
-    "prior_accepted_milestone": "Daily Coach Async Provider Live QA v1 \u2014 Developer Mode Only",
-    "prior_final_status": "DAILY_COACH_ASYNC_PROVIDER_LIVE_QA_V1_ACCEPTED",
-    "prior_main_merge_commit": "71b14ea"
+    "latest_accepted_milestone": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix",
+    "latest_final_status": "NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED",
+    "latest_accepted_commit": "482cf35",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_482cf35_merge-feature-next-async-job-candidate-selection-v1.zip",
+    "latest_main_merge_commit": "482cf35",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_482cf35_merge-feature-next-async-job-candidate-selection-v1.zip",
+    "prior_accepted_milestone": "Async Job Delivery Pattern / Playbook v1",
+    "prior_final_status": "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED",
+    "prior_main_merge_commit": "a3bdb5c"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix",
-    "current_authorized_branch": "feature/next-async-job-candidate-selection-v1",
-    "current_authorized_status": "AUTHORIZED FOR BACKEND / PROJECT MEMORY IMPLEMENTATION",
-    "current_authorized_scope": "Fix the lstop SSH CRLF command transport issue and select the next async job candidate using the accepted Async Job Delivery Pattern / Playbook, without implementing the selected async job or changing runtime/product behavior.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Async Contracts + Data Model v1",
+    "current_authorized_milestone": "Weekly Coach Summary Async Contracts + Data Model v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-async-contracts-data-model-v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
+    "current_authorized_scope": "Define Weekly Coach Summary async contracts/data model only. No generation, persistence schema, provider runtime, UI, worker, queue, scheduler, polling, or public/default display is authorized.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Architecture should review the candidate selection and authorize the selected candidate's first implementation milestone before any async job implementation begins.",
+    "next_milestone_reason": "After contracts/data model acceptance, Architecture may authorize a deterministic service shell with no persistence, provider runtime, worker, queue, scheduler, polling, API, or Streamlit UI.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
-    "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Contracts + Data Model v1"
+    "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1"
   },
   "runtime_split": {
     "windows": [
@@ -64,44 +64,47 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix fixes the known lstop SSH CRLF issue and selects Weekly Coach Summary Async Job as the recommended next async candidate. No selected async job is implemented.",
-    "normal_today_behavior": "unchanged; no runtime product behavior changed",
+    "current": "Weekly Coach Summary Async Contracts + Data Model v1 defines the contracts and data model for the selected next async job. It is contracts/data-model only and deterministic-first.",
+    "normal_today_behavior": "unchanged; no Streamlit UI, API, provider runtime, or public/default display added",
     "in_current_scope": [
-      "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
-      "milestone and review docs for Async Job Delivery Pattern / Playbook v1",
-      "project-memory pointer updates",
-      "project-memory check updates if required",
-      "lstop/lrestart/app CRLF handling recorded as backlog only"
+      "models/weekly_coach_summary_models.py",
+      "tests/test_weekly_coach_summary_models.py",
+      "Weekly Coach Summary lifecycle/status vocabulary",
+      "Weekly Coach Summary period/context/candidate/approved summary contracts",
+      "sanitized runtime metadata contract",
+      "project-memory pointer updates"
     ],
     "deferred": [
-      "Weekly Coach Summary Async Contracts + Data Model v1 until Architecture acceptance",
-      "Weekly Coach Summary Service Shell / No Worker v1",
+      "Weekly Coach Summary generation implementation",
+      "Weekly Coach Summary service shell until next milestone",
       "Weekly Coach Summary persistence design/schema/service shell",
       "Weekly Coach Summary Developer Mode inspection",
       "Weekly Coach Summary provider runtime, if later authorized",
       "worker / queue / scheduler / polling"
     ],
     "not_authorized": [
-      "selected async job implementation in this milestone",
-      "provider behavior changes",
+      "Weekly Coach Summary generation in this milestone",
+      "provider runtime for Weekly Coach Summary",
+      "Ollama/CrewAI calls",
+      "persistence schema/migration",
+      "API endpoint",
+      "Streamlit UI",
       "normal Today behavior changes",
-      "Streamlit behavior changes",
-      "Daily Coach async runtime behavior changes",
-      "approved preview bridge behavior changes",
-      "provider execution from Today",
-      "provider execution on page load",
-      "automatic async job generation",
+      "public/default weekly summary display",
+      "automatic weekly summary generation",
+      "worker / queue / scheduler / polling",
       "raw provider output persistence",
       "rejected provider output persistence",
-      "debug/provider metadata in normal UI",
+      "prompt/raw context/scratchpad persistence",
       "qwen3 bridge",
       "qwen3 promotion",
-      "qwen3:32b promotion",
-      "worker / queue / scheduler / polling"
+      "qwen3:32b promotion"
     ],
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
-    "recommended_first_milestone": "Weekly Coach Summary Async Contracts + Data Model v1",
-    "lstop_crlf_hotfix": "implemented in scripts/fitness_commands.ps1 by LF-normalizing SSH command script content and transporting it as UTF-8/base64 before remote bash execution"
+    "recommended_first_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
+    "lstop_crlf_hotfix": "implemented in scripts/fitness_commands.ps1 by LF-normalizing SSH command script content and transporting it as UTF-8/base64 before remote bash execution",
+    "weekly_coach_summary_contracts_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
+    "weekly_coach_summary_posture": "deterministic-first; provider runtime deferred; persistence schema deferred; Developer Mode inspection later"
   },
   "codex_assisted_flow": {
     "codex_role": "implementation worker only",
@@ -140,7 +143,10 @@
       "docs/project_memory/open_questions.md",
       "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
       "docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md",
-      "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md"
+      "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md",
+      "models/weekly_coach_summary_models.py",
+      "docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md",
+      "docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md"
     ],
     "architecture": [
       "docs/project_memory/role_bootstrap_architecture.md"

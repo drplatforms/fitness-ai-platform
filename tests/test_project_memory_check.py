@@ -1113,3 +1113,22 @@ def test_async_job_delivery_pattern_playbook_memory_is_required() -> None:
         "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED"
         in project_memory_check.REQUIRED_PHRASES[review_path]
     )
+
+
+def test_weekly_coach_summary_contracts_memory_is_required() -> None:
+    milestone_path = "docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md"
+    review_path = "docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md"
+
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "Weekly Coach Summary Async Contracts + Data Model v1"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert (
+        "WEEKLY_COACH_SUMMARY_ASYNC_CONTRACTS_DATA_MODEL_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )
+    assert (
+        "no provider runtime" in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )

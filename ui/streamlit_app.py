@@ -1,8 +1,7 @@
 # =====================================
 # Imports
 # =====================================
-
-from datetime import datetime
+from datetime import date, datetime
 from html import escape
 from time import perf_counter
 
@@ -29,6 +28,13 @@ from services.weekly_coach_summary_persistence_service import (
     WeeklyCoachSummaryPersistenceError,
     get_latest_approved_weekly_summary,
     save_approved_weekly_summary,
+)
+from services.weekly_coach_summary_qa_data_service import (
+    QA_DEBUG_RANGE_OPTIONS,
+    build_weekly_summary_context_from_qa_range,
+    get_qa_user_options,
+    get_user_data_date_bounds,
+    get_weekly_summary_fact_inventory,
 )
 from services.weekly_coach_summary_service import (
     approved_weekly_summary_to_public_sections,
@@ -754,29 +760,33 @@ def planned_range_label(
 
 def effort_delta_label(rir_deviation: int | float | None) -> str:
     if rir_deviation is None:
-        return "⚪ Effort unknown"
+        return "âšª Effort unknown"
 
     if rir_deviation < 0:
-        return f"🔴 Harder than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+        return (
+            f"ðŸ”´ Harder than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+        )
 
     if rir_deviation > 0:
-        return f"🟡 Easier than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+        return (
+            f"ðŸŸ¡ Easier than planned ({format_signed_delta(rir_deviation, ' RIR')})"
+        )
 
-    return "✅ On target"
+    return "âœ… On target"
 
 
 def rep_result_label(below: int, inside: int, above: int) -> str:
     parts = []
 
     if below:
-        parts.append(f"🟡 {below} below")
+        parts.append(f"ðŸŸ¡ {below} below")
     if inside:
-        parts.append(f"✅ {inside} on target")
+        parts.append(f"âœ… {inside} on target")
     if above:
-        parts.append(f"🔴 {above} above")
+        parts.append(f"ðŸ”´ {above} above")
 
     if not parts:
-        return "⚪ Reps unknown"
+        return "âšª Reps unknown"
 
     return " / ".join(parts)
 
@@ -890,22 +900,22 @@ def build_planned_vs_actual_delta_rows(
             rir_delta = round(actual_rir_average - planned_rir_midpoint, 2)
 
         if skipped_sets and not completed_sets:
-            status = "⚪ Skipped"
+            status = "âšª Skipped"
         elif completed_sets and len(completed_sets) >= planned_sets:
-            status = "✅ Complete"
+            status = "âœ… Complete"
         elif completed_sets:
-            status = "🟡 Partially logged"
+            status = "ðŸŸ¡ Partially logged"
         else:
-            status = "⚪ Not logged"
+            status = "âšª Not logged"
 
         if substituted:
-            status = f"↔️ Substituted / {status}"
+            status = f"â†”ï¸ Substituted / {status}"
 
         delta_rows.append(
             {
                 "Exercise": exercise_label,
                 "Planned": (
-                    f"{planned_sets} sets × {planned_range_label(reps_min, reps_max)} reps "
+                    f"{planned_sets} sets Ã— {planned_range_label(reps_min, reps_max)} reps "
                     f"@ RIR {planned_range_label(rir_min, rir_max)}"
                 ),
                 "Actual": (
@@ -1090,7 +1100,7 @@ def planned_exercise_option_label(exercise: dict) -> str:
     )
 
     return (
-        f"{exercise.get('id')} — "
+        f"{exercise.get('id')} â€” "
         f"{exercise.get('exercise_order', '?')}. "
         f"{exercise.get('name', 'Unknown')} "
         f"({exercise.get('sets', '?')} sets, {reps_label}, {rir_label})"
@@ -1431,8 +1441,8 @@ def display_apply_substitution_control(
         with col1:
             st.write(f"**{index}. {candidate.get('name', 'Unknown')}**")
             st.caption(
-                f"{humanize_label(candidate.get('movement_pattern'))} · "
-                f"{format_substitution_list(candidate.get('required_equipment'))} · "
+                f"{humanize_label(candidate.get('movement_pattern'))} Â· "
+                f"{format_substitution_list(candidate.get('required_equipment'))} Â· "
                 f"{first_reason}"
             )
         with col2:
@@ -1524,7 +1534,7 @@ def display_substitution_candidates(
     active_substitutions = active_substitutions or {}
 
     st.caption(
-        "Pick the exercise you want to replace, then choose a similar option that fits today’s workout."
+        "Pick the exercise you want to replace, then choose a similar option that fits todayâ€™s workout."
     )
 
     selectable_exercises = [
@@ -1711,11 +1721,11 @@ def active_workout_exercise_label(
 
     if planned_exercise_id is not None and active_name != planned_name:
         return (
-            f"{planned_exercise_id} — {active_name} "
+            f"{planned_exercise_id} â€” {active_name} "
             f"(sub for {planned_name}; {sets} sets, {reps}, RIR {rir})"
         )
 
-    return f"{planned_exercise_id} — {planned_name} ({sets} sets, {reps}, RIR {rir})"
+    return f"{planned_exercise_id} â€” {planned_name} ({sets} sets, {reps}, RIR {rir})"
 
 
 def actual_set_status_label(actual_set: dict) -> str:
@@ -2102,7 +2112,7 @@ def actual_set_option_label(actual_set: dict) -> str:
     else:
         status = "Not Completed"
 
-    return f"Actual Set {actual_set_id} — {exercise_name} — Set {set_number} — {status}"
+    return f"Actual Set {actual_set_id} â€” {exercise_name} â€” Set {set_number} â€” {status}"
 
 
 def planned_exercise_by_id(
@@ -2908,11 +2918,11 @@ def display_workout_execution_history(
 
             if st.session_state.get("developer_mode", False):
                 expander_label = (
-                    f"Plan {plan_instance_id} — {title} — "
-                    f"{plan_status} — selected {selected_at}"
+                    f"Plan {plan_instance_id} â€” {title} â€” "
+                    f"{plan_status} â€” selected {selected_at}"
                 )
             else:
-                expander_label = f"{title} — {plan_status} — selected {selected_at}"
+                expander_label = f"{title} â€” {plan_status} â€” selected {selected_at}"
 
             with st.expander(expander_label):
                 display_workout_execution_history_item(
@@ -3026,7 +3036,7 @@ def exercise_matches_equipment_profile(
 
 
 def display_exercise_catalog(user_id: int) -> None:
-    st.header("📚 Exercise Catalog")
+    st.header("ðŸ“š Exercise Catalog")
 
     try:
         catalog_response = api_get("/exercise-catalog")
@@ -3415,6 +3425,10 @@ SESSION_DEFAULTS = {
     "weekly_coach_summary_persisted_by_user": {},
     "weekly_coach_summary_message_by_user": {},
     "weekly_coach_summary_timing_by_user": {},
+    "weekly_coach_summary_qa_inventory_by_key": {},
+    "weekly_coach_summary_qa_preview_by_key": {},
+    "weekly_coach_summary_qa_persisted_by_key": {},
+    "weekly_coach_summary_qa_message_by_key": {},
 }
 
 for key, default_value in SESSION_DEFAULTS.items():
@@ -3501,11 +3515,11 @@ def handle_user_switch(selected_user_id: int) -> None:
 USER_OPTIONS = {
     "User 1": 1,
     "User 2": 2,
-    "QA 101 — Under-recovered lifter": 101,
-    "QA 102 — Well-recovered baseline": 102,
-    "QA 103 — Nutrition/training mismatch": 103,
-    "QA 104 — Improving after deload": 104,
-    "QA 105 — Messy/incomplete logging": 105,
+    "QA 101 â€” Under-recovered lifter": 101,
+    "QA 102 â€” Well-recovered baseline": 102,
+    "QA 103 â€” Nutrition/training mismatch": 103,
+    "QA 104 â€” Improving after deload": 104,
+    "QA 105 â€” Messy/incomplete logging": 105,
 }
 
 # =====================================
@@ -3518,7 +3532,7 @@ with st.sidebar:
     selected_user_label = st.selectbox(
         "Demo user",
         options=list(USER_OPTIONS.keys()),
-        index=list(USER_OPTIONS.keys()).index("QA 102 — Well-recovered baseline"),
+        index=list(USER_OPTIONS.keys()).index("QA 102 â€” Well-recovered baseline"),
         help="QA 102 is the primary portfolio screenshot user.",
     )
 
@@ -3532,7 +3546,7 @@ with st.sidebar:
 
     st.divider()
     st.caption("Primary flow")
-    st.write("Today → Workout → Nutrition → History → Reports")
+    st.write("Today â†’ Workout â†’ Nutrition â†’ History â†’ Reports")
 
 handle_user_switch(user_id)
 
@@ -3751,9 +3765,9 @@ def render_preview_exercise_snapshot(workout_plan: dict) -> None:
 
 
 WORKOUT_SIZE_OPTION_LABELS = {
-    "quick": "Quick — 3 to 4 exercises",
-    "standard": "Standard — 5 exercises",
-    "full": "Full — 6 to 7 exercises",
+    "quick": "Quick â€” 3 to 4 exercises",
+    "standard": "Standard â€” 5 exercises",
+    "full": "Full â€” 6 to 7 exercises",
 }
 
 
@@ -4020,7 +4034,7 @@ def render_readiness_snapshot(user_id: int) -> None:
 def get_daily_recommendation_for_user(user_id: int) -> dict | None:
     """Fetch daily recommendation data and cache it by user_id.
 
-    The cache is intentionally keyed by user_id so switching 101 → 102 → 103
+    The cache is intentionally keyed by user_id so switching 101 â†’ 102 â†’ 103
     can never reuse a recommendation from the previous user. A successful fetch
     always replaces that user's cached value; if a transient backend error occurs,
     the UI may show that same user's cached value instead of going blank.
@@ -4091,12 +4105,12 @@ def friendly_daily_coach_limitations(limitations: list[object]) -> list[str]:
 
 
 DAILY_NEXT_ACTION_WORKFLOW_LABELS = {
-    "today_recovery_checkin": "Today → Recovery Check-In",
-    "today_recovery_aware_workout": "Today → Today’s Workout",
-    "nutrition_quick_log": "Nutrition → Quick Log Food",
-    "nutrition_target_vs_actual": "Nutrition → Target vs Actual",
-    "workout_preview": "Workout → Preview / Start Workout",
-    "reports_guidance": "Reports → Full Report Guidance",
+    "today_recovery_checkin": "Today â†’ Recovery Check-In",
+    "today_recovery_aware_workout": "Today â†’ Todayâ€™s Workout",
+    "nutrition_quick_log": "Nutrition â†’ Quick Log Food",
+    "nutrition_target_vs_actual": "Nutrition â†’ Target vs Actual",
+    "workout_preview": "Workout â†’ Preview / Start Workout",
+    "reports_guidance": "Reports â†’ Full Report Guidance",
 }
 
 DAILY_NEXT_ACTION_SEVERITY_LABELS = {
@@ -5140,32 +5154,32 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
 
 
 def render_daily_coach_today_card(user_id: int) -> None:
-    st.subheader("Today’s Coach Note")
+    st.subheader("Todayâ€™s Coach Note")
     st.caption("A short note tied to your next action.")
 
     try:
         response = api_get(f"/daily-coach/{user_id}/today-card", request_timeout=30)
     except requests.RequestException as exc:
-        st.info("Today’s plan is still available. Start with the next action above.")
+        st.info("Todayâ€™s plan is still available. Start with the next action above.")
         if st.session_state.get("developer_mode", False):
             with st.expander("Developer details: Today Coach Note error"):
                 st.write(extract_api_error_message(exc))
         return
 
     if not response.get("success"):
-        st.info("Today’s plan is still available. Start with the next action above.")
+        st.info("Todayâ€™s plan is still available. Start with the next action above.")
         developer_details("Developer details: Today Coach Note response", response)
         return
 
     card = response.get("today_card") or {}
     if not card:
-        st.info("Today’s plan is still available. Start with the next action above.")
+        st.info("Todayâ€™s plan is still available. Start with the next action above.")
         developer_details("Developer details: Today Coach Note response", response)
         return
 
-    card_title = card.get("card_title") or "Today’s Coach Note"
+    card_title = card.get("card_title") or "Todayâ€™s Coach Note"
     coach_note = card.get("coach_note") or (
-        "Today’s plan is still available. Start with the next action above."
+        "Todayâ€™s plan is still available. Start with the next action above."
     )
     next_action_title = card.get("next_action_title") or "Next action"
     cta_label = card.get("cta_label") or f"Next action: {next_action_title}"
@@ -5262,9 +5276,9 @@ def render_daily_next_action_panel(user_id: int) -> None:
 
 
 def render_daily_coach_synthesis_card(user_id: int) -> None:
-    st.subheader("Coach’s Read for Today")
+    st.subheader("Coachâ€™s Read for Today")
     st.caption(
-        "Backend-approved Daily Coach Synthesis for today. This is the Coach’s Read surface, separate from the Developer Preview panel."
+        "Backend-approved Daily Coach Synthesis for today. This is the Coachâ€™s Read surface, separate from the Developer Preview panel."
     )
 
     synthesis_response = None
@@ -5277,21 +5291,21 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
 
     if synthesis_error:
         st.info(
-            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+            "Coachâ€™s Read is not available yet. Daily Next Action and Todayâ€™s Coach Note still work."
         )
         if st.session_state.get("developer_mode", False):
             with st.expander(
-                "Developer details: Coach’s Read / Daily Coach Synthesis error"
+                "Developer details: Coachâ€™s Read / Daily Coach Synthesis error"
             ):
                 st.write(synthesis_error)
         return
 
     if not synthesis_response or not synthesis_response.get("success"):
         st.info(
-            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+            "Coachâ€™s Read is not available yet. Daily Next Action and Todayâ€™s Coach Note still work."
         )
         developer_details(
-            "Developer details: Coach’s Read / Daily Coach Synthesis response",
+            "Developer details: Coachâ€™s Read / Daily Coach Synthesis response",
             synthesis_response or {},
         )
         return
@@ -5299,10 +5313,10 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
     synthesis = synthesis_response.get("daily_coach_synthesis") or {}
     if not synthesis:
         st.info(
-            "Coach’s Read is not available yet. Daily Next Action and Today’s Coach Note still work."
+            "Coachâ€™s Read is not available yet. Daily Next Action and Todayâ€™s Coach Note still work."
         )
         developer_details(
-            "Developer details: Coach’s Read / Daily Coach Synthesis response",
+            "Developer details: Coachâ€™s Read / Daily Coach Synthesis response",
             synthesis_response,
         )
         return
@@ -5318,7 +5332,7 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
         if today_summary:
             st.markdown(
                 portfolio_card_html(
-                    "Coach’s Read",
+                    "Coachâ€™s Read",
                     "Daily Coach Synthesis",
                     today_summary,
                     [portfolio_chip("Backend-approved", "green")],
@@ -5357,7 +5371,7 @@ def render_daily_coach_synthesis_card(user_id: int) -> None:
                 st.write(f"- {limitation}")
 
     developer_details(
-        "Developer details: Coach’s Read / Daily Coach Synthesis response",
+        "Developer details: Coachâ€™s Read / Daily Coach Synthesis response",
         synthesis_response,
     )
 
@@ -5376,7 +5390,7 @@ def render_daily_recommendation_snapshot(user_id: int) -> None:
 
     if recommendation_error and recommendation_data:
         st.warning(
-            "Could not refresh today’s recommendation. Showing the last loaded "
+            "Could not refresh todayâ€™s recommendation. Showing the last loaded "
             "recommendation for this user."
         )
     elif recommendation_error:
@@ -5426,7 +5440,7 @@ def render_daily_recommendation_snapshot(user_id: int) -> None:
 
 
 def render_today_workout_panel(user_id: int) -> None:
-    st.subheader("Today’s Workout")
+    st.subheader("Todayâ€™s Workout")
     st.caption(
         "Review the plan, start when ready, log sets, complete the workout, "
         "then review what happened."
@@ -6119,9 +6133,7 @@ def target_comparison_value(comparison: dict, keys: list[str]) -> object | None:
     target_max = comparison.get("target_max")
 
     if target_min is not None and target_max is not None:
-        return (
-            f"{format_nutrition_value(target_min)}–{format_nutrition_value(target_max)}"
-        )
+        return f"{format_nutrition_value(target_min)}â€“{format_nutrition_value(target_max)}"
 
     return None
 
@@ -6231,7 +6243,7 @@ def format_nutrition_difference_range(
         return format_nutrition_difference_amount(minimum_value, unit)
 
     return (
-        f"{format_nutrition_difference_amount(minimum_value, None)}–"
+        f"{format_nutrition_difference_amount(minimum_value, None)}â€“"
         f"{format_nutrition_difference_amount(maximum_value, unit)}"
     )
 
@@ -6645,7 +6657,7 @@ def nutrition_target_band_specs(summary: dict) -> list[dict]:
                 "target_label": (
                     format_nutrition_value(target_min, unit)
                     if target_min == target_max
-                    else f"{format_nutrition_value(target_min, unit)}–{format_nutrition_value(target_max, unit)}"
+                    else f"{format_nutrition_value(target_min, unit)}â€“{format_nutrition_value(target_max, unit)}"
                 ),
                 "status_label": status_label,
                 "tone": nutrition_target_band_status_tone(status_label),
@@ -6709,7 +6721,7 @@ def render_nutrition_target_band(spec: dict) -> None:
                 <div title="Logged actual" style="position: absolute; left: {actual_pct:.2f}%; width: 3px; height: 100%; background: #f8fafc;"></div>
             </div>
             <div>{chip_html}</div>
-            <div class="portfolio-muted">target band = approved range · marker = logged actual</div>
+            <div class="portfolio-muted">target band = approved range Â· marker = logged actual</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -6829,7 +6841,7 @@ def display_logging_quality(
         for limitation in limitations:
             friendly = nutrition_public_text(limitation)
             if friendly:
-                st.caption(f"• {friendly}")
+                st.caption(f"â€¢ {friendly}")
 
 
 FORMULA_TARGET_DISPLAY_SPECS = [
@@ -6941,7 +6953,7 @@ def formula_target_value(target: dict | None, default_unit: str) -> str | None:
     min_value = target.get("min_value")
     max_value = target.get("max_value")
     if min_value is not None and max_value is not None:
-        return f"{format_nutrition_value(min_value, unit)}–{format_nutrition_value(max_value, unit)}"
+        return f"{format_nutrition_value(min_value, unit)}â€“{format_nutrition_value(max_value, unit)}"
 
     return None
 
@@ -7060,7 +7072,7 @@ def display_formula_transparency_metadata(formula_response: dict) -> None:
             for value in values:
                 friendly = formula_public_text(value)
                 if friendly:
-                    st.caption(f"• {friendly}")
+                    st.caption(f"â€¢ {friendly}")
 
 
 def render_nutrition_formula_target_transparency_card(user_id: int) -> None:
@@ -7225,7 +7237,7 @@ def render_nutrition_target_vs_actual_card(user_id: int) -> None:
 
     display_nutrition_actuals(nutrition_actuals, logging_summary)
 
-    with st.expander("Target comparisons — approved targets only", expanded=True):
+    with st.expander("Target comparisons â€” approved targets only", expanded=True):
         st.caption(
             "Comparisons are shown only when the backend approves the target for display."
         )
@@ -7356,7 +7368,7 @@ def display_selected_canonical_food_summary(food: dict) -> None:
     summary_parts = [default_serving, nutrient_summary]
     if food_type != "Unknown":
         summary_parts.insert(0, food_type)
-    st.caption(" · ".join(summary_parts))
+    st.caption(" Â· ".join(summary_parts))
 
 
 def raw_food_option_label(food: dict) -> str:
@@ -7372,7 +7384,7 @@ def raw_food_option_label(food: dict) -> str:
             f"{protein.get('amount')} {protein.get('unit', 'g')} protein"
         )
 
-    suffix = f" · {' / '.join(summary_parts)}" if summary_parts else ""
+    suffix = f" Â· {' / '.join(summary_parts)}" if summary_parts else ""
     return f"{food.get('name', 'Unknown food')}{suffix}"
 
 
@@ -7566,7 +7578,7 @@ def render_food_suggestion_card(suggestion: dict, index: int) -> None:
             for limitation in limitations:
                 friendly = food_suggestion_public_text(limitation)
                 if friendly:
-                    st.caption(f"• {friendly}")
+                    st.caption(f"â€¢ {friendly}")
 
 
 def nutrition_runtime_debug_value(value: object) -> str:
@@ -7708,7 +7720,7 @@ def render_nutrition_explanation_runtime_debug_view(user_id: int) -> None:
         if validation_errors:
             with st.expander("Validation errors", expanded=False):
                 for error in validation_errors:
-                    st.caption(f"• {nutrition_runtime_debug_value(error)}")
+                    st.caption(f"â€¢ {nutrition_runtime_debug_value(error)}")
         else:
             st.caption("No validation errors reported.")
 
@@ -7784,7 +7796,7 @@ def render_nutrition_food_suggestions_card(user_id: int) -> None:
             for limitation in limitations:
                 friendly = food_suggestion_public_text(limitation)
                 if friendly:
-                    st.caption(f"• {friendly}")
+                    st.caption(f"â€¢ {friendly}")
 
     if not suggestions:
         st.caption(
@@ -7963,7 +7975,7 @@ def render_nutrition_explanation_preview_card(user_id: int) -> None:
     if friendly_limitations:
         with st.expander("Nutrition explanation limitations", expanded=False):
             for limitation in friendly_limitations:
-                st.caption(f"• {limitation}")
+                st.caption(f"â€¢ {limitation}")
 
     developer_details(
         "Developer details: nutrition explanation preview response",
@@ -8247,7 +8259,7 @@ def render_trend_calibration_limitations(
     with st.expander("Why calibration may be limited", expanded=False):
         if limitations:
             for limitation in limitations:
-                st.caption(f"• {limitation}")
+                st.caption(f"â€¢ {limitation}")
         else:
             st.caption(
                 "No major limitations were reported for this trend window. "
@@ -8506,7 +8518,7 @@ def render_nutrition_section(user_id: int) -> None:
 
                 st.caption(f"Selected: {selected_food_name}")
                 if detail_parts:
-                    st.caption(" · ".join(detail_parts))
+                    st.caption(" Â· ".join(detail_parts))
                 st.caption(
                     "Nutrition values come from the approved canonical food record."
                 )
@@ -8824,7 +8836,9 @@ def render_history_section(user_id: int) -> None:
 
         for workout in workouts:
             session = workout["session"]
-            with st.expander(f"{session['workout_date']} — {session['workout_name']}"):
+            with st.expander(
+                f"{session['workout_date']} â€” {session['workout_name']}"
+            ):
                 if st.session_state.get("developer_mode", False):
                     col1, col2 = st.columns(2)
                     col1.metric("Duration", f"{session['duration_minutes']} min")
@@ -9094,6 +9108,314 @@ def _render_weekly_coach_summary_timing(user_id: int) -> None:
         st.dataframe(pd.DataFrame(timing_rows), width="stretch", hide_index=True)
 
 
+def _weekly_coach_summary_qa_range_defaults(label: str) -> tuple[date, date]:
+    start_text, end_text = QA_DEBUG_RANGE_OPTIONS.get(
+        label,
+        QA_DEBUG_RANGE_OPTIONS["Latest seeded week: 2026-06-08 to 2026-06-14"],
+    )
+    return date.fromisoformat(start_text), date.fromisoformat(end_text)
+
+
+def _weekly_coach_summary_qa_key(
+    user_id: int,
+    start_date: date,
+    end_date: date,
+) -> str:
+    return f"qa:{int(user_id)}:{start_date.isoformat()}:{end_date.isoformat()}"
+
+
+def _render_weekly_coach_summary_qa_inventory(inventory) -> None:
+    inventory_rows = [
+        {"Metric": "Selected User", "Value": inventory.user_id},
+        {"Metric": "Scenario", "Value": inventory.scenario},
+        {
+            "Metric": "Selected Range",
+            "Value": f"{inventory.start_date} to {inventory.end_date}",
+        },
+        {"Metric": "Recovery Check-ins", "Value": inventory.recovery_checkins_count},
+        {
+            "Metric": "Nutrition Logged Days",
+            "Value": inventory.nutrition_logged_days_count,
+        },
+        {"Metric": "Nutrition Entries", "Value": inventory.nutrition_entries_count},
+        {"Metric": "Completed Workouts", "Value": inventory.completed_workouts_count},
+        {"Metric": "Actual Sets", "Value": inventory.actual_sets_count},
+        {"Metric": "Planned Workouts", "Value": inventory.planned_workouts_count},
+        {"Metric": "Skipped Sets", "Value": inventory.skipped_sets_count},
+        {"Metric": "Average Sleep Hours", "Value": inventory.average_sleep_hours},
+        {"Metric": "Average Energy Level", "Value": inventory.average_energy_level},
+        {"Metric": "Average Soreness Level", "Value": inventory.average_soreness_level},
+        {"Metric": "Data Quality", "Value": inventory.data_quality_label},
+    ]
+    st.dataframe(pd.DataFrame(inventory_rows), width="stretch", hide_index=True)
+    st.markdown("**QA Range Reason Codes:**")
+    st.write(", ".join(inventory.reason_codes) or "None")
+    st.markdown("**QA Range Limitations:**")
+    st.write(", ".join(inventory.limitations) or "None")
+
+
+def render_weekly_coach_summary_qa_data_range_debug() -> None:
+    st.divider()
+    st.subheader("Weekly Coach Summary QA Data Range")
+    st.caption(
+        "Developer Mode-only QA data inspection. Counts are live DB aggregates; "
+        "raw rows, notes, raw provider output, prompts, and scratchpads are not shown."
+    )
+
+    qa_options = get_qa_user_options()
+    option_labels = [option.label for option in qa_options]
+    selected_label = st.selectbox(
+        "Weekly Coach Summary QA user",
+        options=option_labels,
+        index=(
+            option_labels.index("102 â€” aligned_managed")
+            if "102 â€” aligned_managed" in option_labels
+            else 0
+        ),
+        key="weekly_coach_summary_qa_user_selector",
+    )
+    selected_user_id = int(selected_label.split("â€”", 1)[0].strip())
+
+    quick_range_label = st.selectbox(
+        "Weekly Coach Summary QA quick range",
+        options=list(QA_DEBUG_RANGE_OPTIONS.keys()),
+        key="weekly_coach_summary_qa_quick_range_selector",
+    )
+    default_start, default_end = _weekly_coach_summary_qa_range_defaults(
+        quick_range_label
+    )
+    range_col_1, range_col_2 = st.columns(2)
+    with range_col_1:
+        selected_start = st.date_input(
+            "Weekly Coach Summary QA start date",
+            value=default_start,
+            key="weekly_coach_summary_qa_start_date",
+        )
+    with range_col_2:
+        selected_end = st.date_input(
+            "Weekly Coach Summary QA end date",
+            value=default_end,
+            key="weekly_coach_summary_qa_end_date",
+        )
+
+    qa_key = _weekly_coach_summary_qa_key(
+        selected_user_id,
+        selected_start,
+        selected_end,
+    )
+    inventory_cache = st.session_state.weekly_coach_summary_qa_inventory_by_key
+    qa_preview_cache = st.session_state.weekly_coach_summary_qa_preview_by_key
+    qa_persisted_cache = st.session_state.weekly_coach_summary_qa_persisted_by_key
+    qa_message_cache = st.session_state.weekly_coach_summary_qa_message_by_key
+
+    if st.button(
+        "Inspect QA data range",
+        key="weekly_coach_summary_qa_inspect_button",
+    ):
+        inspect_start = perf_counter()
+        bounds = get_user_data_date_bounds(selected_user_id)
+        inventory = get_weekly_summary_fact_inventory(
+            user_id=selected_user_id,
+            start_date=selected_start,
+            end_date=selected_end,
+        )
+        inventory_cache[qa_key] = {
+            "bounds": bounds,
+            "inventory": inventory,
+        }
+        qa_message_cache[qa_key] = "QA data range inspected."
+        _store_weekly_coach_summary_timing(
+            selected_user_id,
+            "qa_range_inspect",
+            {"qa_range_inspect_ms": _weekly_coach_summary_elapsed_ms(inspect_start)},
+        )
+
+    cached_inventory = inventory_cache.get(qa_key)
+    if cached_inventory:
+        st.success(qa_message_cache.get(qa_key, "QA data range ready."))
+        bounds = cached_inventory["bounds"]
+        inventory = cached_inventory["inventory"]
+        st.markdown("**Available Date Bounds:**")
+        bounds_rows = [
+            {"Field": key.replace("_", " ").title(), "Value": value}
+            for key, value in bounds.to_dict().items()
+        ]
+        st.dataframe(pd.DataFrame(bounds_rows), width="stretch", hide_index=True)
+        _render_weekly_coach_summary_qa_inventory(inventory)
+
+    if st.button(
+        "Generate deterministic weekly summary from selected QA range",
+        key="weekly_coach_summary_qa_generate_button",
+    ):
+        qa_generate_start = perf_counter()
+        context = build_weekly_summary_context_from_qa_range(
+            user_id=selected_user_id,
+            start_date=selected_start,
+            end_date=selected_end,
+        )
+        summary = generate_approved_weekly_summary(context)
+        sections = approved_weekly_summary_to_public_sections(summary)
+        qa_preview_cache[qa_key] = {
+            "period": context.period.to_dict(),
+            "summary": summary,
+            "sections": sections,
+            "selected_user_id": selected_user_id,
+        }
+        qa_message_cache[qa_key] = (
+            "Selected-range deterministic weekly summary generated."
+        )
+        _store_weekly_coach_summary_timing(
+            selected_user_id,
+            "qa_range_generate",
+            {
+                "qa_range_generate_ms": _weekly_coach_summary_elapsed_ms(
+                    qa_generate_start
+                )
+            },
+        )
+
+    selected_preview = qa_preview_cache.get(qa_key)
+    if selected_preview:
+        st.success(
+            qa_message_cache.get(
+                qa_key,
+                "Selected-range deterministic weekly summary ready.",
+            )
+        )
+        selected_sections = selected_preview["sections"]
+        selected_period = selected_preview["period"]
+        st.write(
+            f"**Selected QA Period:** {selected_period['week_start']} to {selected_period['week_end']}"
+        )
+        metadata_rows = [
+            {"Field": "Selected User", "Value": selected_user_id},
+            {"Field": "Source", "Value": selected_sections["source"]},
+            {"Field": "Confidence", "Value": selected_sections["confidence"]},
+            {
+                "Field": "Public Safe",
+                "Value": str(selected_sections["public_safe"]).lower(),
+            },
+            {
+                "Field": "Displayable",
+                "Value": str(selected_sections["displayable"]).lower(),
+            },
+        ]
+        st.dataframe(pd.DataFrame(metadata_rows), width="stretch", hide_index=True)
+        _render_weekly_coach_summary_sections(selected_sections)
+        st.markdown("**Selected-Range Reason Codes:**")
+        st.write(", ".join(selected_sections["reason_codes"]) or "None")
+        st.markdown("**Selected-Range Limitations:**")
+        st.write(", ".join(selected_sections["limitations"]) or "None")
+
+        qa_save_col, qa_load_col = st.columns(2)
+        with qa_save_col:
+            if st.button(
+                "Save selected-range approved summary",
+                key="weekly_coach_summary_qa_save_button",
+            ):
+                qa_save_start = perf_counter()
+                try:
+                    saved = save_approved_weekly_summary(
+                        summary=selected_preview["summary"],
+                        user_id=selected_user_id,
+                        week_start=selected_period["week_start"],
+                        week_end=selected_period["week_end"],
+                        sanitized_metadata={
+                            "provider_attempted": False,
+                            "fallback_used": selected_sections["source"]
+                            == "deterministic_fallback",
+                            "fallback_reason": (
+                                "deterministic fallback"
+                                if selected_sections["source"]
+                                == "deterministic_fallback"
+                                else None
+                            ),
+                            "parse_status": "not_attempted",
+                            "validation_status": "approved",
+                            "final_summary_source": selected_sections["source"],
+                            "generated_by": "developer_mode_weekly_summary_qa_range",
+                        },
+                    )
+                except WeeklyCoachSummaryPersistenceError:
+                    st.error(
+                        "Selected-range weekly summary was not saved because it failed safety checks."
+                    )
+                else:
+                    qa_persisted_cache[qa_key] = saved
+                    _store_weekly_coach_summary_timing(
+                        selected_user_id,
+                        "qa_range_save",
+                        {
+                            "qa_range_save_ms": _weekly_coach_summary_elapsed_ms(
+                                qa_save_start
+                            )
+                        },
+                    )
+                    st.success(
+                        f"Saved selected-range weekly summary {saved.record_id}."
+                    )
+        with qa_load_col:
+            if st.button(
+                "Load latest selected-range summary",
+                key="weekly_coach_summary_qa_load_button",
+            ):
+                qa_load_start = perf_counter()
+                latest = get_latest_approved_weekly_summary(
+                    user_id=selected_user_id,
+                    week_start=selected_start,
+                    week_end=selected_end,
+                )
+                if latest is None:
+                    st.warning(
+                        "No persisted approved weekly summary found for the selected user/range."
+                    )
+                else:
+                    qa_persisted_cache[qa_key] = latest
+                    st.success(
+                        f"Loaded selected-range weekly summary {latest.record_id}."
+                    )
+                _store_weekly_coach_summary_timing(
+                    selected_user_id,
+                    "qa_range_load_latest",
+                    {
+                        "qa_range_load_latest_ms": _weekly_coach_summary_elapsed_ms(
+                            qa_load_start
+                        )
+                    },
+                )
+
+    selected_persisted = qa_persisted_cache.get(qa_key)
+    if selected_persisted:
+        st.markdown("**Selected-Range Persisted Metadata:**")
+        persisted_rows = [
+            {"Field": "Record ID", "Value": selected_persisted.record_id},
+            {"Field": "User ID", "Value": selected_persisted.user_id},
+            {"Field": "Week Start", "Value": selected_persisted.week_start},
+            {"Field": "Week End", "Value": selected_persisted.week_end},
+            {"Field": "Source", "Value": selected_persisted.source},
+            {"Field": "Confidence", "Value": selected_persisted.confidence},
+            {
+                "Field": "Public Safe",
+                "Value": str(selected_persisted.public_safe).lower(),
+            },
+            {
+                "Field": "Displayable",
+                "Value": str(selected_persisted.displayable).lower(),
+            },
+            {"Field": "Stale", "Value": str(selected_persisted.stale).lower()},
+            {"Field": "Expired", "Value": str(selected_persisted.expired).lower()},
+        ]
+        st.dataframe(pd.DataFrame(persisted_rows), width="stretch", hide_index=True)
+        with st.expander(
+            "Loaded selected-range approved summary sections", expanded=False
+        ):
+            _render_weekly_coach_summary_sections(
+                approved_weekly_summary_to_public_sections(
+                    selected_persisted.approved_summary
+                )
+            )
+
+
 def weekly_coach_summary_streamlit_fragment(function):
     """Use Streamlit fragment reruns when available to avoid full-app rerender latency.
 
@@ -9298,6 +9620,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             "panel_render_ms": _weekly_coach_summary_elapsed_ms(panel_start),
         },
     )
+    render_weekly_coach_summary_qa_data_range_debug()
     _render_weekly_coach_summary_timing(user_id)
 
 
@@ -9395,7 +9718,7 @@ with reports_tab:
 with developer_tab:
     render_developer_section(user_id)
 
-# Portfolio visual tightening v4 — garnet/gold portfolio palette
+# Portfolio visual tightening v4 â€” garnet/gold portfolio palette
 st.markdown(
     """
     <style>

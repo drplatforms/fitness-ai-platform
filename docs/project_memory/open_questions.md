@@ -24,3 +24,8 @@ Open after acceptance:
 - provider runtime
 - automatic weekly generation
 - worker/queue/scheduler/polling
+## Weekly Coach Summary follow-up
+
+- Should the next milestone deepen QA range context into richer deterministic fact summaries?
+- Should focused Linux runtime QA come before approved preview bridge design?
+- Public/default display, normal Today integration, provider runtime, automatic generation, and worker/queue/scheduler/polling remain deferred.

@@ -32,3 +32,6 @@ Workflow reminder:
 - Temporary apply scripts live outside the repo under `C:\projects`.
 - Run apply scripts from repo root as `python ..\<script>.py`.
 - Never use `git add .`.
+## Weekly Coach Summary QA Data Debug continuity
+
+Date-range QA data debug is Developer Mode-only. It inspects live DB fact counts for QA users 101-105 and selected ranges, then generates/saves/loads deterministic approved summaries for that selected range. Live DB counts are source-of-truth over seed-script estimates. No raw rows or provider/debug content should appear.

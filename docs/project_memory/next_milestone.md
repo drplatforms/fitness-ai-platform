@@ -23,3 +23,6 @@ Scope:
 Likely next milestone after acceptance:
 
 Weekly Coach Summary Persistence QA / Developer Mode Smoke v1.
+## Current recommendation after Weekly Coach Summary Date-Range QA Data Debug v1
+
+Likely next milestone: Weekly Coach Summary QA Data Context Integration v1, or Weekly Coach Summary Persistence QA / Developer Mode Smoke v1 if runtime QA should come first. Still defer public/default display, normal Today integration, approved preview bridge implementation, provider runtime, automatic generation, worker/queue/scheduler/polling.

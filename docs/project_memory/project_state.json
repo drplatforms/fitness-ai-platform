@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Approved Preview Bridge Implementation v1 \u2014 Feature Flag Disabled by Default",
-    "latest_final_status": "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED",
-    "latest_accepted_commit": "4c19e80",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_4c19e80_merge-feature-daily-coach-async-approved-preview-bridge-implementation-v1.zip",
-    "latest_main_merge_commit": "4c19e80",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_4c19e80_merge-feature-daily-coach-async-approved-preview-bridge-implementation-v1.zip",
-    "prior_accepted_milestone": "Daily Coach Async Approved Preview Bridge Design v1",
-    "prior_final_status": "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_DESIGN_V1_ACCEPTED",
-    "prior_main_merge_commit": "f1d2ee1"
+    "latest_accepted_milestone": "Daily Coach Async Provider Live QA v1 — Developer Mode Only",
+    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_LIVE_QA_V1_ACCEPTED",
+    "latest_accepted_commit": "71b14ea",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_71b14ea_merge-feature-daily-coach-async-approved-preview-bridge-qa-v1.zip",
+    "latest_main_merge_commit": "71b14ea",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_71b14ea_merge-feature-daily-coach-async-approved-preview-bridge-qa-v1.zip",
+    "prior_accepted_milestone": "Daily Coach Async Approved Preview Bridge QA v1",
+    "prior_final_status": "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED",
+    "prior_main_merge_commit": "71b14ea"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Approved Preview Bridge QA v1",
-    "current_authorized_branch": "feature/daily-coach-async-approved-preview-bridge-qa-v1",
-    "current_authorized_status": "AUTHORIZED FOR QA HARDENING / TEST IMPLEMENTATION",
-    "current_authorized_scope": "Hard-test approved preview bridge behavior, eligibility gates, no-provider-call guarantees, no-async-job-creation guarantees, and metadata boundaries without expanding product behavior.",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Provider Live QA v1 \u2014 Developer Mode Only",
+    "current_authorized_milestone": "Async Job Delivery Pattern / Playbook v1",
+    "current_authorized_branch": "feature/async-job-delivery-pattern-playbook-v1",
+    "current_authorized_status": "AUTHORIZED FOR ARCHITECTURE / DOCS / PROJECT MEMORY IMPLEMENTATION",
+    "current_authorized_scope": "Create reusable async job delivery playbook covering lifecycle, persistence, Developer Mode inspection, provider runtime, approved preview bridge, QA ownership, pass/fail criteria, milestone templates, and tooling lessons without runtime behavior changes.",
+    "recommended_next_milestone_after_acceptance": "DevOps Tooling SSH Command Normalization v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Provider live QA must remain Developer Mode-only; provider execution from Today remains unauthorized.",
+    "next_milestone_reason": "Fix lstop/lrestart/app SSH command CRLF handling if workflow friction remains; otherwise use the playbook to scope the next async job candidate.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "runtime_split": {
@@ -60,31 +60,32 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Approved preview bridge QA hardening exists; bridge remains disabled by default and Today reads only approved persisted narratives without provider calls or async job creation.",
-    "normal_today_behavior": "unchanged when DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED is disabled",
+    "current": "Async Job Delivery Pattern / Playbook v1 documents the reusable async job architecture harvested from the accepted Daily Coach async path. This is docs/pattern only.",
+    "normal_today_behavior": "unchanged; no runtime/product behavior files changed",
     "in_current_scope": [
-      "approved preview bridge QA tests",
-      "feature flag disabled/default isolation tests",
-      "read-only approved narrative eligibility gate tests",
-      "no-provider-call guarantee tests",
-      "no-async-job-creation guarantee tests",
-      "normal UI metadata boundary tests",
-      "Developer Mode diagnostics gated and sanitized",
-      "project-memory updates"
+      "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
+      "milestone and review docs for Async Job Delivery Pattern / Playbook v1",
+      "project-memory pointer updates",
+      "project-memory check updates if required",
+      "lstop/lrestart/app CRLF handling recorded as backlog only"
     ],
     "deferred": [
-      "Daily Coach Async Provider Live QA v1 \u2014 Developer Mode Only",
-      "provider execution from Today remains unauthorized",
-      "public/default async narrative display remains unauthorized",
-      "worker / queue / scheduler / polling remains unauthorized"
+      "DevOps Tooling SSH Command Normalization v1",
+      "Next Async Job Candidate Selection v1",
+      "any new async job implementation",
+      "worker / queue / scheduler / polling"
     ],
     "not_authorized": [
       "automatic async job generation",
       "debug/provider metadata in normal UI",
       "full prompt/raw context/scratchpad display",
       "full prompt/raw context/scratchpad persistence",
+      "lstop/lrestart/app tooling behavior modification in this milestone",
+      "new async job implementation",
       "normal Today provider call",
+      "normal Today behavior change",
       "polling",
+      "provider behavior change",
       "provider execution on page load",
       "provider execution on Today render",
       "public/default async narrative display",
@@ -97,6 +98,7 @@
       "rejected provider output display",
       "rejected provider output persistence",
       "scheduler",
+      "Streamlit behavior change",
       "worker"
     ]
   },
@@ -135,10 +137,9 @@
       "docs/project_memory/next_milestone.md",
       "docs/project_memory/current_state.md",
       "docs/project_memory/open_questions.md",
-      "docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md",
-      "docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_implementation_v1.md",
-      "docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_qa_v1.md",
-      "docs/project_memory/reviews/daily_coach_async_approved_preview_bridge_qa_v1.md"
+      "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
+      "docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md",
+      "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md"
     ],
     "architecture": [
       "docs/project_memory/role_bootstrap_architecture.md"

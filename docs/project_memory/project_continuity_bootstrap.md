@@ -1,7 +1,7 @@
 # Project Continuity Bootstrap
 
 Current milestone:
-Daily Coach Async Approved Preview Bridge QA v1
+Async Job Delivery Pattern / Playbook v1
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
@@ -11,24 +11,21 @@ Start here:
 1. Read `docs/project_memory/project_state.json`.
 2. Read `docs/project_memory/current_state.md`.
 3. Read `docs/project_memory/next_milestone.md`.
-4. Read `docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md`.
-5. Read `docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_implementation_v1.md`.
-6. Read `docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_qa_v1.md`.
+4. Read `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`.
+5. Read `docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md`.
+6. Read `docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md`.
 
 Current boundary:
 
-- Feature flag defaults disabled.
-- Normal Today remains unchanged when disabled.
-- Preview reads only approved persisted async narratives.
-- Preview appears only when all gates pass.
-- QA hardening tests cover disabled/enabled/gated behavior.
-- No provider call occurs from Today render.
-- No provider call occurs on page load.
-- No async job is created from Today.
-- Deterministic Daily Next Action remains primary.
-- No public/default async narrative display is authorized.
-- No worker / queue / scheduler / polling is authorized.
-- qwen3 and qwen3:32b remain unauthorized for bridge use.
+- This is a docs/pattern milestone.
+- No runtime behavior changed.
+- No provider behavior changed.
+- No normal Today behavior changed.
+- No Streamlit behavior changed.
+- No new async job implemented.
+- The playbook should be used before scoping future async jobs.
+- lstop/lrestart/app CRLF handling is backlog only.
+- lstop/lrestart/app are Windows PowerShell helper commands that SSH into Linux; do not present them as Linux bash commands.
 
 Workflow reminder:
 

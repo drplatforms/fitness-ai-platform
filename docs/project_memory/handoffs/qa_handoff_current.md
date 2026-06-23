@@ -1,20 +1,11 @@
 # QA Handoff Current
 
-Milestone: Daily Coach Async Approved Preview Bridge QA v1
+Milestone: Async Job Delivery Pattern / Playbook v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 QA focus:
-- feature flag disabled by default
-- enabled flag with no narrative
-- eligible narrative preview
-- non-approved/missing/stale/expired job states
-- non-displayable/non-public-safe/empty narrative states
-- context/version/source mismatch gates
-- persistence unavailable path
-- normal UI metadata boundary
-- Developer Mode diagnostic boundary
-- no provider call from Today preview path
-- no async job creation from Today preview path
-
-Provider enabled live-generation smoke is not required for this milestone.
+- Review `docs/project_memory/patterns/async_job_delivery_pattern_v1.md` as the reusable QA baseline for future async jobs.
+- Confirm the playbook includes disabled/default smoke, Developer Mode inspection smoke, provider disabled path smoke, provider enabled path smoke when relevant, failure/fallback smoke, preview bridge boundary smoke, normal UI metadata leak checks, Developer Mode diagnostic boundary checks, regression tests, project memory checks, and fsweep clean.
+- This milestone does not require app smoke because no runtime files changed.
+- lstop/lrestart/app CRLF issue is backlog only and not fixed here.

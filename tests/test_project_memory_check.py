@@ -1080,3 +1080,36 @@ def test_daily_coach_async_approved_preview_bridge_qa_memory_is_required() -> No
         "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED"
         in project_memory_check.REQUIRED_PHRASES[review_path]
     )
+
+
+def test_async_job_delivery_pattern_playbook_memory_is_required() -> None:
+    pattern_path = "docs/project_memory/patterns/async_job_delivery_pattern_v1.md"
+    milestone_path = (
+        "docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md"
+    )
+    review_path = (
+        "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md"
+    )
+
+    assert pattern_path in project_memory_check.REQUIRED_FILES
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "Canonical Async Job Lifecycle"
+        in project_memory_check.REQUIRED_PHRASES[pattern_path]
+    )
+    assert (
+        "Provider Runtime Pattern"
+        in project_memory_check.REQUIRED_PHRASES[pattern_path]
+    )
+    assert (
+        "Preview Bridge Pattern" in project_memory_check.REQUIRED_PHRASES[pattern_path]
+    )
+    assert (
+        "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert (
+        "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )

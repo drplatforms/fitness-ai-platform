@@ -1,31 +1,26 @@
-# Current implementation update — Weekly Coach Summary Async Persistence v1
-
-Weekly Coach Summary Async Persistence v1 is implemented on `feature/weekly-coach-summary-async-persistence-v1`.
-
-The milestone persists only approved/public-safe Weekly Coach Summary output and sanitized metadata. It adds Developer Mode-only save/load controls, preserves normal Today/public UI boundaries, and does not add provider runtime, automatic generation, worker/queue/scheduler/polling, API endpoints, or public/default display.
-
-Next likely milestone after acceptance: Weekly Coach Summary Persistence QA / Developer Mode Smoke v1.
-
 # Open Questions
 
-## Weekly Coach Summary Async Service Shell / No Worker v1
+## Weekly Coach Summary Persistence Latency Investigation v1
 
 Current status:
-Weekly Coach Summary Async Service Shell / No Worker v1 is implemented and ready for Architecture review.
+Weekly Coach Summary Persistence Latency Investigation v1 is implemented and ready for Architecture review.
+
+Resolved:
+
+- Root cause was strongly narrowed to Streamlit full-app rerun behavior during Developer Mode button interactions.
+- A targeted Streamlit fragment-rerun fix was added for the Weekly Coach Summary Developer Mode panel.
+- Developer Mode-only timing diagnostics were added.
+- A CLI latency probe was added for the deterministic backend path.
 
 Open after acceptance:
 
-- Architecture should choose Weekly Coach Summary Async Persistence Design v1 or Weekly Coach Summary Developer Mode Inspection v1.
-- Backend should keep persistence/provider/UI work out of the service-shell milestone unless separately authorized.
-- QA should verify deterministic output, fallback behavior, absence of provider/runtime dependencies, and public-safe language boundaries.
+- QA should confirm Linux runtime generate/save/load timing is now acceptable.
+- If any interaction remains above 5 seconds, Architecture should decide whether to investigate other app-wide rendering costs before preview bridge work.
 
-## Deferred Weekly Coach Summary decisions
+## Still deferred
 
-- What exact weekly summary persistence schema will be used?
-- What Developer Mode inspection surface will weekly summaries need?
-- Should any normal UI preview exist later, and behind what feature flag?
-- Provider runtime remains deferred until deterministic service/persistence boundaries are accepted.
-
-## Portfolio / LinkedIn / GitHub
-
-Portfolio / LinkedIn / GitHub update remains deferred until a stable end-to-end persisted async workflow is ready to describe cleanly.
+- public/default Weekly Coach Summary display
+- normal Today integration
+- provider runtime
+- automatic weekly generation
+- worker/queue/scheduler/polling

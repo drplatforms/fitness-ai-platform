@@ -1,21 +1,21 @@
 # Next Milestone
 
-Current authorized milestone: Weekly Coach Summary Async Persistence v1
+Current authorized milestone: Weekly Coach Summary Persistence Latency Investigation v1
 
-Branch: `feature/weekly-coach-summary-async-persistence-v1`
+Branch: `feature/weekly-coach-summary-persistence-latency-investigation-v1`
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: `WEEKLY_COACH_SUMMARY_ASYNC_PERSISTENCE_V1_ACCEPTED`
+Proposed final status: `WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED`
 
 Scope:
 
-- persist approved deterministic Weekly Coach Summary output
-- persist deterministic fallback summaries safely
-- persist sanitized metadata only
-- provide Developer Mode-only save/load controls
+- measure Weekly Coach Summary Developer Mode generate/save/load timing
+- identify latency root cause
+- apply targeted fix
+- preserve Developer Mode-only and provider-free boundaries
 - no public/default display
-- no normal Today display
+- no normal Today integration
 - no provider runtime
 - no automatic generation
 - no worker/queue/scheduler/polling

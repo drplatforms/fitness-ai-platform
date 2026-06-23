@@ -8,10 +8,10 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Weekly Coach Summary Developer Mode Inspection v1",
-    "latest_final_status": "WEEKLY_COACH_SUMMARY_DEVELOPER_MODE_INSPECTION_V1_ACCEPTED",
-    "latest_accepted_commit": "ce0baa8",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_ce0baa8_add-weekly-coach-summary-developer-inspection.zip",
+    "latest_accepted_milestone": "Weekly Coach Summary Async Persistence v1",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_ASYNC_PERSISTENCE_V1_ACCEPTED",
+    "latest_accepted_commit": "2507b68",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_2507b68_persist-weekly-coach-summary-approvals.zip",
     "latest_main_merge_commit": "ce0baa8",
     "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
     "prior_accepted_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
@@ -19,10 +19,10 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary Async Persistence v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-async-persistence-v1",
+    "current_authorized_milestone": "Weekly Coach Summary Persistence Latency Investigation v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-persistence-latency-investigation-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Persist approved/public-safe Weekly Coach Summary output and sanitized metadata only, with Developer Mode-only save/load controls. No provider runtime, public/default display, normal Today display, automatic generation, worker, queue, scheduler, or polling is authorized.",
+    "current_authorized_scope": "Measure and reduce Developer Mode persistence latency with a targeted fragment-rerun fix while preserving persistence safety and provider-free boundaries.",
     "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Persistence QA / Developer Mode Smoke v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
     "next_milestone_reason": "After deterministic service shell acceptance, Architecture may authorize persistence design or Developer Mode inspection.",
@@ -172,5 +172,13 @@
     "fsweep clean",
     "no snapshots committed",
     "no qa_artifacts committed"
-  ]
+  ],
+  "weekly_coach_summary": {
+    "persistence_status": "accepted baseline before latency investigation",
+    "latency_investigation_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
+    "root_cause": "Streamlit full-app rerun behavior during Developer Mode button interactions",
+    "fix": "Weekly Coach Summary Developer Mode panel uses Streamlit fragment reruns when available and shows Developer Mode-only timing diagnostics.",
+    "provider_runtime": "not authorized",
+    "public_default_display": "not authorized"
+  }
 }

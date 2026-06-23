@@ -1,17 +1,26 @@
 # Open Questions
 
-## Daily Coach async approved preview bridge
+## Async Job Delivery Pattern / Playbook v1
 
-Current QA status:
-Daily Coach Async Approved Preview Bridge QA v1 is implemented and ready for Architecture review.
+Current status:
+Async Job Delivery Pattern / Playbook v1 is implemented and ready for Architecture review.
 
-Open before broader exposure:
+Open after acceptance:
 
-- Should provider live QA be limited to Developer Mode only? Yes.
-- Should provider execution from Today be authorized? No.
-- Should provider execution on page load be authorized? No.
-- Should automatic async job generation be authorized? No.
-- Should public/default async narrative display be authorized? No.
-- Should qwen3 or qwen3:32b be bridge-enabled? No.
+- Should DevOps Tooling SSH Command Normalization v1 be prioritized next? Likely yes if lstop/lrestart/app friction continues.
+- Should the next async job be selected using the playbook? Yes, after the playbook is accepted.
+- Should future async jobs skip Developer Mode inspection? No, unless Architecture explicitly approves a deviation.
+- Should future preview bridges call providers? No.
 
-Portfolio / LinkedIn / GitHub update remains deferred until a more stable end-to-end persisted async workflow exists.
+## Tooling backlog
+
+lstop/lrestart/app are Windows PowerShell helper commands that SSH into Linux.
+
+Known backlog:
+Fix lstop/lrestart/app SSH command CRLF handling in `scripts/fitness_commands.ps1` so SSH command blocks are normalized to LF before execution.
+
+This was recorded during the async provider/live QA path and is not fixed in the playbook milestone.
+
+## Portfolio / LinkedIn / GitHub
+
+Portfolio / LinkedIn / GitHub update remains deferred until a stable end-to-end persisted async workflow is ready to describe cleanly.

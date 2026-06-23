@@ -1,11 +1,12 @@
 # Backend Handoff Current
 
-Milestone: Daily Coach Async Approved Preview Bridge QA v1
+Milestone: Async Job Delivery Pattern / Playbook v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Backend notes:
-- Added `tests/test_daily_coach_async_approved_preview_bridge_qa_v1.py`.
-- QA covers feature flag isolation, eligibility gates, read-only behavior, no provider call, no async job creation, and safe metadata boundaries.
-- Normal Today rendering uses the normal UI payload from the preview result.
-- No provider/runtime behavior was expanded.
+- This milestone is docs/pattern only.
+- No backend runtime/service behavior changed.
+- No provider behavior changed.
+- No new async job was implemented.
+- Future async job Backend work should start from the playbook templates and should not skip contracts, service shell, persistence, Developer Mode inspection, provider gating, validation, fallback, or QA boundaries without Architecture approval.

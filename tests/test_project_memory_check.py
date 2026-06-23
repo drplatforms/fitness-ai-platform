@@ -1198,3 +1198,25 @@ def test_weekly_coach_summary_persistence_memory_is_required() -> None:
         in project_memory_check.REQUIRED_PHRASES[review_path]
     )
     assert "sanitized metadata" in project_memory_check.REQUIRED_PHRASES[milestone_path]
+
+
+def test_weekly_coach_summary_latency_investigation_memory_is_required() -> None:
+    probe_path = "tools/dev_weekly_coach_summary_latency_probe.py"
+    milestone_path = "docs/project_memory/milestones/weekly_coach_summary_persistence_latency_investigation_v1.md"
+    review_path = "docs/project_memory/reviews/weekly_coach_summary_persistence_latency_investigation_v1.md"
+
+    assert probe_path in project_memory_check.REQUIRED_FILES
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "Weekly Coach Summary Persistence Latency Investigation v1"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert (
+        "WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )
+    assert (
+        "Streamlit fragment reruns"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )

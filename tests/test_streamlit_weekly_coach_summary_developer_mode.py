@@ -112,3 +112,25 @@ def test_weekly_coach_summary_developer_preview_has_no_provider_or_auto_job_call
     ]
     for term in forbidden:
         assert term not in panel_source
+
+
+def test_weekly_coach_summary_developer_preview_uses_fragment_and_timing() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+    panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
+    timing_source = _function_source("_render_weekly_coach_summary_timing")
+
+    assert "def weekly_coach_summary_streamlit_fragment" in source
+    assert "@weekly_coach_summary_streamlit_fragment" in source
+    assert "perf_counter" in panel_source
+    assert "Weekly Coach Summary Timing" in timing_source
+    assert "panel_render_ms" in panel_source
+    assert "deterministic_generation_ms" in panel_source
+    assert "save_ms" in panel_source
+    assert "load_latest_ms" in panel_source
+
+
+def test_weekly_coach_summary_timing_is_not_in_normal_today_ui() -> None:
+    today_source = _function_source("render_today_section")
+
+    assert "Weekly Coach Summary Timing" not in today_source
+    assert "weekly_coach_summary_timing_by_user" not in today_source

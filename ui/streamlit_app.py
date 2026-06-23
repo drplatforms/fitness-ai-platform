@@ -4,6 +4,7 @@
 
 from datetime import datetime
 from html import escape
+from time import perf_counter
 
 import pandas as pd
 import requests
@@ -3413,6 +3414,7 @@ SESSION_DEFAULTS = {
     "weekly_coach_summary_preview_by_user": {},
     "weekly_coach_summary_persisted_by_user": {},
     "weekly_coach_summary_message_by_user": {},
+    "weekly_coach_summary_timing_by_user": {},
 }
 
 for key, default_value in SESSION_DEFAULTS.items():
@@ -9063,10 +9065,57 @@ def _render_weekly_coach_summary_sections(sections: dict[str, object]) -> None:
     st.write(sections["next_week_guidance"])
 
 
+def _weekly_coach_summary_elapsed_ms(start: float) -> float:
+    return round((perf_counter() - start) * 1000, 2)
+
+
+def _store_weekly_coach_summary_timing(
+    user_id: int,
+    action: str,
+    timings: dict[str, float],
+) -> None:
+    timing_cache = st.session_state.weekly_coach_summary_timing_by_user
+    timing_cache[user_id] = {"action": action, **timings}
+
+
+def _render_weekly_coach_summary_timing(user_id: int) -> None:
+    timings = st.session_state.weekly_coach_summary_timing_by_user.get(user_id)
+    if not timings:
+        return
+
+    st.markdown("**Weekly Coach Summary Timing:**")
+    timing_rows = [
+        {"Step": key.replace("_", " ").title(), "Milliseconds": value}
+        for key, value in timings.items()
+        if key != "action"
+    ]
+    st.caption(f"Last measured action: {timings.get('action', 'unknown')}")
+    if timing_rows:
+        st.dataframe(pd.DataFrame(timing_rows), width="stretch", hide_index=True)
+
+
+def weekly_coach_summary_streamlit_fragment(function):
+    """Use Streamlit fragment reruns when available to avoid full-app rerender latency.
+
+    Streamlit tabs execute all tab bodies during a normal rerun. The Weekly Coach
+    Summary Developer Mode panel has isolated button interactions, so fragment
+    reruns are a safe targeted fix: clicks inside this panel rerun only this panel
+    on Streamlit versions that support st.fragment. Older Streamlit versions fall
+    back to normal behavior without changing product boundaries.
+    """
+
+    fragment = getattr(st, "fragment", None)
+    if callable(fragment):
+        return fragment(function)
+    return function
+
+
+@weekly_coach_summary_streamlit_fragment
 def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
 
+    panel_start = perf_counter()
     st.subheader("Developer Mode: Weekly Coach Summary Preview")
     st.caption(
         "Developer Mode-only deterministic inspection. Generation is manual, "
@@ -9088,16 +9137,34 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
         "Generate deterministic weekly summary preview",
         key="weekly_coach_summary_generate_preview_button",
     ):
+        action_start = perf_counter()
+        context_start = perf_counter()
         context = build_weekly_summary_context_from_fixture(**fixture)
+        context_ms = _weekly_coach_summary_elapsed_ms(context_start)
+        generation_start = perf_counter()
         summary = generate_approved_weekly_summary(context)
+        generation_ms = _weekly_coach_summary_elapsed_ms(generation_start)
+        sections_start = perf_counter()
+        sections = approved_weekly_summary_to_public_sections(summary)
+        sections_ms = _weekly_coach_summary_elapsed_ms(sections_start)
         preview_cache[user_id] = {
             "scenario": scenario_label,
             "fixture": fixture,
             "period": context.period.to_dict(),
             "summary": summary,
-            "sections": approved_weekly_summary_to_public_sections(summary),
+            "sections": sections,
         }
         message_cache[user_id] = "Approved deterministic weekly summary generated."
+        _store_weekly_coach_summary_timing(
+            user_id,
+            "generate",
+            {
+                "context_build_ms": context_ms,
+                "deterministic_generation_ms": generation_ms,
+                "section_build_ms": sections_ms,
+                "total_action_ms": _weekly_coach_summary_elapsed_ms(action_start),
+            },
+        )
 
     cached_preview = preview_cache.get(user_id)
     if cached_preview:
@@ -9126,6 +9193,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                 "Save approved deterministic summary",
                 key="weekly_coach_summary_save_button",
             ):
+                save_start = perf_counter()
                 try:
                     saved = save_approved_weekly_summary(
                         summary=cached_preview["summary"],
@@ -9153,23 +9221,47 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                     )
                 else:
                     persisted_cache[user_id] = saved
+                    _store_weekly_coach_summary_timing(
+                        user_id,
+                        "save",
+                        {"save_ms": _weekly_coach_summary_elapsed_ms(save_start)},
+                    )
                     st.success(f"Saved weekly summary record {saved.record_id}.")
         with load_col:
             if st.button(
                 "Load latest persisted weekly summary",
                 key="weekly_coach_summary_load_button",
             ):
+                load_start = perf_counter()
                 latest = get_latest_approved_weekly_summary(
                     user_id=user_id,
                     week_start=period["week_start"],
                     week_end=period["week_end"],
                 )
                 if latest is None:
+                    _store_weekly_coach_summary_timing(
+                        user_id,
+                        "load_latest_empty",
+                        {
+                            "load_latest_ms": _weekly_coach_summary_elapsed_ms(
+                                load_start
+                            )
+                        },
+                    )
                     st.warning(
                         "No persisted approved weekly summary found for this period."
                     )
                 else:
                     persisted_cache[user_id] = latest
+                    _store_weekly_coach_summary_timing(
+                        user_id,
+                        "load_latest",
+                        {
+                            "load_latest_ms": _weekly_coach_summary_elapsed_ms(
+                                load_start
+                            )
+                        },
+                    )
                     st.success(f"Loaded weekly summary record {latest.record_id}.")
 
     persisted = persisted_cache.get(user_id)
@@ -9197,6 +9289,16 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             _render_weekly_coach_summary_sections(
                 approved_weekly_summary_to_public_sections(persisted.approved_summary)
             )
+
+    _store_weekly_coach_summary_timing(
+        user_id,
+        "panel_render",
+        {
+            **st.session_state.weekly_coach_summary_timing_by_user.get(user_id, {}),
+            "panel_render_ms": _weekly_coach_summary_elapsed_ms(panel_start),
+        },
+    )
+    _render_weekly_coach_summary_timing(user_id)
 
 
 def render_developer_section(user_id: int) -> None:

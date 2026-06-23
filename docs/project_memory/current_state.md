@@ -22,6 +22,3 @@ Boundaries preserved:
 - no prompt/raw context/scratchpad persisted/displayed
 
 Next likely milestone after acceptance: Weekly Coach Summary Persistence QA / Developer Mode Smoke v1.
-## Weekly Coach Summary Date-Range QA Data Debug v1
-
-Implemented / ready for Architecture review. Developer Mode now supports QA user/date-range selection, sanitized live DB fact counts, selected-range deterministic summary generation, and selected-range save/load. Normal/default UI and Today remain unchanged. Provider runtime, public/default display, automatic generation, worker/queue/scheduler/polling, raw rows, prompts, raw context, scratchpad, and chain-of-thought remain not authorized.

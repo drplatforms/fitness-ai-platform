@@ -1220,26 +1220,3 @@ def test_weekly_coach_summary_latency_investigation_memory_is_required() -> None
         "Streamlit fragment reruns"
         in project_memory_check.REQUIRED_PHRASES[milestone_path]
     )
-
-
-def test_weekly_coach_summary_date_range_qa_data_debug_memory_is_required() -> None:
-    service_path = "services/weekly_coach_summary_qa_data_service.py"
-    test_path = "tests/test_weekly_coach_summary_qa_data_service.py"
-    milestone_path = "docs/project_memory/milestones/weekly_coach_summary_date_range_qa_data_debug_v1.md"
-    review_path = "docs/project_memory/reviews/weekly_coach_summary_date_range_qa_data_debug_v1.md"
-
-    assert service_path in project_memory_check.REQUIRED_FILES
-    assert test_path in project_memory_check.REQUIRED_FILES
-    assert milestone_path in project_memory_check.REQUIRED_FILES
-    assert review_path in project_memory_check.REQUIRED_FILES
-    assert (
-        "Weekly Coach Summary Date-Range QA Data Debug v1"
-        in project_memory_check.REQUIRED_PHRASES[milestone_path]
-    )
-    assert (
-        "live DB fact counts" in project_memory_check.REQUIRED_PHRASES[milestone_path]
-    )
-    assert (
-        "WEEKLY_COACH_SUMMARY_DATE_RANGE_QA_DATA_DEBUG_V1_ACCEPTED"
-        in project_memory_check.REQUIRED_PHRASES[review_path]
-    )

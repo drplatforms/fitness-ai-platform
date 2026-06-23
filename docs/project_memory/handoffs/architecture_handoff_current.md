@@ -1,9 +1,25 @@
-# Architecture Handoff Current — Weekly Coach Summary Date-Range QA Data Debug v1
+# Architecture Handoff — Weekly Coach Summary Persistence Latency Investigation v1
 
-Current milestone: Weekly Coach Summary Date-Range QA Data Debug v1
+Recipient: Architecture
+
+Project: AI Health Coach / fitness_ai
+
+Milestone: Weekly Coach Summary Persistence Latency Investigation v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: WEEKLY_COACH_SUMMARY_DATE_RANGE_QA_DATA_DEBUG_V1_ACCEPTED
+Proposed final status: WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED
 
-Summary: Developer Mode-only QA user/date-range debugging now allows sanitized live DB fact-count inspection and selected-range deterministic Weekly Coach Summary generate/save/load behavior. Normal/default UI and Today remain unchanged. No provider runtime, public display, automatic generation, worker, queue, scheduler, polling, raw rows, prompt/raw context/scratchpad, or qwen promotion was added.
+Summary:
+The Weekly Coach Summary Developer Mode persistence latency was strongly narrowed to Streamlit full-app rerun behavior. The Developer Mode panel now uses Streamlit fragment reruns when available, adds Developer Mode-only timing diagnostics, and includes a CLI latency probe for the backend deterministic path.
+
+Boundaries:
+- Developer Mode-only behavior preserved
+- normal/default UI unchanged
+- normal Today unchanged
+- no public/default display
+- no provider runtime
+- no Ollama/CrewAI/qwen call
+- no automatic generation
+- no worker/queue/scheduler/polling
+- no persistence safety weakening

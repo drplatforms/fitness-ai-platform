@@ -8,10 +8,10 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Weekly Coach Summary Persistence Latency Investigation v1",
-    "latest_final_status": "WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED",
-    "latest_accepted_commit": "461092f",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_461092f_reduce-weekly-coach-summary-persistence-latency.zip",
+    "latest_accepted_milestone": "Weekly Coach Summary Async Persistence v1",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_ASYNC_PERSISTENCE_V1_ACCEPTED",
+    "latest_accepted_commit": "2507b68",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_2507b68_persist-weekly-coach-summary-approvals.zip",
     "latest_main_merge_commit": "ce0baa8",
     "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
     "prior_accepted_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
@@ -19,11 +19,11 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary Date-Range QA Data Debug v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-date-range-qa-data-debug-v1",
+    "current_authorized_milestone": "Weekly Coach Summary Persistence Latency Investigation v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-persistence-latency-investigation-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Developer Mode-only QA user/date-range debugging with sanitized live DB fact counts and selected-range deterministic generate/save/load behavior.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Data Context Integration v1",
+    "current_authorized_scope": "Measure and reduce Developer Mode persistence latency with a targeted fragment-rerun fix while preserving persistence safety and provider-free boundaries.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Persistence QA / Developer Mode Smoke v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
     "next_milestone_reason": "After deterministic service shell acceptance, Architecture may authorize persistence design or Developer Mode inspection.",
     "codex": "DO NOT USE BY DEFAULT",

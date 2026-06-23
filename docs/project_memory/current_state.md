@@ -1,34 +1,43 @@
+
 # Current State
 
-Latest docs/pattern milestone:
+Latest accepted milestone:
 Async Job Delivery Pattern / Playbook v1
+
+Current milestone:
+Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
 
 Current status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Proposed final status:
-ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED
-
-Accepted implementation foundation:
-Daily Coach async provider/runtime/preview path through Provider Live QA v1 — Developer Mode Only.
+NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED
 
 Current behavior:
 
-- async job delivery playbook exists at `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`
-- playbook captures canonical async lifecycle, persistence, service shell, Developer Mode inspection, provider runtime, parser/schema/validator/fallback, approved preview bridge, feature flag, normal UI, Developer Mode diagnostics, QA ownership, pass/fail criteria, milestone templates, and Daily Coach case study
-- this milestone is docs/pattern only
-- no runtime behavior changed
-- no provider behavior changed
-- no normal Today behavior changed
-- no Streamlit behavior changed
-- no new async job implemented
-- lstop/lrestart/app CRLF issue is recorded as backlog only
-- lstop/lrestart/app are Windows PowerShell helper commands that SSH into Linux
-- qwen3 remains not bridge-enabled
-- qwen3:32b remains not promoted
+- `lstop` SSH command transport now LF-normalizes Linux command script content before remote Bash execution.
+- `lstop`, `app`, and `lrestart` remain Windows PowerShell helper commands that SSH into Linux.
+- No runtime product behavior changed.
+- No provider behavior changed.
+- No Streamlit behavior changed.
+- No normal Today behavior changed.
+- No selected async job was implemented.
+- Weekly Coach Summary Async Job is selected as the recommended next async job candidate.
+- Recommended first implementation milestone is Weekly Coach Summary Async Contracts + Data Model v1.
 
 Important docs:
 
 - `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`
-- `docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md`
-- `docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md`
+- `docs/project_memory/reviews/next_async_job_candidate_selection_v1.md`
+- `docs/project_memory/milestones/next_async_job_candidate_selection_v1.md`
+
+Still not authorized:
+
+- Weekly Coach Summary implementation
+- provider execution from Today
+- provider execution on page load
+- automatic async job generation
+- public/default async narrative display
+- worker / queue / scheduler / polling
+- qwen3 bridge or promotion
+- qwen3:32b promotion

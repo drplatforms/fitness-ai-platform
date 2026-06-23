@@ -1,7 +1,8 @@
+
 # Project Continuity Bootstrap
 
 Current milestone:
-Async Job Delivery Pattern / Playbook v1
+Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
@@ -12,20 +13,20 @@ Start here:
 2. Read `docs/project_memory/current_state.md`.
 3. Read `docs/project_memory/next_milestone.md`.
 4. Read `docs/project_memory/patterns/async_job_delivery_pattern_v1.md`.
-5. Read `docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md`.
-6. Read `docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md`.
+5. Read `docs/project_memory/reviews/next_async_job_candidate_selection_v1.md`.
+6. Read `docs/project_memory/milestones/next_async_job_candidate_selection_v1.md`.
 
 Current boundary:
 
-- This is a docs/pattern milestone.
-- No runtime behavior changed.
+- This is a tooling hotfix plus planning/project-memory milestone.
+- `lstop` CRLF SSH command handling was fixed through LF-normalized command transport.
+- `app` and `lrestart` remain Windows PowerShell helpers that SSH into Linux.
+- Weekly Coach Summary Async Job is selected as the next candidate.
+- No selected async job was implemented.
+- No runtime product behavior changed.
 - No provider behavior changed.
-- No normal Today behavior changed.
 - No Streamlit behavior changed.
-- No new async job implemented.
-- The playbook should be used before scoping future async jobs.
-- lstop/lrestart/app CRLF handling is backlog only.
-- lstop/lrestart/app are Windows PowerShell helper commands that SSH into Linux; do not present them as Linux bash commands.
+- No normal Today behavior changed.
 
 Workflow reminder:
 

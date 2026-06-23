@@ -12,7 +12,21 @@ $script:FitnessLinuxStreamlitPort = if ($env:FITNESS_LINUX_STREAMLIT_PORT) { [in
 $script:FitnessLinuxStreamlitUrl = if ($env:FITNESS_LINUX_STREAMLIT_URL) { $env:FITNESS_LINUX_STREAMLIT_URL } else { $linuxHost = $script:FitnessLinuxSsh; if ($linuxHost -match "@(.+)$") { $linuxHost = $Matches[1] }; "http://${linuxHost}:$script:FitnessLinuxStreamlitPort" }
 
 function Assert-FitnessRepo { if (-not (Test-Path $script:FitnessWindowsRepo)) { throw "Repo missing: $script:FitnessWindowsRepo" }; Set-Location $script:FitnessWindowsRepo; if (-not (Test-Path ".git")) { throw "Not repo root: $script:FitnessWindowsRepo" } }
-function Invoke-FitnessLinux { param([Parameter(Mandatory=$true)][string]$Command); Write-Host "SSH target: $script:FitnessLinuxSsh"; $Command | ssh $script:FitnessLinuxSsh "bash -s"; if ($LASTEXITCODE -ne 0) { throw "Linux command failed: $LASTEXITCODE" } }
+function ConvertTo-FitnessLinuxSshScript {
+    param([Parameter(Mandatory=$true)][string]$Command)
+    $normalized = $Command -replace "`r`n", "`n"
+    $normalized = $normalized -replace "`r", "`n"
+    return $normalized.TrimEnd("`n") + "`n"
+}
+
+function Invoke-FitnessLinux {
+    param([Parameter(Mandatory=$true)][string]$Command)
+    Write-Host "SSH target: $script:FitnessLinuxSsh"
+    $normalized = ConvertTo-FitnessLinuxSshScript $Command
+    $payload = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($normalized))
+    ssh $script:FitnessLinuxSsh "printf '%s' '$payload' | base64 -d | bash -s"
+    if ($LASTEXITCODE -ne 0) { throw "Linux command failed: $LASTEXITCODE" }
+}
 function Test-FitnessPort { param([int]$Port); try { return [bool](Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) } catch { return $false } }
 function Show-FitnessPort { param([int]$Port); Write-Host "`nPort $Port"; try { $c=Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue; if(-not $c){Write-Host "  none";return}; $c|ForEach-Object{ $p=Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; Write-Host "  PID=$($_.OwningProcess) Process=$($p.ProcessName)" } } catch { Write-Host "  unable to inspect" } }
 

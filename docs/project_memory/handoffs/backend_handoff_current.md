@@ -1,12 +1,14 @@
+
 # Backend Handoff Current
 
-Milestone: Async Job Delivery Pattern / Playbook v1
+Milestone: Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Backend notes:
-- This milestone is docs/pattern only.
-- No backend runtime/service behavior changed.
-- No provider behavior changed.
-- No new async job was implemented.
-- Future async job Backend work should start from the playbook templates and should not skip contracts, service shell, persistence, Developer Mode inspection, provider gating, validation, fallback, or QA boundaries without Architecture approval.
+- `lstop` now uses the shared LF-normalized SSH command transport through `Invoke-FitnessLinux`.
+- Because the shared transport helper was touched, validate `lstop` and `app` from Windows PowerShell before final acceptance.
+- Candidate selection only selected Weekly Coach Summary Async Job; it did not implement the job.
+- Next Backend implementation should wait for Architecture to authorize Weekly Coach Summary Async Contracts + Data Model v1.
+- Do not jump directly to provider runtime.
+- Do not add worker/queue/scheduler/polling without design authorization.

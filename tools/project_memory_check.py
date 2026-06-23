@@ -78,6 +78,8 @@ REQUIRED_FILES = [
     "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
     "docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md",
     "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md",
+    "docs/project_memory/milestones/next_async_job_candidate_selection_v1.md",
+    "docs/project_memory/reviews/next_async_job_candidate_selection_v1.md",
     "docs/project_memory/handoffs/architecture_handoff_current.md",
     "docs/project_memory/handoffs/backend_handoff_current.md",
     "docs/project_memory/handoffs/qa_handoff_current.md",

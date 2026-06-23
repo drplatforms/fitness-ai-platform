@@ -8,25 +8,27 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Provider Live QA v1 — Developer Mode Only",
-    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_LIVE_QA_V1_ACCEPTED",
-    "latest_accepted_commit": "71b14ea",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_71b14ea_merge-feature-daily-coach-async-approved-preview-bridge-qa-v1.zip",
-    "latest_main_merge_commit": "71b14ea",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_71b14ea_merge-feature-daily-coach-async-approved-preview-bridge-qa-v1.zip",
-    "prior_accepted_milestone": "Daily Coach Async Approved Preview Bridge QA v1",
-    "prior_final_status": "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED",
+    "latest_accepted_milestone": "Async Job Delivery Pattern / Playbook v1",
+    "latest_final_status": "ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED",
+    "latest_accepted_commit": "a3bdb5c",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_a3bdb5c_merge-feature-async-job-delivery-pattern-playbook-v1.zip",
+    "latest_main_merge_commit": "a3bdb5c",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_a3bdb5c_merge-feature-async-job-delivery-pattern-playbook-v1.zip",
+    "prior_accepted_milestone": "Daily Coach Async Provider Live QA v1 \u2014 Developer Mode Only",
+    "prior_final_status": "DAILY_COACH_ASYNC_PROVIDER_LIVE_QA_V1_ACCEPTED",
     "prior_main_merge_commit": "71b14ea"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Async Job Delivery Pattern / Playbook v1",
-    "current_authorized_branch": "feature/async-job-delivery-pattern-playbook-v1",
-    "current_authorized_status": "AUTHORIZED FOR ARCHITECTURE / DOCS / PROJECT MEMORY IMPLEMENTATION",
-    "current_authorized_scope": "Create reusable async job delivery playbook covering lifecycle, persistence, Developer Mode inspection, provider runtime, approved preview bridge, QA ownership, pass/fail criteria, milestone templates, and tooling lessons without runtime behavior changes.",
-    "recommended_next_milestone_after_acceptance": "DevOps Tooling SSH Command Normalization v1",
+    "current_authorized_milestone": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix",
+    "current_authorized_branch": "feature/next-async-job-candidate-selection-v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND / PROJECT MEMORY IMPLEMENTATION",
+    "current_authorized_scope": "Fix the lstop SSH CRLF command transport issue and select the next async job candidate using the accepted Async Job Delivery Pattern / Playbook, without implementing the selected async job or changing runtime/product behavior.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Async Contracts + Data Model v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Fix lstop/lrestart/app SSH command CRLF handling if workflow friction remains; otherwise use the playbook to scope the next async job candidate.",
-    "codex": "DO NOT USE BY DEFAULT"
+    "next_milestone_reason": "Architecture should review the candidate selection and authorize the selected candidate's first implementation milestone before any async job implementation begins.",
+    "codex": "DO NOT USE BY DEFAULT",
+    "selected_next_async_candidate": "Weekly Coach Summary Async Job",
+    "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Contracts + Data Model v1"
   },
   "runtime_split": {
     "windows": [
@@ -48,7 +50,9 @@
     "commands": {
       "app": "Windows PowerShell command that talks to Linux over SSH and restarts FastAPI + Streamlit there",
       "wapp": "Windows-local only",
-      "fports": "Windows-side visibility only"
+      "fports": "Windows-side visibility only",
+      "lstop": "Windows PowerShell command that sends LF-normalized Linux command text over SSH and stops Linux FastAPI + Streamlit",
+      "lrestart": "Windows PowerShell command that talks to Linux over SSH and restarts Linux FastAPI + Streamlit"
     }
   },
   "model_provider_policy": {
@@ -60,8 +64,8 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Async Job Delivery Pattern / Playbook v1 documents the reusable async job architecture harvested from the accepted Daily Coach async path. This is docs/pattern only.",
-    "normal_today_behavior": "unchanged; no runtime/product behavior files changed",
+    "current": "Next Async Job Candidate Selection v1 + lstop Tooling Hotfix fixes the known lstop SSH CRLF issue and selects Weekly Coach Summary Async Job as the recommended next async candidate. No selected async job is implemented.",
+    "normal_today_behavior": "unchanged; no runtime product behavior changed",
     "in_current_scope": [
       "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
       "milestone and review docs for Async Job Delivery Pattern / Playbook v1",
@@ -70,37 +74,34 @@
       "lstop/lrestart/app CRLF handling recorded as backlog only"
     ],
     "deferred": [
-      "DevOps Tooling SSH Command Normalization v1",
-      "Next Async Job Candidate Selection v1",
-      "any new async job implementation",
+      "Weekly Coach Summary Async Contracts + Data Model v1 until Architecture acceptance",
+      "Weekly Coach Summary Service Shell / No Worker v1",
+      "Weekly Coach Summary persistence design/schema/service shell",
+      "Weekly Coach Summary Developer Mode inspection",
+      "Weekly Coach Summary provider runtime, if later authorized",
       "worker / queue / scheduler / polling"
     ],
     "not_authorized": [
-      "automatic async job generation",
-      "debug/provider metadata in normal UI",
-      "full prompt/raw context/scratchpad display",
-      "full prompt/raw context/scratchpad persistence",
-      "lstop/lrestart/app tooling behavior modification in this milestone",
-      "new async job implementation",
-      "normal Today provider call",
-      "normal Today behavior change",
-      "polling",
-      "provider behavior change",
+      "selected async job implementation in this milestone",
+      "provider behavior changes",
+      "normal Today behavior changes",
+      "Streamlit behavior changes",
+      "Daily Coach async runtime behavior changes",
+      "approved preview bridge behavior changes",
+      "provider execution from Today",
       "provider execution on page load",
-      "provider execution on Today render",
-      "public/default async narrative display",
+      "automatic async job generation",
+      "raw provider output persistence",
+      "rejected provider output persistence",
+      "debug/provider metadata in normal UI",
       "qwen3 bridge",
       "qwen3 promotion",
       "qwen3:32b promotion",
-      "queue",
-      "raw provider output display",
-      "raw provider output persistence",
-      "rejected provider output display",
-      "rejected provider output persistence",
-      "scheduler",
-      "Streamlit behavior change",
-      "worker"
-    ]
+      "worker / queue / scheduler / polling"
+    ],
+    "selected_next_async_candidate": "Weekly Coach Summary Async Job",
+    "recommended_first_milestone": "Weekly Coach Summary Async Contracts + Data Model v1",
+    "lstop_crlf_hotfix": "implemented in scripts/fitness_commands.ps1 by LF-normalizing SSH command script content and transporting it as UTF-8/base64 before remote bash execution"
   },
   "codex_assisted_flow": {
     "codex_role": "implementation worker only",

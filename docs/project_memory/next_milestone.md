@@ -1,38 +1,36 @@
+
 # Next Milestone
 
 Current authorized milestone:
-Async Job Delivery Pattern / Playbook v1
+Next Async Job Candidate Selection v1 + lstop Tooling Hotfix
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
 Proposed final status:
-ASYNC_JOB_DELIVERY_PATTERN_PLAYBOOK_V1_ACCEPTED
+NEXT_ASYNC_JOB_CANDIDATE_SELECTION_V1_ACCEPTED
 
 Purpose:
-Capture the accepted Daily Coach async job delivery architecture as a reusable project playbook so future async jobs can be scoped faster and more safely.
+Fix the known `lstop` SSH CRLF issue and use the accepted Async Job Delivery Pattern / Playbook to select the next async job candidate before implementation begins.
 
-Next likely milestone option A:
-DevOps Tooling SSH Command Normalization v1
+Selected next async job candidate:
+Weekly Coach Summary Async Job
 
-Purpose:
-Fix lstop/lrestart/app SSH command block CRLF handling in scripts/fitness_commands.ps1.
+Recommended first implementation milestone after acceptance:
+Weekly Coach Summary Async Contracts + Data Model v1
 
-Next likely milestone option B:
-Next Async Job Candidate Selection v1
-
-Purpose:
-Choose the next async job using the new playbook instead of designing from scratch.
+Why:
+Weekly Coach Summary is naturally async, deterministic-first, high product value, lower risk to normal Today behavior, and strong portfolio/demo value.
 
 Still not authorized:
 
-- runtime behavior changes
-- provider behavior changes
-- normal Today behavior changes
-- Streamlit behavior changes
-- new async job implementation
+- Weekly Coach Summary implementation
+- provider runtime changes
+- normal Today provider execution
+- provider execution on page load
+- automatic async job generation
 - worker / queue / scheduler / polling
-- lstop/lrestart/app tooling behavior modification in this playbook milestone
+- public/default async narrative display
 - qwen3 bridge
 - qwen3 promotion
 - qwen3:32b promotion

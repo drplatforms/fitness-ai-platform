@@ -1,25 +1,31 @@
+
 # Open Questions
 
-## Async Job Delivery Pattern / Playbook v1
+## Next Async Job Candidate Selection v1
 
 Current status:
-Async Job Delivery Pattern / Playbook v1 is implemented and ready for Architecture review.
+Next Async Job Candidate Selection v1 + lstop Tooling Hotfix is implemented and ready for Architecture review.
+
+Selected next async job candidate:
+Weekly Coach Summary Async Job
+
+Recommended first milestone:
+Weekly Coach Summary Async Contracts + Data Model v1
 
 Open after acceptance:
 
-- Should DevOps Tooling SSH Command Normalization v1 be prioritized next? Likely yes if lstop/lrestart/app friction continues.
-- Should the next async job be selected using the playbook? Yes, after the playbook is accepted.
-- Should future async jobs skip Developer Mode inspection? No, unless Architecture explicitly approves a deviation.
-- Should future preview bridges call providers? No.
+- Architecture should approve or revise the Weekly Coach Summary recommendation.
+- Architecture should decide whether the first milestone is contracts/data model only or service shell/no worker.
+- QA should review the candidate matrix and the no-provider/no-normal-Today boundaries.
 
 ## Tooling backlog
 
-lstop/lrestart/app are Windows PowerShell helper commands that SSH into Linux.
+Completed in this milestone:
+`lstop` SSH CRLF command handling was fixed by LF-normalizing Linux command text and transporting it safely to remote Bash.
 
-Known backlog:
-Fix lstop/lrestart/app SSH command CRLF handling in `scripts/fitness_commands.ps1` so SSH command blocks are normalized to LF before execution.
-
-This was recorded during the async provider/live QA path and is not fixed in the playbook milestone.
+Still watch:
+- Confirm `app` behavior remains preserved when validating the shared SSH helper path.
+- Confirm `lrestart` behavior remains preserved if directly tested.
 
 ## Portfolio / LinkedIn / GitHub
 

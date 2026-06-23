@@ -1006,3 +1006,30 @@ def test_daily_coach_async_persistence_service_shell_project_memory_files_exist(
         project_root
         / "docs/project_memory/reviews/daily_coach_async_persistence_service_shell_v1.md"
     ).exists()
+
+
+def test_daily_coach_async_approved_preview_bridge_design_memory_is_required() -> None:
+    design_path = (
+        "docs/project_memory/designs/"
+        "daily_coach_async_approved_preview_bridge_design_v1.md"
+    )
+    milestone_path = (
+        "docs/project_memory/milestones/"
+        "daily_coach_async_approved_preview_bridge_design_v1.md"
+    )
+    review_path = (
+        "docs/project_memory/reviews/"
+        "daily_coach_async_approved_preview_bridge_design_v1.md"
+    )
+
+    assert design_path in project_memory_check.REQUIRED_FILES
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "Today preview must not run provider execution"
+        in project_memory_check.REQUIRED_PHRASES[design_path]
+    )
+    assert (
+        "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_DESIGN_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )

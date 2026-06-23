@@ -1,39 +1,3 @@
-## Daily Coach Async Provider Runtime QA Hardening v1
-
-Status: `AUTHORIZED FOR BACKEND / QA IMPLEMENTATION`
-
-Branch: `feature/daily-coach-async-provider-runtime-qa-hardening-v1`
-
-Scope: harden Developer Mode-only provider runtime failure behavior. Preserve manual trigger only, disabled by default, no provider call on page load, no normal Today provider call, no public async narrative display, no worker/queue/scheduler/polling, no qwen3/qwen3:32b promotion, and no raw/rejected output or prompt/context/scratchpad persistence/display.
-
-## Current Implementation Update — Developer Mode Persistence Inspection v1
-
-Status: `AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION`
-
-Branch: `feature/developer-mode-persistence-inspection-v1`
-
-Latest accepted milestone: `Daily Coach Async Persistence Service Shell v1`
-
-Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_SERVICE_SHELL_V1_ACCEPTED`
-
-This milestone adds Developer Mode-only read-only inspection of persisted Daily Coach async job and approved narrative state. It may show sanitized persistence metadata and displayable/public_safe approved narrative content inside Developer Mode only. It must not add provider runtime, worker/queue/scheduler/polling, automatic async job creation, normal Today provider calls, public async narrative display, raw provider output display, rejected provider output display, full prompt/raw context/scratchpad display, or debug/provider metadata in normal UI.
-
-Codex do not use by default.
-
-## Current Implementation Update — Daily Coach Async Persistence Service Shell v1
-
-Status: `AUTHORIZED FOR BACKEND IMPLEMENTATION`
-
-Branch: `feature/daily-coach-async-persistence-service-shell-v1`
-
-Latest accepted milestone: `Daily Coach Async Persistence Contracts + Schema v1`
-
-Latest accepted status: `DAILY_COACH_ASYNC_PERSISTENCE_CONTRACTS_SCHEMA_V1_ACCEPTED`
-
-This milestone adds a bounded deterministic service/repository shell around the accepted `daily_coach_async_jobs` and `daily_coach_approved_narratives` schema. It is service/repository shell only: no provider runtime, no worker/queue/scheduler, no FastAPI behavior change, no Streamlit behavior change, no normal Today provider call, no public async narrative display, no raw provider output persistence, and no rejected provider output persistence.
-
-Codex do not use by default.
-
 # Project Continuity Bootstrap
 
 Last updated: 2026-06-22
@@ -44,54 +8,40 @@ This file is the project-wide continuity landing packet for future AI Health Coa
 
 Use it before making Architecture, Backend Development, QA, DevOps / Tooling, Product, or TPM-style decisions. It exists so future chats can rehydrate from repo truth instead of scattered transcript memory.
 
-Project Continuity System v2 added an active continuity control layer around this packet:
-
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/current_workflow_contract.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/chat_onboarding_test.md`
-- role-specific bootstrap files for Architecture, Backend, QA, and DevOps / Tooling
-- `python tools/dev_assistant.py continuity-brief`
-
 ## 2. Latest accepted baseline
 
 Current accepted baseline:
 
-`Daily Coach Async Persistence Design v1`
+`Daily Coach Async Provider Runtime QA Hardening v1`
 
 Accepted status:
 
-`DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED`
+`DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED`
 
 Accepted commit/snapshot:
 
-- Main merge commit: `898abe0 Merge feature/daily-coach-async-persistence-design-v1`
-- Main snapshot: `fitness_ai_snapshot_2026-06-22_898abe0_merge-feature-daily-coach-async-persistence-design-v1.zip`
+- Main merge commit: `3765314 Merge feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+- Main snapshot: `fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip`
 
-Daily Coach Async Persistence Design v1 is design only. It did not implement provider runtime, DB schema, repositories, services, API routes, Streamlit behavior, worker execution, model promotion, public async narrative display, or normal Today provider calls.
+QA Hardening accepted that the Developer Mode-only provider runtime remains disabled by default, manual-trigger only, sanitized on failure, and isolated from normal Today behavior.
 
 ## 3. Current authorized milestone
 
-`Daily Coach Async Persistence Contracts + Schema v1`
+`Daily Coach Async Approved Preview Bridge Design v1`
 
 Status:
 
-`AUTHORIZED / CODEX-ASSISTED IMPLEMENTATION`
+`AUTHORIZED FOR DESIGN / BACKEND ARCHITECTURE SUPPORT`
 
 Required branch:
 
-`feature/daily-coach-async-persistence-contracts-schema-v1`
+`feature/daily-coach-async-approved-preview-bridge-design-v1`
 
-Required deliverables:
+Required deliverable:
 
-- `daily_coach_async_jobs`
-- `daily_coach_approved_narratives`
-- `daily_coach_job_events` deferred
-- Daily Coach async persistence contract constants
-- focused schema/contract tests
-- project-memory updates and checks
+- `docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md`
 
-This milestone creates storage foundation only. It must not implement provider runtime, repositories/services, workers, queues, schedulers, polling, API behavior, Streamlit behavior, public async narrative display, or normal Today behavior changes.
+This milestone is design only. It must not implement Today preview, normal Today provider calls, public async narrative display, automatic async job generation, worker/queue/scheduler/polling, qwen3 bridge/promotion, qwen3:32b promotion, raw/rejected output display, or debug/provider metadata in normal UI.
 
 ## 4. Current Accepted Milestone Stack
 
@@ -107,6 +57,11 @@ Accepted Daily Coach async / runtime-control / continuity stack:
 8. Daily Coach Async Provider Runtime Design v1
 9. Project Continuity System v2
 10. Daily Coach Async Persistence Design v1
+11. Daily Coach Async Persistence Contracts + Schema v1
+12. Daily Coach Async Persistence Service Shell v1
+13. Developer Mode Persistence Inspection v1
+14. Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
+15. Daily Coach Async Provider Runtime QA Hardening v1
 
 ## 5. Current product vision
 
@@ -115,8 +70,6 @@ AI Health Coach is a backend-truth, validation-first, premium coaching platform.
 Core product doctrine:
 
 `Sound right and be right.`
-
-System doctrine:
 
 Backend owns facts, health state, recovery state, nutrition targets, logged actuals, macro gaps, workout constraints, training evidence, food suggestions, validation, persistence, and fallback.
 
@@ -133,21 +86,20 @@ Windows:
 - source-of-truth repo/control machine
 - Git / merge / snapshot / orchestration
 - Ollama host
+- `app` is a Windows PowerShell command that talks to Linux over SSH and restarts FastAPI + Streamlit there
 
 Linux:
 
 - canonical FastAPI + Streamlit runtime
 - tmux sessions `fitness-api` and `fitness-ui`
-- `app` command launches Linux runtime
-- `wapp` is Windows-local only
 - Linux runtime uses Windows Ollama over LAN
 
 Canonical paths:
 
-- Windows repo: `C:\projects\fitness_ai`
+- Windows repo: `C:\projectsitness_ai`
 - Linux repo: `~/projects/fitness-ai-platform`
 
-Do not change this runtime split without an explicit DevOps / Architecture milestone.
+The `app` command launches Linux runtime from Windows PowerShell. `wapp` is Windows-local only.
 
 ## 7. Command and workflow truth
 
@@ -166,7 +118,7 @@ merge -> validate -> push -> snapshot -> Linux pull main
 Temporary apply scripts and raw patches live outside the repo, normally in `C:\projects`, and are run from repo root as:
 
 ```powershell
-python ..\apply_example.py
+python ..pply_example.py
 git apply --check ..\example.patch
 git apply ..\example.patch
 ```
@@ -200,67 +152,39 @@ Current state:
 - accepted service shell / no worker
 - accepted Developer Mode-only manual lifecycle prototype
 - accepted provider runtime design
-- Project Continuity System v2 accepted
-- Daily Coach Async Persistence Design v1 accepted
-- Daily Coach Async Persistence Contracts + Schema v1 authorized
+- accepted persistence design/schema/service shell
+- accepted Developer Mode persistence inspection
+- accepted Developer Mode-only provider runtime prototype
+- accepted provider runtime QA hardening
+- authorized approved preview bridge design
 
-In current scope:
+Current design focus:
 
-- `daily_coach_async_jobs` schema
-- `daily_coach_approved_narratives` schema
-- persistence contract constants
-- schema/contract tests
-- project-memory updates
+- define future approved preview eligibility gates
+- define Today preview boundary
+- define provider execution boundary
+- define fallback behavior
+- define normal UI vs Developer Mode metadata boundary
+- define feature flag strategy
+- define QA gates before implementation
 
-Deferred / not implemented:
+Deferred / not authorized:
 
-- `daily_coach_job_events`
-- provider runtime implementation
-- direct Ollama Daily Coach async runtime
-- CrewAI Daily Coach async runtime
-- qwen3 call or qwen3 bridge
-- qwen3:32b promotion
-- worker
-- queue
-- scheduler
-- polling
-- repositories
-- services
-- API route behavior
-- Streamlit behavior
-- normal Today provider call
-- public async narrative display
-- raw provider output persistence
-- rejected provider output persistence
+- provider execution from Today
+- provider execution on page load
+- automatic async job generation
+- public/default async narrative display
+- worker / queue / scheduler / polling
+- qwen3 bridge / qwen3 promotion / qwen3:32b promotion
 
-## 10. Codex-assisted implementation boundary
+Historic phrase note: older continuity checks may mention "no provider runtime yet" for early service-shell milestones. Current truth is narrower: Developer Mode-only provider runtime prototype exists, but normal Today provider runtime remains unauthorized.
 
-Codex is implementation worker only.
+## 10. What Future Chats Must Do First
 
-Codex cannot decide architecture, merge, push main, snapshot, touch Linux, use `git add .`, or broaden scope.
-
-Backend/user owns review, validation, explicit staging, commit, push, snapshot, Linux pull, and final Architecture handoff.
-
-## 11. What Future Chats Must Do First
-
-Every new chat should read:
-
-1. `docs/project_memory/project_state.json`
-2. `docs/project_memory/project_continuity_bootstrap.md`
-3. `docs/project_memory/current_workflow_contract.md`
-4. `docs/project_memory/next_milestone.md`
-5. the relevant role bootstrap
-6. `docs/project_memory/current_state.md`
-7. `docs/project_memory/open_questions.md`
-
-Then answer the self-test in `docs/project_memory/chat_onboarding_test.md` before authorizing work or producing patches.
-
----
-
-## Daily Coach Async Provider Runtime Prototype v1
-
-Status: AUTHORIZED FOR BACKEND / STREAMLIT IMPLEMENTATION
-
-Branch: `feature/daily-coach-async-provider-runtime-prototype-v1`
-
-Developer Mode-only manual provider runtime prototype. Provider runtime is disabled by default, manual-trigger only, and must not run on normal Today render or page load. Approved public-safe narrative persistence is allowed only after strict JSON parse and safety validation. Failure paths may persist sanitized metadata only. No qwen3 bridge, qwen3 promotion, qwen3:32b promotion, worker, queue, scheduler, polling, public async narrative display, raw provider output persistence, rejected provider output persistence, full prompt/raw context/scratchpad persistence, or debug/provider metadata in normal UI. Codex do not use by default.
+1. Read `docs/project_memory/project_state.json`.
+2. Read `docs/project_memory/next_milestone.md`.
+3. Read `docs/project_memory/current_state.md`.
+4. Read the current milestone design, milestone, and review docs.
+5. Respect phase-separated delivery.
+6. Do not use Codex by default.
+7. Do not implement beyond the current authorized milestone.

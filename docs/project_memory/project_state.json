@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Provider Runtime Prototype v1 \u2014 Developer Mode Only",
-    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED",
-    "latest_accepted_commit": "ea3f93f",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip",
-    "latest_main_merge_commit": "ea3f93f",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip",
-    "prior_accepted_milestone": "Developer Mode Persistence Inspection v1",
-    "prior_final_status": "DEVELOPER_MODE_PERSISTENCE_INSPECTION_V1_ACCEPTED",
-    "prior_main_merge_commit": "df088f9"
+    "latest_accepted_milestone": "Daily Coach Async Provider Runtime QA Hardening v1",
+    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED",
+    "latest_accepted_commit": "3765314",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip",
+    "latest_main_merge_commit": "3765314",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip",
+    "prior_accepted_milestone": "Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only",
+    "prior_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED",
+    "prior_main_merge_commit": "ea3f93f"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Provider Runtime QA Hardening v1",
-    "current_authorized_branch": "feature/daily-coach-async-provider-runtime-qa-hardening-v1",
-    "current_authorized_status": "AUTHORIZED FOR BACKEND / QA IMPLEMENTATION",
-    "current_authorized_scope": "Developer Mode-only provider runtime QA hardening",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Approved Preview Bridge Design v1",
+    "current_authorized_milestone": "Daily Coach Async Approved Preview Bridge Design v1",
+    "current_authorized_branch": "feature/daily-coach-async-approved-preview-bridge-design-v1",
+    "current_authorized_status": "AUTHORIZED FOR DESIGN / BACKEND ARCHITECTURE SUPPORT",
+    "current_authorized_scope": "Design-only approved preview bridge architecture; no implementation",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Approved Preview Bridge Implementation v1 — Feature Flag Disabled by Default",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Design the bridge before implementation; normal Today provider calls are still not authorized.",
+    "next_milestone_reason": "Implement only after Architecture accepts the bridge design; Today provider execution remains unauthorized.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "runtime_split": {
@@ -46,7 +46,7 @@
       "Linux runtime uses Windows Ollama over LAN"
     ],
     "commands": {
-      "app": "launches/manages Linux FastAPI + Streamlit runtime",
+      "app": "Windows PowerShell command that talks to Linux over SSH and restarts FastAPI + Streamlit there",
       "wapp": "Windows-local only",
       "fports": "Windows-side visibility only"
     }
@@ -60,44 +60,44 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Developer Mode-only provider runtime QA hardening authorized; normal Today behavior remains unchanged and no public async narrative display is authorized",
+    "current": "Approved preview bridge design authorized; design only, normal Today behavior remains unchanged, and no public/default async narrative display is implemented",
     "normal_today_behavior": "unchanged",
     "in_current_scope": [
-      "deterministic sanitized failure result objects",
-      "disabled/missing config handling",
-      "missing/stale/expired job handling",
-      "provider unavailable/timeout handling",
-      "malformed/prose/markdown/schema/validation rejection handling",
-      "bounded persistence failure handling",
-      "Developer Mode-only sanitized status/error clarity",
+      "approved preview eligibility gates",
+      "Today preview boundary design",
+      "provider execution boundary design",
+      "fallback behavior design",
+      "normal UI versus Developer Mode metadata boundary",
+      "feature flag strategy",
+      "QA gates before implementation",
       "project-memory updates"
     ],
     "deferred": [
-      "normal Today provider call",
-      "public async narrative display",
-      "worker / queue / scheduler / polling",
-      "approved preview bridge design after hardening acceptance"
+      "approved preview bridge implementation after design acceptance",
+      "normal Today preview behind disabled-by-default flag",
+      "provider live QA remains Developer Mode-only unless separately authorized",
+      "worker / queue / scheduler / polling remains unauthorized"
     ],
     "not_authorized": [
-      "CrewAI Daily Coach async runtime",
-      "automatic async job creation",
+      "automatic async job generation",
       "debug/provider metadata in normal UI",
       "full prompt/raw context/scratchpad display",
+      "full prompt/raw context/scratchpad persistence",
       "normal Today provider call",
       "polling",
       "provider execution on page load",
-      "provider execution outside Developer Mode",
-      "provider runtime implementation",
-      "public async narrative display",
-      "queue",
+      "provider execution on Today render",
+      "public/default async narrative display",
       "qwen3 bridge",
       "qwen3 promotion",
       "qwen3:32b promotion",
+      "queue",
       "raw provider output display",
       "raw provider output persistence",
       "rejected provider output display",
       "rejected provider output persistence",
       "scheduler",
+      "Today preview bridge implementation before design acceptance",
       "worker"
     ]
   },
@@ -135,7 +135,8 @@
       "docs/project_memory/current_workflow_contract.md",
       "docs/project_memory/next_milestone.md",
       "docs/project_memory/current_state.md",
-      "docs/project_memory/open_questions.md"
+      "docs/project_memory/open_questions.md",
+      "docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md"
     ],
     "architecture": [
       "docs/project_memory/role_bootstrap_architecture.md"

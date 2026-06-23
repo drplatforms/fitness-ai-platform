@@ -4,61 +4,55 @@ Last updated: 2026-06-22
 
 ## Latest accepted milestone
 
-Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only
+Daily Coach Async Provider Runtime QA Hardening v1
 
 ## Latest accepted status
 
-`DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED`
+`DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED`
 
 ## Current source branch
 
 `main`
 
+Latest accepted main merge commit:
+
+`3765314 Merge feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+
 Latest accepted main merge snapshot:
 
-`fitness_ai_snapshot_2026-06-22_ea3f93f_fix-provider-runtime-config-default-isolation.zip`
+`fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip`
 
 ## Current authorized milestone
 
-Daily Coach Async Provider Runtime QA Hardening v1
+Daily Coach Async Approved Preview Bridge Design v1
 
 Status:
 
-`AUTHORIZED FOR BACKEND / QA IMPLEMENTATION`
+`AUTHORIZED FOR DESIGN / BACKEND ARCHITECTURE SUPPORT`
 
 Codex:
 
 `DO NOT USE BY DEFAULT`
 
-Required implementation branch:
+Required branch:
 
-`feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+`feature/daily-coach-async-approved-preview-bridge-design-v1`
 
 Milestone type:
 
-Developer Mode-only provider runtime QA hardening.
+Design/docs-only architecture support milestone.
 
 Expected validation type:
 
-Focused QA hardening tests, provider runtime prototype tests, Streamlit Developer Mode provider tests, Developer Mode persistence inspection tests, persistence service shell tests, schema/contract tests, async narrative contract tests, project-memory checks, diff checks, focused Python compile, focused Ruff/Black checks, `scripts/dev_commit_check.ps1 -Mode code`, fsweep, Linux pull, and manual app smoke only if Developer Mode display changes.
+Docs-only validation, project-memory checks, project-memory test, continuity brief, `scripts/dev_commit_check.ps1 -Mode docs-only`, and fsweep. Runtime restart is not required.
 
 ## Why this is current
 
-Daily Coach Async Provider Runtime Prototype v1 is accepted. The next safe layer is hardening failure behavior before any live provider-enabled workflow is promoted or any Today preview bridge is designed.
-
-This milestone is intentionally narrow:
-
-- QA hardening only
-- Developer Mode-only runtime remains gated
-- manual trigger only remains preserved
-- provider disabled by default
-- deterministic sanitized failure result objects
-- no normal Today behavior change
-- no public async narrative display
+Daily Coach Async Provider Runtime QA Hardening v1 is accepted. The next safe layer is not turning provider output on in Today. The next safe layer is defining strict bridge rules for how an already-approved, already-validated, already-persisted async narrative could eventually appear as a controlled Today preview.
 
 ## Recommended next milestone after acceptance
 
-Daily Coach Async Approved Preview Bridge Design v1
+Daily Coach Async Approved Preview Bridge Implementation v1 — Feature Flag Disabled by Default
 
 Status:
 
@@ -66,20 +60,21 @@ Status:
 
 ## Not authorized
 
-- provider runtime outside Developer Mode
-- provider call on page load
+- Today preview bridge implementation before this design is accepted
 - normal Today provider call
-- public async narrative display
-- automatic async job creation outside Developer Mode
+- provider execution on Today render
+- provider execution on page load
+- automatic async job generation
+- public/default async narrative display
 - worker / queue / scheduler / polling
 - qwen3 bridge
 - qwen3 promotion
 - qwen3:32b promotion
-- raw provider output persistence
-- rejected provider output persistence
-- full prompt/raw context/scratchpad persistence
+- raw provider output display or persistence
+- rejected provider output display or persistence
+- full prompt/raw context/scratchpad display or persistence
 - debug/provider metadata in normal UI
 
 ## Codex reminder
 
-Codex do not use by default. This project uses chat-driven Backend implementation with apply scripts unless the user explicitly opts into a tightly bounded exceptional Codex task.
+Codex do not use by default. This project uses chat-driven Backend implementation with apply scripts/patches unless the user explicitly opts into a tightly bounded exceptional Codex task.

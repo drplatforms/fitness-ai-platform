@@ -25,10 +25,12 @@ from services.async_daily_coach_context_identity import (
 from services.daily_coach_async_persistence_service import (
     DailyCoachAsyncJobNotFoundError,
     DailyCoachAsyncPersistenceError,
+    PersistedDailyCoachApprovedNarrative,
     PersistedDailyCoachAsyncJob,
     create_approved_narrative,
     create_async_job,
     get_async_job,
+    get_latest_displayable_approved_narrative,
     mark_async_job_displayable,
     record_async_job_failure_metadata,
     update_async_job_status,
@@ -52,6 +54,9 @@ DAILY_COACH_ASYNC_PROVIDER_RUNTIME_ENABLED_ENV = (
 DAILY_COACH_ASYNC_PROVIDER_ENV = "DAILY_COACH_ASYNC_PROVIDER"
 DAILY_COACH_ASYNC_PROVIDER_MODEL_ENV = "DAILY_COACH_ASYNC_PROVIDER_MODEL"
 DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_ENV = "DAILY_COACH_ASYNC_PROVIDER_TIMEOUT_SECONDS"
+DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED_ENV = (
+    "DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED"
+)
 OLLAMA_BASE_URL_ENV = "OLLAMA_BASE_URL"
 
 DAILY_COACH_ASYNC_PROVIDER_DIRECT_OLLAMA = "direct_ollama"
@@ -65,6 +70,26 @@ PARSE_STATUS_NOT_ATTEMPTED = "not_attempted"
 VALIDATION_STATUS_NOT_ATTEMPTED = "not_attempted"
 FINAL_SOURCE_PROVIDER_APPROVED = "provider_approved"
 FINAL_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallback"
+DAILY_COACH_ASYNC_APPROVED_PREVIEW_ALLOWED_SOURCES = frozenset(
+    {FINAL_SOURCE_PROVIDER_APPROVED}
+)
+
+APPROVED_PREVIEW_GATE_DISABLED = "preview_disabled"
+APPROVED_PREVIEW_GATE_NO_NARRATIVE = "no_approved_narrative"
+APPROVED_PREVIEW_GATE_MISSING_JOB = "missing_job"
+APPROVED_PREVIEW_GATE_JOB_NOT_APPROVED = "job_not_approved"
+APPROVED_PREVIEW_GATE_NOT_PUBLIC_SAFE = "not_public_safe"
+APPROVED_PREVIEW_GATE_NOT_DISPLAYABLE = "not_displayable"
+APPROVED_PREVIEW_GATE_STALE = "stale"
+APPROVED_PREVIEW_GATE_EXPIRED = "expired"
+APPROVED_PREVIEW_GATE_EMPTY_TEXT = "empty_preview_text"
+APPROVED_PREVIEW_GATE_CONTEXT_MISMATCH = "context_mismatch"
+APPROVED_PREVIEW_GATE_CONTEXT_VERSION_MISMATCH = "context_version_mismatch"
+APPROVED_PREVIEW_GATE_VALIDATOR_VERSION_MISMATCH = "validator_version_mismatch"
+APPROVED_PREVIEW_GATE_PROMPT_CONTRACT_MISMATCH = "prompt_contract_mismatch"
+APPROVED_PREVIEW_GATE_SOURCE_NOT_ALLOWED = "source_not_allowed"
+APPROVED_PREVIEW_GATE_PERSISTENCE_UNAVAILABLE = "persistence_unavailable"
+APPROVED_PREVIEW_GATE_ELIGIBLE = "eligible"
 
 FALLBACK_REASON_RUNTIME_DISABLED = "provider_runtime_disabled"
 FALLBACK_REASON_PROVIDER_CONFIG_MISSING = "provider_config_missing"
@@ -132,6 +157,153 @@ class DailyCoachAsyncProviderRuntimeResult:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachAsyncApprovedPreviewConfig:
+    enabled: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "enabled": self.enabled,
+            "feature_flag": DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED_ENV,
+            "default_enabled": False,
+            "read_only_persisted_narrative_only": True,
+            "today_provider_execution_allowed": False,
+            "automatic_async_job_creation_allowed": False,
+            "deterministic_daily_next_action_remains_primary": True,
+        }
+
+
+@dataclass(frozen=True)
+class DailyCoachAsyncApprovedPreviewResult:
+    enabled: bool
+    eligible: bool
+    preview_text: str | None
+    fallback_used: bool
+    fallback_reason: str | None
+    gate_status: str
+    safe_user_message: str | None = None
+    developer_diagnostics: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+    def to_normal_ui_dict(self) -> dict[str, Any]:
+        """Return only fields allowed in normal Today UI."""
+        return {
+            "enabled": self.enabled,
+            "eligible": self.eligible,
+            "preview_text": self.preview_text,
+            "safe_user_message": self.safe_user_message,
+        }
+
+
+def resolve_daily_coach_async_approved_preview_config(
+    environ=None,
+) -> DailyCoachAsyncApprovedPreviewConfig:
+    """Resolve the read-only approved preview feature flag.
+
+    Important test/runtime contract:
+    - environ=None reads the real process environment.
+    - environ={} is an explicitly empty isolated environment.
+    - the approved Today preview bridge is disabled by default.
+    """
+    env = os.environ if environ is None else environ
+    raw_enabled = env.get(DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED_ENV)
+    return DailyCoachAsyncApprovedPreviewConfig(enabled=_truthy(raw_enabled))
+
+
+def build_daily_coach_async_approved_preview(
+    *,
+    user_id: int,
+    target_date: str | None = None,
+    environ: Mapping[str, str] | None = None,
+    expected_context_hash: str | None = None,
+    expected_context_version: str | None = DAILY_COACH_ASYNC_CONTEXT_VERSION,
+    expected_validator_version: str | None = DAILY_COACH_ASYNC_VALIDATOR_VERSION,
+    expected_prompt_contract_version: (
+        str | None
+    ) = DAILY_COACH_ASYNC_PROMPT_CONTRACT_VERSION,
+) -> DailyCoachAsyncApprovedPreviewResult:
+    """Build a safe, read-only Today preview from approved persistence only.
+
+    This helper never calls a provider, never creates async jobs, never queues or
+    schedules work, and never returns raw provider/debug metadata for normal UI.
+    """
+    config = resolve_daily_coach_async_approved_preview_config(environ)
+    if not config.enabled:
+        return _approved_preview_result(
+            config,
+            gate_status=APPROVED_PREVIEW_GATE_DISABLED,
+            fallback_reason=APPROVED_PREVIEW_GATE_DISABLED,
+            diagnostics={"feature_flag_enabled": False},
+        )
+
+    try:
+        narrative = get_latest_displayable_approved_narrative(
+            user_id=user_id,
+            target_date=target_date,
+        )
+    except (DailyCoachAsyncPersistenceError, sqlite3.Error):
+        return _approved_preview_result(
+            config,
+            gate_status=APPROVED_PREVIEW_GATE_PERSISTENCE_UNAVAILABLE,
+            fallback_reason=APPROVED_PREVIEW_GATE_PERSISTENCE_UNAVAILABLE,
+            diagnostics={"feature_flag_enabled": True},
+        )
+
+    if narrative is None:
+        return _approved_preview_result(
+            config,
+            gate_status=APPROVED_PREVIEW_GATE_NO_NARRATIVE,
+            fallback_reason=APPROVED_PREVIEW_GATE_NO_NARRATIVE,
+            diagnostics={
+                "feature_flag_enabled": True,
+                "approved_narrative_found": False,
+            },
+        )
+
+    try:
+        job = get_async_job(narrative.job_id)
+    except (DailyCoachAsyncPersistenceError, sqlite3.Error):
+        job = None
+
+    gate_failure = _approved_preview_gate_failure(
+        narrative,
+        job,
+        expected_context_hash=expected_context_hash,
+        expected_context_version=expected_context_version,
+        expected_validator_version=expected_validator_version,
+        expected_prompt_contract_version=expected_prompt_contract_version,
+    )
+    diagnostics = _approved_preview_diagnostics(
+        narrative,
+        job,
+        expected_context_hash=expected_context_hash,
+        expected_context_version=expected_context_version,
+        expected_validator_version=expected_validator_version,
+        expected_prompt_contract_version=expected_prompt_contract_version,
+        gate_status=gate_failure or APPROVED_PREVIEW_GATE_ELIGIBLE,
+    )
+    if gate_failure:
+        return _approved_preview_result(
+            config,
+            gate_status=gate_failure,
+            fallback_reason=gate_failure,
+            diagnostics=diagnostics,
+        )
+
+    return DailyCoachAsyncApprovedPreviewResult(
+        enabled=True,
+        eligible=True,
+        preview_text=narrative.approved_text.strip(),
+        fallback_used=False,
+        fallback_reason=None,
+        gate_status=APPROVED_PREVIEW_GATE_ELIGIBLE,
+        safe_user_message=None,
+        developer_diagnostics=diagnostics,
+    )
 
 
 def resolve_daily_coach_async_provider_runtime_config(
@@ -629,6 +801,124 @@ def run_daily_coach_async_provider_runtime_prototype(
         raw_output_preview_truncated=raw_output_preview_truncated,
         markdown_wrapper_detected=markdown_wrapper_detected,
         message=f"Provider output approved and persisted in {elapsed_ms} ms.",
+    )
+
+
+def _approved_preview_gate_failure(
+    narrative: PersistedDailyCoachApprovedNarrative,
+    job: PersistedDailyCoachAsyncJob | None,
+    *,
+    expected_context_hash: str | None,
+    expected_context_version: str | None,
+    expected_validator_version: str | None,
+    expected_prompt_contract_version: str | None,
+) -> str | None:
+    if job is None:
+        return APPROVED_PREVIEW_GATE_MISSING_JOB
+    if narrative.stale or job.stale:
+        return APPROVED_PREVIEW_GATE_STALE
+    if narrative.expired or job.expired:
+        return APPROVED_PREVIEW_GATE_EXPIRED
+    if not narrative.displayable or not job.displayable:
+        return APPROVED_PREVIEW_GATE_NOT_DISPLAYABLE
+    if not narrative.public_safe or not job.public_safe:
+        return APPROVED_PREVIEW_GATE_NOT_PUBLIC_SAFE
+    if job.status != DailyCoachNarrativeJobStatus.APPROVED.value:
+        return APPROVED_PREVIEW_GATE_JOB_NOT_APPROVED
+    if not narrative.approved_text.strip():
+        return APPROVED_PREVIEW_GATE_EMPTY_TEXT
+    if (
+        expected_context_hash is not None
+        and narrative.context_hash != expected_context_hash
+    ):
+        return APPROVED_PREVIEW_GATE_CONTEXT_MISMATCH
+    if (
+        expected_context_version is not None
+        and narrative.context_version != expected_context_version
+    ):
+        return APPROVED_PREVIEW_GATE_CONTEXT_VERSION_MISMATCH
+    if (
+        expected_validator_version is not None
+        and narrative.validator_version != expected_validator_version
+    ):
+        return APPROVED_PREVIEW_GATE_VALIDATOR_VERSION_MISMATCH
+    if (
+        expected_prompt_contract_version is not None
+        and narrative.prompt_contract_version != expected_prompt_contract_version
+    ):
+        return APPROVED_PREVIEW_GATE_PROMPT_CONTRACT_MISMATCH
+    if (
+        narrative.final_narrative_source
+        not in DAILY_COACH_ASYNC_APPROVED_PREVIEW_ALLOWED_SOURCES
+    ):
+        return APPROVED_PREVIEW_GATE_SOURCE_NOT_ALLOWED
+    return None
+
+
+def _approved_preview_diagnostics(
+    narrative: PersistedDailyCoachApprovedNarrative,
+    job: PersistedDailyCoachAsyncJob | None,
+    *,
+    expected_context_hash: str | None,
+    expected_context_version: str | None,
+    expected_validator_version: str | None,
+    expected_prompt_contract_version: str | None,
+    gate_status: str,
+) -> dict[str, Any]:
+    return {
+        "feature_flag_enabled": True,
+        "approved_narrative_found": True,
+        "job_found": job is not None,
+        "gate_status": gate_status,
+        "job_status": job.status if job else None,
+        "displayable": bool(
+            narrative.displayable and (job.displayable if job else False)
+        ),
+        "public_safe": bool(
+            narrative.public_safe and (job.public_safe if job else False)
+        ),
+        "stale": bool(narrative.stale or (job.stale if job else False)),
+        "expired": bool(narrative.expired or (job.expired if job else False)),
+        "final_narrative_source": narrative.final_narrative_source,
+        "context_hash_match": (
+            None
+            if expected_context_hash is None
+            else narrative.context_hash == expected_context_hash
+        ),
+        "context_version_match": (
+            None
+            if expected_context_version is None
+            else narrative.context_version == expected_context_version
+        ),
+        "validator_version_match": (
+            None
+            if expected_validator_version is None
+            else narrative.validator_version == expected_validator_version
+        ),
+        "prompt_contract_version_match": (
+            None
+            if expected_prompt_contract_version is None
+            else narrative.prompt_contract_version == expected_prompt_contract_version
+        ),
+    }
+
+
+def _approved_preview_result(
+    config: DailyCoachAsyncApprovedPreviewConfig,
+    *,
+    gate_status: str,
+    fallback_reason: str,
+    diagnostics: dict[str, Any] | None = None,
+) -> DailyCoachAsyncApprovedPreviewResult:
+    return DailyCoachAsyncApprovedPreviewResult(
+        enabled=config.enabled,
+        eligible=False,
+        preview_text=None,
+        fallback_used=True,
+        fallback_reason=fallback_reason,
+        gate_status=gate_status,
+        safe_user_message=None,
+        developer_diagnostics=diagnostics or {},
     )
 
 

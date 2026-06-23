@@ -8,24 +8,24 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Async Provider Runtime QA Hardening v1",
-    "latest_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED",
-    "latest_accepted_commit": "3765314",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip",
-    "latest_main_merge_commit": "3765314",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_3765314_merge-feature-daily-coach-async-provider-runtime-qa-hardening-v1.zip",
-    "prior_accepted_milestone": "Daily Coach Async Provider Runtime Prototype v1 — Developer Mode Only",
-    "prior_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED",
-    "prior_main_merge_commit": "ea3f93f"
+    "latest_accepted_milestone": "Daily Coach Async Approved Preview Bridge Design v1",
+    "latest_final_status": "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_DESIGN_V1_ACCEPTED",
+    "latest_accepted_commit": "f1d2ee1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-22_f1d2ee1_merge-feature-daily-coach-async-approved-preview-bridge-design-v1.zip",
+    "latest_main_merge_commit": "f1d2ee1",
+    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-22_f1d2ee1_merge-feature-daily-coach-async-approved-preview-bridge-design-v1.zip",
+    "prior_accepted_milestone": "Daily Coach Async Provider Runtime QA Hardening v1",
+    "prior_final_status": "DAILY_COACH_ASYNC_PROVIDER_RUNTIME_QA_HARDENING_V1_ACCEPTED",
+    "prior_main_merge_commit": "3765314"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Coach Async Approved Preview Bridge Design v1",
-    "current_authorized_branch": "feature/daily-coach-async-approved-preview-bridge-design-v1",
-    "current_authorized_status": "AUTHORIZED FOR DESIGN / BACKEND ARCHITECTURE SUPPORT",
-    "current_authorized_scope": "Design-only approved preview bridge architecture; no implementation",
-    "recommended_next_milestone_after_acceptance": "Daily Coach Async Approved Preview Bridge Implementation v1 — Feature Flag Disabled by Default",
+    "current_authorized_milestone": "Daily Coach Async Approved Preview Bridge Implementation v1 \u2014 Feature Flag Disabled by Default",
+    "current_authorized_branch": "feature/daily-coach-async-approved-preview-bridge-implementation-v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
+    "current_authorized_scope": "Read-only approved persisted narrative preview bridge behind disabled-by-default flag; no provider execution from Today",
+    "recommended_next_milestone_after_acceptance": "Daily Coach Async Approved Preview Bridge QA v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Implement only after Architecture accepts the bridge design; Today provider execution remains unauthorized.",
+    "next_milestone_reason": "QA hardening is required before broader exposure; provider execution from Today remains unauthorized.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "runtime_split": {
@@ -60,22 +60,20 @@
     "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
   },
   "daily_coach_async_boundary": {
-    "current": "Approved preview bridge design authorized; design only, normal Today behavior remains unchanged, and no public/default async narrative display is implemented",
-    "normal_today_behavior": "unchanged",
+    "current": "Approved preview bridge implementation exists behind disabled-by-default flag; Today reads only approved persisted narratives and never calls provider",
+    "normal_today_behavior": "unchanged when DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED is disabled",
     "in_current_scope": [
-      "approved preview eligibility gates",
-      "Today preview boundary design",
-      "provider execution boundary design",
-      "fallback behavior design",
-      "normal UI versus Developer Mode metadata boundary",
-      "feature flag strategy",
-      "QA gates before implementation",
+      "feature flag resolver with environ={} isolation",
+      "read-only approved narrative lookup",
+      "strict preview eligibility gates",
+      "secondary Today preview only when flag enabled and gates pass",
+      "Developer Mode-only sanitized diagnostics",
       "project-memory updates"
     ],
     "deferred": [
-      "approved preview bridge implementation after design acceptance",
-      "normal Today preview behind disabled-by-default flag",
+      "Daily Coach Async Approved Preview Bridge QA v1",
       "provider live QA remains Developer Mode-only unless separately authorized",
+      "public/default async narrative display remains unauthorized",
       "worker / queue / scheduler / polling remains unauthorized"
     ],
     "not_authorized": [
@@ -97,7 +95,6 @@
       "rejected provider output display",
       "rejected provider output persistence",
       "scheduler",
-      "Today preview bridge implementation before design acceptance",
       "worker"
     ]
   },
@@ -136,7 +133,8 @@
       "docs/project_memory/next_milestone.md",
       "docs/project_memory/current_state.md",
       "docs/project_memory/open_questions.md",
-      "docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md"
+      "docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md",
+      "docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_implementation_v1.md"
     ],
     "architecture": [
       "docs/project_memory/role_bootstrap_architecture.md"

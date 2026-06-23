@@ -1,26 +1,23 @@
-# QA Handoff — Daily Coach Async Approved Preview Bridge Design v1
+# Daily Coach Async Approved Preview Bridge Implementation v1
 
-Status: `DESIGNED / READY FOR QA / ARCHITECTURE REVIEW`
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Branch: `feature/daily-coach-async-approved-preview-bridge-design-v1`
+Proposed final status: DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED
 
-## QA review focus
+Implementation summary:
 
-Review the design for testability and future QA coverage.
+- Added disabled-by-default feature flag `DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED`.
+- Added read-only approved preview eligibility helper.
+- Added secondary Today preview rendering only when flag is enabled and all gates pass.
+- Preserved deterministic Daily Next Action as primary.
+- Kept Developer Mode diagnostics gated and sanitized.
 
-The design requires future implementation tests for:
+Boundaries preserved:
 
-- feature flag disabled path leaves normal Today unchanged
-- no provider call on Today render
+- no provider call from Today
 - no provider call on page load
-- stale/expired/non-displayable/non-public-safe/context-mismatch narratives hidden
-- deterministic Daily Next Action remains primary
-- fallback/no-preview behavior safe
-- raw/rejected provider output not visible
-- provider/model diagnostics absent in normal UI
-- Developer Mode diagnostics gated
-- qwen3/qwen3:32b unused
-
-## QA non-goals for this milestone
-
-No manual app smoke required unless unexpected runtime files changed. This milestone is docs/design only.
+- no async job creation from Today
+- no worker / queue / scheduler / polling
+- no qwen3 or qwen3:32b behavior
+- no raw/rejected output display
+- no debug/provider metadata in normal UI

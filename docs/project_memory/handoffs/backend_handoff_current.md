@@ -1,25 +1,23 @@
-# Backend Handoff — Daily Coach Async Approved Preview Bridge Design v1
+# Daily Coach Async Approved Preview Bridge Implementation v1
 
-Status: `DESIGNED / READY FOR BACKEND / ARCHITECTURE REVIEW`
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Branch: `feature/daily-coach-async-approved-preview-bridge-design-v1`
+Proposed final status: DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED
 
-## Backend review focus
+Implementation summary:
 
-Review the design for future implementation feasibility only.
+- Added disabled-by-default feature flag `DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED`.
+- Added read-only approved preview eligibility helper.
+- Added secondary Today preview rendering only when flag is enabled and all gates pass.
+- Preserved deterministic Daily Next Action as primary.
+- Kept Developer Mode diagnostics gated and sanitized.
 
-Expected future implementation shape:
+Boundaries preserved:
 
-- read-only backend bridge service
-- feature flag disabled by default
-- Today reads only already-approved persisted narratives
-- strict eligibility gates
-- sanitized Developer Mode diagnostics separate from normal UI
-- no provider execution from Today
-- no automatic job creation from Today
-
-## Backend non-goals for this milestone
-
-No runtime code changes. No Streamlit Today changes. No provider runtime changes. No persistence schema changes. No app/wapp command changes.
-
-Codex do not use by default.
+- no provider call from Today
+- no provider call on page load
+- no async job creation from Today
+- no worker / queue / scheduler / polling
+- no qwen3 or qwen3:32b behavior
+- no raw/rejected output display
+- no debug/provider metadata in normal UI

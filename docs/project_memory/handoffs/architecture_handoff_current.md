@@ -1,25 +1,23 @@
-# Architecture Handoff — Daily Coach Async Approved Preview Bridge Design v1
+# Daily Coach Async Approved Preview Bridge Implementation v1
 
-Status: `DESIGNED / READY FOR ARCHITECTURE REVIEW`
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: `DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_DESIGN_V1_ACCEPTED`
+Proposed final status: DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED
 
-Branch: `feature/daily-coach-async-approved-preview-bridge-design-v1`
+Implementation summary:
 
-Source baseline: `3765314 Merge feature/daily-coach-async-provider-runtime-qa-hardening-v1`
+- Added disabled-by-default feature flag `DAILY_COACH_ASYNC_APPROVED_PREVIEW_ENABLED`.
+- Added read-only approved preview eligibility helper.
+- Added secondary Today preview rendering only when flag is enabled and all gates pass.
+- Preserved deterministic Daily Next Action as primary.
+- Kept Developer Mode diagnostics gated and sanitized.
 
-## Summary
+Boundaries preserved:
 
-Designed a future controlled bridge from Developer Mode-only approved Daily Coach async narratives into a possible Today preview path.
-
-The design defines preview eligibility gates, Today preview boundary, provider execution boundary, fallback behavior, normal UI vs Developer Mode metadata boundary, feature flag strategy, QA gates, and future implementation sequencing.
-
-## Boundary
-
-Design only. No Today preview bridge implemented. No normal Today behavior changed. No provider call added to Today. No public async narrative display added. No worker/queue/scheduler/polling added. qwen3 and qwen3:32b remain unauthorized.
-
-## Review request
-
-Please review `docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md` and accept as:
-
-`DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_DESIGN_V1_ACCEPTED`
+- no provider call from Today
+- no provider call on page load
+- no async job creation from Today
+- no worker / queue / scheduler / polling
+- no qwen3 or qwen3:32b behavior
+- no raw/rejected output display
+- no debug/provider metadata in normal UI

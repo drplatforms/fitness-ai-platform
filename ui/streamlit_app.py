@@ -18,7 +18,9 @@ from services.daily_coach_async_persistence_service import (
     get_latest_displayable_approved_narrative,
 )
 from services.daily_coach_async_provider_runtime_service import (
+    build_daily_coach_async_approved_preview,
     create_developer_mode_provider_runtime_job,
+    resolve_daily_coach_async_approved_preview_config,
     resolve_daily_coach_async_provider_runtime_config,
     run_daily_coach_async_provider_runtime_prototype,
 )
@@ -4667,6 +4669,75 @@ def render_daily_coach_async_developer_lifecycle_panel(user_id: int) -> None:
             st.json(response)
 
 
+def render_daily_coach_async_approved_preview_bridge(user_id: int) -> None:
+    """Render an optional secondary Today preview from approved persistence only."""
+
+    target_date = datetime.today().date().isoformat()
+    config = resolve_daily_coach_async_approved_preview_config()
+    try:
+        preview = build_daily_coach_async_approved_preview(
+            user_id=user_id,
+            target_date=target_date,
+        )
+    except Exception:
+        if st.session_state.get("developer_mode", False):
+            with st.expander(
+                "Developer details: approved preview bridge", expanded=False
+            ):
+                st.write("Approved preview bridge failed safely.")
+                st.write(
+                    "Sanitized failure only; stack traces, raw provider output, rejected output, full prompts, raw context, and scratchpad text are not displayed."
+                )
+        return
+
+    if preview.enabled and preview.eligible and preview.preview_text:
+        st.markdown(
+            portfolio_card_html(
+                "Daily Coach Narrative Preview",
+                "AI-assisted coach preview",
+                preview.preview_text,
+                [
+                    portfolio_chip("Secondary preview", "purple"),
+                    portfolio_chip("Read-only persisted", "green"),
+                ],
+                "portfolio-card-purple",
+            ),
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "Preview is secondary. Deterministic Daily Next Action remains primary."
+        )
+    elif preview.enabled and preview.safe_user_message:
+        st.info(preview.safe_user_message)
+
+    if st.session_state.get("developer_mode", False):
+        with st.expander("Developer details: approved preview bridge", expanded=False):
+            st.caption(
+                "Developer Mode-only sanitized diagnostics. Today preview reads only "
+                "persisted approved narratives and never calls a provider, creates "
+                "jobs, queues work, schedules work, or polls in the render path."
+            )
+            render_daily_coach_async_persistence_table(config.to_dict())
+            diagnostics_payload = preview.to_dict()
+            render_daily_coach_async_persistence_table(
+                {
+                    "enabled": diagnostics_payload.get("enabled"),
+                    "eligible": diagnostics_payload.get("eligible"),
+                    "fallback_used": diagnostics_payload.get("fallback_used"),
+                    "fallback_reason": diagnostics_payload.get("fallback_reason"),
+                    "gate_status": diagnostics_payload.get("gate_status"),
+                    "safe_user_message": diagnostics_payload.get("safe_user_message"),
+                }
+            )
+            diagnostics = diagnostics_payload.get("developer_diagnostics") or {}
+            if diagnostics:
+                render_daily_coach_async_persistence_table(diagnostics)
+            st.caption(
+                "Normal UI does not show provider/model diagnostics, raw provider output, "
+                "rejected output, full prompt, raw context, scratchpad, stack traces, or secrets."
+            )
+
+
 def render_daily_coach_async_provider_runtime_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -5641,6 +5712,7 @@ def render_today_section(user_id: int) -> None:
 
     render_daily_next_action_panel(user_id)
     render_daily_coach_today_card(user_id)
+    render_daily_coach_async_approved_preview_bridge(user_id)
 
     st.divider()
 

@@ -4690,12 +4690,17 @@ def render_daily_coach_async_approved_preview_bridge(user_id: int) -> None:
                 )
         return
 
-    if preview.enabled and preview.eligible and preview.preview_text:
+    normal_preview = preview.to_normal_ui_dict()
+    if (
+        normal_preview.get("enabled")
+        and normal_preview.get("eligible")
+        and normal_preview.get("preview_text")
+    ):
         st.markdown(
             portfolio_card_html(
                 "Daily Coach Narrative Preview",
                 "AI-assisted coach preview",
-                preview.preview_text,
+                str(normal_preview.get("preview_text")),
                 [
                     portfolio_chip("Secondary preview", "purple"),
                     portfolio_chip("Read-only persisted", "green"),
@@ -4707,8 +4712,8 @@ def render_daily_coach_async_approved_preview_bridge(user_id: int) -> None:
         st.caption(
             "Preview is secondary. Deterministic Daily Next Action remains primary."
         )
-    elif preview.enabled and preview.safe_user_message:
-        st.info(preview.safe_user_message)
+    elif normal_preview.get("enabled") and normal_preview.get("safe_user_message"):
+        st.info(str(normal_preview.get("safe_user_message")))
 
     if st.session_state.get("developer_mode", False):
         with st.expander("Developer details: approved preview bridge", expanded=False):

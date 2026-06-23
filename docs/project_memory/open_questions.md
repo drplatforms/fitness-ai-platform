@@ -2,11 +2,12 @@
 
 ## Daily Coach async approved preview bridge
 
-Current implementation is feature-flagged and disabled by default.
+Current QA status:
+Daily Coach Async Approved Preview Bridge QA v1 is implemented and ready for Architecture review.
 
 Open before broader exposure:
 
-- Should Daily Coach Async Approved Preview Bridge QA v1 be run before any broader preview exposure? Yes.
+- Should provider live QA be limited to Developer Mode only? Yes.
 - Should provider execution from Today be authorized? No.
 - Should provider execution on page load be authorized? No.
 - Should automatic async job generation be authorized? No.

@@ -1,7 +1,7 @@
 # Project Continuity Bootstrap
 
 Current milestone:
-Daily Coach Async Approved Preview Bridge Implementation v1 — Feature Flag Disabled by Default
+Daily Coach Async Approved Preview Bridge QA v1
 
 Status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
@@ -13,12 +13,15 @@ Start here:
 3. Read `docs/project_memory/next_milestone.md`.
 4. Read `docs/project_memory/designs/daily_coach_async_approved_preview_bridge_design_v1.md`.
 5. Read `docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_implementation_v1.md`.
+6. Read `docs/project_memory/milestones/daily_coach_async_approved_preview_bridge_qa_v1.md`.
 
 Current boundary:
 
 - Feature flag defaults disabled.
 - Normal Today remains unchanged when disabled.
 - Preview reads only approved persisted async narratives.
+- Preview appears only when all gates pass.
+- QA hardening tests cover disabled/enabled/gated behavior.
 - No provider call occurs from Today render.
 - No provider call occurs on page load.
 - No async job is created from Today.

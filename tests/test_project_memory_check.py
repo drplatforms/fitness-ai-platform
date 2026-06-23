@@ -1057,3 +1057,26 @@ def test_daily_coach_async_approved_preview_bridge_implementation_memory_is_requ
         "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_IMPLEMENTATION_V1_ACCEPTED"
         in project_memory_check.REQUIRED_PHRASES[review_path]
     )
+
+
+def test_daily_coach_async_approved_preview_bridge_qa_memory_is_required() -> None:
+    milestone_path = (
+        "docs/project_memory/milestones/"
+        "daily_coach_async_approved_preview_bridge_qa_v1.md"
+    )
+    review_path = (
+        "docs/project_memory/reviews/"
+        "daily_coach_async_approved_preview_bridge_qa_v1.md"
+    )
+
+    assert milestone_path in project_memory_check.REQUIRED_FILES
+    assert review_path in project_memory_check.REQUIRED_FILES
+    assert (
+        "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    )
+    assert "no provider call" in project_memory_check.REQUIRED_PHRASES[milestone_path]
+    assert (
+        "DAILY_COACH_ASYNC_APPROVED_PREVIEW_BRIDGE_QA_V1_ACCEPTED"
+        in project_memory_check.REQUIRED_PHRASES[review_path]
+    )

@@ -98,3 +98,20 @@ and Workout cards until hard refresh. This is separate UI cleanup.
 Workout generation still repeats common exercises such as EZ bar curl, overhead
 wood chop, band Pallof press, bodyweight squat, and RDL. Future work should add
 anti-repeat/top-K rotation and exposure tracking.
+
+## Weekly Coach Summary provider runtime design integration
+
+Weekly Coach Summary Provider Runtime Design v1 consumes this lifecycle policy as
+a future-runtime requirement only. The design identifies direct_ollama with
+qwen2.5:3b as the future Developer Mode-only prototype path, but this design
+milestone does not execute qwen, call Ollama for Weekly Coach Summary, or add a
+provider preview button.
+
+Future Weekly Coach Summary provider calls must:
+
+- use the central lifecycle helper for keep_alive payload construction
+- default to conservative local resource behavior
+- use unload-after-request where policy requires it
+- keep named-model-only manual unload available
+- keep deterministic fallback when provider/lifecycle failures occur
+- avoid broad process killing, server-wide termination, or secret/env dumps

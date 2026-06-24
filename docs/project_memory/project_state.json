@@ -8,28 +8,28 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Weekly Coach Summary QA Data Context Integration v1",
-    "latest_final_status": "WEEKLY_COACH_SUMMARY_QA_DATA_CONTEXT_INTEGRATION_V1_ACCEPTED",
-    "latest_accepted_commit": "0fd327d",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_0fd327d_restore-weekly-qa-selected-range-persistence-controls.zip",
-    "latest_main_merge_commit": "0fd327d",
+    "latest_accepted_milestone": "Provider Runtime Resource Lifecycle Design v1",
+    "latest_final_status": "PROVIDER_RUNTIME_RESOURCE_LIFECYCLE_DESIGN_V1_ACCEPTED",
+    "latest_accepted_commit": "be2f321",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_be2f321_add-provider-runtime-resource-lifecycle-policy.zip",
+    "latest_main_merge_commit": "be2f321",
     "latest_main_merge_snapshot": "no additional main snapshot by policy",
-    "prior_accepted_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
-    "prior_final_status": "WEEKLY_COACH_SUMMARY_QA_DATE_RANGE_DEBUG_V2_ACCEPTED",
-    "prior_main_merge_commit": "a9e0475"
+    "prior_accepted_milestone": "Weekly Coach Summary QA Data Context Integration v1",
+    "prior_final_status": "WEEKLY_COACH_SUMMARY_QA_DATA_CONTEXT_INTEGRATION_V1_ACCEPTED",
+    "prior_main_merge_commit": "0fd327d"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Provider Runtime Resource Lifecycle Design v1",
-    "current_authorized_branch": "feature/provider-runtime-resource-lifecycle-design-v1",
+    "current_authorized_milestone": "Weekly Coach Summary Provider Runtime Design v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-provider-runtime-design-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Define conservative local Ollama lifecycle policy, diagnostics, and named-model unload helper before additional provider runtime work.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Runtime Design v1",
+    "current_authorized_scope": "Design qwen2.5:3b Weekly Coach Summary provider input/output/parser/validator/fallback/persistence/lifecycle contract without runtime execution.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Runtime Prototype v1 - Developer Mode Only",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Provider lifecycle policy should be accepted before future qwen provider runtime design.",
+    "next_milestone_reason": "Provider runtime prototype must wait for design acceptance.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "required_prerequisite_commit": "0fd327d Restore weekly QA selected-range persistence controls"
+    "required_prerequisite_commit": "be2f321 Add provider runtime resource lifecycle policy"
   },
   "runtime_split": {
     "windows": [
@@ -62,7 +62,9 @@
     "qwen3_32b": "research / future premium async candidate only",
     "model_promotion": "No model promoted without Architecture approval.",
     "fallback": "Deterministic fallback remains mandatory.",
-    "boundary": "Backend owns truth; provider proposes language; validator decides display safety."
+    "boundary": "Backend owns truth; provider proposes language; validator decides display safety.",
+    "weekly_coach_summary_future_provider_design": "direct_ollama + qwen2.5:3b + strict JSON schema + validator + deterministic fallback; design only until accepted.",
+    "weekly_coach_summary_provider_execution": "not authorized in Weekly Coach Summary Provider Runtime Design v1"
   },
   "daily_coach_async_boundary": {
     "current": "Weekly Coach Summary Async Service Shell / No Worker v1 generates deterministic ApprovedWeeklyCoachSummary output from bounded fixture inputs. It is no-worker and does not persist, call providers, or touch UI.",

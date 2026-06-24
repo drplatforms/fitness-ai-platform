@@ -1,14 +1,25 @@
-Recipient:
-Backend Development
+# Current handoff - Weekly Coach Summary Provider Runtime Design v1
 
-Project:
-AI Health Coach / fitness_ai
+Recipient: Backend Development
 
-Current milestone:
-Weekly Coach Summary QA Data Context Integration v1
+Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Status:
-IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+Branch: `feature/weekly-coach-summary-provider-runtime-design-v1`
 
-Backend summary:
-Added/hardened backend-owned selected-range context integration for Weekly Coach Summary QA Date Range Debug. Deterministic generation now consumes bounded context built from selected QA user/date facts. Provider runtime remains out of scope.
+Proposed final status: `WEEKLY_COACH_SUMMARY_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED`
+
+Summary: Design-only milestone defining the future Weekly Coach Summary provider
+runtime path. No qwen call, Ollama call for Weekly Coach Summary, provider
+runtime execution, CrewAI orchestration, automatic generation, public/default UI,
+normal Today display, worker, queue, scheduler, or polling is added.
+
+Key docs:
+
+- `docs/project_memory/weekly_coach_summary_provider_runtime_design.md`
+- `docs/project_memory/milestones/weekly_coach_summary_provider_runtime_design_v1.md`
+- `docs/project_memory/reviews/weekly_coach_summary_provider_runtime_design_v1.md`
+
+Key contract files:
+
+- `models/weekly_coach_summary_provider_models.py`
+- `tests/test_weekly_coach_summary_provider_models.py`

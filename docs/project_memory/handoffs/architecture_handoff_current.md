@@ -1,41 +1,40 @@
-# Current handoff - Developer Mode Linux Latency Investigation v1
+# Architecture Handoff - Top-Level Streamlit Lazy Navigation v1
 
-Project: AI Health Coach / fitness_ai
+## Project
 
-Branch: `feature/developer-mode-linux-latency-investigation-v1`
+AI Health Coach / fitness_ai
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+## Branch
 
-Summary:
-Developer Mode Linux Latency Investigation v1 adds safe Developer Mode timing and makes Runtime / DB Source Verification lazy/action-driven. Opening the Developer tab should render controls without automatically querying the database. Runtime diagnostics remain available through the explicit refresh button.
+feature/top-level-streamlit-lazy-navigation-v1
 
-Validation focus:
-- Developer tab open latency on Linux is measured before/after.
-- Runtime / DB diagnostics refresh still works.
-- QA seed CLI still works.
-- Weekly Coach Summary Developer Mode preview still works.
-- Normal/default UI remains unchanged.
-- No provider/Ollama/CrewAI/qwen calls are added.
+## Milestone
 
-## Windows-local helper addendum
+Top-Level Streamlit Lazy Navigation v1
 
-Added/hardened `wapp` as a Windows-local FastAPI + Streamlit launcher for latency comparison against the Linux canonical runtime.
+## Status
 
-- Uses repo `.venv\Scripts\python.exe` by default.
-- Starts FastAPI on `127.0.0.1`.
-- Starts Streamlit on `127.0.0.1`.
-- Avoids SSH and Linux helper paths.
-- Adds `wstatus` and `wstop` wrappers for Windows-local status/stop.
-- Keeps `app` as the Linux canonical runtime launcher.
+Implemented / ready for Architecture review after validation.
 
-## Windows-local helper addendum repair
+## Context
 
-Repaired the Windows-local helper addendum so `wapp`, `wstatus`, and `wstop` are actually defined and listed by the command menu.
+Developer Mode Linux Latency Investigation v1 proved `render_developer_section()` itself was fast. A later Linux timing capture showed the Developer section completing in milliseconds while top-level Workout and History tab bodies consumed roughly 30 seconds before Developer could render.
 
-- `wapp` uses repo `.venv\Scripts\python.exe` by default.
-- `wapp` starts FastAPI on `127.0.0.1`.
-- `wapp` starts Streamlit on `127.0.0.1`.
-- `wapp` avoids SSH and Linux helper paths.
-- `wstatus` delegates to `fports`.
-- `wstop` delegates to `fkill`.
-- `app` remains the Linux canonical runtime launcher.
+Root cause: Streamlit top-level `st.tabs` eagerly executes all tab bodies.
+
+## Change
+
+Replaced the top-level `st.tabs` block in `ui/streamlit_app.py` with radio-based selected-page navigation. The same top-level pages remain available, but only the selected page body executes per rerun.
+
+## Boundaries
+
+- No Weekly Coach Summary QA Date Range Debug v2 changes.
+- No provider runtime changes.
+- No Ollama/CrewAI/qwen calls.
+- No worker/queue/scheduler/polling.
+- No database schema changes.
+- No raw provider/debug leakage.
+
+## Acceptance request
+
+Please review and accept as `TOP_LEVEL_STREAMLIT_LAZY_NAVIGATION_V1_ACCEPTED` if Linux Developer navigation no longer waits for Workout/History cold renders and normal page access remains intact.

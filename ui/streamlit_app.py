@@ -9583,55 +9583,65 @@ def render_developer_section(user_id: int) -> None:
 # Main Navigation
 # =====================================
 
-(
-    today_tab,
-    workout_tab,
-    nutrition_tab,
-    history_tab,
-    reports_tab,
-    developer_tab,
-) = st.tabs(
-    [
-        "Today",
-        "Workout",
-        "Nutrition",
-        "History",
-        "Reports",
-        "Developer",
-    ]
-)
+MAIN_NAVIGATION_PAGES = [
+    "Today",
+    "Workout",
+    "Nutrition",
+    "History",
+    "Reports",
+    "Developer",
+]
 
-today_tab_start = _developer_mode_latency_log("today_tab_render_start")
-with today_tab:
-    render_today_section(user_id)
-_developer_mode_latency_log("today_tab_render_done", today_tab_start)
 
-workout_tab_start = _developer_mode_latency_log("workout_tab_render_start")
-with workout_tab:
-    render_workout_plan_section(user_id)
-_developer_mode_latency_log("workout_tab_render_done", workout_tab_start)
+def render_main_navigation(user_id: int) -> None:
+    """Render only the selected top-level page body.
 
-nutrition_tab_start = _developer_mode_latency_log("nutrition_tab_render_start")
-with nutrition_tab:
-    render_nutrition_section(user_id)
-_developer_mode_latency_log("nutrition_tab_render_done", nutrition_tab_start)
+    Streamlit tabs eagerly execute every tab body on each rerun. On the Linux
+    runtime this made opening Developer Mode wait for Workout and History to
+    finish expensive cold renders first. This radio-based navigation keeps the
+    same top-level sections but executes exactly one selected page per rerun.
+    """
 
-history_tab_start = _developer_mode_latency_log("history_tab_render_start")
-with history_tab:
-    render_history_section(user_id)
-_developer_mode_latency_log("history_tab_render_done", history_tab_start)
+    selected_page = st.radio(
+        "Main navigation",
+        options=MAIN_NAVIGATION_PAGES,
+        horizontal=True,
+        key="main_navigation_page",
+    )
 
-reports_tab_start = _developer_mode_latency_log("reports_tab_render_start")
-with reports_tab:
-    render_reports_section(user_id)
-_developer_mode_latency_log("reports_tab_render_done", reports_tab_start)
+    if selected_page == "Today":
+        today_tab_start = _developer_mode_latency_log("today_tab_render_start")
+        render_today_section(user_id)
+        _developer_mode_latency_log("today_tab_render_done", today_tab_start)
+    elif selected_page == "Workout":
+        workout_tab_start = _developer_mode_latency_log("workout_tab_render_start")
+        render_workout_plan_section(user_id)
+        _developer_mode_latency_log("workout_tab_render_done", workout_tab_start)
+    elif selected_page == "Nutrition":
+        nutrition_tab_start = _developer_mode_latency_log("nutrition_tab_render_start")
+        render_nutrition_section(user_id)
+        _developer_mode_latency_log("nutrition_tab_render_done", nutrition_tab_start)
+    elif selected_page == "History":
+        history_tab_start = _developer_mode_latency_log("history_tab_render_start")
+        render_history_section(user_id)
+        _developer_mode_latency_log("history_tab_render_done", history_tab_start)
+    elif selected_page == "Reports":
+        reports_tab_start = _developer_mode_latency_log("reports_tab_render_start")
+        render_reports_section(user_id)
+        _developer_mode_latency_log("reports_tab_render_done", reports_tab_start)
+    elif selected_page == "Developer":
+        developer_tab_start = _developer_mode_latency_log(
+            "developer_tab_container_render_start"
+        )
+        render_developer_section(user_id)
+        _developer_mode_latency_log(
+            "developer_tab_container_render_done", developer_tab_start
+        )
+    else:
+        st.error("Unknown navigation page selected.")
 
-developer_tab_start = _developer_mode_latency_log(
-    "developer_tab_container_render_start"
-)
-with developer_tab:
-    render_developer_section(user_id)
-_developer_mode_latency_log("developer_tab_container_render_done", developer_tab_start)
+
+render_main_navigation(user_id)
 
 # Portfolio visual tightening v4 — garnet/gold portfolio palette
 st.markdown(

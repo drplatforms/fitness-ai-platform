@@ -9331,11 +9331,14 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             )
 
     cached_inventory = inventory_cache.get(range_key)
+    cached_preview = preview_cache.get(range_key)
     if cached_inventory:
-        st.success(message_cache.get(range_key, "Selected QA range inspected."))
+        if cached_preview:
+            st.success("Selected QA range inventory used for this generated summary.")
+        else:
+            st.success(message_cache.get(range_key, "Selected QA range inspected."))
         _render_weekly_coach_summary_qa_inventory(cached_inventory)
 
-    cached_preview = preview_cache.get(range_key)
     if cached_preview:
         sections = cached_preview["sections"]
         period = cached_preview["period"]
@@ -9348,46 +9351,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
         )
         st.caption("Generated from selected QA date-range context.")
         st.write(f"**Period:** {period['week_start']} to {period['week_end']}")
-        if context_metadata:
-            st.markdown("**Selected-Range Context Metadata:**")
-            context_rows = [
-                {"Field": "User ID", "Value": context_metadata.get("user_id")},
-                {"Field": "Scenario", "Value": context_metadata.get("scenario")},
-                {"Field": "Start Date", "Value": context_metadata.get("start_date")},
-                {"Field": "End Date", "Value": context_metadata.get("end_date")},
-                {"Field": "Source", "Value": context_metadata.get("source")},
-                {"Field": "Confidence", "Value": context_metadata.get("confidence")},
-                {
-                    "Field": "Data Quality Limited",
-                    "Value": str(context_metadata.get("data_quality_limited")).lower(),
-                },
-                {
-                    "Field": "Deterministic Provider Free",
-                    "Value": str(
-                        context_metadata.get("deterministic_provider_free")
-                    ).lower(),
-                },
-            ]
-            st.dataframe(
-                pd.DataFrame(context_rows),
-                width="stretch",
-                hide_index=True,
-            )
-        metadata_rows = [
-            {"Field": "User ID", "Value": period["user_id"]},
-            {"Field": "Source", "Value": sections["source"]},
-            {"Field": "Confidence", "Value": sections["confidence"]},
-            {"Field": "Public Safe", "Value": str(sections["public_safe"]).lower()},
-            {"Field": "Displayable", "Value": str(sections["displayable"]).lower()},
-            {"Field": "Provider Attempted", "Value": "false"},
-        ]
-        st.dataframe(pd.DataFrame(metadata_rows), width="stretch", hide_index=True)
-        _render_weekly_coach_summary_sections(sections)
-        st.markdown("**Reason Codes:**")
-        st.write(", ".join(sections["reason_codes"]) or "None")
-        st.markdown("**Limitations:**")
-        st.write(", ".join(sections["limitations"]) or "None")
-
+        st.markdown("**Selected-Range Persistence Controls:**")
         save_col, load_col = st.columns(2)
         with save_col:
             if st.button(
@@ -9467,6 +9431,45 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                         },
                     )
                     st.success(f"Loaded weekly summary record {latest.record_id}.")
+        if context_metadata:
+            st.markdown("**Selected-Range Context Metadata:**")
+            context_rows = [
+                {"Field": "User ID", "Value": context_metadata.get("user_id")},
+                {"Field": "Scenario", "Value": context_metadata.get("scenario")},
+                {"Field": "Start Date", "Value": context_metadata.get("start_date")},
+                {"Field": "End Date", "Value": context_metadata.get("end_date")},
+                {"Field": "Source", "Value": context_metadata.get("source")},
+                {"Field": "Confidence", "Value": context_metadata.get("confidence")},
+                {
+                    "Field": "Data Quality Limited",
+                    "Value": str(context_metadata.get("data_quality_limited")).lower(),
+                },
+                {
+                    "Field": "Deterministic Provider Free",
+                    "Value": str(
+                        context_metadata.get("deterministic_provider_free")
+                    ).lower(),
+                },
+            ]
+            st.dataframe(
+                pd.DataFrame(context_rows),
+                width="stretch",
+                hide_index=True,
+            )
+        metadata_rows = [
+            {"Field": "User ID", "Value": period["user_id"]},
+            {"Field": "Source", "Value": sections["source"]},
+            {"Field": "Confidence", "Value": sections["confidence"]},
+            {"Field": "Public Safe", "Value": str(sections["public_safe"]).lower()},
+            {"Field": "Displayable", "Value": str(sections["displayable"]).lower()},
+            {"Field": "Provider Attempted", "Value": "false"},
+        ]
+        st.dataframe(pd.DataFrame(metadata_rows), width="stretch", hide_index=True)
+        _render_weekly_coach_summary_sections(sections)
+        st.markdown("**Reason Codes:**")
+        st.write(", ".join(sections["reason_codes"]) or "None")
+        st.markdown("**Limitations:**")
+        st.write(", ".join(sections["limitations"]) or "None")
 
     persisted = persisted_cache.get(range_key)
     if persisted:

@@ -28,3 +28,11 @@ Repaired the Windows-local helper addendum so `wapp`, `wstatus`, and `wstop` are
 - `wstatus` delegates to `fports`.
 - `wstop` delegates to `fkill`.
 - `app` remains the Linux canonical runtime launcher.
+
+## Current implementation update - Top-Level Streamlit Lazy Navigation v1
+
+Top-Level Streamlit Lazy Navigation v1 is implemented on `feature/top-level-streamlit-lazy-navigation-v1`.
+
+This milestone addresses Linux runtime latency caused by Streamlit eager top-level tab rendering. Developer Mode itself remains fast; the top-level navigation now renders only the selected page body so Developer does not wait for Workout and History cold renders.
+
+Weekly Coach Summary QA Date Range Debug v2 is paused until this prerequisite navigation fix is accepted. Provider runtime, Ollama, CrewAI, qwen, workers, queues, schedulers, automatic generation, schema changes, and public/raw debug leakage remain out of scope.

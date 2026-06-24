@@ -19,13 +19,13 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Developer Mode Linux Latency Investigation v1",
-    "current_authorized_branch": "feature/developer-mode-linux-latency-investigation-v1",
-    "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Measure and reduce Linux Developer tab latency by making Developer Mode diagnostics/debug work lazy and action-driven.",
+    "current_authorized_milestone": "Top-Level Streamlit Lazy Navigation v1",
+    "current_authorized_branch": "feature/top-level-streamlit-lazy-navigation-v1",
+    "current_authorized_status": "IMPLEMENTED / READY FOR VALIDATION",
+    "current_authorized_scope": "Replace eager top-level Streamlit tabs with selected-page navigation so Linux Developer Mode does not wait for Workout/History cold renders.",
     "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
-    "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Runtime/DB source, QA seed windows, and Developer Mode latency are controlled enough to harden the QA Date Range Debug behavior next.",
+    "next_milestone_status": "PAUSED_UNTIL_LAZY_NAVIGATION_ACCEPTED",
+    "next_milestone_reason": "Weekly QA hardening should resume only after Linux top-level navigation latency is fixed.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1"
@@ -187,5 +187,13 @@
     "normal_ui": "unchanged; diagnostics are Developer Mode-only",
     "provider_runtime": "not used",
     "raw_rows": "not displayed"
+  },
+  "streamlit_runtime": {
+    "top_level_lazy_navigation_v1": {
+      "status": "IMPLEMENTED / READY FOR VALIDATION",
+      "branch": "feature/top-level-streamlit-lazy-navigation-v1",
+      "reason": "Streamlit st.tabs eagerly rendered all top-level sections; selected-page navigation renders one page body per rerun.",
+      "linux_validation_required": true
+    }
   }
 }

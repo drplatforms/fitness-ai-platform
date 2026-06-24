@@ -19,11 +19,11 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary Persistence Latency Investigation v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-persistence-latency-investigation-v1",
+    "current_authorized_milestone": "Runtime / DB Source Verification v1",
+    "current_authorized_branch": "feature/runtime-db-source-verification-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Measure and reduce Developer Mode persistence latency with a targeted fragment-rerun fix while preserving persistence safety and provider-free boundaries.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Persistence QA / Developer Mode Smoke v1",
+    "current_authorized_scope": "Developer Mode-only runtime identity, database source, and QA seed presence/date-bounds diagnostics.",
+    "recommended_next_milestone_after_acceptance": "QA Seed Data Verification CLI v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
     "next_milestone_reason": "After deterministic service shell acceptance, Architecture may authorize persistence design or Developer Mode inspection.",
     "codex": "DO NOT USE BY DEFAULT",
@@ -180,5 +180,12 @@
     "fix": "Weekly Coach Summary Developer Mode panel uses Streamlit fragment reruns when available and shows Developer Mode-only timing diagnostics.",
     "provider_runtime": "not authorized",
     "public_default_display": "not authorized"
+  },
+  "runtime_db_source_verification": {
+    "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
+    "branch": "feature/runtime-db-source-verification-v1",
+    "normal_ui": "unchanged; diagnostics are Developer Mode-only",
+    "provider_runtime": "not used",
+    "raw_rows": "not displayed"
   }
 }

@@ -1,25 +1,11 @@
 # Next Milestone
 
-Current authorized milestone: Weekly Coach Summary Persistence Latency Investigation v1
+## Authorized now
 
-Branch: `feature/weekly-coach-summary-persistence-latency-investigation-v1`
+Runtime / DB Source Verification v1 is implemented and ready for Architecture review.
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+## Recommended after acceptance
 
-Proposed final status: `WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED`
+QA Seed Data Verification CLI v1.
 
-Scope:
-
-- measure Weekly Coach Summary Developer Mode generate/save/load timing
-- identify latency root cause
-- apply targeted fix
-- preserve Developer Mode-only and provider-free boundaries
-- no public/default display
-- no normal Today integration
-- no provider runtime
-- no automatic generation
-- no worker/queue/scheduler/polling
-
-Likely next milestone after acceptance:
-
-Weekly Coach Summary Persistence QA / Developer Mode Smoke v1.
+Purpose: independently prove seeded QA weekly data exists outside Streamlit and identify whether missing data is caused by no seed, wrong DB, out-of-range dates, or query logic.

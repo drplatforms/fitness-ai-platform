@@ -1,4 +1,4 @@
-# Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening
+# Review — Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 Branch: `feature/weekly-coach-summary-qa-date-range-debug-v2-hardening`
@@ -35,7 +35,3 @@ Boundaries:
 - No database schema change.
 - No QA reseeding or QA user mutation.
 - No Codex used by default.
-
-## Acceptance focus
-
-Confirm Linux user 102 happy path, user 105 low-data path, out-of-range warning path, lazy navigation speed, no provider calls, and no raw row/secret/prompt/provider output leakage.

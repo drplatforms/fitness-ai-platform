@@ -17,7 +17,7 @@ def test_weekly_coach_summary_developer_panel_is_gated() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
     developer_source = _function_source("render_developer_section")
 
-    assert "Developer Mode: Weekly Coach Summary Preview" in panel_source
+    assert "Developer Mode: Weekly Coach Summary QA Date Range Debug" in panel_source
     assert 'if not st.session_state.get("developer_mode", False):' in panel_source
     assert (
         "render_weekly_coach_summary_developer_inspection(user_id)" in developer_source
@@ -25,41 +25,35 @@ def test_weekly_coach_summary_developer_panel_is_gated() -> None:
     assert "Turn on Developer Mode in the sidebar" in developer_source
 
 
-def test_weekly_coach_summary_preview_is_not_in_normal_today_ui() -> None:
+def test_weekly_coach_summary_debug_is_not_in_normal_today_ui() -> None:
     today_source = _function_source("render_today_section")
 
-    assert "Weekly Coach Summary Preview" not in today_source
+    assert "Weekly Coach Summary QA Date Range Debug" not in today_source
     assert "render_weekly_coach_summary_developer_inspection" not in today_source
 
 
-def test_weekly_coach_summary_preview_generation_is_button_driven() -> None:
+def test_weekly_coach_summary_selected_range_generation_is_button_driven() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
 
-    button_index = panel_source.index("Generate deterministic weekly summary preview")
+    button_index = panel_source.index(
+        "Generate deterministic weekly summary from selected QA range"
+    )
     generate_index = panel_source.index("generate_approved_weekly_summary(context)")
 
     assert button_index < generate_index
     assert "st.button" in panel_source
-    assert "build_weekly_summary_context_from_fixture(**fixture)" in panel_source
+    assert "build_weekly_summary_context_from_qa_range" in panel_source
     assert "approved_weekly_summary_to_public_sections(summary)" in panel_source
 
 
-def test_weekly_coach_summary_preview_has_required_scenarios() -> None:
-    source = _function_source("weekly_coach_summary_developer_scenarios")
-
-    assert "Consistent training / moderate confidence" in source
-    assert "Low data / deterministic fallback" in source
-    assert "Mixed signal / cautious guidance" in source
-    assert "workouts_completed" in source
-    assert "nutrition_days_logged" in source
-
-
-def test_weekly_coach_summary_developer_preview_renders_safe_sections() -> None:
+def test_weekly_coach_summary_debug_renders_safe_sections() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
+    inventory_source = _function_source("_render_weekly_coach_summary_qa_inventory")
     helper_source = _function_source("_render_weekly_coach_summary_sections")
-    combined_source = panel_source + helper_source
+    combined_source = panel_source + inventory_source + helper_source
 
     for expected in [
+        "Selected QA Range Inventory",
         "Source",
         "Confidence",
         "Public Safe",
@@ -78,19 +72,17 @@ def test_weekly_coach_summary_developer_preview_renders_safe_sections() -> None:
         assert expected in combined_source
 
 
-def test_weekly_coach_summary_developer_preview_has_explicit_save_and_load() -> None:
+def test_weekly_coach_summary_debug_has_selected_range_save_and_load() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
 
-    assert "Save approved deterministic summary" in panel_source
-    assert "Load latest persisted weekly summary" in panel_source
+    assert "Save selected-range approved summary" in panel_source
+    assert "Load latest selected-range summary" in panel_source
     assert "save_approved_weekly_summary" in panel_source
     assert "get_latest_approved_weekly_summary" in panel_source
-    assert "Persisted Weekly Coach Summary Metadata" in panel_source
+    assert "range_key" in panel_source
 
 
-def test_weekly_coach_summary_developer_preview_has_no_provider_or_auto_job_calls() -> (
-    None
-):
+def test_weekly_coach_summary_debug_has_no_provider_or_auto_job_calls() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
 
     forbidden = [

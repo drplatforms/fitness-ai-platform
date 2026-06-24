@@ -1,9 +1,30 @@
-# Current implementation update - QA Seed Data Verification CLI v1
+# Current implementation update - Developer Mode Linux Latency Investigation v1
 
-QA Seed Data Verification CLI v1 is implemented on `feature/qa-seed-data-verification-cli-v1`.
+Developer Mode Linux Latency Investigation v1 is implemented on `feature/developer-mode-linux-latency-investigation-v1`.
 
-Runtime / DB Source Verification v1 is the accepted prerequisite baseline and proved the active runtime database path, code identity, and QA users 101-105 seed presence.
+Runtime / DB Source Verification v1 and QA Seed Data Verification CLI v1 are accepted prerequisites. This milestone keeps Linux in the validation workflow while reducing Developer tab latency by avoiding eager diagnostic DB queries on tab open and adding safe Developer Mode timing instrumentation.
 
-This milestone adds read-only CLI verification for selected weekly windows outside Streamlit. It reports active database source, QA user presence, global per-domain bounds, selected-range counts, data-quality labels, and diagnosis codes.
+Normal/default UI and Today behavior are unchanged. Provider runtime, Ollama, CrewAI, qwen, worker/queue/scheduler/polling, automatic generation, public/default Weekly Coach Summary display, and raw debug leakage remain out of scope.
 
-This milestone intentionally does not modify Streamlit UI, reintroduce the failed Date-Range QA Debug panel, clean mojibake, reseed data, persist Weekly Coach Summary records, or call provider runtime/Ollama/CrewAI/qwen.
+## Windows-local helper addendum
+
+Added/hardened `wapp` as a Windows-local FastAPI + Streamlit launcher for latency comparison against the Linux canonical runtime.
+
+- Uses repo `.venv\Scripts\python.exe` by default.
+- Starts FastAPI on `127.0.0.1`.
+- Starts Streamlit on `127.0.0.1`.
+- Avoids SSH and Linux helper paths.
+- Adds `wstatus` and `wstop` wrappers for Windows-local status/stop.
+- Keeps `app` as the Linux canonical runtime launcher.
+
+## Windows-local helper addendum repair
+
+Repaired the Windows-local helper addendum so `wapp`, `wstatus`, and `wstop` are actually defined and listed by the command menu.
+
+- `wapp` uses repo `.venv\Scripts\python.exe` by default.
+- `wapp` starts FastAPI on `127.0.0.1`.
+- `wapp` starts Streamlit on `127.0.0.1`.
+- `wapp` avoids SSH and Linux helper paths.
+- `wstatus` delegates to `fports`.
+- `wstop` delegates to `fkill`.
+- `app` remains the Linux canonical runtime launcher.

@@ -1,4 +1,4 @@
-# AI Health Coach repo-owned local command menu.
+﻿# AI Health Coach repo-owned local command menu.
 # Dot-source from PowerShell: . "C:\projects\fitness_ai\scripts\fitness_commands.ps1"
 
 $script:FitnessWindowsRepo = if ($env:FITNESS_WINDOWS_REPO) { $env:FITNESS_WINDOWS_REPO } else { "C:\projects\fitness_ai" }
@@ -7,6 +7,7 @@ $script:FitnessLinuxSsh = if ($env:FITNESS_LINUX_SSH) { $env:FITNESS_LINUX_SSH }
 $script:FitnessWindowsOllamaUrl = if ($env:FITNESS_WINDOWS_OLLAMA_URL) { $env:FITNESS_WINDOWS_OLLAMA_URL } else { "http://127.0.0.1:11434" }
 $script:FitnessLinuxOllamaUrl = if ($env:FITNESS_LINUX_OLLAMA_URL) { $env:FITNESS_LINUX_OLLAMA_URL } else { "http://192.168.1.104:11434" }
 $script:FitnessFastApiPort = if ($env:FITNESS_FASTAPI_PORT) { [int]$env:FITNESS_FASTAPI_PORT } else { 8000 }
+$script:FitnessWindowsPython = if ($env:FITNESS_WINDOWS_PYTHON) { $env:FITNESS_WINDOWS_PYTHON } else { Join-Path $script:FitnessWindowsRepo ".venv\Scripts\python.exe" }
 $script:FitnessStreamlitPort = if ($env:FITNESS_STREAMLIT_PORT) { [int]$env:FITNESS_STREAMLIT_PORT } else { 8510 }
 $script:FitnessLinuxStreamlitPort = if ($env:FITNESS_LINUX_STREAMLIT_PORT) { [int]$env:FITNESS_LINUX_STREAMLIT_PORT } else { 8501 }
 $script:FitnessLinuxStreamlitUrl = if ($env:FITNESS_LINUX_STREAMLIT_URL) { $env:FITNESS_LINUX_STREAMLIT_URL } else { $linuxHost = $script:FitnessLinuxSsh; if ($linuxHost -match "@(.+)$") { $linuxHost = $Matches[1] }; "http://${linuxHost}:$script:FitnessLinuxStreamlitPort" }
@@ -30,6 +31,22 @@ function Invoke-FitnessLinux {
 function Test-FitnessPort { param([int]$Port); try { return [bool](Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) } catch { return $false } }
 function Show-FitnessPort { param([int]$Port); Write-Host "`nPort $Port"; try { $c=Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue; if(-not $c){Write-Host "  none";return}; $c|ForEach-Object{ $p=Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; Write-Host "  PID=$($_.OwningProcess) Process=$($p.ProcessName)" } } catch { Write-Host "  unable to inspect" } }
 
+function Get-FitnessWindowsPython {
+    $root = Get-FitnessProjectRoot
+
+    if ($env:FITNESS_WINDOWS_PYTHON) {
+        return $env:FITNESS_WINDOWS_PYTHON
+    }
+
+    $pythonExe = Join-Path $root ".venv\Scripts\python.exe"
+
+    if (-not (Test-Path $pythonExe)) {
+        throw "Windows-local Python was not found at $pythonExe. Activate or create the repo .venv first."
+    }
+
+    return $pythonExe
+}
+
 function fitness {
     Write-Host "AI Health Coach commands"
     Write-Host ""
@@ -42,6 +59,8 @@ function fitness {
     Write-Host "  lupdate   Pull latest on Linux + restart app"
     Write-Host "  app       Start Linux FastAPI + Streamlit and open app"
     Write-Host "  wapp      Start Windows-local FastAPI + Streamlit"
+    Write-Host "  wstatus   Show Windows-local FastAPI + Streamlit status"
+    Write-Host "  wstop     Stop Windows-local FastAPI + Streamlit"
     Write-Host ""
     Write-Host "Windows safety/workflow:"
     Write-Host "  fpull     Safe Windows main pull"
@@ -64,14 +83,14 @@ function fitness {
     Write-Host "  lstop     Stop Linux FastAPI + Streamlit"
     Write-Host "  lsh       SSH into Linux project with venv active"
     Write-Host ""
-    Write-Host "Windows repo: $script:FitnessWindowsRepo"
-    Write-Host "Linux repo: $script:FitnessLinuxRepo"
-    Write-Host "Linux SSH: $script:FitnessLinuxSsh"
-    Write-Host "Windows Ollama: $script:FitnessWindowsOllamaUrl"
-    Write-Host "Linux-to-Windows Ollama: $script:FitnessLinuxOllamaUrl"
-    Write-Host "Linux Streamlit: $script:FitnessLinuxStreamlitUrl"
-    Write-Host "Windows-local FastAPI: http://127.0.0.1:$script:FitnessFastApiPort"
-    Write-Host "Windows-local Streamlit: http://127.0.0.1:$script:FitnessStreamlitPort"
+    Write-Host "Windows repo: C:\projects\fitness_ai"
+    Write-Host "Linux repo: ~/projects/fitness-ai-platform"
+    Write-Host "Linux SSH: dusty@itsAlwaysDNS"
+    Write-Host "Windows Ollama: $FitnessWindowsOllamaUrl"
+    Write-Host "Linux-to-Windows Ollama: $FitnessLinuxOllamaUrl"
+    Write-Host "Linux Streamlit: $FitnessLinuxStreamlitUrl"
+    Write-Host "Windows-local FastAPI: http://127.0.0.1:8000"
+    Write-Host "Windows-local Streamlit: http://127.0.0.1:8510"
 }
 
 function cdf { Assert-FitnessRepo; Write-Host "Current directory: $(Get-Location)" }
@@ -88,20 +107,62 @@ function app {
 }
 
 function wapp {
-    Assert-FitnessRepo
-    Write-Host "Starting Windows-local FastAPI + Streamlit. Canonical app runtime is Linux; use app for Linux runtime."
-    $env:OLLAMA_BASE_URL = $script:FitnessWindowsOllamaUrl
-    if (Test-FitnessPort $script:FitnessFastApiPort) {
-        Write-Warning "FastAPI port busy"
-    } else {
-        Start-Process powershell -ArgumentList @("-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "cd '$script:FitnessWindowsRepo'; `$env:PYTHONPATH='$script:FitnessWindowsRepo'; `$env:OLLAMA_BASE_URL='$script:FitnessWindowsOllamaUrl'; python -m uvicorn api.main:app --host 127.0.0.1 --port $script:FitnessFastApiPort --reload")
+    Write-Host "Windows-local FastAPI + Streamlit"
+
+    $root = Get-FitnessProjectRoot
+    $python = Get-FitnessWindowsPython
+
+    $env:PYTHONPATH = $root
+    $env:FITNESS_API_BASE_URL = "http://127.0.0.1:8000"
+    $env:FITNESS_WINDOWS_OLLAMA_URL = $FitnessWindowsOllamaUrl
+
+    $apiCommand = "cd '$root'; `$env:PYTHONPATH = '$root'; & '$python' -m uvicorn api.main:app --host 127.0.0.1 --port 8000"
+    $streamlitCommand = "cd '$root'; `$env:PYTHONPATH = '$root'; `$env:FITNESS_API_BASE_URL = 'http://127.0.0.1:8000'; `$env:FITNESS_WINDOWS_OLLAMA_URL = '$FitnessWindowsOllamaUrl'; & '$python' -m streamlit run ui/streamlit_app.py --server.address 127.0.0.1 --server.port 8510"
+
+    Write-Host "Starting Windows-local FastAPI on http://127.0.0.1:8000"
+    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $apiCommand)
+
+    Start-Sleep -Seconds 2
+
+    Write-Host "Starting Windows-local Streamlit on http://127.0.0.1:8510"
+    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $streamlitCommand)
+
+    Write-Host ""
+    Write-Host "Windows-local FastAPI:   http://127.0.0.1:8000"
+    Write-Host "Windows-local Streamlit: http://127.0.0.1:8510"
+    Write-Host "Windows Ollama: $FitnessWindowsOllamaUrl"
+    Write-Host "Linux Streamlit remains canonical validation: $FitnessLinuxStreamlitUrl"
+
+    Start-Process "http://127.0.0.1:8510"
+}
+
+function wstatus {
+    Write-Host "Windows-local FastAPI / Streamlit status"
+    Write-Host "Windows-side port inspection via fports:"
+    fports
+    Write-Host ""
+    Write-Host "Linux status remains available separately through lstatus; wstatus uses Windows-local checks only."
+
+    foreach ($port in @(8000, 8510)) {
+        $listeners = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+
+        if (-not $listeners) {
+            Write-Host "Port ${port}: not listening"
+            continue
+        }
+
+        foreach ($listener in $listeners) {
+            $proc = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+            $procName = if ($proc) { $proc.ProcessName } else { "unknown" }
+            Write-Host "Port ${port}: listening pid=$($listener.OwningProcess) process=$procName"
+        }
     }
-    if (Test-FitnessPort $script:FitnessStreamlitPort) {
-        Write-Warning "Streamlit port busy"
-    } else {
-        Start-Process powershell -ArgumentList @("-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "cd '$script:FitnessWindowsRepo'; `$env:PYTHONPATH='$script:FitnessWindowsRepo'; `$env:OLLAMA_BASE_URL='$script:FitnessWindowsOllamaUrl'; python -m streamlit run ui/streamlit_app.py --server.address 127.0.0.1 --server.port $script:FitnessStreamlitPort")
-    }
-    Start-Process "http://127.0.0.1:$script:FitnessStreamlitPort"
+}
+
+function wstop {
+    Write-Host "Stopping Windows-local FastAPI / Streamlit project processes"
+    fkill
+    wstatus
 }
 
 function fsnap { Assert-FitnessRepo; $commit=git rev-parse --short HEAD; $date=Get-Date -Format "yyyy-MM-dd"; $msg=git log -1 --pretty=%s; $safe=($msg -replace '[^a-zA-Z0-9]+','-').ToLower().Trim('-'); $zipName="..\fitness_ai_snapshot_${date}_${commit}_${safe}.zip"; git archive --format=zip --output=$zipName HEAD; if($LASTEXITCODE){throw "archive failed"}; Write-Host "Created snapshot:"; Write-Host $zipName; Get-Item $zipName }
@@ -109,7 +170,30 @@ function fbranch { param([Parameter(Mandatory=$true)][string]$BranchName); Asser
 function fmerge { param([Parameter(Mandatory=$true)][string]$BranchName,[Parameter(Mandatory=$true)][string]$AcceptedFinalCommit); Assert-FitnessRepo; git fetch origin --prune; git switch main; git pull --ff-only origin main; if((git rev-parse main) -ne (git rev-parse origin/main)){throw "STOP: local main does not match origin/main"}; git merge --no-ff $BranchName; if($LASTEXITCODE){throw "merge failed"}; git merge-base --is-ancestor $AcceptedFinalCommit main; if($LASTEXITCODE){throw "STOP: accepted final feature commit is not an ancestor of main"}; Write-Host "Merge ancestry verification passed. Run validation before pushing." }
 function fsweep { Assert-FitnessRepo; $markers=@("content"+"Reference","oai"+"cite","file"+"cite","turn"+"[0-9]+","utm_source="+"chat"+"gpt","chat"+"gpt"+"."+"com","<paste latest"+" commit>","<paste snapshot"+" filename>"); $pattern=$markers -join "|"; git grep -n -E $pattern -- .; if($LASTEXITCODE -eq 1){$global:LASTEXITCODE=0; Write-Host "Artifact sweep clean."} elseif($LASTEXITCODE -ne 0){throw "Artifact sweep failed"} else {throw "Artifact sweep found matches"} }
 function fmem { Assert-FitnessRepo; python tools/dev_assistant.py memory-check; if($LASTEXITCODE){throw "memory failed"}; python tools/dev_assistant.py stale-doc-check; if($LASTEXITCODE){throw "stale failed"}; pytest tests/test_project_memory_check.py -q; if($LASTEXITCODE){throw "tests failed"} }
-function fports { Write-Host "Windows-side ports only. Use lstatus for Linux app health."; Show-FitnessPort 8000; Show-FitnessPort 8501; Show-FitnessPort 8510; Show-FitnessPort 11434 }
+
+function fports {
+    Write-Host "Windows-side ports only - app/Ollama"
+    Write-Host "  FastAPI:        http://127.0.0.1:8000"
+    Write-Host "  Streamlit:      http://127.0.0.1:8510"
+    Write-Host "  Windows Ollama: $FitnessWindowsOllamaUrl"
+    Write-Host ""
+
+    foreach ($port in @(8000, 8510, 11434)) {
+        $listeners = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+
+        if (-not $listeners) {
+            Write-Host "Port ${port}: not listening"
+            continue
+        }
+
+        foreach ($listener in $listeners) {
+            $proc = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+            $procName = if ($proc) { $proc.ProcessName } else { "unknown" }
+            Write-Host "Port ${port}: listening pid=$($listener.OwningProcess) process=$procName"
+        }
+    }
+}
+
 function fkill { foreach($port in @($script:FitnessFastApiPort,$script:FitnessStreamlitPort)){ $listeners=Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; foreach($listener in $listeners){ $proc=Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue; if($proc.CommandLine -match "uvicorn api\.main:app|streamlit run ui/streamlit_app\.py|$([regex]::Escape($script:FitnessWindowsRepo))"){Stop-Process -Id $listener.OwningProcess -Force} else {Write-Warning "Skipping non-project process $($listener.OwningProcess)"} } }; fports }
 function fdoctor { Assert-FitnessRepo; gstate; python --version; python -m pip --version; foreach($p in @("scripts/dev_commit_check.ps1","scripts/fitness_commands.ps1","tools/dev_assistant.py")){Write-Host "$p : $(Test-Path $p)"}; fports; try{Invoke-WebRequest -Uri "$script:FitnessWindowsOllamaUrl/api/tags" -UseBasicParsing -TimeoutSec 3|Out-Null; Write-Host "Windows Ollama reachable"}catch{Write-Warning "Windows Ollama not reachable"} }
 
@@ -243,4 +327,23 @@ function lollama {
         "printf '%s\n' 'Windows Ollama reachable from Linux.'"
     )
     Invoke-FitnessLinux $cmd
+}
+
+function Get-FitnessProjectRoot {
+    if ($PSScriptRoot) {
+        return (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    }
+
+    return (Get-Location).Path
+}
+
+function Get-FitnessWindowsPython {
+    $root = Get-FitnessProjectRoot
+    $pythonExe = Join-Path $root ".venv\Scripts\python.exe"
+
+    if (-not (Test-Path $pythonExe)) {
+        throw "Windows-local Python was not found at $pythonExe. Activate or create the repo .venv first."
+    }
+
+    return $pythonExe
 }

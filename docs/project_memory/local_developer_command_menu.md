@@ -151,3 +151,19 @@ Runtime process ownership:
 - `app` opens the Linux-hosted Streamlit URL, defaulting to `http://<linux-host>:8501`.
 
 Do not replace the Linux tmux runtime with Windows-local shells or Linux `nohup` background processes unless a future DevOps milestone explicitly changes the runtime architecture.
+
+## Windows-local latency comparison helper
+
+`wapp` is the supported Windows-local FastAPI + Streamlit launcher for developer productivity and side-by-side latency comparison. It does not replace the Linux runtime workflow.
+
+Expected behavior:
+
+- `wapp` starts Windows-local FastAPI on `127.0.0.1:8000`.
+- `wapp` starts Windows-local Streamlit on the configured Windows-local Streamlit port, default `127.0.0.1:8510`.
+- `wapp` uses the repo virtual environment Python at `.venv\Scripts\python.exe` by default.
+- `wapp` sets `PYTHONPATH` to the Windows repo root.
+- `wapp` avoids SSH and does not call `app`, `lrestart`, or `lstop`.
+- `wstatus` shows Windows-local port status.
+- `wstop` stops Windows-local FastAPI + Streamlit processes only.
+
+Linux remains the canonical runtime validation environment. Use `app`, `lrestart`, `lstatus`, and Linux pull validation for deployed-style checks.

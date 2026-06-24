@@ -17,6 +17,8 @@ REQUIRED_COMMANDS = [
     "gacp",
     "app",
     "wapp",
+    "wstatus",
+    "wstop",
     "lupdate",
     "lstatus",
     "lsetup",
@@ -67,6 +69,8 @@ def test_command_menu_lists_current_and_new_commands() -> None:
     for command in [
         "app",
         "wapp",
+        "wstatus",
+        "wstop",
         "lstop",
         "lrestart",
         "lupdate",
@@ -229,3 +233,47 @@ def test_lollama_uses_printf_without_literal_newline_suffix() -> None:
     assert "printf '%s\\n'" in lollama_block
     assert "api/tags\\\\n" not in lollama_block
     assert "echo 'Windows Ollama reachable from Linux.'" not in lollama_block
+
+
+def test_windows_local_wapp_uses_repo_venv_and_avoids_linux_path() -> None:
+    text = read(COMMAND_SCRIPT)
+    wapp_block = extract_function(text, "wapp")
+
+    assert "Get-FitnessWindowsPython" in wapp_block
+    assert ".venv\\Scripts\\python.exe" in text
+    assert "FITNESS_WINDOWS_PYTHON" in text
+    assert "& '$python' -m uvicorn api.main:app --host 127.0.0.1" in wapp_block
+    assert (
+        "& '$python' -m streamlit run ui/streamlit_app.py --server.address 127.0.0.1"
+        in wapp_block
+    )
+    assert "0.0.0.0" not in wapp_block
+    assert "ssh" not in wapp_block.lower()
+    assert "Invoke-FitnessLinux" not in wapp_block
+    assert "lrestart" not in wapp_block
+    assert "lstop" not in wapp_block
+    assert "function app" not in wapp_block
+
+
+def test_windows_local_status_and_stop_helpers_do_not_touch_linux() -> None:
+    text = read(COMMAND_SCRIPT)
+    wstatus_block = extract_function(text, "wstatus")
+    wstop_block = extract_function(text, "wstop")
+
+    assert "fports" in wstatus_block
+    assert "fkill" in wstop_block
+    assert "lstatus" in wstatus_block
+    for block in [wstatus_block, wstop_block]:
+        assert "ssh" not in block.lower()
+        assert "Invoke-FitnessLinux" not in block
+        assert "lrestart" not in block
+        assert "lstop" not in block
+
+
+def test_windows_local_helper_is_documented_for_latency_comparison() -> None:
+    docs = read(COMMAND_DOC)
+    assert "Windows-local latency comparison helper" in docs
+    assert "wapp" in docs
+    assert "wstatus" in docs
+    assert "wstop" in docs
+    assert "Linux remains the canonical runtime validation environment" in docs

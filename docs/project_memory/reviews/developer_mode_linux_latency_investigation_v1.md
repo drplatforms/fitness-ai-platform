@@ -1,16 +1,23 @@
-# Project continuity bootstrap
-
-Current milestone: Developer Mode Linux Latency Investigation v1
-
-Branch: `feature/developer-mode-linux-latency-investigation-v1`
+# Developer Mode Linux Latency Investigation v1 review
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Latest accepted prerequisite: QA Seed Data Verification CLI v1 (`1266bb7`).
+Branch: `feature/developer-mode-linux-latency-investigation-v1`
 
-Current work reduces Linux Developer tab latency while keeping Linux as a first-class runtime validation target. Runtime / DB diagnostics are now action-driven instead of eager on Developer tab open, and Developer Mode timing records safe aggregate render/action timings.
+Commit: `<pending commit>`
 
-Do not use Codex by default. Do not add provider runtime, Ollama, CrewAI, qwen, workers, queues, schedulers, polling, public/default Weekly Coach Summary display, or raw debug leakage.
+## Review notes
+
+This milestone investigates and reduces Linux Developer tab latency by removing eager Runtime / DB diagnostic execution from Developer tab open and adding safe Developer Mode timing instrumentation.
+
+## Manual Linux smoke required
+
+- Pull feature branch on Linux.
+- Restart Streamlit/FastAPI because Streamlit behavior changed.
+- Open Developer tab and measure approximate open time.
+- Refresh Runtime / DB diagnostics.
+- Confirm QA/debug controls still work.
+- Confirm no raw rows, secrets, stack traces, provider output, prompts, context, or scratchpad are displayed.
 
 ## Windows-local helper addendum
 

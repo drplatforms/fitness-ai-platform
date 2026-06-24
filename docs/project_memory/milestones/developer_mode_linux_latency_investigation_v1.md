@@ -1,16 +1,28 @@
-# Project continuity bootstrap
-
-Current milestone: Developer Mode Linux Latency Investigation v1
-
-Branch: `feature/developer-mode-linux-latency-investigation-v1`
+# Developer Mode Linux Latency Investigation v1
 
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Latest accepted prerequisite: QA Seed Data Verification CLI v1 (`1266bb7`).
+Branch: `feature/developer-mode-linux-latency-investigation-v1`
 
-Current work reduces Linux Developer tab latency while keeping Linux as a first-class runtime validation target. Runtime / DB diagnostics are now action-driven instead of eager on Developer tab open, and Developer Mode timing records safe aggregate render/action timings.
+## Goal
 
-Do not use Codex by default. Do not add provider runtime, Ollama, CrewAI, qwen, workers, queues, schedulers, polling, public/default Weekly Coach Summary display, or raw debug leakage.
+Reduce Linux Developer tab open latency without removing Linux from the validation workflow.
+
+## Implementation summary
+
+- Added Developer Mode render timing for the main Developer tab sections.
+- Made Runtime / DB Source Verification lazy/action-driven so opening the Developer tab does not query the active database automatically.
+- Preserved explicit refresh behavior for Runtime / DB diagnostics.
+- Preserved Weekly Coach Summary Developer Mode preview behavior.
+- Kept normal/default UI and Today behavior unchanged.
+
+## Boundaries
+
+- No provider runtime added.
+- No Ollama/CrewAI/qwen calls added.
+- No worker/queue/scheduler/polling added.
+- No public/default Weekly Coach Summary display added.
+- No raw rows, secrets, prompts, context, or scratchpad displayed.
 
 ## Windows-local helper addendum
 

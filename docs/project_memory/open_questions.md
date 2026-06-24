@@ -1,13 +1,16 @@
 # Open questions
 
-## Runtime / DB source verification
+## Active
 
-Runtime / DB Source Verification v1 proved the active Linux database path and QA seed users 101-105 were present.
+- After Linux smoke, what is the measured Developer tab open time compared with the previous approximately 25-second baseline?
+- Should the next milestone harden the existing QA Date Range Debug behavior or first add richer QA data context integration?
 
-## QA seed data verification
+## Backlog
 
-QA Seed Data Verification CLI v1 now needs Architecture review of Windows and Linux CLI output to confirm the best default happy-path user/range and low-data fallback user/range for Weekly Coach Summary QA Date Range Debug v2.
+- Continue to keep Linux runtime validation in the development loop even when Windows local runtime is faster.
 
-## Streamlit encoding cleanup
+## Windows local vs Linux Developer tab timing comparison
 
-Global Streamlit mojibake remains deferred to a dedicated Streamlit Encoding Cleanup v1 milestone.
+- Record Windows-local Developer tab timing from `wapp`.
+- Record Linux canonical Developer tab timing from `app`/Linux runtime.
+- Keep Linux in the validation loop even when Windows local runtime is faster.

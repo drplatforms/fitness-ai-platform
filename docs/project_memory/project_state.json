@@ -8,10 +8,10 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Runtime / DB Source Verification v1",
-    "latest_final_status": "RUNTIME_DB_SOURCE_VERIFICATION_V1_ACCEPTED",
-    "latest_accepted_commit": "6aaff41",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_6aaff41_add-runtime-db-source-diagnostics.zip",
+    "latest_accepted_milestone": "QA Seed Data Verification CLI v1",
+    "latest_final_status": "QA_SEED_DATA_VERIFICATION_CLI_V1_ACCEPTED",
+    "latest_accepted_commit": "1266bb7",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_1266bb7_add-qa-seed-data-verification-cli.zip",
     "latest_main_merge_commit": "ce0baa8",
     "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
     "prior_accepted_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
@@ -19,13 +19,13 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "QA Seed Data Verification CLI v1",
-    "current_authorized_branch": "feature/qa-seed-data-verification-cli-v1",
+    "current_authorized_milestone": "Developer Mode Linux Latency Investigation v1",
+    "current_authorized_branch": "feature/developer-mode-linux-latency-investigation-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Read-only CLI/devtools verification of QA seed users, global bounds, selected weekly-window counts, and diagnostic classifications.",
-    "recommended_next_milestone_after_acceptance": "Streamlit Encoding Cleanup v1",
+    "current_authorized_scope": "Measure and reduce Linux Developer tab latency by making Developer Mode diagnostics/debug work lazy and action-driven.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Global Streamlit mojibake should be cleaned in isolation before Weekly Coach Summary QA Date Range Debug v2 is rebuilt.",
+    "next_milestone_reason": "Runtime/DB source, QA seed windows, and Developer Mode latency are controlled enough to harden the QA Date Range Debug behavior next.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1"

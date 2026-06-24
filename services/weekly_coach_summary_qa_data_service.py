@@ -14,9 +14,6 @@ from services.qa_seed_data_verification_service import (
     validate_date_range,
     verify_qa_seed_data,
 )
-from services.weekly_coach_summary_service import (
-    build_weekly_summary_context_from_fixture,
-)
 
 DEFAULT_QA_DATE_RANGE_USER_ID = 102
 DEFAULT_QA_LOW_DATA_USER_ID = 105
@@ -230,41 +227,16 @@ def build_weekly_summary_context_from_qa_range(
     end_date: date | str,
     db_path: str | Path | None = None,
 ) -> WeeklyCoachSummaryContext:
-    inventory = inspect_weekly_summary_qa_range(
+    # Lazy import avoids a module cycle while preserving the original public
+    # service entry point for existing callers/tests. The actual context builder
+    # is backend-owned and does not depend on Streamlit/UI labels.
+    from services.weekly_coach_summary_qa_context_service import (
+        build_weekly_summary_context_from_qa_range as build_context,
+    )
+
+    return build_context(
         user_id=user_id,
         start_date=start_date,
         end_date=end_date,
         db_path=db_path,
-    )
-    nutrition_days = int(inventory.distinct_logged_days.get("nutrition") or 0)
-    completed_workouts = _completed_workouts_from_inventory(inventory)
-    planned_workouts = max(4, completed_workouts)
-    limitations = list(inventory.limitations)
-    limitations.append(
-        "QA Date Range Debug inventory source: "
-        f"{inventory.source}; data quality: {inventory.data_quality_label}."
-    )
-    if (
-        not inventory.selected_range_has_data
-        and inventory.available_start_date
-        and inventory.available_end_date
-    ):
-        limitations.append(
-            "Selected range has no data for this user. Available data exists from "
-            f"{inventory.available_start_date} to {inventory.available_end_date}."
-        )
-
-    return build_weekly_summary_context_from_fixture(
-        user_id=inventory.user_id,
-        week_start=inventory.start_date,
-        week_end=inventory.end_date,
-        training_days_logged=_training_days_from_inventory(inventory),
-        workouts_completed=completed_workouts,
-        planned_workouts=planned_workouts,
-        recovery_notes_available=inventory.fact_counts.get("recovery", 0) > 0,
-        nutrition_days_logged=nutrition_days,
-        protein_days_logged=nutrition_days if inventory.selected_range_has_data else 0,
-        average_energy=None,
-        average_soreness=None,
-        limitations=tuple(dict.fromkeys(limitations)),
     )

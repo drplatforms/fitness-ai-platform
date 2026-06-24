@@ -43,7 +43,10 @@ def test_qa_date_range_debug_v2_has_manual_inspect_and_generate_buttons() -> Non
         "Generate deterministic weekly summary from selected QA range" in panel_source
     )
     assert "inspect_weekly_summary_qa_range" in panel_source
+    assert "weekly_coach_summary_qa_context_service" in panel_source
     assert "build_weekly_summary_context_from_qa_range" in panel_source
+    assert "weekly_summary_context_to_safe_metadata" in panel_source
+    assert "Generated from selected QA date-range context" in panel_source
     assert "generate_approved_weekly_summary(context)" in panel_source
     assert panel_source.index("Inspect selected QA range") < panel_source.index(
         "inspect_weekly_summary_qa_range("

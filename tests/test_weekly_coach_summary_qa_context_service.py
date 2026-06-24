@@ -4,20 +4,18 @@ import sqlite3
 from pathlib import Path
 
 from models.weekly_coach_summary_models import WeeklyCoachSummaryConfidence
-from services.weekly_coach_summary_qa_data_service import (
-    DEFAULT_QA_DATE_RANGE_PRESET_KEY,
-    DEFAULT_QA_DATE_RANGE_USER_ID,
-    DEFAULT_QA_LOW_DATA_USER_ID,
-    QA_DATE_RANGE_PRESETS,
-    QA_USER_LABELS,
+from services.weekly_coach_summary_qa_context_service import (
     build_weekly_summary_context_from_qa_range,
-    inspect_weekly_summary_qa_range,
-    qa_date_range_cache_key,
-    qa_range_preset_dates,
+    build_weekly_summary_qa_context_signals,
+    weekly_summary_context_to_safe_metadata,
 )
+from services.weekly_coach_summary_qa_data_service import (
+    inspect_weekly_summary_qa_range,
+)
+from services.weekly_coach_summary_service import generate_approved_weekly_summary
 
 
-def create_qa_range_fixture_db(path: Path) -> None:
+def create_context_fixture_db(path: Path) -> None:
     connection = sqlite3.connect(path)
     connection.executescript("""
         CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
@@ -25,6 +23,9 @@ def create_qa_range_fixture_db(path: Path) -> None:
             id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
             checkin_date TEXT NOT NULL,
+            sleep_hours REAL,
+            energy_level INTEGER,
+            soreness_level INTEGER,
             notes TEXT
         );
         CREATE TABLE food_entries (
@@ -38,6 +39,14 @@ def create_qa_range_fixture_db(path: Path) -> None:
             id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
             workout_date TEXT NOT NULL
+        );
+        CREATE TABLE workout_sets (
+            id INTEGER PRIMARY KEY,
+            workout_session_id INTEGER NOT NULL,
+            set_number INTEGER NOT NULL,
+            reps INTEGER NOT NULL,
+            weight REAL,
+            rir INTEGER
         );
         CREATE TABLE workout_plan_instances (
             id INTEGER PRIMARY KEY,
@@ -89,14 +98,22 @@ def create_qa_range_fixture_db(path: Path) -> None:
         "INSERT INTO users (id, name) VALUES (?, ?)",
         [(102, "QA 102"), (105, "QA 105")],
     )
-    for day in range(8, 15):
+    for index, day in enumerate(range(8, 15)):
         checkin_date = f"2026-06-{day:02d}"
         connection.execute(
             """
-            INSERT INTO daily_checkins (user_id, checkin_date, notes)
-            VALUES (?, ?, ?)
+            INSERT INTO daily_checkins (
+                user_id, checkin_date, sleep_hours, energy_level, soreness_level, notes
+            ) VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (102, checkin_date, "private check-in note must not leak"),
+            (
+                102,
+                checkin_date,
+                7.6 + (index % 3) * 0.2,
+                8,
+                2,
+                "private check-in note must not leak",
+            ),
         )
         connection.execute(
             """
@@ -111,6 +128,15 @@ def create_qa_range_fixture_db(path: Path) -> None:
             "INSERT INTO workout_sessions (id, user_id, workout_date) VALUES (?, ?, ?)",
             (session_id, 102, workout_date),
         )
+        for set_number in (1, 2):
+            connection.execute(
+                """
+                INSERT INTO workout_sets (
+                    workout_session_id, set_number, reps, weight, rir
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (session_id, set_number, 8, 100.0, 3),
+            )
         connection.execute(
             """
             INSERT INTO workout_plan_instances (
@@ -177,108 +203,129 @@ def create_qa_range_fixture_db(path: Path) -> None:
                 ),
             )
     connection.execute(
-        "INSERT INTO daily_checkins (user_id, checkin_date, notes) VALUES (?, ?, ?)",
-        (105, "2026-06-09", "private sparse note must not leak"),
+        """
+        INSERT INTO daily_checkins (
+            user_id, checkin_date, sleep_hours, energy_level, soreness_level, notes
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (105, "2026-06-09", 6.2, 5, 6, "private sparse note must not leak"),
     )
     connection.commit()
     connection.close()
 
 
-def test_qa_range_defaults_are_stable() -> None:
-    assert DEFAULT_QA_DATE_RANGE_USER_ID == 102
-    assert DEFAULT_QA_LOW_DATA_USER_ID == 105
-    assert DEFAULT_QA_DATE_RANGE_PRESET_KEY == "latest_seeded_week"
-    assert QA_DATE_RANGE_PRESETS["latest_seeded_week"] == (
-        "2026-06-08",
-        "2026-06-14",
-    )
-    assert QA_USER_LABELS[102] == "102 aligned_managed"
-
-
-def test_qa_range_preset_and_cache_key_are_typed() -> None:
-    start, end = qa_range_preset_dates("latest_seeded_week")
-    assert start.isoformat() == "2026-06-08"
-    assert end.isoformat() == "2026-06-14"
-    assert qa_date_range_cache_key(102, start, end) == (
-        "user:102|start:2026-06-08|end:2026-06-14"
-    )
-
-
-def test_inspect_weekly_summary_qa_range_returns_safe_inventory(
-    tmp_path: Path,
-) -> None:
+def test_context_service_builds_richer_selected_range_context(tmp_path: Path) -> None:
     db_path = tmp_path / "qa.db"
-    create_qa_range_fixture_db(db_path)
-    inventory = inspect_weekly_summary_qa_range(
-        user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
-        db_path=db_path,
-    )
-    payload_text = str(inventory.to_dict()).lower()
-    assert inventory.user_id == 102
-    assert inventory.scenario == "aligned_managed"
-    assert inventory.data_quality_label == "strong"
-    assert inventory.fact_counts["recovery"] == 7
-    assert inventory.distinct_logged_days["nutrition"] == 7
-    assert inventory.fact_counts["actual_sets"] == 6
-    assert inventory.public_safe is True
-    assert inventory.deterministic_provider_free is True
-    assert "private" not in payload_text
-    assert "raw_provider_output" not in payload_text
+    create_context_fixture_db(db_path)
 
-
-def test_low_data_user_inventory_is_limited_but_safe(tmp_path: Path) -> None:
-    db_path = tmp_path / "qa.db"
-    create_qa_range_fixture_db(db_path)
-    inventory = inspect_weekly_summary_qa_range(
-        user_id=105,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
-        db_path=db_path,
-    )
-    assert inventory.user_id == 105
-    assert inventory.scenario == "data_quality_limited"
-    assert inventory.data_quality_label in {"limited", "insufficient"}
-    assert inventory.public_safe is True
-
-
-def test_out_of_range_inventory_warns_with_available_bounds(tmp_path: Path) -> None:
-    db_path = tmp_path / "qa.db"
-    create_qa_range_fixture_db(db_path)
-    inventory = inspect_weekly_summary_qa_range(
-        user_id=102,
-        start_date="2030-01-01",
-        end_date="2030-01-07",
-        db_path=db_path,
-    )
-    assert inventory.selected_range_has_data is False
-    assert inventory.available_start_date == "2026-06-08"
-    assert inventory.available_end_date == "2026-06-14"
-    assert "selected_range_out_of_bounds" in inventory.diagnosis_codes
-
-
-def test_build_context_from_qa_range_uses_selected_user_and_dates(
-    tmp_path: Path,
-) -> None:
-    db_path = tmp_path / "qa.db"
-    create_qa_range_fixture_db(db_path)
     context = build_weekly_summary_context_from_qa_range(
         user_id=102,
         start_date="2026-06-08",
         end_date="2026-06-14",
         db_path=db_path,
     )
+    payload_text = str(context.to_dict()).lower()
+
     assert context.user_id == 102
     assert context.period.week_start.isoformat() == "2026-06-08"
     assert context.period.week_end.isoformat() == "2026-06-14"
-    assert context.fact_boundary.training_facts_available is True
+    assert context.scenario == "aligned_managed"
+    assert context.confidence == WeeklyCoachSummaryConfidence.HIGH
+    assert context.fact_boundary.recovery_facts_available is True
     assert context.fact_boundary.nutrition_facts_available is True
-    assert context.confidence in {
-        WeeklyCoachSummaryConfidence.MODERATE,
-        WeeklyCoachSummaryConfidence.HIGH,
-    }
-    assert "approved_backend_facts_only" in context.reason_codes
+    assert context.fact_boundary.training_facts_available is True
+    assert context.fact_boundary.workout_execution_facts_available is True
     assert "qa_date_range_context_built" in context.reason_codes
     assert "qa_date_range_debug_source" in context.reason_codes
-    assert "Context source: qa_date_range_debug" in " ".join(context.limitations)
+    assert "Average sleep was about" in context.recovery_summary
+    assert "Nutrition coverage includes 7 entries" in context.nutrition_summary
+    assert "Training coverage includes 3 sessions" in context.training_summary
+    assert "private" not in payload_text
+    assert "raw_database_rows" not in payload_text
+    assert "raw_provider_output" not in payload_text
+
+
+def test_context_signals_are_safe_aggregate_only(tmp_path: Path) -> None:
+    db_path = tmp_path / "qa.db"
+    create_context_fixture_db(db_path)
+    inventory = inspect_weekly_summary_qa_range(
+        user_id=102,
+        start_date="2026-06-08",
+        end_date="2026-06-14",
+        db_path=db_path,
+    )
+
+    signals = build_weekly_summary_qa_context_signals(inventory, db_path=db_path)
+    payload_text = str(signals.to_dict()).lower()
+
+    assert signals.user_id == 102
+    assert signals.source == "qa_date_range_debug"
+    assert signals.recovery_checkins_count == 7
+    assert signals.nutrition_logged_days == 7
+    assert signals.average_energy_level == 8.0
+    assert signals.average_training_rir == 3.0
+    assert "private" not in payload_text
+    assert "scratchpad" not in payload_text
+
+
+def test_low_data_context_remains_limited_and_safe(tmp_path: Path) -> None:
+    db_path = tmp_path / "qa.db"
+    create_context_fixture_db(db_path)
+
+    context = build_weekly_summary_context_from_qa_range(
+        user_id=105,
+        start_date="2026-06-08",
+        end_date="2026-06-14",
+        db_path=db_path,
+    )
+    approved = generate_approved_weekly_summary(context)
+
+    assert context.user_id == 105
+    assert context.scenario == "data_quality_limited"
+    assert context.confidence == WeeklyCoachSummaryConfidence.LIMITED
+    assert context.fact_boundary.data_quality_limited is True
+    assert approved.public_safe is True
+    assert approved.displayable is True
+    assert "deterministic_fallback_used" in approved.reason_codes
+
+
+def test_out_of_range_context_has_safe_insufficient_data_limitation(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "qa.db"
+    create_context_fixture_db(db_path)
+
+    context = build_weekly_summary_context_from_qa_range(
+        user_id=102,
+        start_date="2030-01-01",
+        end_date="2030-01-07",
+        db_path=db_path,
+    )
+    limitation_text = " ".join(context.limitations)
+
+    assert context.confidence == WeeklyCoachSummaryConfidence.LIMITED
+    assert context.fact_boundary.data_quality_limited is True
+    assert "Selected range has no data for this user" in limitation_text
+    assert "2026-06-08 to 2026-06-14" in limitation_text
+
+
+def test_context_metadata_is_sanitized_for_developer_display(tmp_path: Path) -> None:
+    db_path = tmp_path / "qa.db"
+    create_context_fixture_db(db_path)
+    context = build_weekly_summary_context_from_qa_range(
+        user_id=102,
+        start_date="2026-06-08",
+        end_date="2026-06-14",
+        db_path=db_path,
+    )
+
+    metadata = weekly_summary_context_to_safe_metadata(context)
+    metadata_text = str(metadata).lower()
+
+    assert metadata["user_id"] == 102
+    assert metadata["source"] == "qa_date_range_debug"
+    assert metadata["provider_attempted"] is False
+    assert metadata["deterministic_provider_free"] is True
+    assert "raw_provider_output" not in metadata_text
+    assert "private" not in metadata_text
+    assert "scratchpad" not in metadata_text

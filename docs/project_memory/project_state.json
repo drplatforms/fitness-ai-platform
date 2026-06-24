@@ -8,28 +8,28 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "QA Seed Data Verification CLI v1",
-    "latest_final_status": "QA_SEED_DATA_VERIFICATION_CLI_V1_ACCEPTED",
-    "latest_accepted_commit": "1266bb7",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-23_1266bb7_add-qa-seed-data-verification-cli.zip",
+    "latest_accepted_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_QA_DATE_RANGE_DEBUG_V2_ACCEPTED",
+    "latest_accepted_commit": "a9e0475",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_a9e0475_harden-weekly-coach-summary-qa-date-range-debug.zip",
     "latest_main_merge_commit": "ce0baa8",
     "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
-    "prior_accepted_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "prior_final_status": "WEEKLY_COACH_SUMMARY_ASYNC_SERVICE_SHELL_NO_WORKER_V1_ACCEPTED",
-    "prior_main_merge_commit": "da27607"
+    "prior_accepted_milestone": "Top-Level Streamlit Lazy Navigation v1",
+    "prior_final_status": "TOP_LEVEL_STREAMLIT_LAZY_NAVIGATION_V1_ACCEPTED",
+    "prior_main_merge_commit": "2101922"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
-    "current_authorized_branch": "feature/weekly-coach-summary-qa-date-range-debug-v2-hardening",
+    "current_authorized_milestone": "Weekly Coach Summary QA Data Context Integration v1",
+    "current_authorized_branch": "feature/weekly-coach-summary-qa-data-context-integration-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Measure and reduce Linux Developer tab latency by making Developer Mode diagnostics/debug work lazy and action-driven.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Data Context Integration v1",
+    "current_authorized_scope": "Integrate selected QA date-range fact inventory into a richer backend-owned deterministic WeeklyCoachSummaryContext.",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Runtime Design v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Runtime/DB source, QA seed windows, and Developer Mode latency are controlled enough to harden the QA Date Range Debug behavior next.",
+    "next_milestone_reason": "Backend-owned selected-range context is the final deterministic grounding seam before provider runtime design.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "required_prerequisite_commit": "2101922 Add top-level Streamlit lazy navigation"
+    "required_prerequisite_commit": "a9e0475 Harden weekly coach summary QA date range debug"
   },
   "runtime_split": {
     "windows": [
@@ -180,7 +180,10 @@
     "root_cause": "Streamlit full-app rerun behavior during Developer Mode button interactions",
     "fix": "Weekly Coach Summary Developer Mode panel uses Streamlit fragment reruns when available and shows Developer Mode-only timing diagnostics.",
     "provider_runtime": "not authorized",
-    "public_default_display": "not authorized"
+    "public_default_display": "not authorized",
+    "qa_data_context_integration_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
+    "qa_data_context_integration_branch": "feature/weekly-coach-summary-qa-data-context-integration-v1",
+    "qa_data_context_builder": "services/weekly_coach_summary_qa_context_service.py"
   },
   "runtime_db_source_verification": {
     "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",

@@ -9179,10 +9179,13 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
 
+    from services.weekly_coach_summary_qa_context_service import (
+        build_weekly_summary_context_from_qa_range,
+        weekly_summary_context_to_safe_metadata,
+    )
     from services.weekly_coach_summary_qa_data_service import (
         DEFAULT_QA_DATE_RANGE_PRESET_KEY,
         DEFAULT_QA_DATE_RANGE_USER_ID,
-        build_weekly_summary_context_from_qa_range,
         inspect_weekly_summary_qa_range,
         qa_date_range_cache_key,
     )
@@ -9307,6 +9310,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             preview_cache[range_key] = {
                 "range_key": range_key,
                 "inventory": inventory.to_dict(),
+                "context_metadata": weekly_summary_context_to_safe_metadata(context),
                 "period": context.period.to_dict(),
                 "summary": summary,
                 "sections": sections,
@@ -9335,13 +9339,40 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     if cached_preview:
         sections = cached_preview["sections"]
         period = cached_preview["period"]
+        context_metadata = cached_preview.get("context_metadata") or {}
         st.success(
             message_cache.get(
                 range_key,
                 "Approved deterministic weekly summary ready.",
             )
         )
+        st.caption("Generated from selected QA date-range context.")
         st.write(f"**Period:** {period['week_start']} to {period['week_end']}")
+        if context_metadata:
+            st.markdown("**Selected-Range Context Metadata:**")
+            context_rows = [
+                {"Field": "User ID", "Value": context_metadata.get("user_id")},
+                {"Field": "Scenario", "Value": context_metadata.get("scenario")},
+                {"Field": "Start Date", "Value": context_metadata.get("start_date")},
+                {"Field": "End Date", "Value": context_metadata.get("end_date")},
+                {"Field": "Source", "Value": context_metadata.get("source")},
+                {"Field": "Confidence", "Value": context_metadata.get("confidence")},
+                {
+                    "Field": "Data Quality Limited",
+                    "Value": str(context_metadata.get("data_quality_limited")).lower(),
+                },
+                {
+                    "Field": "Deterministic Provider Free",
+                    "Value": str(
+                        context_metadata.get("deterministic_provider_free")
+                    ).lower(),
+                },
+            ]
+            st.dataframe(
+                pd.DataFrame(context_rows),
+                width="stretch",
+                hide_index=True,
+            )
         metadata_rows = [
             {"Field": "User ID", "Value": period["user_id"]},
             {"Field": "Source", "Value": sections["source"]},

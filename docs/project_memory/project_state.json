@@ -19,11 +19,11 @@
     "prior_main_merge_commit": "da27607"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Developer Mode Linux Latency Investigation v1",
-    "current_authorized_branch": "feature/developer-mode-linux-latency-investigation-v1",
+    "current_authorized_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
+    "current_authorized_branch": "feature/weekly-coach-summary-qa-date-range-debug-v2-hardening",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
     "current_authorized_scope": "Measure and reduce Linux Developer tab latency by making Developer Mode diagnostics/debug work lazy and action-driven.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
+    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary QA Data Context Integration v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
     "next_milestone_reason": "Runtime/DB source, QA seed windows, and Developer Mode latency are controlled enough to harden the QA Date Range Debug behavior next.",
     "codex": "DO NOT USE BY DEFAULT",

@@ -82,7 +82,7 @@ def test_developer_tab_keeps_expensive_work_button_driven() -> None:
         "render_weekly_coach_summary_developer_inspection(user_id)" in developer_source
     )
     assert weekly_source.index(
-        "Generate deterministic weekly summary preview"
+        "Generate deterministic weekly summary from selected QA range"
     ) < weekly_source.index("generate_approved_weekly_summary(context)")
     assert runtime_source.index(
         "Refresh runtime / DB diagnostics"

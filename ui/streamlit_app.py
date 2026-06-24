@@ -2,7 +2,7 @@
 # Imports
 # =====================================
 
-from datetime import datetime
+from datetime import date, datetime
 from html import escape
 from time import perf_counter
 
@@ -31,9 +31,19 @@ from services.weekly_coach_summary_persistence_service import (
     get_latest_approved_weekly_summary,
     save_approved_weekly_summary,
 )
+from services.weekly_coach_summary_qa_data_service import (
+    DEFAULT_QA_DATE_RANGE_PRESET_KEY,
+    DEFAULT_QA_DATE_RANGE_USER_ID,
+    QA_DATE_RANGE_PRESET_LABELS,
+    QA_DATE_RANGE_PRESETS,
+    QA_USER_LABELS,
+    build_weekly_summary_context_from_qa_range,
+    inspect_weekly_summary_qa_range,
+    qa_date_range_cache_key,
+    qa_range_preset_dates,
+)
 from services.weekly_coach_summary_service import (
     approved_weekly_summary_to_public_sections,
-    build_weekly_summary_context_from_fixture,
     generate_approved_weekly_summary,
 )
 from ui.daily_coach_session_approval import (
@@ -3414,6 +3424,7 @@ SESSION_DEFAULTS = {
     "weekly_coach_summary_preview_by_user": {},
     "weekly_coach_summary_persisted_by_user": {},
     "weekly_coach_summary_message_by_user": {},
+    "weekly_coach_summary_qa_inventory_by_range": {},
     "weekly_coach_summary_timing_by_user": {},
     "runtime_db_diagnostics": None,
     "developer_mode_latency_timing": {},
@@ -8991,61 +9002,111 @@ def render_reports_section(user_id: int) -> None:
     developer_details("Developer details: report history", data)
 
 
-def weekly_coach_summary_developer_scenarios() -> dict[str, dict[str, object]]:
-    return {
-        "Consistent training / moderate confidence": {
-            "user_id": 102,
-            "week_start": "2026-06-15",
-            "week_end": "2026-06-21",
-            "training_days_logged": 4,
-            "workouts_completed": 3,
-            "planned_workouts": 4,
-            "recovery_notes_available": True,
-            "nutrition_days_logged": 3,
-            "protein_days_logged": 3,
-            "average_energy": 7,
-            "average_soreness": 4,
-            "limitations": ("One nutrition day may be incomplete.",),
-        },
-        "Low data / deterministic fallback": {
-            "user_id": 102,
-            "week_start": "2026-06-15",
-            "week_end": "2026-06-21",
-            "training_days_logged": 0,
-            "workouts_completed": 0,
-            "planned_workouts": 4,
-            "recovery_notes_available": False,
-            "nutrition_days_logged": 0,
-            "protein_days_logged": 0,
-            "average_energy": None,
-            "average_soreness": None,
-            "limitations": ("Fixture intentionally has limited data.",),
-        },
-        "Mixed signal / cautious guidance": {
-            "user_id": 102,
-            "week_start": "2026-06-15",
-            "week_end": "2026-06-21",
-            "training_days_logged": 2,
-            "workouts_completed": 2,
-            "planned_workouts": 4,
-            "recovery_notes_available": True,
-            "nutrition_days_logged": 1,
-            "protein_days_logged": 1,
-            "average_energy": 4,
-            "average_soreness": 7,
-            "limitations": ("Mixed fixture signal keeps guidance conservative.",),
-        },
+def weekly_coach_summary_qa_user_options() -> dict[int, str]:
+    return dict(QA_USER_LABELS)
+
+
+def weekly_coach_summary_qa_range_presets() -> dict[str, dict[str, date | str]]:
+    presets: dict[str, dict[str, date | str]] = {}
+    for key, (start_date, end_date) in QA_DATE_RANGE_PRESETS.items():
+        presets[key] = {
+            "label": QA_DATE_RANGE_PRESET_LABELS[key],
+            "start_date": date.fromisoformat(start_date),
+            "end_date": date.fromisoformat(end_date),
+        }
+    default_start, default_end = qa_range_preset_dates(DEFAULT_QA_DATE_RANGE_PRESET_KEY)
+    presets["custom"] = {
+        "label": QA_DATE_RANGE_PRESET_LABELS["custom"],
+        "start_date": default_start,
+        "end_date": default_end,
     }
+    return presets
 
 
-def _weekly_coach_summary_selected_fixture(
-    scenario_label: str,
-    user_id: int,
-) -> dict[str, object]:
-    scenarios = weekly_coach_summary_developer_scenarios()
-    fixture = dict(scenarios[scenario_label])
-    fixture["user_id"] = user_id
-    return fixture
+def _weekly_coach_summary_selected_range(
+    preset_key: str,
+    start_date_value: date,
+    end_date_value: date,
+) -> tuple[date, date]:
+    if preset_key == "custom":
+        return start_date_value, end_date_value
+    return qa_range_preset_dates(preset_key)
+
+
+def _render_weekly_coach_summary_qa_inventory(inventory: dict[str, object]) -> None:
+    metadata_rows = [
+        {"Field": "User ID", "Value": inventory.get("user_id")},
+        {"Field": "Scenario", "Value": inventory.get("scenario")},
+        {"Field": "Selected Start", "Value": inventory.get("start_date")},
+        {"Field": "Selected End", "Value": inventory.get("end_date")},
+        {"Field": "Available Start", "Value": inventory.get("available_start_date")},
+        {"Field": "Available End", "Value": inventory.get("available_end_date")},
+        {"Field": "Data Quality", "Value": inventory.get("data_quality_label")},
+        {"Field": "Source", "Value": inventory.get("source")},
+        {
+            "Field": "Provider Free",
+            "Value": str(inventory.get("deterministic_provider_free")).lower(),
+        },
+        {"Field": "Public Safe", "Value": str(inventory.get("public_safe")).lower()},
+        {"Field": "Displayable", "Value": str(inventory.get("displayable")).lower()},
+    ]
+    st.markdown("**Selected QA Range Inventory**")
+    st.dataframe(pd.DataFrame(metadata_rows), width="stretch", hide_index=True)
+
+    fact_counts = inventory.get("fact_counts") or {}
+    fact_date_bounds = inventory.get("fact_date_bounds") or {}
+    distinct_logged_days = inventory.get("distinct_logged_days") or {}
+    completed_counts = inventory.get("completed_counts") or {}
+    fact_rows = []
+    if isinstance(fact_counts, dict):
+        for domain, count in fact_counts.items():
+            bounds = (
+                fact_date_bounds.get(domain, {})
+                if isinstance(fact_date_bounds, dict)
+                else {}
+            )
+            fact_rows.append(
+                {
+                    "Domain": domain,
+                    "Count": count,
+                    "Distinct Days": (
+                        distinct_logged_days.get(domain)
+                        if isinstance(distinct_logged_days, dict)
+                        else None
+                    ),
+                    "Completed": (
+                        completed_counts.get(domain)
+                        if isinstance(completed_counts, dict)
+                        else None
+                    ),
+                    "Min Date": (
+                        bounds.get("min_date") if isinstance(bounds, dict) else None
+                    ),
+                    "Max Date": (
+                        bounds.get("max_date") if isinstance(bounds, dict) else None
+                    ),
+                    "Reason": (
+                        bounds.get("reason") if isinstance(bounds, dict) else None
+                    ),
+                }
+            )
+    if fact_rows:
+        st.dataframe(pd.DataFrame(fact_rows), width="stretch", hide_index=True)
+
+    diagnosis_codes = inventory.get("diagnosis_codes") or []
+    limitations = inventory.get("limitations") or []
+    st.markdown("**Diagnosis Codes:**")
+    st.write(", ".join(diagnosis_codes) or "None")
+    st.markdown("**Limitations:**")
+    st.write(", ".join(limitations) or "None")
+
+    if "selected_range_out_of_bounds" in diagnosis_codes:
+        st.warning(
+            "Selected range has no data for this user. Available data exists from "
+            f"{inventory.get('available_start_date')} to {inventory.get('available_end_date')}."
+        )
+    elif not inventory.get("selected_range_has_data"):
+        st.warning("Selected range has no data for this user.")
 
 
 def _render_weekly_coach_summary_sections(sections: dict[str, object]) -> None:
@@ -9072,16 +9133,16 @@ def _weekly_coach_summary_elapsed_ms(start: float) -> float:
 
 
 def _store_weekly_coach_summary_timing(
-    user_id: int,
+    cache_key: str,
     action: str,
     timings: dict[str, float],
 ) -> None:
     timing_cache = st.session_state.weekly_coach_summary_timing_by_user
-    timing_cache[user_id] = {"action": action, **timings}
+    timing_cache[cache_key] = {"action": action, **timings}
 
 
-def _render_weekly_coach_summary_timing(user_id: int) -> None:
-    timings = st.session_state.weekly_coach_summary_timing_by_user.get(user_id)
+def _render_weekly_coach_summary_timing(cache_key: str) -> None:
+    timings = st.session_state.weekly_coach_summary_timing_by_user.get(cache_key)
     if not timings:
         return
 
@@ -9118,69 +9179,162 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
         return
 
     panel_start = perf_counter()
-    st.subheader("Developer Mode: Weekly Coach Summary Preview")
+    st.subheader("Developer Mode: Weekly Coach Summary QA Date Range Debug")
     st.caption(
-        "Developer Mode-only deterministic inspection. Generation is manual, "
-        "persistence is explicit, and no provider runtime is used."
+        "Developer Mode-only deterministic QA date-range inspection. Actions are "
+        "manual, selected user/date values are typed, and no provider runtime is used."
     )
 
-    scenarios = weekly_coach_summary_developer_scenarios()
-    scenario_label = st.selectbox(
-        "Weekly Coach Summary scenario",
-        options=list(scenarios.keys()),
-        key="weekly_coach_summary_developer_scenario",
+    user_options = weekly_coach_summary_qa_user_options()
+    user_ids = list(user_options.keys())
+    selected_user_id = st.selectbox(
+        "QA user",
+        options=user_ids,
+        index=user_ids.index(DEFAULT_QA_DATE_RANGE_USER_ID),
+        format_func=lambda option: user_options[int(option)],
+        key="weekly_coach_summary_qa_user_id",
     )
-    fixture = _weekly_coach_summary_selected_fixture(scenario_label, user_id)
+    range_presets = weekly_coach_summary_qa_range_presets()
+    preset_keys = list(range_presets.keys())
+    selected_preset_key = st.selectbox(
+        "Range preset",
+        options=preset_keys,
+        index=preset_keys.index(DEFAULT_QA_DATE_RANGE_PRESET_KEY),
+        format_func=lambda option: str(range_presets[str(option)]["label"]),
+        key="weekly_coach_summary_qa_range_preset",
+    )
+    selected_preset = range_presets[selected_preset_key]
+    is_custom_range = selected_preset_key == "custom"
+
+    date_col1, date_col2 = st.columns(2)
+    with date_col1:
+        start_date_input = st.date_input(
+            "Start date",
+            value=selected_preset["start_date"],
+            disabled=not is_custom_range,
+            key=f"weekly_coach_summary_qa_start_date_{selected_preset_key}",
+        )
+    with date_col2:
+        end_date_input = st.date_input(
+            "End date",
+            value=selected_preset["end_date"],
+            disabled=not is_custom_range,
+            key=f"weekly_coach_summary_qa_end_date_{selected_preset_key}",
+        )
+
+    selected_start_date, selected_end_date = _weekly_coach_summary_selected_range(
+        selected_preset_key,
+        start_date_input,
+        end_date_input,
+    )
+    range_key = qa_date_range_cache_key(
+        int(selected_user_id), selected_start_date, selected_end_date
+    )
+
+    inventory_cache = st.session_state.weekly_coach_summary_qa_inventory_by_range
     preview_cache = st.session_state.weekly_coach_summary_preview_by_user
     persisted_cache = st.session_state.weekly_coach_summary_persisted_by_user
     message_cache = st.session_state.weekly_coach_summary_message_by_user
 
-    if st.button(
-        "Generate deterministic weekly summary preview",
-        key="weekly_coach_summary_generate_preview_button",
-    ):
-        action_start = perf_counter()
-        context_start = perf_counter()
-        context = build_weekly_summary_context_from_fixture(**fixture)
-        context_ms = _weekly_coach_summary_elapsed_ms(context_start)
-        generation_start = perf_counter()
-        summary = generate_approved_weekly_summary(context)
-        generation_ms = _weekly_coach_summary_elapsed_ms(generation_start)
-        sections_start = perf_counter()
-        sections = approved_weekly_summary_to_public_sections(summary)
-        sections_ms = _weekly_coach_summary_elapsed_ms(sections_start)
-        preview_cache[user_id] = {
-            "scenario": scenario_label,
-            "fixture": fixture,
-            "period": context.period.to_dict(),
-            "summary": summary,
-            "sections": sections,
-        }
-        message_cache[user_id] = "Approved deterministic weekly summary generated."
-        _store_weekly_coach_summary_timing(
-            user_id,
-            "generate",
-            {
-                "context_build_ms": context_ms,
-                "deterministic_generation_ms": generation_ms,
-                "section_build_ms": sections_ms,
-                "total_action_ms": _weekly_coach_summary_elapsed_ms(action_start),
-            },
-        )
+    st.caption(
+        "Selected QA range: "
+        f"user {selected_user_id}, {selected_start_date.isoformat()} through "
+        f"{selected_end_date.isoformat()}."
+    )
 
-    cached_preview = preview_cache.get(user_id)
+    inspect_col, generate_col = st.columns(2)
+    with inspect_col:
+        if st.button(
+            "Inspect selected QA range",
+            key="weekly_coach_summary_inspect_selected_range_button",
+        ):
+            inspect_start = perf_counter()
+            inventory = inspect_weekly_summary_qa_range(
+                user_id=int(selected_user_id),
+                start_date=selected_start_date,
+                end_date=selected_end_date,
+            )
+            inventory_cache[range_key] = inventory.to_dict()
+            message_cache[range_key] = "Selected QA range inventory inspected."
+            _store_weekly_coach_summary_timing(
+                range_key,
+                "inspect_selected_range",
+                {
+                    "inspect_selected_range_ms": _weekly_coach_summary_elapsed_ms(
+                        inspect_start
+                    )
+                },
+            )
+
+    with generate_col:
+        if st.button(
+            "Generate deterministic weekly summary from selected QA range",
+            key="weekly_coach_summary_generate_selected_range_button",
+        ):
+            action_start = perf_counter()
+            inventory_start = perf_counter()
+            inventory = inspect_weekly_summary_qa_range(
+                user_id=int(selected_user_id),
+                start_date=selected_start_date,
+                end_date=selected_end_date,
+            )
+            inventory_ms = _weekly_coach_summary_elapsed_ms(inventory_start)
+            context_start = perf_counter()
+            context = build_weekly_summary_context_from_qa_range(
+                user_id=int(selected_user_id),
+                start_date=selected_start_date,
+                end_date=selected_end_date,
+            )
+            context_ms = _weekly_coach_summary_elapsed_ms(context_start)
+            generation_start = perf_counter()
+            summary = generate_approved_weekly_summary(context)
+            generation_ms = _weekly_coach_summary_elapsed_ms(generation_start)
+            sections_start = perf_counter()
+            sections = approved_weekly_summary_to_public_sections(summary)
+            sections_ms = _weekly_coach_summary_elapsed_ms(sections_start)
+            inventory_cache[range_key] = inventory.to_dict()
+            preview_cache[range_key] = {
+                "range_key": range_key,
+                "inventory": inventory.to_dict(),
+                "period": context.period.to_dict(),
+                "summary": summary,
+                "sections": sections,
+            }
+            message_cache[range_key] = (
+                "Approved deterministic weekly summary generated."
+            )
+            _store_weekly_coach_summary_timing(
+                range_key,
+                "generate_selected_range",
+                {
+                    "inventory_ms": inventory_ms,
+                    "context_build_ms": context_ms,
+                    "deterministic_generation_ms": generation_ms,
+                    "section_build_ms": sections_ms,
+                    "total_action_ms": _weekly_coach_summary_elapsed_ms(action_start),
+                },
+            )
+
+    cached_inventory = inventory_cache.get(range_key)
+    if cached_inventory:
+        st.success(message_cache.get(range_key, "Selected QA range inspected."))
+        _render_weekly_coach_summary_qa_inventory(cached_inventory)
+
+    cached_preview = preview_cache.get(range_key)
     if cached_preview:
         sections = cached_preview["sections"]
         period = cached_preview["period"]
         st.success(
-            message_cache.get(user_id, "Approved deterministic weekly summary ready.")
+            message_cache.get(range_key, "Approved deterministic weekly summary ready.")
         )
         st.write(f"**Period:** {period['week_start']} to {period['week_end']}")
         metadata_rows = [
+            {"Field": "User ID", "Value": period["user_id"]},
             {"Field": "Source", "Value": sections["source"]},
             {"Field": "Confidence", "Value": sections["confidence"]},
             {"Field": "Public Safe", "Value": str(sections["public_safe"]).lower()},
             {"Field": "Displayable", "Value": str(sections["displayable"]).lower()},
+            {"Field": "Provider Attempted", "Value": "false"},
         ]
         st.dataframe(pd.DataFrame(metadata_rows), width="stretch", hide_index=True)
         _render_weekly_coach_summary_sections(sections)
@@ -9192,14 +9346,14 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
         save_col, load_col = st.columns(2)
         with save_col:
             if st.button(
-                "Save approved deterministic summary",
-                key="weekly_coach_summary_save_button",
+                "Save selected-range approved summary",
+                key="weekly_coach_summary_save_selected_range_button",
             ):
                 save_start = perf_counter()
                 try:
                     saved = save_approved_weekly_summary(
                         summary=cached_preview["summary"],
-                        user_id=user_id,
+                        user_id=int(selected_user_id),
                         week_start=period["week_start"],
                         week_end=period["week_end"],
                         sanitized_metadata={
@@ -9214,7 +9368,9 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                             "parse_status": "not_attempted",
                             "validation_status": "approved",
                             "final_summary_source": sections["source"],
-                            "generated_by": "developer_mode_weekly_summary_preview",
+                            "generated_by": "developer_mode_weekly_summary_qa_date_range_debug",
+                            "source": "qa_date_range_debug",
+                            "range_key": range_key,
                         },
                     )
                 except WeeklyCoachSummaryPersistenceError:
@@ -9222,28 +9378,28 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                         "Weekly summary was not saved because it failed safety checks."
                     )
                 else:
-                    persisted_cache[user_id] = saved
+                    persisted_cache[range_key] = saved
                     _store_weekly_coach_summary_timing(
-                        user_id,
-                        "save",
+                        range_key,
+                        "save_selected_range",
                         {"save_ms": _weekly_coach_summary_elapsed_ms(save_start)},
                     )
                     st.success(f"Saved weekly summary record {saved.record_id}.")
         with load_col:
             if st.button(
-                "Load latest persisted weekly summary",
-                key="weekly_coach_summary_load_button",
+                "Load latest selected-range summary",
+                key="weekly_coach_summary_load_selected_range_button",
             ):
                 load_start = perf_counter()
                 latest = get_latest_approved_weekly_summary(
-                    user_id=user_id,
+                    user_id=int(selected_user_id),
                     week_start=period["week_start"],
                     week_end=period["week_end"],
                 )
                 if latest is None:
                     _store_weekly_coach_summary_timing(
-                        user_id,
-                        "load_latest_empty",
+                        range_key,
+                        "load_selected_range_empty",
                         {
                             "load_latest_ms": _weekly_coach_summary_elapsed_ms(
                                 load_start
@@ -9251,13 +9407,13 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                         },
                     )
                     st.warning(
-                        "No persisted approved weekly summary found for this period."
+                        "No persisted approved weekly summary found for this selected user/range."
                     )
                 else:
-                    persisted_cache[user_id] = latest
+                    persisted_cache[range_key] = latest
                     _store_weekly_coach_summary_timing(
-                        user_id,
-                        "load_latest",
+                        range_key,
+                        "load_selected_range",
                         {
                             "load_latest_ms": _weekly_coach_summary_elapsed_ms(
                                 load_start
@@ -9266,7 +9422,7 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                     )
                     st.success(f"Loaded weekly summary record {latest.record_id}.")
 
-    persisted = persisted_cache.get(user_id)
+    persisted = persisted_cache.get(range_key)
     if persisted:
         st.markdown("**Persisted Weekly Coach Summary Metadata:**")
         persisted_rows = [
@@ -9293,14 +9449,14 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
             )
 
     _store_weekly_coach_summary_timing(
-        user_id,
+        range_key,
         "panel_render",
         {
-            **st.session_state.weekly_coach_summary_timing_by_user.get(user_id, {}),
+            **st.session_state.weekly_coach_summary_timing_by_user.get(range_key, {}),
             "panel_render_ms": _weekly_coach_summary_elapsed_ms(panel_start),
         },
     )
-    _render_weekly_coach_summary_timing(user_id)
+    _render_weekly_coach_summary_timing(range_key)
 
 
 def _developer_mode_latency_elapsed_ms(start: float) -> float:

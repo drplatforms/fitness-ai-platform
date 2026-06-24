@@ -14,7 +14,3 @@ Hardened the Developer Mode Weekly Coach Summary QA Date Range Debug path.
 - Deterministic provider-free generation from selected range.
 - Selected-range save/load isolation.
 - No provider runtime, Ollama, CrewAI, qwen, workers, queues, schedulers, polling, automatic generation, public/default display, raw provider output, prompts, scratchpad, tracebacks, or secrets.
-
-## Acceptance focus
-
-Confirm Linux user 102 happy path, user 105 low-data path, out-of-range warning path, no provider calls, and no raw row/secret/prompt/provider output leakage.

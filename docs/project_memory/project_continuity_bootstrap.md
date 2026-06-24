@@ -1,9 +1,27 @@
-# Current implementation update - Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening
+# Current implementation update - Provider Runtime Resource Lifecycle Design v1
 
-Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening is implemented on `feature/weekly-coach-summary-qa-date-range-debug-v2-hardening` after the accepted `2101922 Add top-level Streamlit lazy navigation` prerequisite.
+Provider Runtime Resource Lifecycle Design v1 is implemented on
+`feature/provider-runtime-resource-lifecycle-design-v1` after accepted commit
+`0fd327d Restore weekly QA selected-range persistence controls`.
 
-The Developer Mode Weekly Coach Summary QA Date Range Debug path now uses stable typed QA user/date selections, defaults to user 102 for `2026-06-08` through `2026-06-14`, supports the user 105 low-data path, exposes only safe aggregate fact inventory, and generates deterministic provider-free weekly summary output from the selected range.
+This milestone defines the project-level Ollama lifecycle policy and adds a
+small developer-only diagnostic/helper layer. Direct Ollama payload construction
+for Daily Coach Narrative and Nutrition Explanation now uses the central lifecycle
+helper so `keep_alive` is explicit instead of relying on Ollama default residency
+behavior.
 
-Normal/default UI and Today behavior are unchanged. Top-level lazy navigation remains in place so Linux Developer page access stays fast. Provider runtime, Ollama, CrewAI, qwen, worker/queue/scheduler/polling, automatic generation, public/default Weekly Coach Summary display, raw rows, raw provider output, prompts, scratchpad, tracebacks, and secrets remain out of scope.
+Current default:
 
-Continuation note: future weekly provider work must start from the selected user/date-range fact inventory seam and remain deterministic until parser/validator/provider runtime design is accepted.
+- `FITNESS_AI_OLLAMA_KEEP_ALIVE=0` when unset
+- `FITNESS_AI_OLLAMA_UNLOAD_AFTER_REQUEST=true` when unset
+- manual unload helper targets only a named model
+- diagnostics do not generate provider output or dump secrets
+
+Backlog captured:
+
+- Daily Narrative Provider Quality + Grounding v1
+- Streamlit Theme Cleanup v1
+- Workout Exercise Variety Rotation v1
+
+Weekly Coach Summary provider runtime remains not authorized until a separate
+Provider Runtime Design milestone is accepted.

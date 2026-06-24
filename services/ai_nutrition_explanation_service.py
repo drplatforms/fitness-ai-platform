@@ -42,6 +42,10 @@ from services.nutrition_target_vs_actual_service import (
     build_target_vs_actual_nutrition_summary,
 )
 from services.nutrition_trend_service import build_nutrition_trend_window
+from services.provider_lifecycle_service import (
+    build_ollama_generate_payload,
+    resolve_provider_lifecycle_policy,
+)
 from services.user_service import get_user_profile
 from services.user_state_service import build_user_health_state
 
@@ -669,13 +673,17 @@ def call_direct_ollama_generate(
     """
 
     endpoint = f"{base_url.rstrip('/')}/api/generate"
-    payload = {
-        "model": selected_model,
-        "prompt": prompt,
-        "format": response_schema,
-        "stream": False,
-        "options": {"temperature": 0},
-    }
+    policy = resolve_provider_lifecycle_policy(
+        provider_name="nutrition_explanation_direct_ollama",
+        model_name=selected_model,
+    )
+    payload = build_ollama_generate_payload(
+        model_name=selected_model,
+        prompt=prompt,
+        response_schema=response_schema,
+        options={"temperature": 0},
+        policy=policy,
+    )
 
     try:
         response = requests.post(endpoint, json=payload, timeout=timeout_seconds)

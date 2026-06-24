@@ -1,10 +1,10 @@
 # Next milestone
 
 Current active milestone:
-Weekly Coach Summary QA Data Context Integration v1
+Provider Runtime Resource Lifecycle Design v1
 
 Current branch:
-`feature/weekly-coach-summary-qa-data-context-integration-v1`
+`feature/provider-runtime-resource-lifecycle-design-v1`
 
 Current status:
 IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
@@ -13,7 +13,16 @@ Recommended next milestone after acceptance:
 Weekly Coach Summary Provider Runtime Design v1
 
 Purpose:
-Define exactly what qwen2.5:3b receives, what JSON schema it must return, how parser/validator/fallback works, what can be persisted/displayed, and how Developer Mode manual provider preview should behave.
+Define exactly what qwen2.5:3b receives, what JSON schema it must return, how
+parser/validator/fallback works, how provider lifecycle policy applies, what can
+be persisted/displayed, and how Developer Mode manual provider preview should
+behave.
+
+Alternative next milestones if priorities change:
+
+- Daily Narrative Provider Quality + Grounding v1
+- Streamlit Theme Cleanup v1
+- Workout Exercise Variety Rotation v1
 
 Status:
 NOT_AUTHORIZED_YET

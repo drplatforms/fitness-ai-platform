@@ -8,28 +8,28 @@
     "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
-    "latest_final_status": "WEEKLY_COACH_SUMMARY_QA_DATE_RANGE_DEBUG_V2_ACCEPTED",
-    "latest_accepted_commit": "a9e0475",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_a9e0475_harden-weekly-coach-summary-qa-date-range-debug.zip",
-    "latest_main_merge_commit": "ce0baa8",
-    "latest_main_merge_snapshot": "fitness_ai_snapshot_2026-06-23_38b7868_add-weekly-coach-summary-async-contracts.zip",
-    "prior_accepted_milestone": "Top-Level Streamlit Lazy Navigation v1",
-    "prior_final_status": "TOP_LEVEL_STREAMLIT_LAZY_NAVIGATION_V1_ACCEPTED",
-    "prior_main_merge_commit": "2101922"
+    "latest_accepted_milestone": "Weekly Coach Summary QA Data Context Integration v1",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_QA_DATA_CONTEXT_INTEGRATION_V1_ACCEPTED",
+    "latest_accepted_commit": "0fd327d",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_0fd327d_restore-weekly-qa-selected-range-persistence-controls.zip",
+    "latest_main_merge_commit": "0fd327d",
+    "latest_main_merge_snapshot": "no additional main snapshot by policy",
+    "prior_accepted_milestone": "Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening",
+    "prior_final_status": "WEEKLY_COACH_SUMMARY_QA_DATE_RANGE_DEBUG_V2_ACCEPTED",
+    "prior_main_merge_commit": "a9e0475"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary QA Data Context Integration v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-qa-data-context-integration-v1",
+    "current_authorized_milestone": "Provider Runtime Resource Lifecycle Design v1",
+    "current_authorized_branch": "feature/provider-runtime-resource-lifecycle-design-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Integrate selected QA date-range fact inventory into a richer backend-owned deterministic WeeklyCoachSummaryContext.",
+    "current_authorized_scope": "Define conservative local Ollama lifecycle policy, diagnostics, and named-model unload helper before additional provider runtime work.",
     "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Runtime Design v1",
     "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Backend-owned selected-range context is the final deterministic grounding seam before provider runtime design.",
+    "next_milestone_reason": "Provider lifecycle policy should be accepted before future qwen provider runtime design.",
     "codex": "DO NOT USE BY DEFAULT",
     "selected_next_async_candidate": "Weekly Coach Summary Async Job",
     "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "required_prerequisite_commit": "a9e0475 Harden weekly coach summary QA date range debug"
+    "required_prerequisite_commit": "0fd327d Restore weekly QA selected-range persistence controls"
   },
   "runtime_split": {
     "windows": [
@@ -191,5 +191,21 @@
     "normal_ui": "unchanged; diagnostics are Developer Mode-only",
     "provider_runtime": "not used",
     "raw_rows": "not displayed"
+  },
+  "provider_lifecycle": {
+    "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
+    "branch": "feature/provider-runtime-resource-lifecycle-design-v1",
+    "policy_doc": "docs/project_memory/provider_runtime_resource_lifecycle_policy.md",
+    "service": "services/provider_lifecycle_service.py",
+    "diagnostic_tool": "tools/dev_ollama_lifecycle_diagnostics.py",
+    "default_keep_alive": "0",
+    "default_unload_after_request": true,
+    "manual_unload": "named-model only via Ollama API; no broad process kill",
+    "weekly_coach_summary_provider_runtime": "not authorized",
+    "backlog": [
+      "Daily Narrative Provider Quality + Grounding v1",
+      "Streamlit Theme Cleanup v1",
+      "Workout Exercise Variety Rotation v1"
+    ]
   }
 }

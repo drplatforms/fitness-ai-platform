@@ -1,7 +1,23 @@
-# Current implementation update - Weekly Coach Summary QA Data Context Integration v1
+# Current implementation update - Provider Runtime Resource Lifecycle Design v1
 
-Weekly Coach Summary QA Data Context Integration v1 is implemented on `feature/weekly-coach-summary-qa-data-context-integration-v1` after the accepted `a9e0475 Harden weekly coach summary QA date range debug` milestone.
+Provider Runtime Resource Lifecycle Design v1 is implemented on
+`feature/provider-runtime-resource-lifecycle-design-v1` after accepted commit
+`0fd327d Restore weekly QA selected-range persistence controls`.
 
-The Developer Mode Weekly Coach Summary QA Date Range Debug path now builds/uses a backend-owned selected-range `WeeklyCoachSummaryContext` with safe aggregate facts, selected user/date provenance, source metadata, data quality, limitations, and reason codes. User 102 for `2026-05-31` through `2026-06-06` remains the happy path, while user 105 for the same range remains the low-data/fallback path.
+The milestone defines a conservative provider lifecycle policy for local Ollama
+usage before additional qwen or Weekly Coach Summary provider runtime work. It
+adds a backend-owned lifecycle service, developer-only Ollama diagnostics, a safe
+named-model unload helper, tests, and a policy document.
 
-Normal/default UI and Today behavior are unchanged. Top-level lazy navigation remains in place so Linux Developer page access stays fast. Provider runtime, Ollama, CrewAI, qwen, worker/queue/scheduler/polling, automatic generation, public/default Weekly Coach Summary display, raw rows, raw provider output, prompts, scratchpad, tracebacks, and secrets remain out of scope.
+Default local direct Ollama behavior now routes supported payload construction
+through a central lifecycle helper with `keep_alive` defaulting to `0`. Manual
+unload is explicit and targets only the named model. No arbitrary process kill,
+server-wide termination, provider output generation, secret dump, public/default
+UI change, Weekly Coach Summary provider runtime, qwen call, CrewAI orchestration,
+worker, queue, scheduler, polling, or automatic provider generation is added.
+
+Downstream backlog captured:
+
+- Daily Narrative Provider Quality + Grounding v1
+- Streamlit Theme Cleanup v1 for FSU color leakage
+- Workout Exercise Variety Rotation v1

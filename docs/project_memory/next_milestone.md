@@ -1,21 +1,13 @@
 # Next milestone
 
-## Current authorized milestone
+Current active milestone:
+Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening
 
-Top-Level Streamlit Lazy Navigation v1
+Current branch:
+`feature/weekly-coach-summary-qa-date-range-debug-v2-hardening`
 
-## Goal
+Current status:
+IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Fix Linux Streamlit top-level navigation latency by replacing eager top-level tab rendering with selected-page rendering.
-
-## After acceptance
-
-Return to Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening after Linux runtime confirms Developer no longer waits for Workout/History cold renders.
-
-## Boundaries
-
-- No provider runtime.
-- No Ollama/CrewAI/qwen calls.
-- No Weekly QA hardening in this prerequisite branch.
-- No schema changes.
-- No raw debug/provider leakage.
+Recommended next milestone after acceptance:
+Weekly Coach Summary QA Data Context Integration v1

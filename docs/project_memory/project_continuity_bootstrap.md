@@ -1,36 +1,9 @@
-# Project continuity bootstrap
+# Current implementation update - Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening
 
-Current milestone: Developer Mode Linux Latency Investigation v1
+Weekly Coach Summary QA Date Range Debug v2 Acceptance Hardening is implemented on `feature/weekly-coach-summary-qa-date-range-debug-v2-hardening` after the accepted `2101922 Add top-level Streamlit lazy navigation` prerequisite.
 
-Branch: `feature/developer-mode-linux-latency-investigation-v1`
+The Developer Mode Weekly Coach Summary QA Date Range Debug path now uses stable typed QA user/date selections, defaults to user 102 for `2026-06-08` through `2026-06-14`, supports the user 105 low-data path, exposes only safe aggregate fact inventory, and generates deterministic provider-free weekly summary output from the selected range.
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+Normal/default UI and Today behavior are unchanged. Top-level lazy navigation remains in place so Linux Developer page access stays fast. Provider runtime, Ollama, CrewAI, qwen, worker/queue/scheduler/polling, automatic generation, public/default Weekly Coach Summary display, raw rows, raw provider output, prompts, scratchpad, tracebacks, and secrets remain out of scope.
 
-Latest accepted prerequisite: QA Seed Data Verification CLI v1 (`1266bb7`).
-
-Current work reduces Linux Developer tab latency while keeping Linux as a first-class runtime validation target. Runtime / DB diagnostics are now action-driven instead of eager on Developer tab open, and Developer Mode timing records safe aggregate render/action timings.
-
-Do not use Codex by default. Do not add provider runtime, Ollama, CrewAI, qwen, workers, queues, schedulers, polling, public/default Weekly Coach Summary display, or raw debug leakage.
-
-## Windows-local helper addendum
-
-Added/hardened `wapp` as a Windows-local FastAPI + Streamlit launcher for latency comparison against the Linux canonical runtime.
-
-- Uses repo `.venv\Scripts\python.exe` by default.
-- Starts FastAPI on `127.0.0.1`.
-- Starts Streamlit on `127.0.0.1`.
-- Avoids SSH and Linux helper paths.
-- Adds `wstatus` and `wstop` wrappers for Windows-local status/stop.
-- Keeps `app` as the Linux canonical runtime launcher.
-
-## Windows-local helper addendum repair
-
-Repaired the Windows-local helper addendum so `wapp`, `wstatus`, and `wstop` are actually defined and listed by the command menu.
-
-- `wapp` uses repo `.venv\Scripts\python.exe` by default.
-- `wapp` starts FastAPI on `127.0.0.1`.
-- `wapp` starts Streamlit on `127.0.0.1`.
-- `wapp` avoids SSH and Linux helper paths.
-- `wstatus` delegates to `fports`.
-- `wstop` delegates to `fkill`.
-- `app` remains the Linux canonical runtime launcher.
+Continuation note: future weekly provider work must start from the selected user/date-range fact inventory seam and remain deterministic until parser/validator/provider runtime design is accepted.

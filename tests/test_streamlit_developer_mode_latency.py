@@ -54,6 +54,7 @@ def test_developer_session_state_defaults_are_cheap_for_heavy_results() -> None:
     assert '"weekly_coach_summary_preview_by_user": {}' in source
     assert '"weekly_coach_summary_persisted_by_user": {}' in source
     assert '"weekly_coach_summary_timing_by_user": {}' in source
+    assert '"weekly_coach_summary_qa_inventory_by_range": {}' in source
     defaults_start = source.index("SESSION_DEFAULTS = {")
     defaults_end = source.index("for key, default_value in SESSION_DEFAULTS.items():")
     defaults_source = source[defaults_start:defaults_end]
@@ -82,7 +83,7 @@ def test_developer_tab_keeps_expensive_work_button_driven() -> None:
         "render_weekly_coach_summary_developer_inspection(user_id)" in developer_source
     )
     assert weekly_source.index(
-        "Generate deterministic weekly summary preview"
+        "Generate deterministic weekly summary from selected QA range"
     ) < weekly_source.index("generate_approved_weekly_summary(context)")
     assert runtime_source.index(
         "Refresh runtime / DB diagnostics"

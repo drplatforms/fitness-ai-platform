@@ -25,6 +25,7 @@ from services.daily_coach_async_provider_runtime_service import (
     resolve_daily_coach_async_provider_runtime_config,
     run_daily_coach_async_provider_runtime_prototype,
 )
+from services.runtime_diagnostics_service import build_runtime_db_diagnostics
 from services.weekly_coach_summary_persistence_service import (
     WeeklyCoachSummaryPersistenceError,
     get_latest_approved_weekly_summary,
@@ -1195,7 +1196,7 @@ def substitution_candidate_option_label(candidate: dict) -> str:
     equipment = format_substitution_list(candidate.get("required_equipment"))
     movement_pattern = humanize_label(candidate.get("movement_pattern"))
 
-    return f"{candidate.get('name', 'Unknown')} " f"({movement_pattern}; {equipment})"
+    return f"{candidate.get('name', 'Unknown')} ({movement_pattern}; {equipment})"
 
 
 def display_active_substitution(apply_response: dict | None) -> None:
@@ -1515,8 +1516,7 @@ def display_substitution_candidates(
             "substitution_apply_error_detail"
         ):
             st.caption(
-                "Developer detail: "
-                f"{st.session_state.substitution_apply_error_detail}"
+                f"Developer detail: {st.session_state.substitution_apply_error_detail}"
             )
         st.session_state.substitution_apply_error = None
 
@@ -1596,7 +1596,7 @@ def display_substitution_candidates(
         )
     except requests.RequestException as exc:
         if st.session_state.get("developer_mode", False):
-            st.caption("Developer detail: " f"{extract_api_error_message(exc)}")
+            st.caption(f"Developer detail: {extract_api_error_message(exc)}")
         st.info(
             "No replacement candidates are available for this exercise yet. "
             "Keep the original exercise or regenerate the workout."
@@ -4514,7 +4514,7 @@ def create_daily_coach_async_developer_job(
 
     try:
         response = requests.post(
-            f"{API_BASE_URL}/daily-coach/{user_id}" "/async-narrative/developer/jobs",
+            f"{API_BASE_URL}/daily-coach/{user_id}/async-narrative/developer/jobs",
             params=params,
             json={},
             timeout=30,
@@ -9301,6 +9301,125 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     _render_weekly_coach_summary_timing(user_id)
 
 
+def _runtime_diagnostic_table(mapping: dict) -> None:
+    rows = [
+        {"Field": key, "Value": "" if value is None else str(value)}
+        for key, value in mapping.items()
+    ]
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+
+def _runtime_qa_seed_rows(diagnostics: list[dict]) -> list[dict]:
+    rows = []
+    for user in diagnostics:
+        recovery = user.get("recovery") or {}
+        nutrition = user.get("nutrition") or {}
+        workouts = user.get("workouts") or {}
+        actual_sets = user.get("actual_sets") or {}
+        rows.append(
+            {
+                "User ID": user.get("user_id"),
+                "Exists": user.get("user_exists"),
+                "Scenario": user.get("scenario"),
+                "Recovery Count": recovery.get("row_count"),
+                "Recovery Min": recovery.get("min_date"),
+                "Recovery Max": recovery.get("max_date"),
+                "Nutrition Count": nutrition.get("row_count"),
+                "Nutrition Min": nutrition.get("min_date"),
+                "Nutrition Max": nutrition.get("max_date"),
+                "Workout Count": workouts.get("row_count"),
+                "Workout Min": workouts.get("min_date"),
+                "Workout Max": workouts.get("max_date"),
+                "Actual Set Count": actual_sets.get("row_count"),
+                "Actual Set Min": actual_sets.get("min_date"),
+                "Actual Set Max": actual_sets.get("max_date"),
+            }
+        )
+    return rows
+
+
+def render_runtime_db_source_verification() -> None:
+    if not st.session_state.get("developer_mode", False):
+        return
+
+    st.subheader("Runtime / DB Source Verification")
+    st.caption(
+        "Developer Mode-only diagnostic. Shows sanitized runtime identity, "
+        "database source, and QA seed aggregate counts/date bounds. No raw rows, "
+        "secrets, provider output, prompts, or stack traces are displayed."
+    )
+
+    refresh = st.button(
+        "Refresh runtime / DB diagnostics",
+        key="runtime_db_diagnostics_refresh_button",
+    )
+    if refresh or "runtime_db_diagnostics" not in st.session_state:
+        st.session_state.runtime_db_diagnostics = build_runtime_db_diagnostics(
+            api_base_url=API_BASE_URL
+        )
+
+    diagnostics = st.session_state.get("runtime_db_diagnostics") or {}
+    warnings = diagnostics.get("warnings") or []
+    for warning in warnings:
+        st.warning(warning)
+
+    st.markdown("**Runtime Identity**")
+    runtime_identity = diagnostics.get("runtime_identity") or {}
+    _runtime_diagnostic_table(
+        {
+            "git_commit_short": runtime_identity.get("git_commit_short"),
+            "git_commit_full": runtime_identity.get("git_commit_full"),
+            "git_branch": runtime_identity.get("git_branch"),
+            "dirty_working_tree": runtime_identity.get("dirty_working_tree"),
+            "repository_root": runtime_identity.get("repository_root"),
+            "current_working_directory": runtime_identity.get(
+                "current_working_directory"
+            ),
+            "python_executable": runtime_identity.get("python_executable"),
+            "python_version": runtime_identity.get("python_version"),
+            "platform": runtime_identity.get("platform"),
+        }
+    )
+
+    st.markdown("**Database Source**")
+    database_source = diagnostics.get("database_source") or {}
+    _runtime_diagnostic_table(
+        {
+            "resolved_database_path": database_source.get("resolved_database_path"),
+            "database_exists": database_source.get("database_exists"),
+            "database_file_size_bytes": database_source.get("database_file_size_bytes"),
+            "database_modified_at": database_source.get("database_modified_at"),
+            "sqlite_connectable": database_source.get("sqlite_connectable"),
+            "available_table_count": database_source.get("available_table_count"),
+            "relevant_tables_found": ", ".join(
+                database_source.get("relevant_tables_found") or []
+            ),
+            "error_category": database_source.get("error_category"),
+        }
+    )
+
+    st.markdown("**Streamlit / FastAPI Context**")
+    streamlit_fastapi = diagnostics.get("streamlit_fastapi") or {}
+    _runtime_diagnostic_table(
+        {
+            "configured_api_base_url": streamlit_fastapi.get("configured_api_base_url"),
+            "diagnostic_path": streamlit_fastapi.get("diagnostic_path"),
+        }
+    )
+
+    st.markdown("**QA Seed Presence**")
+    qa_rows = _runtime_qa_seed_rows(diagnostics.get("qa_seed_diagnostics") or [])
+    if qa_rows:
+        st.dataframe(pd.DataFrame(qa_rows), width="stretch", hide_index=True)
+    else:
+        st.info("No QA seed diagnostics were returned.")
+
+    with st.expander(
+        "Developer details: sanitized runtime diagnostics", expanded=False
+    ):
+        st.json(diagnostics)
+
+
 def render_developer_section(user_id: int) -> None:
     st.header("Developer")
     st.caption(
@@ -9329,6 +9448,8 @@ def render_developer_section(user_id: int) -> None:
             ).get("workout_daily_state"),
         }
     )
+
+    render_runtime_db_source_verification()
 
     render_weekly_coach_summary_developer_inspection(user_id)
 

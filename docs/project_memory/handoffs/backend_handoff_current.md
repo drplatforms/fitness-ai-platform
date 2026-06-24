@@ -1,25 +1,28 @@
-# Backend Handoff — Weekly Coach Summary Persistence Latency Investigation v1
-
-Recipient: Architecture
+# Runtime / DB Source Verification v1 Handoff
 
 Project: AI Health Coach / fitness_ai
-
-Milestone: Weekly Coach Summary Persistence Latency Investigation v1
-
+Branch: feature/runtime-db-source-verification-v1
 Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
 
-Proposed final status: WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED
+## Summary
 
-Summary:
-The Weekly Coach Summary Developer Mode persistence latency was strongly narrowed to Streamlit full-app rerun behavior. The Developer Mode panel now uses Streamlit fragment reruns when available, adds Developer Mode-only timing diagnostics, and includes a CLI latency probe for the backend deterministic path.
+Added Developer Mode-only runtime/database source diagnostics so the app can prove which code, repo path, Python runtime, SQLite DB, and QA seed data are active.
 
-Boundaries:
-- Developer Mode-only behavior preserved
-- normal/default UI unchanged
-- normal Today unchanged
-- no public/default display
-- no provider runtime
-- no Ollama/CrewAI/qwen call
-- no automatic generation
-- no worker/queue/scheduler/polling
-- no persistence safety weakening
+## Files
+
+- services/runtime_diagnostics_service.py
+- tools/dev_runtime_db_diagnostics.py
+- ui/streamlit_app.py
+- tests/test_runtime_diagnostics_service.py
+- tests/test_streamlit_runtime_diagnostics_developer_mode.py
+- docs/project_memory/milestones/runtime_db_source_verification_v1.md
+- docs/project_memory/reviews/runtime_db_source_verification_v1.md
+
+## Boundaries
+
+- No Date-Range QA Debug v1 revival.
+- No Streamlit encoding cleanup.
+- No seed mutation.
+- No provider runtime.
+- No Ollama/CrewAI/qwen calls.
+- No raw rows/secrets/stack traces in UI.

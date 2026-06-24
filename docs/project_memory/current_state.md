@@ -1,24 +1,7 @@
-# Current implementation update — Weekly Coach Summary Persistence Latency Investigation v1
+# Current implementation update - Runtime / DB Source Verification v1
 
-Weekly Coach Summary Persistence Latency Investigation v1 is implemented on `feature/weekly-coach-summary-persistence-latency-investigation-v1`.
+Runtime / DB Source Verification v1 is implemented on `feature/runtime-db-source-verification-v1`.
 
-The milestone narrows the unacceptable Developer Mode persistence latency to Streamlit full-app rerun behavior and applies a targeted fragment-rerun fix for the Weekly Coach Summary Developer Mode panel. Developer Mode-only timing diagnostics and a CLI latency probe now exist. Persistence safety and provider-free boundaries are unchanged.
+This milestone adds a Developer Mode-only diagnostic panel and CLI that report runtime identity, git commit/branch where available, repo/cwd, Python executable/version, resolved SQLite path, DB existence/connectability, relevant table presence, and QA users 101-105 aggregate counts/date bounds.
 
-Latest accepted milestone: Weekly Coach Summary Async Persistence v1.
-
-Current proposed final status: `WEEKLY_COACH_SUMMARY_PERSISTENCE_LATENCY_INVESTIGATION_V1_ACCEPTED`.
-
-Boundaries preserved:
-
-- no public/default Weekly Coach Summary display
-- no normal Today Weekly Coach Summary display
-- no provider runtime
-- no Ollama/CrewAI/qwen calls
-- no worker/queue/scheduler/polling
-- no automatic weekly generation
-- no persistence safety weakening
-- no raw provider output persisted/displayed
-- no rejected provider output persisted/displayed
-- no prompt/raw context/scratchpad persisted/displayed
-
-Next likely milestone after acceptance: Weekly Coach Summary Persistence QA / Developer Mode Smoke v1.
+This milestone intentionally does not reintroduce the failed Weekly Coach Summary Date-Range QA Debug panel, does not clean Streamlit mojibake, does not reseed data, and does not call provider runtime/Ollama/CrewAI.

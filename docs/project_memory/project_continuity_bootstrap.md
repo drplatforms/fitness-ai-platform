@@ -32,3 +32,7 @@ Workflow reminder:
 - Temporary apply scripts live outside the repo under `C:\projects`.
 - Run apply scripts from repo root as `python ..\<script>.py`.
 - Never use `git add .`.
+
+## Runtime / DB Source Verification v1
+
+This milestone adds a permanent Developer Mode safety diagnostic to prove runtime identity and database source before future QA data work resumes. It follows the Date-Range QA Debug v1 failure and intentionally avoids reintroducing that panel or mixing in Streamlit encoding cleanup.

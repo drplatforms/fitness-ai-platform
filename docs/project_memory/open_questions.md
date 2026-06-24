@@ -1,26 +1,11 @@
 # Open Questions
 
-## Weekly Coach Summary Persistence Latency Investigation v1
+## Runtime / DB Source Verification v1
 
-Current status:
-Weekly Coach Summary Persistence Latency Investigation v1 is implemented and ready for Architecture review.
+- Do Windows and Linux resolve the same expected SQLite database path?
+- Do QA users 101-105 exist in the active runtime DB?
+- Do QA users 101-105 have expected recovery/nutrition/workout/actual-set counts and date bounds?
 
-Resolved:
+## Next likely milestone
 
-- Root cause was strongly narrowed to Streamlit full-app rerun behavior during Developer Mode button interactions.
-- A targeted Streamlit fragment-rerun fix was added for the Weekly Coach Summary Developer Mode panel.
-- Developer Mode-only timing diagnostics were added.
-- A CLI latency probe was added for the deterministic backend path.
-
-Open after acceptance:
-
-- QA should confirm Linux runtime generate/save/load timing is now acceptable.
-- If any interaction remains above 5 seconds, Architecture should decide whether to investigate other app-wide rendering costs before preview bridge work.
-
-## Still deferred
-
-- public/default Weekly Coach Summary display
-- normal Today integration
-- provider runtime
-- automatic weekly generation
-- worker/queue/scheduler/polling
+QA Seed Data Verification CLI v1 after Architecture acceptance.

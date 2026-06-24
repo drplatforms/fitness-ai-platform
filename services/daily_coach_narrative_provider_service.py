@@ -25,6 +25,10 @@ from services.daily_coach_narrative_validation_service import (
     score_daily_coach_narrative_candidate,
     validate_daily_coach_narrative_candidate,
 )
+from services.provider_lifecycle_service import (
+    build_ollama_generate_payload,
+    resolve_provider_lifecycle_policy,
+)
 
 OLLAMA_BASE_URL_ENV = "OLLAMA_BASE_URL"
 DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
@@ -465,13 +469,17 @@ def call_ollama_generate(
     ollama_base_url: str,
 ) -> str:
     url = ollama_base_url.rstrip("/") + "/api/generate"
-    payload = {
-        "model": _normalize_model_name(model_name),
-        "prompt": prompt,
-        "stream": False,
-        "format": DAILY_COACH_NARRATIVE_JSON_SCHEMA,
-        "options": {"temperature": 0.1},
-    }
+    policy = resolve_provider_lifecycle_policy(
+        provider_name="daily_coach_narrative_provider",
+        model_name=model_name,
+    )
+    payload = build_ollama_generate_payload(
+        model_name=model_name,
+        prompt=prompt,
+        response_schema=DAILY_COACH_NARRATIVE_JSON_SCHEMA,
+        options={"temperature": 0.1},
+        policy=policy,
+    )
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),

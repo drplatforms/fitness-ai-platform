@@ -20,17 +20,17 @@ DEFAULT_QA_LOW_DATA_USER_ID = 105
 DEFAULT_QA_DATE_RANGE_PRESET_KEY = "latest_seeded_week"
 
 QA_DATE_RANGE_PRESETS: dict[str, tuple[str, str]] = {
-    "latest_seeded_week": ("2026-06-08", "2026-06-14"),
-    "previous_seeded_week": ("2026-06-01", "2026-06-07"),
-    "recent_14_days": ("2026-06-01", "2026-06-14"),
-    "recent_28_days": ("2026-05-18", "2026-06-14"),
+    "latest_seeded_week": ("2026-05-31", "2026-06-06"),
+    "previous_seeded_week": ("2026-05-24", "2026-05-30"),
+    "recent_14_days": ("2026-05-24", "2026-06-06"),
+    "recent_28_days": ("2026-05-10", "2026-06-06"),
 }
 
 QA_DATE_RANGE_PRESET_LABELS: dict[str, str] = {
-    "latest_seeded_week": "Latest seeded week: 2026-06-08 through 2026-06-14",
-    "previous_seeded_week": "Previous seeded week: 2026-06-01 through 2026-06-07",
-    "recent_14_days": "Recent 14 days: 2026-06-01 through 2026-06-14",
-    "recent_28_days": "Recent 28 days: 2026-05-18 through 2026-06-14",
+    "latest_seeded_week": "Latest seeded week: 2026-05-31 through 2026-06-06",
+    "previous_seeded_week": "Previous seeded week: 2026-05-24 through 2026-05-30",
+    "recent_14_days": "Recent 14 days: 2026-05-24 through 2026-06-06",
+    "recent_28_days": "Recent 28 days: 2026-05-10 through 2026-06-06",
     "custom": "Custom",
 }
 
@@ -142,6 +142,16 @@ def _inventory_from_user_summary(
         domain: _domain_row_count(summary)
         for domain, summary in user.selected_range_counts.items()
     }
+    data_quality_label = user.data_quality_label
+    diagnosis_codes = list(user.diagnosis_codes)
+    limitations = list(user.limitations)
+    if user.scenario == "data_quality_limited":
+        data_quality_label = "limited"
+        diagnosis_codes.append("scenario_data_quality_limited")
+        limitations.append(
+            "QA user is a data-quality-limited scenario; keep conclusions cautious "
+            "even when selected-range counts are present."
+        )
     return WeeklyCoachSummaryQAInventory(
         user_id=user.user_id,
         scenario=user.scenario,
@@ -153,9 +163,9 @@ def _inventory_from_user_summary(
         selected_range_has_data=any(value > 0 for value in fact_counts.values()),
         available_start_date=available_start,
         available_end_date=available_end,
-        data_quality_label=user.data_quality_label,
-        diagnosis_codes=user.diagnosis_codes,
-        limitations=user.limitations,
+        data_quality_label=data_quality_label,
+        diagnosis_codes=tuple(dict.fromkeys(diagnosis_codes)),
+        limitations=tuple(dict.fromkeys(limitations)),
         fact_counts=fact_counts,
         fact_date_bounds={
             domain: _domain_bounds(summary)

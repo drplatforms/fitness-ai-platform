@@ -98,8 +98,16 @@ def create_context_fixture_db(path: Path) -> None:
         "INSERT INTO users (id, name) VALUES (?, ?)",
         [(102, "QA 102"), (105, "QA 105")],
     )
-    for index, day in enumerate(range(8, 15)):
-        checkin_date = f"2026-06-{day:02d}"
+    fixture_dates = [
+        "2026-05-31",
+        "2026-06-01",
+        "2026-06-02",
+        "2026-06-03",
+        "2026-06-04",
+        "2026-06-05",
+        "2026-06-06",
+    ]
+    for index, checkin_date in enumerate(fixture_dates):
         connection.execute(
             """
             INSERT INTO daily_checkins (
@@ -122,8 +130,10 @@ def create_context_fixture_db(path: Path) -> None:
             """,
             (102, 1, 100.0, checkin_date),
         )
-    for session_id, day in enumerate((8, 10, 12), start=1):
-        workout_date = f"2026-06-{day:02d}"
+    for session_id, workout_date in enumerate(
+        ("2026-06-01", "2026-06-03", "2026-06-05"),
+        start=1,
+    ):
         connection.execute(
             "INSERT INTO workout_sessions (id, user_id, workout_date) VALUES (?, ?, ?)",
             (session_id, 102, workout_date),
@@ -208,7 +218,7 @@ def create_context_fixture_db(path: Path) -> None:
             user_id, checkin_date, sleep_hours, energy_level, soreness_level, notes
         ) VALUES (?, ?, ?, ?, ?, ?)
         """,
-        (105, "2026-06-09", 6.2, 5, 6, "private sparse note must not leak"),
+        (105, "2026-06-02", 6.2, 5, 6, "private sparse note must not leak"),
     )
     connection.commit()
     connection.close()
@@ -220,15 +230,15 @@ def test_context_service_builds_richer_selected_range_context(tmp_path: Path) ->
 
     context = build_weekly_summary_context_from_qa_range(
         user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
     payload_text = str(context.to_dict()).lower()
 
     assert context.user_id == 102
-    assert context.period.week_start.isoformat() == "2026-06-08"
-    assert context.period.week_end.isoformat() == "2026-06-14"
+    assert context.period.week_start.isoformat() == "2026-05-31"
+    assert context.period.week_end.isoformat() == "2026-06-06"
     assert context.scenario == "aligned_managed"
     assert context.confidence == WeeklyCoachSummaryConfidence.HIGH
     assert context.fact_boundary.recovery_facts_available is True
@@ -250,8 +260,8 @@ def test_context_signals_are_safe_aggregate_only(tmp_path: Path) -> None:
     create_context_fixture_db(db_path)
     inventory = inspect_weekly_summary_qa_range(
         user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
 
@@ -274,8 +284,8 @@ def test_low_data_context_remains_limited_and_safe(tmp_path: Path) -> None:
 
     context = build_weekly_summary_context_from_qa_range(
         user_id=105,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
     approved = generate_approved_weekly_summary(context)
@@ -306,7 +316,7 @@ def test_out_of_range_context_has_safe_insufficient_data_limitation(
     assert context.confidence == WeeklyCoachSummaryConfidence.LIMITED
     assert context.fact_boundary.data_quality_limited is True
     assert "Selected range has no data for this user" in limitation_text
-    assert "2026-06-08 to 2026-06-14" in limitation_text
+    assert "2026-05-31 to 2026-06-06" in limitation_text
 
 
 def test_context_metadata_is_sanitized_for_developer_display(tmp_path: Path) -> None:
@@ -314,8 +324,8 @@ def test_context_metadata_is_sanitized_for_developer_display(tmp_path: Path) -> 
     create_context_fixture_db(db_path)
     context = build_weekly_summary_context_from_qa_range(
         user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
 

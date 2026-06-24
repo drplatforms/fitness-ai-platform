@@ -9416,8 +9416,6 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
                             "generated_by": (
                                 "developer_mode_weekly_summary_qa_date_range_debug"
                             ),
-                            "source": "qa_date_range_debug",
-                            "range_key": range_key,
                         },
                     )
                 except WeeklyCoachSummaryPersistenceError:

@@ -89,8 +89,16 @@ def create_qa_range_fixture_db(path: Path) -> None:
         "INSERT INTO users (id, name) VALUES (?, ?)",
         [(102, "QA 102"), (105, "QA 105")],
     )
-    for day in range(8, 15):
-        checkin_date = f"2026-06-{day:02d}"
+    fixture_dates = [
+        "2026-05-31",
+        "2026-06-01",
+        "2026-06-02",
+        "2026-06-03",
+        "2026-06-04",
+        "2026-06-05",
+        "2026-06-06",
+    ]
+    for checkin_date in fixture_dates:
         connection.execute(
             """
             INSERT INTO daily_checkins (user_id, checkin_date, notes)
@@ -105,8 +113,10 @@ def create_qa_range_fixture_db(path: Path) -> None:
             """,
             (102, 1, 100.0, checkin_date),
         )
-    for session_id, day in enumerate((8, 10, 12), start=1):
-        workout_date = f"2026-06-{day:02d}"
+    for session_id, workout_date in enumerate(
+        ("2026-06-01", "2026-06-03", "2026-06-05"),
+        start=1,
+    ):
         connection.execute(
             "INSERT INTO workout_sessions (id, user_id, workout_date) VALUES (?, ?, ?)",
             (session_id, 102, workout_date),
@@ -178,7 +188,7 @@ def create_qa_range_fixture_db(path: Path) -> None:
             )
     connection.execute(
         "INSERT INTO daily_checkins (user_id, checkin_date, notes) VALUES (?, ?, ?)",
-        (105, "2026-06-09", "private sparse note must not leak"),
+        (105, "2026-06-02", "private sparse note must not leak"),
     )
     connection.commit()
     connection.close()
@@ -189,18 +199,18 @@ def test_qa_range_defaults_are_stable() -> None:
     assert DEFAULT_QA_LOW_DATA_USER_ID == 105
     assert DEFAULT_QA_DATE_RANGE_PRESET_KEY == "latest_seeded_week"
     assert QA_DATE_RANGE_PRESETS["latest_seeded_week"] == (
-        "2026-06-08",
-        "2026-06-14",
+        "2026-05-31",
+        "2026-06-06",
     )
     assert QA_USER_LABELS[102] == "102 aligned_managed"
 
 
 def test_qa_range_preset_and_cache_key_are_typed() -> None:
     start, end = qa_range_preset_dates("latest_seeded_week")
-    assert start.isoformat() == "2026-06-08"
-    assert end.isoformat() == "2026-06-14"
+    assert start.isoformat() == "2026-05-31"
+    assert end.isoformat() == "2026-06-06"
     assert qa_date_range_cache_key(102, start, end) == (
-        "user:102|start:2026-06-08|end:2026-06-14"
+        "user:102|start:2026-05-31|end:2026-06-06"
     )
 
 
@@ -211,8 +221,8 @@ def test_inspect_weekly_summary_qa_range_returns_safe_inventory(
     create_qa_range_fixture_db(db_path)
     inventory = inspect_weekly_summary_qa_range(
         user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
     payload_text = str(inventory.to_dict()).lower()
@@ -233,8 +243,8 @@ def test_low_data_user_inventory_is_limited_but_safe(tmp_path: Path) -> None:
     create_qa_range_fixture_db(db_path)
     inventory = inspect_weekly_summary_qa_range(
         user_id=105,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
     assert inventory.user_id == 105
@@ -253,8 +263,8 @@ def test_out_of_range_inventory_warns_with_available_bounds(tmp_path: Path) -> N
         db_path=db_path,
     )
     assert inventory.selected_range_has_data is False
-    assert inventory.available_start_date == "2026-06-08"
-    assert inventory.available_end_date == "2026-06-14"
+    assert inventory.available_start_date == "2026-05-31"
+    assert inventory.available_end_date == "2026-06-06"
     assert "selected_range_out_of_bounds" in inventory.diagnosis_codes
 
 
@@ -265,13 +275,13 @@ def test_build_context_from_qa_range_uses_selected_user_and_dates(
     create_qa_range_fixture_db(db_path)
     context = build_weekly_summary_context_from_qa_range(
         user_id=102,
-        start_date="2026-06-08",
-        end_date="2026-06-14",
+        start_date="2026-05-31",
+        end_date="2026-06-06",
         db_path=db_path,
     )
     assert context.user_id == 102
-    assert context.period.week_start.isoformat() == "2026-06-08"
-    assert context.period.week_end.isoformat() == "2026-06-14"
+    assert context.period.week_start.isoformat() == "2026-05-31"
+    assert context.period.week_end.isoformat() == "2026-06-06"
     assert context.fact_boundary.training_facts_available is True
     assert context.fact_boundary.nutrition_facts_available is True
     assert context.confidence in {

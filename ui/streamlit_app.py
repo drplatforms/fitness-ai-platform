@@ -322,7 +322,10 @@ def portfolio_card_html(
 
 
 def display_workout_plan_preview(
-    workout_plan: dict, user_id: int | None = None
+    workout_plan: dict,
+    user_id: int | None = None,
+    workout_size_preference: str | None = None,
+    allow_preview_refresh: bool = False,
 ) -> None:
     title = workout_plan.get("title", "Workout Plan Preview")
     session_focus = workout_plan.get("session_focus", "No focus available.")
@@ -358,6 +361,18 @@ def display_workout_plan_preview(
         display_workout_plan_explanation(user_id)
 
     st.markdown("#### Exercises")
+
+    if allow_preview_refresh and user_id is not None:
+        st.button(
+            "Show different exercises",
+            key="refresh_workout_plan_preview_button",
+            help=(
+                "Generate a new unselected preview variation. Selected and active "
+                "workouts stay unchanged."
+            ),
+            on_click=bump_workout_preview_variation_index,
+            args=(user_id, workout_size_preference),
+        )
 
     if not exercises:
         st.warning("No exercises are available for this workout preview.")
@@ -6296,125 +6311,113 @@ def render_workout_plan_section(user_id: int) -> None:
         workout_size_preference = render_workout_size_preference_control("plan")
         active_plan_response = get_active_plan_response(user_id)
         has_selected_workout = has_current_workout_selection(active_plan_response)
-        force_preview_refresh = st.button(
-            "Show different exercises",
-            key="refresh_workout_plan_preview_button",
-            help=(
-                "Generate a new unselected preview variation. Selected and active "
-                "workouts stay unchanged."
-            ),
-            disabled=has_selected_workout,
-        )
         if has_selected_workout:
-            st.caption(
-                "A workout is already selected. The selected workout is frozen unless "
-                "you explicitly replace it in a future workflow."
+            st.info(
+                "A workout is already selected or active. The selected workout is "
+                "frozen and will not be replaced by preview refreshes."
             )
-        try:
-            workout_plan_data = get_stable_workout_plan_preview(
-                user_id,
-                workout_size_preference,
-                force_refresh=force_preview_refresh and not has_selected_workout,
-            )
-        except requests.RequestException as exc:
-            st.error(
-                f"Failed to load workout plan preview: {extract_api_error_message(exc)}"
-            )
-            return
+            st.success("Selected workout plan is ready to customize.")
+            render_active_plan_summary(active_plan_response)
 
-        if workout_plan_data.get("success"):
-            scenario = workout_plan_data.get("scenario")
-            confidence = workout_plan_data.get("confidence", "Unknown")
-            approved_workout_plan = workout_plan_data.get("approved_workout_plan", {})
-
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Plan Context", scenario_display_name(scenario))
-            col2.metric("Confidence", confidence)
-            col3.metric(
-                "Exercise Count",
-                len(approved_workout_plan.get("exercises") or []),
-            )
-            count_reason = workout_count_reason_from_payload(
-                workout_plan_data,
-                approved_workout_plan,
-            )
-            if count_reason:
-                st.caption(count_reason)
-
-            display_workout_plan_preview(approved_workout_plan, user_id=user_id)
-
-            if active_plan_response:
-                st.success("Selected workout plan is ready to customize.")
-                render_active_plan_summary(active_plan_response)
-
-                plan_instance_id = get_plan_instance_id_from_response(
-                    active_plan_response
+            plan_instance_id = get_plan_instance_id_from_response(active_plan_response)
+            if plan_instance_id is not None:
+                workout_plan_instance = (
+                    active_plan_response.get("workout_plan_instance") or {}
                 )
-                if plan_instance_id is not None:
-                    workout_plan_instance = (
-                        active_plan_response.get("workout_plan_instance") or {}
+                execution_session = active_plan_response.get("execution_session") or {}
+                planned_exercises = active_plan_response.get("planned_exercises") or []
+                active_substitutions = merged_active_substitution_map(
+                    plan_instance_id,
+                    active_plan_response,
+                )
+
+                st.divider()
+                with st.expander(
+                    "Need a swap?",
+                    expanded=bool(active_substitutions),
+                ):
+                    st.caption(
+                        "Optional: choose one exercise to replace before you start. "
+                        "After you apply a swap, the active workout plan updates automatically "
+                        "and the Do Workout step uses the active exercise choice for logging."
                     )
-                    execution_session = (
-                        active_plan_response.get("execution_session") or {}
+                    display_substitution_candidates(
+                        plan_instance_id,
+                        planned_exercises,
+                        context_key="plan_step",
+                        plan_status=workout_plan_instance.get("status"),
+                        execution_status=execution_session.get("status"),
+                        active_substitutions=active_substitutions,
+                        always_visible=False,
+                        title="Need a swap?",
                     )
-                    planned_exercises = (
-                        active_plan_response.get("planned_exercises") or []
-                    )
+
+                refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
+                if refreshed_plan_response:
+                    active_plan_response = refreshed_plan_response
                     active_substitutions = merged_active_substitution_map(
                         plan_instance_id,
                         active_plan_response,
                     )
 
-                    st.divider()
-                    with st.expander(
-                        "Need a swap?",
-                        expanded=bool(active_substitutions),
-                    ):
-                        st.caption(
-                            "Optional: choose one exercise to replace before you start. "
-                            "After you apply a swap, the active workout plan updates automatically "
-                            "and the Do Workout step uses the active exercise choice for logging."
-                        )
-                        display_substitution_candidates(
-                            plan_instance_id,
-                            planned_exercises,
-                            context_key="plan_step",
-                            plan_status=workout_plan_instance.get("status"),
-                            execution_status=execution_session.get("status"),
-                            active_substitutions=active_substitutions,
-                            always_visible=False,
-                            title="Need a swap?",
-                        )
-
-                    refreshed_plan_response = refresh_active_plan_response(
-                        plan_instance_id
+                if active_substitutions:
+                    st.success(
+                        "Workout plan updated with active substitutions. "
+                        "The Do Workout step is populated with the active exercise choices."
                     )
-                    if refreshed_plan_response:
-                        active_plan_response = refreshed_plan_response
-                        active_substitutions = merged_active_substitution_map(
-                            plan_instance_id,
-                            active_plan_response,
-                        )
+                else:
+                    st.info(
+                        "No substitutions are active yet. Keep the original plan or "
+                        "apply a compatible substitution before moving to Do Workout."
+                    )
 
-                    if active_substitutions:
-                        st.success(
-                            "Workout plan updated with active substitutions. "
-                            "The Do Workout step is populated with the active exercise choices."
-                        )
-                    else:
-                        st.info(
-                            "No substitutions are active yet. Keep the original plan or "
-                            "apply a compatible substitution before moving to Do Workout."
-                        )
+                if st.button(
+                    "Continue to Do Workout",
+                    key=f"continue_to_do_workout_{plan_instance_id}",
+                    type="primary",
+                ):
+                    request_workout_flow_step("2. Do Workout")
+                    st.rerun()
+        else:
+            try:
+                workout_plan_data = get_stable_workout_plan_preview(
+                    user_id,
+                    workout_size_preference,
+                )
+            except requests.RequestException as exc:
+                st.error(
+                    f"Failed to load workout plan preview: {extract_api_error_message(exc)}"
+                )
+                return
 
-                    if st.button(
-                        "Continue to Do Workout",
-                        key=f"continue_to_do_workout_{plan_instance_id}",
-                        type="primary",
-                    ):
-                        request_workout_flow_step("2. Do Workout")
-                        st.rerun()
-            else:
+            if workout_plan_data.get("success"):
+                scenario = workout_plan_data.get("scenario")
+                confidence = workout_plan_data.get("confidence", "Unknown")
+                approved_workout_plan = workout_plan_data.get(
+                    "approved_workout_plan", {}
+                )
+
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Plan Context", scenario_display_name(scenario))
+                col2.metric("Confidence", confidence)
+                col3.metric(
+                    "Exercise Count",
+                    len(approved_workout_plan.get("exercises") or []),
+                )
+                count_reason = workout_count_reason_from_payload(
+                    workout_plan_data,
+                    approved_workout_plan,
+                )
+                if count_reason:
+                    st.caption(count_reason)
+
+                display_workout_plan_preview(
+                    approved_workout_plan,
+                    user_id=user_id,
+                    workout_size_preference=workout_size_preference,
+                    allow_preview_refresh=True,
+                )
+
                 select_today_workout(
                     user_id,
                     "select_workout_plan_button",
@@ -6422,19 +6425,19 @@ def render_workout_plan_section(user_id: int) -> None:
                     approved_workout_plan=approved_workout_plan,
                 )
 
-            if st.session_state.get("developer_mode", False):
-                with st.expander(
-                    "Developer details: workout plan preview/select/start"
-                ):
-                    st.subheader("Training Constraints")
-                    st.json(workout_plan_data.get("training_constraints", {}))
-                    st.subheader("Workout Constraints")
-                    st.json(workout_plan_data.get("workout_constraints", {}))
-                    st.subheader("Raw Workout Plan Preview Response")
-                    st.json(workout_plan_data)
+                if st.session_state.get("developer_mode", False):
+                    with st.expander(
+                        "Developer details: workout plan preview/select/start"
+                    ):
+                        st.subheader("Training Constraints")
+                        st.json(workout_plan_data.get("training_constraints", {}))
+                        st.subheader("Workout Constraints")
+                        st.json(workout_plan_data.get("workout_constraints", {}))
+                        st.subheader("Raw Workout Plan Preview Response")
+                        st.json(workout_plan_data)
 
-        else:
-            st.warning("No workout plan preview is available for this user yet.")
+            else:
+                st.warning("No workout plan preview is available for this user yet.")
 
     elif selected_step == "2. Do Workout":
         active_plan_response = get_active_plan_response(user_id)

@@ -5,16 +5,16 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Workout Plan Selection Persistence + Today Workout De-dup v1",
-    "latest_final_status": "WORKOUT_PLAN_SELECTION_PERSISTENCE_TODAY_DEDUP_V1_ACCEPTED",
-    "latest_accepted_commit": "d1077cc",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_d1077cc_fix-workout-selection-persistence.zip"
+    "latest_accepted_milestone": "Daily Narrative Voice + Grounding / Copy Tuning v1",
+    "latest_final_status": "DAILY_NARRATIVE_VOICE_GROUNDING_COPY_TUNING_V1_ACCEPTED_WITH_USER_COPY_FEEDBACK_FOLLOW_UP",
+    "latest_accepted_commit": "637a770",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_637a770_tune-daily-narrative-voice-grounding.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Narrative Voice + Grounding / Copy Tuning v1",
-    "current_authorized_branch": "feature/daily-narrative-voice-grounding-copy-tuning-v1",
+    "current_authorized_milestone": "Daily Narrative Coaching Intelligence + Voice Lab v1",
+    "current_authorized_branch": "feature/daily-narrative-coaching-intelligence-voice-lab-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1",
+    "recommended_next_milestone_after_acceptance": "Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -30,6 +30,9 @@
     "no_exercise_variety_work": true,
     "daily_narrative_voice_contract": true,
     "no_model_promotion": true,
-    "workout_selection_regression_preserved": true
+    "workout_selection_regression_preserved": true,
+    "developer_mode_voice_lab": true,
+    "synthetic_voice_lab_scenarios": true,
+    "app_side_voice_examples": true
   }
 }

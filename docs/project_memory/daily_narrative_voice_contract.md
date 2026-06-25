@@ -1,8 +1,8 @@
 # Daily Narrative Voice Contract
 
-Status: Daily Narrative Voice + Grounding / Copy Tuning v1
+Status: Daily Narrative Coaching Intelligence + Voice Lab v1
 
-The Daily Narrative should sound like a practical coach who has seen the selected facts, not a compliance memo, debug template, or washer hardware manual.
+The Daily Narrative should sound like a practical coach who has seen the facts, not a compliance memo, debug template, or washer hardware manual.
 
 ## Target voice
 
@@ -10,17 +10,18 @@ The Daily Narrative should sound like a practical coach who has seen the selecte
 - Direct but not bossy.
 - Plainspoken but not bland.
 - Warm without fake hype.
-- Specific to the selected facts.
-- Gives a reason, not just an instruction.
+- Specific to what is present and missing.
+- Explains why the next step matters without forcing the word “because.”
 - Avoids shame, guilt, medical claims, and motivational-poster language.
 - States limits naturally when data is thin.
+- Speaks to the user as if the Today card is about today, not “the selected date.”
 
 The note should answer:
 
 1. What is actually going on?
 2. Why does it matter?
 3. What is the next small action?
-4. What should the user not over-read because data is limited?
+4. What should the user not over-read when the entry detail is limited?
 
 ## Banned or strongly discouraged defaults
 
@@ -32,35 +33,53 @@ The note should answer:
 - “keep logging simple”
 - “keep your food logs straightforward and basic”
 - “start with one entry”
+- “selected date” in user-facing copy
+- “signal” as default user-facing copy
+- “concrete anchor”
+- “light read”
+- “verify the daily picture”
+- “nutrition note”
+- “food-context note”
 - generic “log one meal or snack” when nutrition is not actually missing or weak
 
 The words “useful” and “simple” are not impossible, but they must not become the house style.
 
-## Bad examples
+## Rejected examples from user QA
 
-> Today's useful move is to log a meal or snack. This action builds a clearer picture of your nutrition state.
+> Keep the nutrition note grounded: Because nutrition shows up, but training does not for the selected date, Treat this as a food-context note, not a full training read.
 
-> Keep logging simple. Simple logging helps build a clearer picture.
+Why it fails: awkward label, forced “Because,” too many commas, run-on structure, and “selected date” user-facing language.
 
-> Compare training, fueling, and recovery because the selected range has all three domains.
+Preferred direction:
+
+> I see food logged today, but no workout. That means this can be a nutrition-based read, not a full training recommendation.
+
+---
+
+> Add one concrete anchor: Because there is not enough signal for the selected date ending 2026-06-06 to coach from yet. Add the easiest concrete anchor now: a recovery check-in, one meal entry, or the workout you actually completed.
+
+Why it fails: “concrete anchor” is weird, “signal” sounds technical, “selected date ending…” sounds like QA/debug copy, and the label is not user-friendly.
+
+Preferred direction:
+
+> Today's advice is limited. Log a recovery check-in, a meal or snack, or the workout you completed so the coach has enough to work with.
 
 ## Better examples
 
-> Training is logged, but nutrition is blank for this date. Add one meal entry so the coach can connect effort with fueling instead of guessing.
+> Training is logged, but food is missing. Add one meal or snack so the coach can connect the work you did with how you fueled it.
 
-> Do not turn this into homework. One honest meal entry is enough to make today's training notes easier to interpret.
+> You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.
 
-> There is enough here for a light read, not a verdict. Training, nutrition, and recovery all show up in the range, so the next step is to check whether they tell the same story before drawing a stronger conclusion.
-
-> I do not have enough signal to make a strong call yet. Give me one concrete anchor today: a recovery check-in, a meal, or the workout you actually did.
+> There are a few entries here, but not enough detail for a strong coaching read. Add the easiest missing piece today so the next recommendation has more to work with.
 
 ## Reason-code copy families
 
-- `nutrition_missing_training_present`: training exists, fueling is missing; ask for one nutrition anchor.
-- `multiple_domains_present_limited_confidence`: compare lightly, but do not overstate.
-- `rich_day_multiple_domains`: summarize the signal and suggest interpretation, not more random logging.
-- `actual_sets_missing`: training is present, but set-level detail is missing; ask for workout detail if progression is the question.
-- `no_data_selected_date`: say there is no selected-date signal and ask for one concrete anchor.
+- `nutrition_present_training_missing`: food exists, workout is missing; keep the read nutrition-based.
+- `training_present_nutrition_missing`: training exists, food is missing; ask for food around the workout.
+- `multiple_domains_present_limited_confidence`: keep the next step practical and avoid strong comparison language.
+- `rich_day_multiple_domains`: interpret what is already logged instead of asking for more random logging.
+- `actual_sets_missing`: workout exists, set-level detail is missing; ask for workout detail if progression is the question.
+- `no_data_today`: say advice is limited and ask for one practical entry.
 
 ## Model memory note
 

@@ -1,22 +1,22 @@
 # Next Milestone
 
-Likely next milestone: Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1.
+Likely next milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1.
 
-Purpose: apply the same voice-contract lessons to Weekly Coach Summary and compare model quality only after copy constraints are fixed.
+Purpose: let the user mark generated copy as bad/better/approved and preserve that feedback in project memory or a safe local feedback store so future deterministic/provider copy can improve from explicit examples.
 
-Alternative next milestone: Workout Exercise Variety Rotation v1.
+Alternative next milestones:
 
-Purpose: improve exercise variety after workout selection persistence is functional again.
+- Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1
+- Workout Exercise Variety Rotation v1
 
 Still deferred:
 
 - public/default Daily Narrative provider display
 - normal Today Daily Narrative provider display
 - Weekly Summary public/default display
-- approved preview bridge implementation
 - automatic generation
 - worker / queue / scheduler / polling
 - CrewAI
-- qwen3/qwen3:32b promotion
+- qwen3 / qwen3:32b promotion
 - 14B promotion
 - Streamlit Theme Cleanup

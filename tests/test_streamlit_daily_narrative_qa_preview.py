@@ -60,3 +60,20 @@ def test_daily_narrative_rich_day_scan_visible_in_developer_panel() -> None:
     assert "daily_narrative_rich_day_candidates(" in panel_source
     assert "Active seed bounds for Daily Narrative QA scan" in panel_source
     assert "Recommended Daily Narrative rich-data days" not in today_source
+
+
+def test_daily_narrative_voice_lab_is_developer_mode_only_and_no_provider_on_select() -> (
+    None
+):
+    panel_source = _function_source("render_daily_coach_narrative_developer_panel")
+    lab_source = _function_source("render_daily_narrative_voice_lab")
+    today_source = _function_source("render_today_section")
+
+    assert "render_daily_narrative_voice_lab()" in panel_source
+    assert "Daily Narrative Voice Lab" in lab_source
+    assert "list_daily_narrative_voice_lab_scenarios" in lab_source
+    assert "build_daily_narrative_voice_lab_result" in lab_source
+    assert "No provider call happens on page open" in lab_source
+    assert "Provider candidate generation is intentionally not automatic" in lab_source
+    assert "fetch_daily_coach_narrative_preview(" not in lab_source
+    assert "Daily Narrative Voice Lab" not in today_source

@@ -25,6 +25,10 @@ from services.daily_coach_async_provider_runtime_service import (
     resolve_daily_coach_async_provider_runtime_config,
     run_daily_coach_async_provider_runtime_prototype,
 )
+from services.daily_narrative_voice_lab_service import (
+    build_daily_narrative_voice_lab_result,
+    list_daily_narrative_voice_lab_scenarios,
+)
 from services.runtime_diagnostics_service import build_runtime_db_diagnostics
 from services.weekly_coach_summary_persistence_service import (
     WeeklyCoachSummaryPersistenceError,
@@ -5201,6 +5205,85 @@ def render_daily_narrative_rich_day_candidates(candidates: list[dict]) -> None:
             )
 
 
+def render_daily_narrative_voice_lab() -> None:
+    """Developer Mode-only Daily Narrative copy lab.
+
+    This panel is intentionally deterministic on render. It never calls a
+    provider when the page opens or when a scenario is selected.
+    """
+
+    st.write("**Daily Narrative Voice Lab**")
+    st.caption(
+        "Developer Mode only. Synthetic copy fixtures and safe scenario facts. "
+        "No provider call happens on page open or scenario selection."
+    )
+    scenarios = list_daily_narrative_voice_lab_scenarios()
+    scenario_ids = [scenario.scenario_id for scenario in scenarios]
+    labels = {
+        scenario.scenario_id: f"{scenario.scenario_label} ({scenario.scenario_id})"
+        for scenario in scenarios
+    }
+    selected_scenario_id = st.selectbox(
+        "Voice Lab scenario",
+        options=scenario_ids,
+        format_func=lambda value: labels.get(value, value),
+        key="daily_narrative_voice_lab_scenario",
+        help="Synthetic safe scenario fixtures for copy testing. These are not real users.",
+    )
+    result = build_daily_narrative_voice_lab_result(selected_scenario_id)
+    scenario = result.scenario
+
+    st.write("**Scenario facts**")
+    fact_rows = [
+        {"Field": "Situation", "Value": scenario.situation_summary},
+        {"Field": "Data quality", "Value": scenario.data_quality},
+        {"Field": "Confidence", "Value": scenario.confidence},
+        {
+            "Field": "Domains present",
+            "Value": ", ".join(scenario.domains_present) or "none",
+        },
+        {
+            "Field": "Missing pieces",
+            "Value": ", ".join(scenario.missing_domains) or "none",
+        },
+        {"Field": "Coaching angle", "Value": scenario.desired_coaching_angle},
+    ]
+    st.dataframe(pd.DataFrame(fact_rows), width="stretch", hide_index=True)
+    with st.expander("Reason codes and safe aggregate facts", expanded=False):
+        st.write("Reason codes:")
+        st.json(list(scenario.reason_codes))
+        st.write("Safe aggregate facts:")
+        st.json(list(scenario.safe_aggregate_facts))
+        st.write("Prohibited claims:")
+        st.json(list(scenario.prohibited_claims))
+
+    st.write("**Deterministic candidates**")
+    for candidate in result.candidates:
+        st.markdown(f"**{candidate.title}**")
+        st.write(candidate.body)
+        qa_rows = [
+            {"Check": "copy_family", "Result": candidate.copy_family},
+            {
+                "Check": "banned_phrase_hits",
+                "Result": ", ".join(candidate.banned_phrase_hits) or "none",
+            },
+            {
+                "Check": "awkward_phrase_hits",
+                "Result": ", ".join(candidate.awkward_phrase_hits) or "none",
+            },
+            {
+                "Check": "quality_notes",
+                "Result": " | ".join(candidate.quality_notes) or "none",
+            },
+        ]
+        st.dataframe(pd.DataFrame(qa_rows), width="stretch", hide_index=True)
+
+    st.info(
+        "Provider candidate generation is intentionally not automatic in this lab. "
+        "Use existing manual provider preview controls separately if provider QA is needed."
+    )
+
+
 def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -5210,6 +5293,10 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
             "Developer-only, manual, fallback-first preview. Provider output is "
             "shown only after backend parse and validation pass."
         )
+
+        render_daily_narrative_voice_lab()
+
+        st.divider()
 
         st.write("**Daily Narrative QA Date Range Preview / Grounding**")
         st.caption(

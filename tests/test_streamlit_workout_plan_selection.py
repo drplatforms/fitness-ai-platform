@@ -43,3 +43,21 @@ def test_select_button_does_not_force_preview_generation_endpoint() -> None:
 
     assert "/select-preview" in exact_preview_branch
     assert "/workout-plans/preview" not in exact_preview_branch
+
+
+def test_select_success_moves_to_active_workout_without_clearing_preview_cache() -> (
+    None
+):
+    select_source = _function_source("select_today_workout")
+    success_branch = select_source.split(
+        'if select_response.get("success"):', maxsplit=1
+    )[1]
+    success_branch = success_branch.split(
+        'st.session_state.workout_plan_action_error = "Workout plan selection failed."',
+        maxsplit=1,
+    )[0]
+
+    assert 'request_workout_flow_step("2. Do Workout")' in success_branch
+    assert 'request_workout_flow_step("1. Plan")' not in success_branch
+    assert "st.session_state.workout_plan_preview_by_user = {}" not in success_branch
+    assert "Opening the active workout" in success_branch

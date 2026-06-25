@@ -1396,6 +1396,7 @@ def _persist_selected_workout_plan(
     ensure_workout_plan_persistence_tables()
     conn = get_connection()
     cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     try:
         cursor.execute(
@@ -1407,9 +1408,11 @@ def _persist_selected_workout_plan(
                 confidence,
                 title,
                 approved_workout_plan_json,
+                selected_at,
+                created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -1418,6 +1421,9 @@ def _persist_selected_workout_plan(
                 approved_plan.confidence,
                 approved_plan.title,
                 _encode_json(asdict(approved_plan)),
+                now,
+                now,
+                now,
             ),
         )
         instance_id = cursor.lastrowid
@@ -1459,11 +1465,12 @@ def _persist_selected_workout_plan(
                 workout_plan_instance_id,
                 user_id,
                 status,
+                created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (instance_id, user_id, "selected"),
+            (instance_id, user_id, "selected", now, now),
         )
         execution_session_id = cursor.lastrowid
 

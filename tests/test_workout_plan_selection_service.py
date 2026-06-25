@@ -1,8 +1,10 @@
 from dataclasses import asdict, replace
+from datetime import date, datetime
 
 import database
 from scripts.seed_qa_scenarios import seed_qa_scenarios
 from services.user_state_service import build_user_health_state
+from services.workout_daily_state_service import resolve_workout_daily_state
 from services.workout_plan_persistence_service import (
     approved_workout_plan_from_payload,
     get_planned_workout_exercises,
@@ -99,3 +101,32 @@ def test_select_preview_endpoint_persists_exact_visible_preview(tmp_path, monkey
     assert [exercise["name"] for exercise in payload["planned_exercises"]] == [
         exercise["name"] for exercise in visible_plan["exercises"]
     ]
+
+
+def test_select_approved_workout_plan_is_visible_to_current_day_state(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+    health_state = build_user_health_state(102)
+    visible_preview = build_approved_workout_plan(health_state)
+
+    import services.workout_plan_persistence_service as persistence_service
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 20, 9, 30, 0)
+
+    monkeypatch.setattr(persistence_service, "datetime", FixedDateTime)
+
+    selected = select_approved_workout_plan(102, visible_preview)
+    instance = selected["workout_plan_instance"]
+
+    assert str(instance.selected_at).startswith("2026-06-20")
+    assert str(instance.created_at).startswith("2026-06-20")
+
+    daily_state = resolve_workout_daily_state(102, target_date=date(2026, 6, 20))
+
+    assert daily_state.state == "selected_today"
+    assert daily_state.selected_plan_id == instance.id
+    assert daily_state.stale_state_detected is False

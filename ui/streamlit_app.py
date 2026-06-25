@@ -3878,8 +3878,12 @@ def select_today_workout(
         if select_response.get("success"):
             st.session_state.selected_workout_plan_response = select_response
             st.session_state.started_workout_plan_response = None
+            st.session_state.workout_daily_state_response = None
+            st.session_state.workout_daily_state_message = None
             st.session_state.workout_plan_action_error = None
-            st.session_state.workout_plan_preview_by_user = {}
+            # Keep the visible preview cache intact after selection. Clearing it here
+            # makes the next rerun load a fresh preview, which looks like the select
+            # action regenerated or swapped the exercises the user just chose.
             st.session_state.actual_set_logging_message = None
             st.session_state.completed_workout_plan_response = None
             st.session_state.workout_completion_message = None
@@ -3889,8 +3893,8 @@ def select_today_workout(
             st.session_state.substitution_apply_message = None
             st.session_state.substitution_apply_error = None
             st.session_state.substitution_flow_ready_to_do_workout = False
-            request_workout_flow_step("1. Plan")
-            st.success("Workout plan selected. Review substitutions before starting.")
+            request_workout_flow_step("2. Do Workout")
+            st.success("Workout plan selected. Opening the active workout.")
             st.rerun()
 
         st.session_state.workout_plan_action_error = "Workout plan selection failed."

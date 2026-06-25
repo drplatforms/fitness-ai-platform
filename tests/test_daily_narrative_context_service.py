@@ -26,14 +26,15 @@ def test_daily_narrative_qa_context_includes_selected_date_provenance():
     assert validate_daily_coach_narrative_context(context) == []
 
 
-def test_daily_narrative_qa_context_uses_because_grounding():
+def test_daily_narrative_qa_context_avoids_forced_because_in_user_copy():
     context = build_daily_coach_narrative_qa_preview_context(
         102,
         selected_date="2026-06-06",
         lookback_days=1,
     )
 
-    assert "Because" in context.next_action_reason
+    assert not context.next_action_reason.startswith("Because")
+    assert "selected date" not in context.next_action_reason.lower()
     assert (
         context.fallback_note
         == f"{context.next_action_title}: {context.next_action_reason}"

@@ -14,19 +14,38 @@ DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS = {
     "start with one entry",
 }
 
+DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS = {
+    "selected date",
+    "because the selected date",
+    "selected range",
+    "not enough signal",
+    "signal for the",
+    "concrete anchor",
+    "light read",
+    "verify the daily picture",
+    "nutrition note",
+    "food-context note",
+    "because there is",
+    "because nutrition",
+}
+
 DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES = (
     (
-        "Training is logged, but nutrition is blank for this date. Add one meal "
-        "entry so the coach can connect effort with fueling instead of guessing."
+        "I see food logged today, but no workout. That means this can be a "
+        "nutrition-based read, not a full training recommendation."
     ),
     (
-        "There is enough here for a light read, not a verdict. Training, nutrition, "
-        "and recovery all show up, so check whether they tell the same story before "
-        "drawing a stronger conclusion."
+        "Training is logged, but food is missing. Add one meal or snack so the "
+        "coach can connect the work you did with how you fueled it."
     ),
     (
-        "I do not have enough signal to make a strong call yet. Give me one concrete "
-        "anchor today: a recovery check-in, a meal, or the workout you actually did."
+        "Today's advice is limited. Log a recovery check-in, a meal or snack, or "
+        "the workout you completed so the coach has enough to work with."
+    ),
+    (
+        "You have enough logged to compare the day instead of adding random data. "
+        "Check whether training, food, and recovery tell the same story before "
+        "making a stronger call."
     ),
 )
 
@@ -34,6 +53,9 @@ DAILY_NARRATIVE_VOICE_BAD_EXAMPLES = (
     "Today's useful move is to log a meal or snack.",
     "This action builds a clearer picture of your nutrition state.",
     "Keep logging simple without overcomplicating it.",
+    "Add one concrete anchor because there is not enough signal for the selected date.",
+    "Keep the nutrition note grounded because nutrition shows up for the selected date.",
+    "Verify the daily picture before drawing conclusions from this light read.",
 )
 
 
@@ -63,65 +85,62 @@ def build_daily_narrative_qa_copy_choice(
     actual_sets_count: int = 0,
     planned_exercises_count: int = 0,
 ) -> DailyNarrativeCopyChoice:
-    """Map selected QA facts to a less mechanical Daily Narrative action."""
+    """Map selected QA facts to a more natural Daily Narrative action."""
 
-    range_label = "selected date" if start_date == end_date else "selected range"
-    any_signal = recovery_present or nutrition_present or training_present
+    del selected_date, start_date, end_date
+    any_entries = recovery_present or nutrition_present or training_present
 
-    if not any_signal or data_quality_label == "insufficient":
+    if not any_entries or data_quality_label == "insufficient":
         return DailyNarrativeCopyChoice(
-            action_id="daily_narrative_qa_add_one_anchor",
-            title="Add one concrete anchor",
+            action_id="daily_narrative_qa_today_advice_limited",
+            title="Today's advice is limited",
             reason=(
-                f"Because there is not enough signal for the {range_label} ending "
-                f"{selected_date} to coach from yet. Add the easiest concrete "
-                "anchor now: a recovery check-in, one meal entry, or the workout "
-                "you actually completed."
+                "Log a recovery check-in, a meal or snack, or the workout you "
+                "completed so the coach has enough to work with."
             ),
             workflow_target="daily_logging_review",
             priority=3,
             severity="info",
-            copy_family="no_data_anchor",
+            copy_family="no_data_start_point",
         )
 
     if data_quality_label == "limited":
         return DailyNarrativeCopyChoice(
-            action_id="daily_narrative_qa_verify_daily_picture",
-            title="Verify the daily picture",
+            action_id="daily_narrative_qa_get_on_same_page",
+            title="Let's get on the same page",
             reason=(
-                f"Because the {range_label} has some signal, but it is still a light read, "
-                "not a verdict. Use the available entries to spot what is missing "
-                "or weak before drawing a stronger training, fueling, or recovery "
-                "conclusion."
+                "There are a few entries here, but not enough detail for a strong "
+                "coaching read. Add the easiest missing piece today so the next "
+                "recommendation has more to work with."
             ),
             workflow_target="daily_logging_review",
             priority=4,
             severity="info",
-            copy_family="limited_data_light_read",
+            copy_family="low_data_practical_next_step",
         )
 
     if training_present and nutrition_present and recovery_present:
         if actual_sets_count > 0 or planned_exercises_count > 0:
             return DailyNarrativeCopyChoice(
-                action_id="daily_narrative_qa_read_training_fueling_recovery",
-                title="Read the day before adding more",
+                action_id="daily_narrative_qa_compare_the_day",
+                title="Compare the day",
                 reason=(
-                    f"Because the {range_label} has recovery, nutrition, and training "
-                    "signals. Check whether effort, fueling, and recovery tell the "
-                    "same story before turning this into more logging."
+                    "You have enough logged to compare the day instead of adding "
+                    "random data. Check whether training, food, and recovery tell "
+                    "the same story before making a stronger call."
                 ),
                 workflow_target="daily_grounded_review",
                 priority=4,
                 severity="success",
-                copy_family="rich_day_multi_domain_read",
+                copy_family="rich_day_interpretation",
             )
         return DailyNarrativeCopyChoice(
-            action_id="daily_narrative_qa_connect_day_signals",
-            title="Connect the day's signals",
+            action_id="daily_narrative_qa_read_what_is_there",
+            title="Read what is already there",
             reason=(
-                f"Because the {range_label} has recovery, nutrition, and training context, "
-                "Use it to make one grounded read of the day instead of defaulting "
-                "to another generic logging task."
+                "Recovery, food, and training are all present. Use them to make "
+                "one grounded read of the day instead of adding another generic "
+                "logging task."
             ),
             workflow_target="daily_grounded_review",
             priority=4,
@@ -134,9 +153,8 @@ def build_daily_narrative_qa_copy_choice(
             action_id="daily_narrative_qa_connect_training_and_fueling",
             title="Connect training and fueling",
             reason=(
-                f"Because training and nutrition both show up for the {range_label}, look "
-                "at whether the meal logs support the training demand instead of "
-                "adding another basic entry just to fill space."
+                "Training and food are both logged. Check whether the meals around "
+                "the workout match the kind of effort you put in."
             ),
             workflow_target="daily_grounded_review",
             priority=4,
@@ -146,45 +164,44 @@ def build_daily_narrative_qa_copy_choice(
 
     if training_present and not nutrition_present:
         return DailyNarrativeCopyChoice(
-            action_id="daily_narrative_qa_add_fueling_anchor",
-            title="Add a fueling anchor",
+            action_id="daily_narrative_qa_add_food_around_workout",
+            title="Add the food around the workout",
             reason=(
-                f"Because training is present, but nutrition is missing for the {range_label}, "
-                "Add one honest meal entry so the coach can connect the work you did "
-                "with the fuel around it."
+                "Training is logged, but food is missing. Add one meal or snack "
+                "so the coach can connect the work you did with how you fueled it."
             ),
             workflow_target="nutrition_quick_log",
             priority=3,
             severity="info",
-            copy_family="training_present_nutrition_missing",
+            copy_family="training_without_fueling",
         )
 
     if nutrition_present and not training_present:
         return DailyNarrativeCopyChoice(
-            action_id="daily_narrative_qa_ground_nutrition_note",
-            title="Keep the nutrition note grounded",
+            action_id="daily_narrative_qa_nutrition_based_read",
+            title="Keep this nutrition-based",
             reason=(
-                f"Because nutrition shows up, but training does not for the {range_label}, "
-                "Treat this as a food-context note, not a full training read."
+                "I see food logged today, but no workout. That means this can be "
+                "a nutrition-based read, not a full training recommendation."
             ),
             workflow_target="nutrition_context_review",
             priority=3,
             severity="info",
-            copy_family="nutrition_present_training_missing",
+            copy_family="nutrition_only_read",
         )
 
     return DailyNarrativeCopyChoice(
-        action_id="daily_narrative_qa_add_context_anchor",
-        title="Add one concrete anchor",
+        action_id="daily_narrative_qa_add_missing_training_or_food",
+        title="Add what happened today",
         reason=(
-            f"Because recovery is the only signal for the {range_label}, add either the "
-            "workout you actually did or one meal entry so the day is not interpreted "
-            "from how you felt alone."
+            "Recovery is the only clear piece right now. Add the workout you did "
+            "or one meal entry so the coach is not reading the day from how you "
+            "felt alone."
         ),
         workflow_target="daily_logging_review",
         priority=3,
         severity="info",
-        copy_family="single_domain_recovery_anchor",
+        copy_family="single_domain_recovery_next_step",
     )
 
 
@@ -202,3 +219,16 @@ def banned_daily_narrative_phrases_found(text: str) -> list[str]:
         for fragment in DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS
         if fragment in lowered
     )
+
+
+def awkward_daily_narrative_phrases_found(text: str) -> list[str]:
+    lowered = text.lower()
+    return sorted(
+        fragment
+        for fragment in DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS
+        if fragment in lowered
+    )
+
+
+def contains_awkward_daily_narrative_phrase(text: str) -> bool:
+    return bool(awkward_daily_narrative_phrases_found(text))

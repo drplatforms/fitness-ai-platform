@@ -1,9 +1,7 @@
-# Backend Handoff Current
+# Current Handoff — Daily Narrative Coaching Intelligence + Voice Lab v1
 
-Milestone: Daily Narrative Voice + Grounding / Copy Tuning v1
+Status: implemented for Architecture review.
 
-Status: Implemented / ready for Architecture review.
+Branch: `feature/daily-narrative-coaching-intelligence-voice-lab-v1`
 
-Summary: Daily Narrative copy now avoids the mechanical “useful move” / “clearer picture” defaults, routes selected-date QA output through a copy service and voice contract, keeps limited-data copy cautious, keeps rich-data copy interpretive, and updates provider-facing style guidance with banned phrases and good/bad examples.
-
-Boundary: no model promotion, no public/default provider display, no automatic generation, no CrewAI, no raw data exposure, no workout behavior changes beyond regression preservation.
+Summary: Developer Mode Daily Narrative Voice Lab added with synthetic safe scenarios, deterministic candidate variants, reason codes, coaching angles, banned/awkward phrase detection, and app-side voice examples. Normal Today behavior remains unchanged. Provider calls remain manual-only and are not triggered by page load or scenario selection.

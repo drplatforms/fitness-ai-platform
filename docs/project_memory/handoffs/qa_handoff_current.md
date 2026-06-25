@@ -1,13 +1,7 @@
-# QA Handoff Current
+# Current Handoff — Daily Narrative Coaching Intelligence + Voice Lab v1
 
-Milestone: Daily Narrative Voice + Grounding / Copy Tuning v1
+Status: implemented for Architecture review.
 
-QA focus:
+Branch: `feature/daily-narrative-coaching-intelligence-voice-lab-v1`
 
-- Rich-data, low-data, and no-data Daily Narrative QA previews should differ meaningfully.
-- “useful move” and “clearer picture” should not appear as output defaults.
-- Rich-data days should not default to generic meal/snack logging.
-- Low-data days should sound cautious without becoming pointless.
-- Provider prompt guidance should include voice contract, banned phrases, and good/bad examples.
-- Workout selection persistence regressions should still pass.
-- Weekly Summary provider regressions should still pass.
+Summary: Developer Mode Daily Narrative Voice Lab added with synthetic safe scenarios, deterministic candidate variants, reason codes, coaching angles, banned/awkward phrase detection, and app-side voice examples. Normal Today behavior remains unchanged. Provider calls remain manual-only and are not triggered by page load or scenario selection.

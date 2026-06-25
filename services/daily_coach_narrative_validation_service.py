@@ -19,6 +19,7 @@ from models.daily_coach_narrative_models import (
 )
 from models.daily_next_action_models import DAILY_NEXT_ACTION_WORKFLOW_TARGETS
 from services.daily_narrative_copy_service import (
+    DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS,
     DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS,
 )
 
@@ -296,6 +297,12 @@ def validate_daily_coach_narrative_candidate(
         if fragment in lowercase_public_text:
             validation_errors.append(
                 f"Mechanical Daily Narrative phrase found: {fragment}"
+            )
+
+    for fragment in sorted(DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS):
+        if fragment in lowercase_public_text:
+            validation_errors.append(
+                f"Awkward Daily Narrative phrase found: {fragment}"
             )
 
     for fragment in sorted(_template_copy_fragments_found(candidate)):

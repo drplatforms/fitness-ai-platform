@@ -1,18 +1,7 @@
-# Architecture Handoff Current
+# Current Handoff — Daily Narrative Coaching Intelligence + Voice Lab v1
 
-Please review Daily Narrative Voice + Grounding / Copy Tuning v1.
+Status: implemented for Architecture review.
 
-Proposed final status: DAILY_NARRATIVE_VOICE_GROUNDING_COPY_TUNING_V1_ACCEPTED
+Branch: `feature/daily-narrative-coaching-intelligence-voice-lab-v1`
 
-Primary decision: Daily Narrative voice should be governed by app-side copy contract and reason-code copy families before any model escalation.
-
-Files of interest:
-
-- services/daily_narrative_copy_service.py
-- services/daily_narrative_rich_day_service.py
-- services/daily_coach_narrative_provider_service.py
-- services/daily_coach_narrative_validation_service.py
-- docs/project_memory/daily_narrative_voice_contract.md
-- tests/test_daily_narrative_copy_service.py
-
-No public/default provider display or model promotion was added.
+Summary: Developer Mode Daily Narrative Voice Lab added with synthetic safe scenarios, deterministic candidate variants, reason codes, coaching angles, banned/awkward phrase detection, and app-side voice examples. Normal Today behavior remains unchanged. Provider calls remain manual-only and are not triggered by page load or scenario selection.

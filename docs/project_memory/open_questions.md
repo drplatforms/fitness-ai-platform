@@ -2,11 +2,11 @@
 
 ## Daily Narrative feedback hardening
 
-The Voice Lab can now capture bad/better/approved feedback. The next question is how aggressively future milestones should turn saved examples into deterministic copy rules and provider prompt examples.
+The first feedback-driven deterministic copy hardening pass is implemented. The next question is whether Architecture wants a second pass focused on provider-facing examples and validation prompt guidance, or whether Daily Narrative should pause while workout variety or Weekly Summary copy quality moves forward.
 
 ## Feedback storage lifecycle
 
-The v1 feedback store is local JSONL and should not be committed by default. A future milestone may decide whether selected approved examples should be promoted from runtime feedback into project-memory docs.
+The v1 feedback store is local JSONL and should not be committed by default. A future milestone may decide whether selected approved examples should be manually promoted from runtime feedback into project-memory docs. Raw runtime JSONL should not be committed.
 
 ## Provider usage
 

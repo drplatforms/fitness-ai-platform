@@ -143,7 +143,17 @@ def _build_candidate(
             "Name what is missing without sounding like a debug panel."
         )
     if scenario.scenario_id == "rich_day_multiple_domains":
-        quality_notes.append("Interpret the day before asking for more entries.")
+        quality_notes.append(
+            "Use the full-day view before asking for more entries; avoid optimal-results claims."
+        )
+    if scenario.scenario_id == "high_soreness_lower_body_planned":
+        quality_notes.append(
+            "Use conservative first-set language and let the body's response decide progression."
+        )
+    if scenario.scenario_id == "mixed_signals_day":
+        quality_notes.append(
+            "Name recovery as the limiter only when supported; avoid unsupported physiology claims."
+        )
     return DailyNarrativeVoiceLabCandidate(
         variant_id=variant_id,
         title=title,
@@ -458,7 +468,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Respect the soreness",
-            "Soreness is up and lower-body work is planned. Keep the first sets conservative and let how you move decide whether the session stays heavy.",
+            "Soreness is up and lower-body work is planned. Keep the first sets conservative, then let how your body reacts decide how the session progresses.",
             "recovery_limited_caution",
         ),
         (
@@ -485,14 +495,14 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
     "rich_day_multiple_domains": (
         (
             "primary",
-            "Compare the day",
-            "You have enough logged to review the day before adding more entries. Check whether training, food, and recovery point in the same direction before making a stronger call.",
+            "Use the full-day view",
+            "Today's logs give the coach enough context to compare training load, food intake, and recovery. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.",
             "rich_day_interpretation",
         ),
         (
             "alternate",
             "Read what is already there",
-            "Training, food, and recovery are all present. The next step is not more logging; it is seeing whether those pieces agree.",
+            "Training, food, and recovery are all present. Review that full-day view before changing the plan or asking for more entries.",
             "rich_day_interpretation",
         ),
     ),
@@ -500,13 +510,13 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Separate effort from readiness",
-            "Food and training are logged, but recovery looks less supportive. Treat that as a mismatch to watch, not proof that anything is broken.",
+            "Food and training are logged, but recovery is the limiting factor today. Use readiness as the check before pushing the next session.",
             "mixed_signals",
         ),
         (
             "alternate",
-            "Do not force one story",
-            "The day has both work and recovery friction. Keep the read cautious and look for whether the next check-in confirms the pattern.",
+            "Keep recovery in the decision",
+            "Training and food are present, but readiness should still set the ceiling. Keep the next session honest until recovery looks more supportive.",
             "mixed_signals",
         ),
     ),

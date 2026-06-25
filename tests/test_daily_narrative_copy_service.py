@@ -36,7 +36,7 @@ def test_rich_day_copy_does_not_default_to_generic_logging() -> None:
     assert "meal or snack" not in combined
     assert "useful move" not in combined
     assert "clearer picture" not in combined
-    assert "training, food, and recovery" in combined
+    assert "training load, food intake, and recovery" in combined
 
 
 def test_limited_data_copy_is_practical_without_weird_debug_language() -> None:
@@ -140,10 +140,25 @@ def test_random_data_and_automatic_plan_phrases_are_rejected() -> None:
     assert "before you treat the plan as automatic" in found
 
 
-def test_rich_day_copy_uses_review_entries_language() -> None:
+def test_new_user_rejected_phrases_are_flagged() -> None:
+    found = banned_daily_narrative_phrases_found(
+        "Let how you move decide whether the session stays heavy. "
+        "Recovery does not support expended energy, but the plan is optimal results."
+    )
+
+    assert "let how you move decide" in found
+    assert "session stays heavy" in found
+    assert "does not support expended energy" in found
+    assert "optimal results" in found
+
+
+def test_rich_day_copy_uses_full_day_view_without_overclaiming() -> None:
     choice = _choice()
     combined = _combined(choice)
 
-    assert "review the day before adding more entries" in combined
+    assert "full-day view" in combined
+    assert "training load, food intake, and recovery" in combined
+    assert "stay consistent or needs a small adjustment" in combined
     assert "adding random data" not in combined
     assert "random data" not in combined
+    assert "optimal results" not in combined

@@ -5,17 +5,19 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Narrative Coaching Intelligence + Voice Lab v1",
-    "latest_final_status": "DAILY_NARRATIVE_COACHING_INTELLIGENCE_VOICE_LAB_V1_ACCEPTED_WITH_COPY_FEEDBACK_LOOP_ACTIVE",
-    "latest_accepted_commit": "a4ea288",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-25_a4ea288_add-daily-narrative-voice-lab.zip"
+    "latest_accepted_milestone": "Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1",
+    "latest_final_status": "DAILY_NARRATIVE_USER_FEEDBACK_CAPTURE_PREFERRED_REWRITE_LOOP_V1_ACCEPTED",
+    "latest_accepted_commit": "141a583",
+    "latest_main_merge_commit": "644792d",
+    "latest_accepted_snapshot": "fitness_ai_codebase_snapshot_2026-06-25_644792d_main_after-daily-narrative-feedback-capture.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1",
-    "current_authorized_branch": "feature/daily-narrative-user-feedback-capture-preferred-rewrite-loop-v1",
-    "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "recommended_next_milestone_after_acceptance": "Daily Narrative Feedback-Driven Copy Rule Hardening v1",
-    "codex": "DO NOT USE BY DEFAULT"
+    "current_authorized_milestone": "Daily Narrative Feedback-Driven Copy Rule Hardening v1",
+    "current_authorized_branch": "feature/daily-narrative-feedback-driven-copy-rule-hardening-v1",
+    "current_authorized_status": "IMPLEMENTED / READY FOR VALIDATION",
+    "recommended_next_milestone_after_acceptance": "Daily Narrative Provider Example Alignment v1 or Workout Exercise Variety Rotation v1",
+    "codex": "DO NOT USE BY DEFAULT",
+    "delivery_flow": "downloadable patch -> preflight -> apply patch -> validate -> stage -> commit -> push -> Linux pull/smoke -> feature snapshot -> Architecture handoff"
   },
   "boundaries": {
     "normal_today_unchanged": true,
@@ -36,6 +38,8 @@
     "app_side_voice_examples": true,
     "developer_mode_feedback_capture": true,
     "daily_narrative_feedback_jsonl": true,
-    "no_provider_on_feedback_save": true
+    "no_provider_on_feedback_save": true,
+    "daily_narrative_feedback_driven_copy_hardening": true,
+    "patch_first_delivery": true
   }
 }

@@ -55,6 +55,10 @@ def test_voice_lab_outputs_public_safe_candidates_without_known_bad_phrases() ->
             assert "useful move" not in candidate.body.lower()
             assert "adding random data" not in candidate.body.lower()
             assert "random data" not in candidate.body.lower()
+            assert "optimal results" not in candidate.body.lower()
+            assert "does not support expended energy" not in candidate.body.lower()
+            assert "let how you move decide" not in candidate.body.lower()
+            assert "session stays heavy" not in candidate.body.lower()
             assert (
                 "before you treat the plan as automatic" not in candidate.body.lower()
             )
@@ -84,7 +88,7 @@ def test_voice_lab_copy_families_are_adaptive_by_scenario() -> None:
     assert len(families) == 4
     assert len(bodies) == 4
     assert "nutrition-based read" in nutrition_only.candidates[0].body
-    assert "review the day" in rich.candidates[0].body
+    assert "full-day view" in rich.candidates[0].body
 
 
 def test_voice_lab_quality_hits_surface_rejected_user_language() -> None:
@@ -97,13 +101,16 @@ def test_voice_lab_quality_hits_surface_rejected_user_language() -> None:
     assert "not enough signal" in hits["awkward_phrase_hits"]
 
 
-def test_voice_lab_rich_day_uses_accepted_random_data_rewrite() -> None:
+def test_voice_lab_rich_day_uses_full_day_view_without_optimal_results() -> None:
     rich = build_daily_narrative_voice_lab_result("rich_day_multiple_domains")
     primary = rich.candidates[0]
 
-    assert "review the day before adding more entries" in primary.body
+    assert "full-day view" in primary.body
+    assert "training load, food intake, and recovery" in primary.body
+    assert "stay consistent or needs a small adjustment" in primary.body
     assert "adding random data" not in primary.body.lower()
     assert "random data" not in primary.body.lower()
+    assert "optimal results" not in primary.body.lower()
 
 
 def test_voice_lab_recovery_planned_uses_preferred_rewrite_direction() -> None:
@@ -114,3 +121,39 @@ def test_voice_lab_recovery_planned_uses_preferred_rewrite_direction() -> None:
 
     assert "Plan the intensity" in primary.body
     assert "before you treat the plan as automatic" not in primary.body
+
+
+def test_voice_lab_high_soreness_lower_body_uses_body_reaction_language() -> None:
+    result = build_daily_narrative_voice_lab_result("high_soreness_lower_body_planned")
+    primary = result.candidates[0]
+
+    assert "Keep the first sets conservative" in primary.body
+    assert "let how your body reacts decide how the session progresses" in primary.body
+    assert "let how you move decide" not in primary.body.lower()
+    assert "session stays heavy" not in primary.body.lower()
+
+
+def test_voice_lab_mixed_signals_uses_readiness_without_overclaiming() -> None:
+    result = build_daily_narrative_voice_lab_result("mixed_signals_day")
+    primary = result.candidates[0]
+
+    assert "recovery is the limiting factor today" in primary.body
+    assert "Use readiness as the check" in primary.body
+    assert "does not support expended energy" not in primary.body.lower()
+    assert "overtrained" not in primary.body.lower()
+
+
+def test_voice_lab_scenario_specific_quality_notes_include_feedback_guidance() -> None:
+    rich = build_daily_narrative_voice_lab_result("rich_day_multiple_domains")
+    soreness = build_daily_narrative_voice_lab_result(
+        "high_soreness_lower_body_planned"
+    )
+    mixed = build_daily_narrative_voice_lab_result("mixed_signals_day")
+
+    assert any("full-day view" in note for note in rich.candidates[0].quality_notes)
+    assert any(
+        "body's response" in note for note in soreness.candidates[0].quality_notes
+    )
+    assert any(
+        "physiology claims" in note for note in mixed.candidates[0].quality_notes
+    )

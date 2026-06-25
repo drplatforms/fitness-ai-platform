@@ -207,7 +207,12 @@ def parse_candidate_weekly_provider_output_json(
         raise WeeklyCoachSummaryProviderModelError(
             "Provider output must be a JSON object."
         )
-    return CandidateWeeklyCoachSummaryProviderOutput(**parsed)
+    try:
+        return CandidateWeeklyCoachSummaryProviderOutput(**parsed)
+    except TypeError as exc:
+        raise WeeklyCoachSummaryProviderModelError(
+            "Provider output did not match the approved JSON schema."
+        ) from exc
 
 
 @dataclass(frozen=True)

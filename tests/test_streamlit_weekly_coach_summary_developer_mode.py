@@ -82,7 +82,7 @@ def test_weekly_coach_summary_debug_has_selected_range_save_and_load() -> None:
     assert "range_key" in panel_source
 
 
-def test_weekly_coach_summary_debug_has_no_provider_or_auto_job_calls() -> None:
+def test_weekly_coach_summary_debug_provider_preview_has_no_auto_job_calls() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
 
     forbidden = [
@@ -92,7 +92,6 @@ def test_weekly_coach_summary_debug_has_no_provider_or_auto_job_calls() -> None:
         "run_daily_coach_async_provider_runtime_prototype",
         "call_ollama",
         "CrewAI",
-        "qwen2.5",
         "qwen3",
         "create_async_job",
         "raw_provider_output",
@@ -104,6 +103,11 @@ def test_weekly_coach_summary_debug_has_no_provider_or_auto_job_calls() -> None:
     ]
     for term in forbidden:
         assert term not in panel_source
+
+    assert "Generate provider candidate" in panel_source
+    assert panel_source.index("Generate provider candidate") < panel_source.index(
+        "generate_weekly_summary_provider_preview("
+    )
 
 
 def test_weekly_coach_summary_developer_preview_uses_fragment_and_timing() -> None:

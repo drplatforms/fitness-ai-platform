@@ -8,11 +8,11 @@ This milestone applies the first captured Voice Lab feedback to deterministic Da
 
 ## Confirmed changes
 
-- Rich all-domain copy now uses a full-day view of training load, food intake, and recovery.
+- Rich all-domain copy now uses a full-day view that considers training load, food intake, and recovery together.
 - Rich all-domain copy avoids claiming alignment or `optimal results` unless backend facts prove it.
 - Recovery-present/planned-workout copy keeps the direct recovery-based intensity planning direction.
 - High-soreness/lower-body planned copy now says to keep first sets conservative and let body response guide progression.
-- Mixed-signals copy now frames recovery as the limiting factor and readiness as the check before pushing the next session.
+- Mixed-signals copy now frames recovery as the weaker point and lets readiness guide the next training push.
 - Copy-quality checks now flag additional user-rejected phrases.
 - Voice examples now preserve scenario-specific bad/preferred examples for future provider/deterministic work.
 

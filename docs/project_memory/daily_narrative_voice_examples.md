@@ -40,7 +40,7 @@ Why it fails:
 - The result sounds like an analytics panel, not a coach.
 
 Preferred:
-> Today's advice is limited. Log a recovery check-in, a meal or snack, or the workout you completed so the coach has enough to work with.
+> Today's advice is limited. Log a recovery check-in, a meal/snack, or a completed workout so the coach has enough data to provide recommendations.
 
 ## generic_logging
 
@@ -59,7 +59,7 @@ Only ask for logging when a specific missing piece changes the coaching read.
 
 Allowed facts:
 - Recovery, food, and training are present.
-- There is enough context to compare the day cautiously.
+- There is enough context to consider the day cautiously.
 
 Rejected:
 > You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.
@@ -70,7 +70,7 @@ Why it fails:
 - The idea is right, but the phrase should be cleaner.
 
 Preferred:
-> Today's logs give the coach enough context to compare training load, food intake, and recovery. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
+> Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
 
 ## recovery_present_training_planned
 
@@ -111,7 +111,7 @@ Preferred:
 
 Allowed facts:
 - Recovery, food, and training are present.
-- There is enough context to compare the day cautiously.
+- There is enough context to consider the day cautiously.
 - Backend facts may not prove true alignment or optimal outcomes.
 
 Rejected direction:
@@ -123,7 +123,7 @@ Why it needs tightening:
 - The useful point is full-day context, not guaranteed progress.
 
 Preferred:
-> Today's logs give the coach enough context to compare training load, food intake, and recovery. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
+> Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
 
 ## mixed_signals_day
 
@@ -141,7 +141,7 @@ Why it needs tightening:
 - The useful point is readiness limiting the next push.
 
 Preferred:
-> Food and training are logged, but recovery is the limiting factor today. Use readiness as the check before pushing the next session.
+> Food and training are logged, but recovery is the weaker point today. Let readiness guide how aggressively you push the next session.
 
 ## style notes
 
@@ -151,7 +151,7 @@ Preferred:
 - Do not use “adding random data.” Prefer “before adding more entries,” “use what is already logged first,” or “use the full-day view.”
 - Do not use “before you treat the plan as automatic.” Prefer recovery-based intensity planning.
 - Do not use “let how you move decide whether the session stays heavy.” Prefer body-reaction / session-progression language.
-- Do not use “does not support expended energy.” Prefer readiness/recovery-limiting-factor language when supported.
+- Do not use “does not support expended energy.” Prefer readiness/recovery-constraint language when supported.
 - Do not use “optimal results” unless backend facts can prove the claim.
 - Do not force “Because...” as a sentence starter.
 - Reduce colon-heavy labels and comma-heavy run-ons.

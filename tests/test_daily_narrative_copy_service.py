@@ -36,7 +36,8 @@ def test_rich_day_copy_does_not_default_to_generic_logging() -> None:
     assert "meal or snack" not in combined
     assert "useful move" not in combined
     assert "clearer picture" not in combined
-    assert "training load, food intake, and recovery" in combined
+    assert "consider training load, food intake, and recovery together" in combined
+    assert "compare" not in combined
 
 
 def test_limited_data_copy_is_practical_without_weird_debug_language() -> None:
@@ -45,7 +46,11 @@ def test_limited_data_copy_is_practical_without_weird_debug_language() -> None:
 
     assert choice.copy_family == "low_data_practical_next_step"
     assert choice.title == "Let's get on the same page"
-    assert "not enough detail" in combined
+    assert "handful of entries" in combined
+    assert "recovery check-in" in combined
+    assert "meal/snack" in combined
+    assert "completed workout" in combined
+    assert "easiest missing piece" not in combined
     assert "selected date" not in combined
     assert "signal" not in combined
     assert "concrete anchor" not in combined
@@ -68,12 +73,32 @@ def test_no_data_copy_asks_for_practical_update_without_banned_phrases() -> None
     assert choice.copy_family == "no_data_start_point"
     assert choice.title == "Today's advice is limited"
     assert "recovery check-in" in combined
-    assert "meal or snack" in combined
-    assert "workout you completed" in combined
+    assert "meal/snack" in combined
+    assert "completed workout" in combined
+    assert "data" in combined
+    assert "recommendations" in combined
     assert "selected date" not in combined
     assert "signal" not in combined
     assert "concrete anchor" not in combined
     assert not contains_banned_daily_narrative_phrase(combined)
+
+
+def test_training_present_nutrition_missing_uses_meals_snacks_today() -> None:
+    choice = _choice(
+        recovery_present=False,
+        nutrition_present=False,
+        training_present=True,
+        actual_sets_count=0,
+        planned_exercises_count=0,
+    )
+    combined = _combined(choice)
+
+    assert choice.copy_family == "training_without_fueling"
+    assert "training session" in combined
+    assert "food entries" in combined
+    assert "meals or snacks" in combined
+    assert "today" in combined
+    assert "connect the work you did" in combined
 
 
 def test_nutrition_present_training_missing_uses_user_preferred_direction() -> None:
@@ -115,7 +140,11 @@ def test_banned_and_awkward_phrase_detectors_flag_mechanical_copy() -> None:
     banned_text = (
         "Today's useful move is to build a clearer picture without overcomplicating it."
     )
-    awkward_text = "Add one concrete anchor because there is not enough signal for the selected date."
+    awkward_text = (
+        "Add one concrete anchor because there is not enough signal for the selected date. "
+        "Do not use the easiest missing piece or pretend it covers the whole plan. "
+        "Do not compare training load when the copy should consider the full day."
+    )
 
     found = banned_daily_narrative_phrases_found(banned_text)
     awkward = awkward_daily_narrative_phrases_found(awkward_text)
@@ -127,6 +156,9 @@ def test_banned_and_awkward_phrase_detectors_flag_mechanical_copy() -> None:
     assert "concrete anchor" in awkward
     assert "selected date" in awkward
     assert "not enough signal" in awkward
+    assert "easiest missing piece" in awkward
+    assert "pretend" in awkward
+    assert "compare training load" in awkward
 
 
 def test_random_data_and_automatic_plan_phrases_are_rejected() -> None:
@@ -157,8 +189,9 @@ def test_rich_day_copy_uses_full_day_view_without_overclaiming() -> None:
     combined = _combined(choice)
 
     assert "full-day view" in combined
-    assert "training load, food intake, and recovery" in combined
+    assert "consider training load, food intake, and recovery together" in combined
     assert "stay consistent or needs a small adjustment" in combined
+    assert "compare" not in combined
     assert "adding random data" not in combined
     assert "random data" not in combined
     assert "optimal results" not in combined

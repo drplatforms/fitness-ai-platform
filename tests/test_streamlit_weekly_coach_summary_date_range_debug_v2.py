@@ -78,12 +78,11 @@ def test_qa_date_range_debug_v2_preserves_lazy_navigation() -> None:
     assert "render_history_section(user_id)" not in developer_branch
 
 
-def test_qa_date_range_debug_v2_has_no_provider_calls() -> None:
+def test_qa_date_range_debug_v2_provider_preview_is_manual_and_safe() -> None:
     panel_source = _function_source("render_weekly_coach_summary_developer_inspection")
     forbidden = (
         "api_post",
         "CrewAI",
-        "qwen2.5",
         "qwen3",
         "raw_provider_output",
         "raw_context",
@@ -92,6 +91,12 @@ def test_qa_date_range_debug_v2_has_no_provider_calls() -> None:
     )
     for term in forbidden:
         assert term not in panel_source
+
+    assert "Generate provider candidate" in panel_source
+    assert "generate_weekly_summary_provider_preview(" in panel_source
+    assert panel_source.index("Generate provider candidate") < panel_source.index(
+        "generate_weekly_summary_provider_preview("
+    )
 
 
 def test_selected_range_persistence_controls_render_before_summary_sections() -> None:

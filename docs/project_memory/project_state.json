@@ -181,11 +181,16 @@
     "latency_investigation_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
     "root_cause": "Streamlit full-app rerun behavior during Developer Mode button interactions",
     "fix": "Weekly Coach Summary Developer Mode panel uses Streamlit fragment reruns when available and shows Developer Mode-only timing diagnostics.",
-    "provider_runtime": "not authorized",
+    "provider_runtime": "Developer Mode-only manual qwen2.5:3b prototype implemented; public/default display not authorized",
     "public_default_display": "not authorized",
     "qa_data_context_integration_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
     "qa_data_context_integration_branch": "feature/weekly-coach-summary-qa-data-context-integration-v1",
-    "qa_data_context_builder": "services/weekly_coach_summary_qa_context_service.py"
+    "qa_data_context_builder": "services/weekly_coach_summary_qa_context_service.py",
+    "provider_runtime_prototype_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
+    "provider_runtime_prototype_branch": "feature/weekly-coach-summary-provider-runtime-prototype-v1",
+    "provider_runtime_prototype_model": "qwen2.5:3b",
+    "provider_runtime_prototype_scope": "Developer Mode-only manual provider preview; deterministic fallback remains authoritative",
+    "normal_today_display": "not authorized"
   },
   "runtime_db_source_verification": {
     "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
@@ -208,6 +213,9 @@
       "Daily Narrative Provider Quality + Grounding v1",
       "Streamlit Theme Cleanup v1",
       "Workout Exercise Variety Rotation v1"
-    ]
+    ],
+    "weekly_provider_prototype_uses_policy": true,
+    "keep_alive_unload_policy_applies": true,
+    "manual_unload_helper": "fallback only; normal provider preview uses lifecycle policy automatically"
   }
 }

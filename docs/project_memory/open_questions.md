@@ -1,15 +1,25 @@
-# Open questions
+# Open Questions / Backlog
 
-- After Weekly Coach Summary Provider Runtime Design v1 acceptance, should the
-  next milestone be Weekly Coach Summary Provider Runtime Prototype v1 -
-  Developer Mode Only?
-- Should the first prototype use `FITNESS_AI_OLLAMA_KEEP_ALIVE=0` for every
-  qwen2.5:3b call, or should repeated manual Developer Mode preview actions use
-  a short keep_alive such as `30s` or `1m`?
-- Should raw provider output remain completely hidden, or should a later
-  Architecture-approved Developer Mode raw/debug gate show it only ephemerally?
-- Should provider candidate validation start with strict keyword/field checks or
-  a richer claim-to-fact validator in the first prototype?
-- Should Streamlit Theme Cleanup v1 or Workout Exercise Variety Rotation v1 be
-  prioritized before provider prototype work if those trust issues become more
-  disruptive?
+## Active downstream candidates
+
+1. Weekly Coach Summary Provider Runtime QA Hardening v1
+   - tune qwen2.5:3b wording quality
+   - harden validator edge cases
+   - verify automatic unload behavior in live smoke
+
+2. Daily Narrative Voice + Grounding v1
+   - make provider wording more human/coach-like
+   - require factual because-grounding such as missing nutrition entries for the day
+
+3. Streamlit Theme Cleanup v1
+   - investigate FSU-like theme leakage into cards
+
+4. Workout Exercise Variety Rotation v1
+   - reduce repeated exercise choices with anti-repeat/top-K rotation
+
+## Boundaries still open
+
+- Public/default Weekly Coach Summary display remains deferred.
+- Normal Today Weekly Coach Summary display remains deferred.
+- CrewAI remains deferred.
+- qwen3/qwen3:32b remain not approved for this path.

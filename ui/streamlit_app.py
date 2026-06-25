@@ -3415,6 +3415,7 @@ SESSION_DEFAULTS = {
     "weekly_coach_summary_message_by_user": {},
     "weekly_coach_summary_qa_inventory_by_range": {},
     "weekly_coach_summary_timing_by_user": {},
+    "weekly_coach_summary_provider_preview_by_range": {},
     "runtime_db_diagnostics": None,
     "developer_mode_latency_timing": {},
 }
@@ -9193,8 +9194,9 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     panel_start = perf_counter()
     st.subheader("Developer Mode: Weekly Coach Summary QA Date Range Debug")
     st.caption(
-        "Developer Mode-only deterministic QA date-range inspection. Actions are "
-        "manual, selected user/date values are typed, and no provider runtime is used."
+        "Developer Mode-only Weekly Coach Summary QA inspection. Deterministic "
+        "actions and provider preview actions are manual, selected user/date "
+        "values are typed, and normal/default UI remains unchanged."
     )
 
     user_options = weekly_coach_summary_qa_user_options()
@@ -9249,6 +9251,9 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
     preview_cache = st.session_state.weekly_coach_summary_preview_by_user
     persisted_cache = st.session_state.weekly_coach_summary_persisted_by_user
     message_cache = st.session_state.weekly_coach_summary_message_by_user
+    provider_preview_cache = (
+        st.session_state.weekly_coach_summary_provider_preview_by_range
+    )
 
     st.caption(
         "Selected QA range: "
@@ -9470,6 +9475,95 @@ def render_weekly_coach_summary_developer_inspection(user_id: int) -> None:
         st.write(", ".join(sections["reason_codes"]) or "None")
         st.markdown("**Limitations:**")
         st.write(", ".join(sections["limitations"]) or "None")
+
+        st.markdown("**Weekly Coach Summary Provider Preview:**")
+        from services.weekly_coach_summary_provider_service import (
+            generate_weekly_summary_provider_preview,
+            resolve_weekly_summary_provider_preview_config,
+            weekly_provider_preview_result_to_display_rows,
+        )
+
+        provider_config = resolve_weekly_summary_provider_preview_config()
+        provider_config_payload = provider_config.to_safe_dict()
+        st.caption(
+            "Developer Mode only. Manual provider preview. Deterministic fallback remains authoritative."
+        )
+        lifecycle_policy = provider_config_payload["lifecycle_policy"]
+        lifecycle_rows = [
+            {"Field": "Provider model", "Value": provider_config.model_name},
+            {"Field": "Preview enabled", "Value": str(provider_config.enabled).lower()},
+            {
+                "Field": "Keep alive policy",
+                "Value": lifecycle_policy.get("keep_alive_policy"),
+            },
+            {
+                "Field": "Keep alive value",
+                "Value": str(lifecycle_policy.get("keep_alive_value")),
+            },
+            {
+                "Field": "Unload after request",
+                "Value": str(lifecycle_policy.get("unload_after_request")).lower(),
+            },
+        ]
+        st.dataframe(pd.DataFrame(lifecycle_rows), width="stretch", hide_index=True)
+        if not provider_config.enabled:
+            st.warning(
+                "Provider preview is disabled. Set FITNESS_AI_WEEKLY_SUMMARY_PROVIDER_PREVIEW_ENABLED=true in the Streamlit runtime environment to run the manual qwen2.5:3b preview."
+            )
+        if st.button(
+            "Generate provider candidate — qwen2.5:3b",
+            key="weekly_coach_summary_generate_provider_candidate_button",
+            disabled=not provider_config.enabled,
+        ):
+            provider_start = perf_counter()
+            context = build_weekly_summary_context_from_qa_range(
+                user_id=int(selected_user_id),
+                start_date=selected_start_date,
+                end_date=selected_end_date,
+            )
+            provider_result = generate_weekly_summary_provider_preview(
+                context=context,
+                deterministic_summary=cached_preview["summary"],
+                config=provider_config,
+            )
+            provider_preview_cache[range_key] = provider_result.to_dict()
+            _store_weekly_coach_summary_timing(
+                range_key,
+                "provider_preview",
+                {
+                    "provider_preview_ms": _weekly_coach_summary_elapsed_ms(
+                        provider_start
+                    )
+                },
+            )
+
+        provider_preview = provider_preview_cache.get(range_key)
+        if provider_preview:
+            st.markdown("**Provider Preview Result:**")
+            st.dataframe(
+                pd.DataFrame(
+                    weekly_provider_preview_result_to_display_rows(provider_preview)
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+            if provider_preview.get("validation_status") == "approved":
+                st.success(
+                    "Provider candidate parsed and validated for Developer Mode preview."
+                )
+                provider_sections = provider_preview["approved_sections"]
+                _render_weekly_coach_summary_sections(provider_sections)
+            else:
+                st.warning(
+                    provider_preview.get(
+                        "safe_message",
+                        "Provider preview fell back to deterministic summary.",
+                    )
+                )
+                errors = provider_preview.get("validation_errors") or []
+                if errors:
+                    st.markdown("**Provider Preview Validation Notes:**")
+                    st.write(", ".join(errors))
 
     persisted = persisted_cache.get(range_key)
     if persisted:

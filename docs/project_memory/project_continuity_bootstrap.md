@@ -37,3 +37,23 @@ Provider boundary:
   user-facing display/persistence
 
 No provider runtime execution is added in this milestone.
+
+
+## Current Implementation Update - Weekly Coach Summary Provider Runtime Prototype v1
+
+Weekly Coach Summary Provider Runtime Prototype v1 is implemented on
+`feature/weekly-coach-summary-provider-runtime-prototype-v1`.
+
+Future chats must preserve these boundaries:
+
+- Developer Mode-only manual provider preview
+- qwen2.5:3b only
+- direct_ollama only
+- backend-owned bounded context only
+- parser/validator/fallback required
+- deterministic fallback remains authoritative
+- lifecycle keep_alive/unload policy required
+- no public/default display
+- no automatic generation
+- no CrewAI
+- no qwen3/qwen3:32b

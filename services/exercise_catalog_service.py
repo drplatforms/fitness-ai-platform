@@ -2480,6 +2480,67 @@ def filter_exercises_for_equipment(
     return matches
 
 
+def build_exercise_catalog_utilization_report(
+    available_equipment: list[str],
+    unavailable_equipment: list[str] | None = None,
+    movement_patterns: list[str] | None = None,
+) -> dict:
+    """Summarize catalog reachability for deterministic workout planning.
+
+    This report is intentionally diagnostic-only. It helps identify whether the
+    catalog is underused because exercises are unavailable, unmapped to current
+    movement patterns, or simply not included in template candidate pools.
+    """
+
+    catalog = get_exercise_catalog()
+    equipment_eligible = filter_exercises_for_equipment(
+        available_equipment=available_equipment,
+        unavailable_equipment=unavailable_equipment or [],
+    )
+    pattern_filtered = filter_exercises_for_equipment(
+        available_equipment=available_equipment,
+        unavailable_equipment=unavailable_equipment or [],
+        movement_patterns=movement_patterns,
+    )
+
+    by_movement_pattern: dict[str, int] = {}
+    eligible_by_movement_pattern: dict[str, int] = {}
+    examples_by_movement_pattern: dict[str, list[str]] = {}
+
+    for entry in catalog:
+        by_movement_pattern[entry.movement_pattern] = (
+            by_movement_pattern.get(entry.movement_pattern, 0) + 1
+        )
+
+    for entry in equipment_eligible:
+        eligible_by_movement_pattern[entry.movement_pattern] = (
+            eligible_by_movement_pattern.get(entry.movement_pattern, 0) + 1
+        )
+        examples = examples_by_movement_pattern.setdefault(entry.movement_pattern, [])
+        if len(examples) < 12:
+            examples.append(entry.name)
+
+    requested_patterns = set(_normalize_list(movement_patterns))
+    reachable_patterns = set(eligible_by_movement_pattern)
+
+    return {
+        "total_catalog_exercises": len(catalog),
+        "equipment_eligible_count": len(equipment_eligible),
+        "movement_pattern_eligible_count": len(pattern_filtered),
+        "movement_patterns_requested": sorted(requested_patterns),
+        "movement_patterns_available": sorted(reachable_patterns),
+        "movement_patterns_missing": sorted(requested_patterns - reachable_patterns),
+        "by_movement_pattern": dict(sorted(by_movement_pattern.items())),
+        "eligible_by_movement_pattern": dict(
+            sorted(eligible_by_movement_pattern.items())
+        ),
+        "examples_by_movement_pattern": {
+            key: examples_by_movement_pattern[key]
+            for key in sorted(examples_by_movement_pattern)
+        },
+    }
+
+
 def find_catalog_entry_by_name(name: str) -> ExerciseCatalogEntry | None:
     normalized_name = _normalize_display_name(name)
     for entry in get_exercise_catalog():

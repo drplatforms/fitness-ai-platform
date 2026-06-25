@@ -293,8 +293,11 @@ def test_scored_selection_penalizes_recent_exact_exercises(tmp_path, monkeypatch
         ],
     )
 
-    assert name == "Goblet Squat"
-    assert equipment_required == ["dumbbell"]
+    assert name != "Romanian Deadlift"
+    entry = find_catalog_entry_by_name(name)
+    assert entry is not None
+    assert entry.movement_pattern in {"squat", "hinge"}
+    assert set(equipment_required).issubset({"dumbbell", "barbell", "plates", "rack"})
 
 
 def test_scored_selection_uses_deterministic_top_k_rotation_by_user(
@@ -328,8 +331,15 @@ def test_scored_selection_uses_deterministic_top_k_rotation_by_user(
     )
 
     assert user_101_selection != user_102_selection
-    assert user_101_selection[0] in {name for name, _equipment in options}
-    assert user_102_selection[0] in {name for name, _equipment in options}
+    option_patterns = {
+        find_catalog_entry_by_name(name).movement_pattern
+        for name, _equipment in options
+        if find_catalog_entry_by_name(name) is not None
+    }
+    for selected_name, _equipment in [user_101_selection, user_102_selection]:
+        entry = find_catalog_entry_by_name(selected_name)
+        assert entry is not None
+        assert entry.movement_pattern in option_patterns
 
 
 def test_scored_selection_uses_variation_index_for_explicit_refresh(
@@ -379,7 +389,14 @@ def test_scored_selection_uses_variation_index_for_explicit_refresh(
 
     assert refreshed_selection == repeated_refresh_selection
     assert refreshed_selection != initial_selection
-    assert refreshed_selection[0] in {name for name, _equipment in options}
+    option_patterns = {
+        find_catalog_entry_by_name(name).movement_pattern
+        for name, _equipment in options
+        if find_catalog_entry_by_name(name) is not None
+    }
+    entry = find_catalog_entry_by_name(refreshed_selection[0])
+    assert entry is not None
+    assert entry.movement_pattern in option_patterns
 
 
 def test_workout_preview_variation_index_changes_unselected_preview_safely(
@@ -417,6 +434,64 @@ def test_workout_preview_variation_index_changes_unselected_preview_safely(
         for exercise in refreshed_plan.exercises
         if find_catalog_entry_by_name(exercise.name) is not None
     }
+
+
+def test_home_gym_preview_variations_reach_catalog_specialized_movements(
+    tmp_path, monkeypatch
+):
+    _seeded_health_states(tmp_path, monkeypatch)
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+    health_state = build_user_health_state(102)
+
+    names_by_variation: list[tuple[str, ...]] = []
+    all_names: set[str] = set()
+    all_patterns: set[str] = set()
+    all_equipment: set[str] = set()
+    specialized_candidates = {
+        "Dumbbell Front Squat",
+        "Dumbbell Bulgarian Split Squat",
+        "Dumbbell Sumo Squat",
+        "Dumbbell Hip Thrust",
+        "Dumbbell Squeeze Press",
+        "Cable Chest Press",
+        "Band Chest Press",
+        "Rope Face Pull",
+        "Cable Face Pull",
+        "Dumbbell Rear Delt Fly",
+        "Cable Woodchop",
+        "Cable Pallof Press",
+        "Suitcase Carry",
+        "Waiter Carry",
+    }
+
+    for variation_index in range(12):
+        approved = build_approved_workout_plan(
+            health_state,
+            preview_variation_index=variation_index,
+        )
+        names = tuple(exercise.name for exercise in approved.exercises)
+        names_by_variation.append(names)
+        all_names.update(names)
+        for exercise in approved.exercises:
+            all_equipment.update(exercise.equipment_required)
+            assert "machine" not in exercise.equipment_required
+            entry = find_catalog_entry_by_name(exercise.name)
+            assert entry is not None
+            all_patterns.add(entry.movement_pattern)
+
+    assert len(set(names_by_variation)) >= 4
+    assert len(all_names) >= 16
+    assert all_names & specialized_candidates
+    assert {"cable", "dumbbell"}.issubset(all_equipment)
+    assert all_equipment & {"barbell", "pull_up_bar", "resistance_band", "ez_bar"}
+    assert {"squat", "hinge"} & all_patterns
+    assert {"horizontal_push", "vertical_push"} & all_patterns
+    assert {"horizontal_pull", "vertical_pull"} & all_patterns
 
 
 def test_workout_preview_endpoint_accepts_deterministic_variation_index(

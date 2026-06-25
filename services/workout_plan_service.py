@@ -72,6 +72,9 @@ FINAL_EXPLANATION_SOURCE_CREWAI_APPROVED = "crewai_approved"
 FINAL_EXPLANATION_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallback"
 RAW_OUTPUT_PREVIEW_LIMIT = 240
 ALLOWED_CATALOG_CONTEXT_LIMIT = 12
+CATALOG_SLOT_ALTERNATIVE_LIMIT = 24
+CATALOG_ROTATION_TOP_CANDIDATE_LIMIT = 10
+
 
 _CONFIDENCE_RANK = {"Limited": 0, "Low": 1, "Moderate": 2, "High": 3}
 
@@ -722,6 +725,177 @@ def _difficulty_score(
     return {"beginner": 2, "intermediate": 12, "advanced": 4}.get(normalized, 0)
 
 
+def _catalog_slot_alternative_priority(
+    entry,
+    workout_constraints: WorkoutConstraints,
+    pattern_order: dict[str, int],
+) -> int:
+    """Rank catalog-backed slot alternatives without overriding safety filters.
+
+    Higher priority alternatives are added earlier to the candidate pool, which
+    lets deterministic rotation reach more of the existing catalog without
+    making variety the only selection factor.
+    """
+
+    score = 0
+    score += max(0, 40 - (pattern_order.get(entry.movement_pattern, 20) * 6))
+    score += _difficulty_score(entry.difficulty, workout_constraints)
+
+    equipment = {_normalize_equipment(item) for item in entry.equipment_required}
+    if _is_home_gym_like(workout_constraints):
+        score += 6 * len(
+            equipment
+            & {
+                "barbell",
+                "cable",
+                "dumbbell",
+                "ez_bar",
+                "pull_up_bar",
+                "resistance_band",
+                "rope_cable_attachment",
+                "treadmill",
+                "bike",
+                "exercise_ball",
+            }
+        )
+
+    name = _normalize_exercise_name(entry.name)
+    if any(
+        token in name
+        for token in [
+            "single leg",
+            "single arm",
+            "bulgarian",
+            "front",
+            "sumo",
+            "tempo",
+            "pause",
+            "supported",
+            "pallof",
+            "woodchop",
+            "face pull",
+            "squeeze",
+            "suitcase",
+            "rack",
+            "landmine",
+        ]
+    ):
+        score += 18
+
+    if "machine" in equipment:
+        score -= 60
+
+    return score
+
+
+def _catalog_entry_type_allowed_for_slot(entry, slot_patterns: set[str]) -> bool:
+    if entry.movement_pattern in {"core_anti_extension", "core_anti_rotation"}:
+        return entry.exercise_type in {"core", "strength"}
+
+    if entry.movement_pattern in {"carry", "conditioning"}:
+        return entry.exercise_type in {"conditioning", "strength"}
+
+    if entry.movement_pattern == "mobility":
+        return "mobility" in slot_patterns
+
+    return entry.exercise_type == "strength"
+
+
+def _catalog_slot_alternatives(
+    options: list[tuple[str, list[str]]],
+    workout_constraints: WorkoutConstraints,
+) -> list[tuple[str, list[str]]]:
+    """Return same-pattern catalog alternatives for a workout template slot.
+
+    The deterministic workout templates still define the intent of each slot.
+    This helper only broadens each slot with catalog exercises that match the
+    slot movement pattern and current equipment constraints, so specialized
+    catalog entries can appear without violating template or equipment rules.
+    """
+
+    existing_names: set[str] = set()
+    ordered_patterns: list[str] = []
+    for name, _equipment_required in options:
+        existing_names.add(_normalize_exercise_name(name))
+        catalog_entry = find_catalog_entry_by_name(name)
+        if catalog_entry is None:
+            continue
+        if catalog_entry.movement_pattern not in ordered_patterns:
+            ordered_patterns.append(catalog_entry.movement_pattern)
+
+    if not ordered_patterns:
+        return []
+
+    slot_patterns = set(ordered_patterns)
+    pattern_order = {pattern: index for index, pattern in enumerate(ordered_patterns)}
+    candidates = []
+    avoid_movements = {
+        movement.strip().lower()
+        for movement in workout_constraints.avoid_movements
+        + workout_constraints.movement_restrictions
+        if movement.strip()
+    }
+
+    for entry in get_exercise_catalog():
+        normalized_name = _normalize_exercise_name(entry.name)
+        if normalized_name in existing_names:
+            continue
+        if entry.movement_pattern not in slot_patterns:
+            continue
+        if entry.movement_pattern in avoid_movements:
+            continue
+        if not _catalog_entry_type_allowed_for_slot(entry, slot_patterns):
+            continue
+        normalized_equipment = [
+            _normalize_equipment(item) for item in entry.equipment_required
+        ]
+        if not _equipment_allowed(normalized_equipment, workout_constraints):
+            continue
+        candidates.append(
+            (
+                _catalog_slot_alternative_priority(
+                    entry,
+                    workout_constraints,
+                    pattern_order,
+                ),
+                entry.name,
+                normalized_equipment,
+            )
+        )
+
+    candidates.sort(key=lambda item: (-item[0], item[1]))
+    return [
+        (name, equipment_required)
+        for _score, name, equipment_required in candidates[
+            :CATALOG_SLOT_ALTERNATIVE_LIMIT
+        ]
+    ]
+
+
+def _expand_slot_options_with_catalog(
+    options: list[tuple[str, list[str]]],
+    workout_constraints: WorkoutConstraints,
+    excluded_names: set[str] | None = None,
+) -> list[tuple[str, list[str]]]:
+    excluded_names = excluded_names or set()
+    expanded = [
+        option
+        for option in options
+        if _normalize_exercise_name(option[0]) not in excluded_names
+    ]
+    seen = {_normalize_exercise_name(name) for name, _equipment in expanded}
+    for name, equipment_required in _catalog_slot_alternatives(
+        options,
+        workout_constraints,
+    ):
+        normalized_name = _normalize_exercise_name(name)
+        if normalized_name in seen:
+            continue
+        expanded.append((name, equipment_required))
+        seen.add(normalized_name)
+    return expanded
+
+
 def _option_score(
     name: str,
     equipment_required: list[str],
@@ -799,7 +973,11 @@ def _select_from_rotated_top_options(
 ) -> tuple[str, list[str]]:
     ranked = sorted(allowed_options, key=lambda item: item[0], reverse=True)
     best_score = ranked[0][0]
-    top_options = [item for item in ranked[:5] if best_score - item[0] <= 180]
+    top_options = [
+        item
+        for item in ranked[:CATALOG_ROTATION_TOP_CANDIDATE_LIMIT]
+        if best_score - item[0] <= 260
+    ]
 
     primary_slot_pattern = (slot_key or "").split("|", 1)[0]
     if primary_slot_pattern:
@@ -847,6 +1025,8 @@ def _select_exercise(
     user_id: int | None = None,
     slot_key: str | None = None,
     preview_variation_index: int = 0,
+    allow_catalog_expansion: bool = True,
+    excluded_names: set[str] | None = None,
 ) -> tuple[str, list[str]]:
     allowed_options: list[tuple[int, str, list[str]]] = []
     recent_name_counts = _recent_exercise_counts(workout_constraints)
@@ -854,8 +1034,22 @@ def _select_exercise(
     recent_modality_counts = _recent_equipment_modality_counts(workout_constraints)
     most_recent_plan_names = _most_recent_plan_names(workout_constraints)
     history_depth = _recent_history_depth(workout_constraints)
+    excluded_names = excluded_names or set()
+    slot_key = slot_key or _selection_slot_key(options)
+    if allow_catalog_expansion:
+        expanded_options = _expand_slot_options_with_catalog(
+            options,
+            workout_constraints,
+            excluded_names,
+        )
+    else:
+        expanded_options = [
+            option
+            for option in options
+            if _normalize_exercise_name(option[0]) not in excluded_names
+        ]
 
-    for index, (name, equipment_required) in enumerate(options):
+    for index, (name, equipment_required) in enumerate(expanded_options):
         catalog_name, catalog_equipment_required = _catalog_equipment_for_option(
             name,
             equipment_required,
@@ -882,7 +1076,7 @@ def _select_exercise(
         return _select_from_rotated_top_options(
             allowed_options,
             user_id=user_id,
-            slot_key=slot_key or _selection_slot_key(options),
+            slot_key=slot_key,
             recent_name_counts=recent_name_counts,
             most_recent_plan_names=most_recent_plan_names,
             history_depth=history_depth,
@@ -939,6 +1133,7 @@ def _exercise_from_options(
         user_id=context.user_id,
         slot_key=_selection_slot_key(options),
         preview_variation_index=context.preview_variation_index,
+        allow_catalog_expansion=context.scenario != "data_quality_limited",
     )
     return _exercise(
         name,
@@ -1503,16 +1698,27 @@ def _next_additional_exercise(
     constraints = context.training_constraints
     rir_min = constraints.recommended_rir_min or 2
     rir_max = constraints.recommended_rir_max or 4
-    exercise = _exercise_from_options(
-        context,
+    name, equipment_required = _select_exercise(
+        context.workout_constraints,
         available_options,
+        user_id=context.user_id,
+        slot_key=_selection_slot_key(available_options),
+        preview_variation_index=context.preview_variation_index,
+        allow_catalog_expansion=context.scenario != "data_quality_limited",
+        excluded_names=existing_names,
+    )
+    exercise = _exercise(
+        name,
         sets,
         reps_min,
         reps_max,
         rir_min,
         rir_max,
         notes,
+        equipment_required,
     )
+    if _normalize_exercise_name(exercise.name) in existing_names:
+        return None
     existing_names.add(_normalize_exercise_name(exercise.name))
     return exercise
 

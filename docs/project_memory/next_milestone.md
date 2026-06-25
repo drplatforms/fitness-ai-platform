@@ -1,18 +1,20 @@
 # Next Milestone
 
-Likely next milestone: Architecture review / QA acceptance for Workout Exercise Variety Rotation v1.
+Likely next step: Architecture review / QA acceptance for Exercise Catalog Utilization / Specialized Movement Coverage v1.
 
 After acceptance, recommended next implementation options:
 
-- Workout Preview Refresh Replacement UX v1: if Architecture wants a safe explicit path to replace an already selected workout with a new variation.
-- Workout Exercise Exposure Tracking v1: if a dedicated durable exposure model is needed beyond recent selected/completed workout history.
-- Daily Narrative Feedback Expansion / Scenario Coverage v1: broaden Daily Narrative scenario coverage after copy hardening.
-- Weekly Coach Summary Voice Lab / Provider Quality v1: bring the copy QA loop to Weekly Summary.
+- Streamlit Workout Save Latency Probe v1: instrument workout preview/selection/save latency before optimizing.
+- Workout Exercise Exposure Tracking Design v1: design durable long-window exercise exposure tracking beyond recent selected/completed history.
+- Daily Coach Synthesis Copy Hardening v1: harden the separate synthesis-copy family that still produces repetitive controlled-progression language.
+- Provider Data Access Audit / Cross-Domain Context Map v1: document exactly what approved facts every provider-backed path receives.
+- Workout Plan Replacement Flow Design v1: design an explicit user-controlled replacement path for already selected workouts.
 
 Still deferred:
 
 - AI/provider workout generation
 - CrewAI workout generation
+- Ollama workout generation
 - automatic workout progression
 - weekly periodization
 - worker / queue / scheduler / polling

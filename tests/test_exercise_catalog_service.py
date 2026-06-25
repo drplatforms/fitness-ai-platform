@@ -2,6 +2,7 @@ import database
 from scripts.seed_qa_scenarios import seed_qa_scenarios
 from services.equipment_profile_service import save_equipment_profile
 from services.exercise_catalog_service import (
+    build_exercise_catalog_utilization_report,
     filter_exercises_for_equipment,
     find_catalog_entry_by_name,
     get_exercise_catalog,
@@ -714,3 +715,50 @@ def test_limited_equipment_filter_keeps_expanded_v1_options_compatible(
         set(entry.equipment_required).issubset({"bodyweight", "dumbbell"})
         for entry in entries
     )
+
+
+def test_exercise_catalog_utilization_report_identifies_reachable_home_gym_depth(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    report = build_exercise_catalog_utilization_report(
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+        movement_patterns=[
+            "squat",
+            "hinge",
+            "horizontal_push",
+            "horizontal_pull",
+            "vertical_push",
+            "vertical_pull",
+            "core_anti_rotation",
+            "carry",
+        ],
+    )
+
+    assert report["total_catalog_exercises"] == 240
+    assert report["equipment_eligible_count"] >= 100
+    assert report["movement_pattern_eligible_count"] >= 70
+    assert report["movement_patterns_missing"] == []
+    assert report["eligible_by_movement_pattern"]["squat"] >= 5
+    assert report["eligible_by_movement_pattern"]["horizontal_pull"] >= 10
+    assert "Dumbbell Front Squat" in report["examples_by_movement_pattern"]["squat"]
+    assert (
+        "Cable Face Pull" in report["examples_by_movement_pattern"]["horizontal_pull"]
+    )
+
+
+def test_exercise_catalog_utilization_report_surfaces_missing_pattern_coverage(
+    tmp_path, monkeypatch
+):
+    _seed_test_db(tmp_path, monkeypatch)
+
+    report = build_exercise_catalog_utilization_report(
+        available_equipment=["bodyweight"],
+        unavailable_equipment=USER_HOME_GYM_EQUIPMENT + ["machine"],
+        movement_patterns=["vertical_pull"],
+    )
+
+    assert report["movement_patterns_requested"] == ["vertical_pull"]
+    assert "vertical_pull" in report["movement_patterns_missing"]

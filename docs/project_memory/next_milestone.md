@@ -2,12 +2,14 @@
 
 Recommended next milestone: Daily Narrative Voice + Grounding v1.
 
-Purpose: use the new seeded QA date/date-range context to tune Daily Narrative provider voice and model quality fairly. The next milestone should evaluate whether qwen2.5:3b is too weak for product-quality language and whether qwen3:8b should be a controlled candidate under strict lifecycle controls.
+Purpose: use the proven rich-day and low-data contexts to tune Daily Narrative wording, "because" phrasing, provider prompt contract, and model comparison fairly.
+
+Alternative next milestone: Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1.
 
 Still deferred:
 
 - public/default Daily Narrative provider display
-- normal Today provider display
+- normal Today Daily Narrative provider display
 - automatic generation
 - worker / queue / scheduler / polling
 - CrewAI

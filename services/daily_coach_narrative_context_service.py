@@ -10,6 +10,9 @@ from models.daily_coach_narrative_models import (
     DailyCoachNarrativeContext,
 )
 from models.daily_next_action_models import DailyNextAction
+from services.daily_narrative_rich_day_service import (
+    summarize_daily_narrative_inventory,
+)
 from services.daily_next_action_service import build_daily_next_action
 from services.weekly_coach_summary_qa_data_service import (
     DEFAULT_QA_DATE_RANGE_USER_ID,
@@ -180,15 +183,25 @@ def _build_daily_narrative_context_from_qa_inventory(
     lookback_days: int,
     inventory,
 ) -> DailyCoachNarrativeContext:
-    fact_counts = inventory.fact_counts
-    nutrition_entries = int(fact_counts.get("nutrition", 0))
-    recovery_rows = int(fact_counts.get("recovery", 0))
-    workout_sessions = int(fact_counts.get("workout_sessions", 0))
-    workout_execution_sessions = int(fact_counts.get("workout_execution_sessions", 0))
-    actual_sets = int(fact_counts.get("workout_sets", 0))
-    planned_exercises = int(fact_counts.get("planned_workout_exercises", 0))
-    training_present = workout_sessions > 0 or workout_execution_sessions > 0
-    nutrition_present = nutrition_entries > 0
+    candidate = summarize_daily_narrative_inventory(
+        inventory=inventory,
+        selected_date=selected_date,
+    )
+    nutrition_entries = candidate.nutrition_entries_count
+    recovery_rows = candidate.recovery_checkins_count
+    workout_sessions = candidate.workout_sessions_count
+    workout_execution_sessions = candidate.workout_execution_sessions_count
+    actual_sets = candidate.actual_sets_count
+    planned_workouts = candidate.planned_workouts_count
+    planned_exercises = candidate.planned_exercises_count
+    training_present = (
+        workout_sessions > 0
+        or workout_execution_sessions > 0
+        or planned_workouts > 0
+        or planned_exercises > 0
+        or actual_sets > 0
+    )
+    nutrition_present = candidate.nutrition_logged
     recovery_present = recovery_rows > 0
     range_label = (
         "selected date"
@@ -196,21 +209,20 @@ def _build_daily_narrative_context_from_qa_inventory(
         else "selected range"
     )
 
-    action_id, title, reason, workflow_target, priority, severity = _qa_daily_action(
-        range_label=range_label,
-        nutrition_present=nutrition_present,
-        recovery_present=recovery_present,
-        training_present=training_present,
-        selected_date=selected_date,
-        data_quality_label=inventory.data_quality_label,
-    )
+    action_id = candidate.next_action.action_id
+    title = candidate.next_action.title
+    reason = candidate.next_action.reason
+    workflow_target = candidate.next_action.workflow_target
+    priority = candidate.next_action.priority
+    severity = candidate.next_action.severity
 
     approved_facts = [
         f"Selected QA user: {user_id} {inventory.scenario}",
         f"Selected date: {selected_date}",
         f"Selected range: {inventory.start_date} through {inventory.end_date}",
         f"Lookback days: {lookback_days}",
-        f"Data quality label: {inventory.data_quality_label}",
+        f"Data quality label: {candidate.data_quality_label}",
+        f"Weekly inventory label: {inventory.data_quality_label}",
         f"Daily next action: {title}",
         f"Daily next action reason: {reason}",
         f"Workflow target: {workflow_target}",
@@ -218,8 +230,13 @@ def _build_daily_narrative_context_from_qa_inventory(
         f"Nutrition entries in {range_label}: {nutrition_entries}",
         f"Workout sessions in {range_label}: {workout_sessions}",
         f"Workout execution sessions in {range_label}: {workout_execution_sessions}",
+        f"Planned workouts in {range_label}: {planned_workouts}",
         f"Planned workout exercises in {range_label}: {planned_exercises}",
         f"Actual set count in {range_label}: {actual_sets}",
+        f"Domains present in {range_label}: {candidate.domains_present_count}",
+        f"Recommended test label: {candidate.recommended_test_label}",
+        f"Richness score: {candidate.richness_score}",
+        "Daily Narrative reason codes: " + ", ".join(candidate.reason_codes),
     ]
     approved_facts.extend(
         _qa_missing_data_reason_facts(
@@ -234,7 +251,7 @@ def _build_daily_narrative_context_from_qa_inventory(
     limitations = list(inventory.limitations)
     limitations.extend(
         _qa_preview_limitations(
-            data_quality_label=inventory.data_quality_label,
+            data_quality_label=candidate.data_quality_label,
             range_label=range_label,
             nutrition_present=nutrition_present,
             recovery_present=recovery_present,
@@ -252,7 +269,7 @@ def _build_daily_narrative_context_from_qa_inventory(
         priority=priority,
         severity=severity,
         approved_focus=title,
-        confidence_language=_qa_confidence_language(inventory.data_quality_label),
+        confidence_language=_qa_confidence_language(candidate.data_quality_label),
         approved_facts=_dedupe_preserve_order(approved_facts),
         approved_limitations=_dedupe_preserve_order(limitations),
         forbidden_claims=list(DAILY_COACH_NARRATIVE_FORBIDDEN_CLAIMS_V1),
@@ -264,7 +281,20 @@ def _build_daily_narrative_context_from_qa_inventory(
             "end_date": inventory.end_date,
             "lookback_days": lookback_days,
             "scenario": inventory.scenario,
-            "data_quality_label": inventory.data_quality_label,
+            "data_quality_label": candidate.data_quality_label,
+            "weekly_inventory_data_quality_label": inventory.data_quality_label,
+            "reason_codes": list(candidate.reason_codes),
+            "recommended_test_label": candidate.recommended_test_label,
+            "richness_score": candidate.richness_score,
+            "domains_present_count": candidate.domains_present_count,
+            "recovery_checkins_count": recovery_rows,
+            "nutrition_entries_count": nutrition_entries,
+            "workout_sessions_count": workout_sessions,
+            "workout_execution_sessions_count": workout_execution_sessions,
+            "planned_workouts_count": planned_workouts,
+            "planned_exercises_count": planned_exercises,
+            "actual_sets_count": actual_sets,
+            "next_action_reason": reason,
         },
         context_status=DAILY_COACH_NARRATIVE_CONTEXT_STATUS_READY,
     )

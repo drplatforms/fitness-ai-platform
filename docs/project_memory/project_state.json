@@ -5,14 +5,14 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Weekly Coach Summary Provider Runtime Prototype v1 - Developer Mode Only",
-    "latest_final_status": "WEEKLY_COACH_SUMMARY_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED_WITH_PROVIDER_QUALITY_FOLLOW_UP",
-    "latest_accepted_commit": "c0f7a84",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_c0f7a84_add-weekly-coach-summary-provider-prototype.zip"
+    "latest_accepted_milestone": "Daily Narrative QA Date Range Preview / Grounding v1",
+    "latest_final_status": "DAILY_NARRATIVE_QA_DATE_RANGE_PREVIEW_GROUNDING_V1_ACCEPTED",
+    "latest_accepted_commit": "43b61d9",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_43b61d9_add-daily-narrative-qa-date-range-preview.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Narrative QA Date Range Preview / Grounding v1",
-    "current_authorized_branch": "feature/daily-narrative-qa-date-range-preview-grounding-v1",
+    "current_authorized_milestone": "Daily Narrative Rich-Day Targeting + Context Differentiation v1",
+    "current_authorized_branch": "feature/daily-narrative-rich-day-targeting-context-differentiation-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
     "recommended_next_milestone_after_acceptance": "Daily Narrative Voice + Grounding v1",
     "codex": "DO NOT USE BY DEFAULT"

@@ -127,3 +127,23 @@ def test_banned_and_awkward_phrase_detectors_flag_mechanical_copy() -> None:
     assert "concrete anchor" in awkward
     assert "selected date" in awkward
     assert "not enough signal" in awkward
+
+
+def test_random_data_and_automatic_plan_phrases_are_rejected() -> None:
+    found = banned_daily_narrative_phrases_found(
+        "You have enough logged to compare the day instead of adding random data. "
+        "Use recovery before you treat the plan as automatic."
+    )
+
+    assert "adding random data" in found
+    assert "random data" in found
+    assert "before you treat the plan as automatic" in found
+
+
+def test_rich_day_copy_uses_review_entries_language() -> None:
+    choice = _choice()
+    combined = _combined(choice)
+
+    assert "review the day before adding more entries" in combined
+    assert "adding random data" not in combined
+    assert "random data" not in combined

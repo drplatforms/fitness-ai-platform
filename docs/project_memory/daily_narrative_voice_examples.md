@@ -1,6 +1,6 @@
 # Daily Narrative Voice Examples
 
-Status: Daily Narrative Coaching Intelligence + Voice Lab v1
+Status: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
 
 This file is app-side memory for Daily Narrative copy QA. It records rejected wording, why it failed, and preferred directions. Future deterministic/provider copy should use these examples as style guidance without weakening factual grounding.
 
@@ -61,14 +61,41 @@ Allowed facts:
 - Recovery, food, and training are present.
 - There is enough context to compare the day cautiously.
 
-Preferred:
+Rejected:
 > You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.
+
+Why it fails:
+- “adding random data” sounds dismissive and weird.
+- It makes the user's own logs sound random.
+- The idea is right, but the phrase should be cleaner.
+
+Preferred:
+> You have enough logged to review the day before adding more entries. Check whether training, food, and recovery point in the same direction before making a stronger call.
+
+## recovery_present_training_planned
+
+Allowed facts:
+- Recovery is logged.
+- A workout is planned.
+- Workout completion is not logged yet.
+
+Rejected:
+> You checked in, and a workout is planned. Use that recovery note to decide how hard to push before you treat the plan as automatic.
+
+Why it fails:
+- “before you treat the plan as automatic” is awkward and abstract.
+- The sentence over-explains what should be a direct coaching point.
+
+Preferred:
+> Plan the intensity of your workout around how recovered you feel today.
 
 ## style notes
 
 - Use “today” for user-facing Today copy.
 - Do not use “selected date” outside Developer Mode diagnostics.
 - Do not use “signal,” “concrete anchor,” “light read,” or “verify the daily picture.”
+- Do not use “adding random data.” Prefer “before adding more entries” or “use what is already logged first.”
 - Do not force “Because...” as a sentence starter.
 - Reduce colon-heavy labels and comma-heavy run-ons.
 - Keep the factual boundary, but make the sentence sound like a coach, not a debug trace.
+- Runtime feedback captured through the Voice Lab should preserve scenario, candidate, reason-code, and preferred-rewrite context without storing raw logs or private data.

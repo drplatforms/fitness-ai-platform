@@ -1,8 +1,12 @@
 # Open Questions
 
-## Daily Narrative feedback loop
+## Daily Narrative feedback hardening
 
-The Voice Lab creates synthetic and seeded copy examples, but user feedback is still manual. A future milestone should decide whether to store bad/better/approved examples in docs only or in a safe local feedback table.
+The Voice Lab can now capture bad/better/approved feedback. The next question is how aggressively future milestones should turn saved examples into deterministic copy rules and provider prompt examples.
+
+## Feedback storage lifecycle
+
+The v1 feedback store is local JSONL and should not be committed by default. A future milestone may decide whether selected approved examples should be promoted from runtime feedback into project-memory docs.
 
 ## Provider usage
 

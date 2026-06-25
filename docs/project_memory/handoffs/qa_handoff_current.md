@@ -1,7 +1,18 @@
-# Current Handoff — Daily Narrative Coaching Intelligence + Voice Lab v1
+# QA Handoff Current
 
-Status: implemented for Architecture review.
+Milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
 
-Branch: `feature/daily-narrative-coaching-intelligence-voice-lab-v1`
+QA focus:
+- feedback labels: bad / better / approved
+- rejected phrase capture
+- preferred rewrite capture
+- feedback persists after rerun
+- list/export works
+- feedback excludes raw/private/debug data
+- saving feedback does not call provider
+- normal Today remains unchanged with Developer Mode off
+- workout selection regression still passes
 
-Summary: Developer Mode Daily Narrative Voice Lab added with synthetic safe scenarios, deterministic candidate variants, reason codes, coaching angles, banned/awkward phrase detection, and app-side voice examples. Normal Today behavior remains unchanged. Provider calls remain manual-only and are not triggered by page load or scenario selection.
+Manual smoke examples:
+- recovery_present_training_planned: reject "before you treat the plan as automatic" and save preferred rewrite.
+- rich_day_multiple_domains: reject "adding random data" and save preferred rewrite.

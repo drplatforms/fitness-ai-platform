@@ -5,16 +5,16 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Narrative Voice + Grounding / Copy Tuning v1",
-    "latest_final_status": "DAILY_NARRATIVE_VOICE_GROUNDING_COPY_TUNING_V1_ACCEPTED_WITH_USER_COPY_FEEDBACK_FOLLOW_UP",
-    "latest_accepted_commit": "637a770",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_637a770_tune-daily-narrative-voice-grounding.zip"
+    "latest_accepted_milestone": "Daily Narrative Coaching Intelligence + Voice Lab v1",
+    "latest_final_status": "DAILY_NARRATIVE_COACHING_INTELLIGENCE_VOICE_LAB_V1_ACCEPTED_WITH_COPY_FEEDBACK_LOOP_ACTIVE",
+    "latest_accepted_commit": "a4ea288",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-25_a4ea288_add-daily-narrative-voice-lab.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Narrative Coaching Intelligence + Voice Lab v1",
-    "current_authorized_branch": "feature/daily-narrative-coaching-intelligence-voice-lab-v1",
+    "current_authorized_milestone": "Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1",
+    "current_authorized_branch": "feature/daily-narrative-user-feedback-capture-preferred-rewrite-loop-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "recommended_next_milestone_after_acceptance": "Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1",
+    "recommended_next_milestone_after_acceptance": "Daily Narrative Feedback-Driven Copy Rule Hardening v1",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -33,6 +33,9 @@
     "workout_selection_regression_preserved": true,
     "developer_mode_voice_lab": true,
     "synthetic_voice_lab_scenarios": true,
-    "app_side_voice_examples": true
+    "app_side_voice_examples": true,
+    "developer_mode_feedback_capture": true,
+    "daily_narrative_feedback_jsonl": true,
+    "no_provider_on_feedback_save": true
   }
 }

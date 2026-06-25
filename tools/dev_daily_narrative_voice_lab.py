@@ -9,6 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from services.daily_narrative_feedback_service import (  # noqa: E402
+    export_daily_narrative_feedback,
+    list_daily_narrative_feedback,
+    summarize_daily_narrative_feedback,
+)
 from services.daily_narrative_voice_lab_service import (  # noqa: E402
     build_daily_narrative_voice_lab_result,
     list_daily_narrative_voice_lab_scenarios,
@@ -18,7 +23,10 @@ from services.daily_narrative_voice_lab_service import (  # noqa: E402
 def main() -> int:
     parser = argparse.ArgumentParser(description="Daily Narrative Voice Lab")
     parser.add_argument("--list-scenarios", action="store_true")
-    parser.add_argument("--scenario", help="Scenario id to render")
+    parser.add_argument("--list-feedback", action="store_true")
+    parser.add_argument("--export-feedback", action="store_true")
+    parser.add_argument("--feedback-summary", action="store_true")
+    parser.add_argument("--scenario", help="Scenario id to render or filter feedback")
     parser.add_argument(
         "--dry-run", action="store_true", help="Render public-safe JSON"
     )
@@ -29,8 +37,40 @@ def main() -> int:
             print(f"{scenario.scenario_id}\t{scenario.scenario_label}")
         return 0
 
+    if args.list_feedback:
+        records = list_daily_narrative_feedback(scenario_id=args.scenario)
+        if not records:
+            print("No Daily Narrative feedback records found.")
+            return 0
+        for record in records:
+            print(
+                f"{record.created_at}\t{record.feedback_label}\t"
+                f"{record.scenario_id}\t{record.candidate_id}\t"
+                f"{record.rejected_phrase or '-'}"
+            )
+        return 0
+
+    if args.export_feedback:
+        print(
+            json.dumps(
+                export_daily_narrative_feedback(scenario_id=args.scenario),
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+
+    if args.feedback_summary:
+        print(
+            json.dumps(summarize_daily_narrative_feedback(), indent=2, sort_keys=True)
+        )
+        return 0
+
     if not args.scenario:
-        parser.error("Use --list-scenarios or --scenario <scenario_id>.")
+        parser.error(
+            "Use --list-scenarios, --list-feedback, --export-feedback, "
+            "--feedback-summary, or --scenario <scenario_id>."
+        )
 
     result = build_daily_narrative_voice_lab_result(args.scenario)
     if args.dry_run:

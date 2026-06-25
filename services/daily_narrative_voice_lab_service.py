@@ -143,9 +143,7 @@ def _build_candidate(
             "Name what is missing without sounding like a debug panel."
         )
     if scenario.scenario_id == "rich_day_multiple_domains":
-        quality_notes.append(
-            "Interpret the day instead of asking for random extra logging."
-        )
+        quality_notes.append("Interpret the day before asking for more entries.")
     return DailyNarrativeVoiceLabCandidate(
         variant_id=variant_id,
         title=title,
@@ -295,7 +293,7 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
             "Food is logged.",
             "Training is logged.",
         ),
-        next_action_intent="Compare the day instead of asking for more random logging.",
+        next_action_intent="Compare the day before asking for more entries.",
         prohibited_claims=(
             "Do not claim causation.",
             "Do not make a medical or progress verdict.",
@@ -446,7 +444,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Use recovery before the workout",
-            "You checked in, and a workout is planned. Use that recovery note to decide how hard to push before you treat the plan as automatic.",
+            "You checked in, and a workout is planned. Plan the intensity around how recovered you feel today.",
             "recovery_limited_caution",
         ),
         (
@@ -488,7 +486,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Compare the day",
-            "You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.",
+            "You have enough logged to review the day before adding more entries. Check whether training, food, and recovery point in the same direction before making a stronger call.",
             "rich_day_interpretation",
         ),
         (

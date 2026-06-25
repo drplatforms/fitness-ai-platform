@@ -25,6 +25,12 @@ from services.daily_coach_async_provider_runtime_service import (
     resolve_daily_coach_async_provider_runtime_config,
     run_daily_coach_async_provider_runtime_prototype,
 )
+from services.daily_narrative_feedback_service import (
+    DailyNarrativeFeedbackInput,
+    list_daily_narrative_feedback,
+    save_daily_narrative_feedback,
+    summarize_daily_narrative_feedback,
+)
 from services.daily_narrative_voice_lab_service import (
     build_daily_narrative_voice_lab_result,
     list_daily_narrative_voice_lab_scenarios,
@@ -5278,9 +5284,98 @@ def render_daily_narrative_voice_lab() -> None:
         ]
         st.dataframe(pd.DataFrame(qa_rows), width="stretch", hide_index=True)
 
+        with st.expander(
+            f"Capture feedback for {candidate.variant_id}", expanded=False
+        ):
+            feedback_key = f"daily_narrative_feedback_{scenario.scenario_id}_{candidate.variant_id}"
+            with st.form(feedback_key, clear_on_submit=False):
+                feedback_label = st.selectbox(
+                    "Feedback label",
+                    options=["bad", "better", "approved"],
+                    key=f"{feedback_key}_label",
+                )
+                rejected_phrase = st.text_input(
+                    "Rejected phrase",
+                    key=f"{feedback_key}_rejected_phrase",
+                    help="Optional. Example: adding random data",
+                )
+                preferred_rewrite = st.text_area(
+                    "Preferred rewrite",
+                    key=f"{feedback_key}_preferred_rewrite",
+                    help="Optional. Paste a better direction or exact replacement.",
+                )
+                user_notes = st.text_area(
+                    "Notes",
+                    key=f"{feedback_key}_notes",
+                    help="Optional. Capture why the copy worked or failed.",
+                )
+                save_feedback = st.form_submit_button("Save feedback")
+
+            if save_feedback:
+                warnings = tuple(
+                    list(candidate.banned_phrase_hits)
+                    + list(candidate.awkward_phrase_hits)
+                    + list(candidate.quality_notes)
+                )
+                feedback = DailyNarrativeFeedbackInput(
+                    scenario_id=scenario.scenario_id,
+                    scenario_label=scenario.scenario_label,
+                    scenario_source="synthetic",
+                    candidate_id=candidate.variant_id,
+                    candidate_source="deterministic",
+                    candidate_text=f"{candidate.title}\n\n{candidate.body}",
+                    feedback_label=feedback_label,
+                    rejected_phrase=rejected_phrase,
+                    preferred_rewrite=preferred_rewrite,
+                    user_notes=user_notes,
+                    reason_codes=candidate.reason_codes,
+                    data_quality=scenario.data_quality,
+                    confidence=scenario.confidence,
+                    domains_present=scenario.domains_present,
+                    domains_missing=scenario.missing_domains,
+                    coaching_angle=scenario.desired_coaching_angle,
+                    copy_quality_warnings=warnings,
+                )
+                try:
+                    saved = save_daily_narrative_feedback(feedback)
+                except ValueError as exc:
+                    st.error(f"Feedback was not saved: {exc}")
+                else:
+                    st.success(
+                        "Feedback saved: " f"{saved.feedback_id} at {saved.created_at}"
+                    )
+
+    recent_feedback = list_daily_narrative_feedback(
+        scenario_id=scenario.scenario_id, limit=5
+    )
+    feedback_summary = summarize_daily_narrative_feedback()
+    st.write("**Recent feedback for this scenario**")
+    if recent_feedback:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "created_at": item.created_at,
+                        "label": item.feedback_label,
+                        "candidate": item.candidate_id,
+                        "rejected_phrase": item.rejected_phrase,
+                        "preferred_rewrite": item.preferred_rewrite,
+                    }
+                    for item in recent_feedback
+                ]
+            ),
+            width="stretch",
+            hide_index=True,
+        )
+    else:
+        st.caption("No feedback saved for this scenario yet.")
+    st.caption(
+        f"Total saved Daily Narrative feedback records: {feedback_summary['count']}"
+    )
+
     st.info(
         "Provider candidate generation is intentionally not automatic in this lab. "
-        "Use existing manual provider preview controls separately if provider QA is needed."
+        "Saving feedback does not call a provider or regenerate the candidate."
     )
 
 

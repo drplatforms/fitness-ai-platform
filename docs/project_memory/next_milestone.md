@@ -1,13 +1,13 @@
 # Next Milestone
 
-Likely next milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1.
+Likely next milestone: Daily Narrative Feedback-Driven Copy Rule Hardening v1.
 
-Purpose: let the user mark generated copy as bad/better/approved and preserve that feedback in project memory or a safe local feedback store so future deterministic/provider copy can improve from explicit examples.
+Purpose: use captured bad/better/approved Voice Lab feedback to update deterministic copy families, provider-facing examples, banned phrases, awkward phrase checks, and scenario-specific rewrite guidance.
 
 Alternative next milestones:
 
-- Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1
 - Workout Exercise Variety Rotation v1
+- Weekly Coach Summary Voice Lab / Provider Quality v1
 
 Still deferred:
 

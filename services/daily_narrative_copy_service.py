@@ -12,6 +12,9 @@ DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS = {
     "keep your food logs straightforward and basic",
     "straightforward and basic",
     "start with one entry",
+    "adding random data",
+    "random data",
+    "before you treat the plan as automatic",
 }
 
 DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS = {
@@ -43,9 +46,9 @@ DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES = (
         "the workout you completed so the coach has enough to work with."
     ),
     (
-        "You have enough logged to compare the day instead of adding random data. "
-        "Check whether training, food, and recovery tell the same story before "
-        "making a stronger call."
+        "You have enough logged to review the day before adding more entries. "
+        "Check whether training, food, and recovery point in the same direction "
+        "before making a stronger call."
     ),
 )
 
@@ -56,6 +59,8 @@ DAILY_NARRATIVE_VOICE_BAD_EXAMPLES = (
     "Add one concrete anchor because there is not enough signal for the selected date.",
     "Keep the nutrition note grounded because nutrition shows up for the selected date.",
     "Verify the daily picture before drawing conclusions from this light read.",
+    "You have enough logged to compare the day instead of adding random data.",
+    "Use recovery before the workout before you treat the plan as automatic.",
 )
 
 
@@ -125,9 +130,9 @@ def build_daily_narrative_qa_copy_choice(
                 action_id="daily_narrative_qa_compare_the_day",
                 title="Compare the day",
                 reason=(
-                    "You have enough logged to compare the day instead of adding "
-                    "random data. Check whether training, food, and recovery tell "
-                    "the same story before making a stronger call."
+                    "You have enough logged to review the day before adding more "
+                    "entries. Check whether training, food, and recovery point in "
+                    "the same direction before making a stronger call."
                 ),
                 workflow_target="daily_grounded_review",
                 priority=4,

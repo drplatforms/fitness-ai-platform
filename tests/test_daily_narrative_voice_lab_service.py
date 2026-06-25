@@ -53,6 +53,11 @@ def test_voice_lab_outputs_public_safe_candidates_without_known_bad_phrases() ->
             assert "concrete anchor" not in candidate.body.lower()
             assert "light read" not in candidate.body.lower()
             assert "useful move" not in candidate.body.lower()
+            assert "adding random data" not in candidate.body.lower()
+            assert "random data" not in candidate.body.lower()
+            assert (
+                "before you treat the plan as automatic" not in candidate.body.lower()
+            )
 
 
 def test_voice_lab_copy_families_are_adaptive_by_scenario() -> None:
@@ -79,7 +84,7 @@ def test_voice_lab_copy_families_are_adaptive_by_scenario() -> None:
     assert len(families) == 4
     assert len(bodies) == 4
     assert "nutrition-based read" in nutrition_only.candidates[0].body
-    assert "compare the day" in rich.candidates[0].body
+    assert "review the day" in rich.candidates[0].body
 
 
 def test_voice_lab_quality_hits_surface_rejected_user_language() -> None:
@@ -90,3 +95,22 @@ def test_voice_lab_quality_hits_surface_rejected_user_language() -> None:
     assert "concrete anchor" in hits["awkward_phrase_hits"]
     assert "selected date" in hits["awkward_phrase_hits"]
     assert "not enough signal" in hits["awkward_phrase_hits"]
+
+
+def test_voice_lab_rich_day_uses_accepted_random_data_rewrite() -> None:
+    rich = build_daily_narrative_voice_lab_result("rich_day_multiple_domains")
+    primary = rich.candidates[0]
+
+    assert "review the day before adding more entries" in primary.body
+    assert "adding random data" not in primary.body.lower()
+    assert "random data" not in primary.body.lower()
+
+
+def test_voice_lab_recovery_planned_uses_preferred_rewrite_direction() -> None:
+    recovery = build_daily_narrative_voice_lab_result(
+        "recovery_present_training_planned"
+    )
+    primary = recovery.candidates[0]
+
+    assert "Plan the intensity" in primary.body
+    assert "before you treat the plan as automatic" not in primary.body

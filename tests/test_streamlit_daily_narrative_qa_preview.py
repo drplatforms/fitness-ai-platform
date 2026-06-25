@@ -77,3 +77,18 @@ def test_daily_narrative_voice_lab_is_developer_mode_only_and_no_provider_on_sel
     assert "Provider candidate generation is intentionally not automatic" in lab_source
     assert "fetch_daily_coach_narrative_preview(" not in lab_source
     assert "Daily Narrative Voice Lab" not in today_source
+
+
+def test_daily_narrative_voice_lab_feedback_capture_is_developer_only() -> None:
+    panel_source = _function_source("render_daily_coach_narrative_developer_panel")
+    lab_source = _function_source("render_daily_narrative_voice_lab")
+    today_source = _function_source("render_today_section")
+
+    assert "render_daily_narrative_voice_lab()" in panel_source
+    assert "Feedback label" in lab_source
+    assert "Save feedback" in lab_source
+    assert "save_daily_narrative_feedback(" in lab_source
+    assert "Saving feedback does not call a provider" in lab_source
+    assert "fetch_daily_coach_narrative_preview(" not in lab_source
+    assert "Feedback label" not in today_source
+    assert "Save feedback" not in today_source

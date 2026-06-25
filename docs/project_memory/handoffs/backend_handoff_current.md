@@ -1,7 +1,9 @@
-# Current Handoff — Daily Narrative Coaching Intelligence + Voice Lab v1
+# Backend Handoff Current
 
-Status: implemented for Architecture review.
+Milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
 
-Branch: `feature/daily-narrative-coaching-intelligence-voice-lab-v1`
+Status: implemented / ready for architecture review.
 
-Summary: Developer Mode Daily Narrative Voice Lab added with synthetic safe scenarios, deterministic candidate variants, reason codes, coaching angles, banned/awkward phrase detection, and app-side voice examples. Normal Today behavior remains unchanged. Provider calls remain manual-only and are not triggered by page load or scenario selection.
+Summary: Added Developer Mode feedback capture to the Daily Narrative Voice Lab. Feedback records preserve scenario, candidate, reason-code, data-quality, and preferred-rewrite context in a safe local JSONL store. Normal Today behavior is unchanged and saving feedback does not call a provider or regenerate candidates.
+
+Validation target: run focused Daily Narrative feedback/Voice Lab/copy/context/provider tests, workout selection regressions, weekly summary regressions, project memory checks, CLI feedback list/export, py_compile, fsweep.

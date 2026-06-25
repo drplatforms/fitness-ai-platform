@@ -273,10 +273,21 @@ def _text_blob(plan: CandidateWorkoutPlan) -> str:
     ).lower()
 
 
+def _normalize_preview_variation_index(value: int | None) -> int:
+    if value is None:
+        return 0
+    try:
+        parsed_value = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, min(parsed_value, 24))
+
+
 def build_workout_context(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> WorkoutContext:
     coaching_decision = build_coaching_decision(health_state)
     training_constraints = build_training_constraints(health_state, coaching_decision)
@@ -311,6 +322,9 @@ def build_workout_context(
         final_target_exercise_count=resolved_count.final_count,
         exercise_count_reason=resolved_count.clamp_reason,
         exercise_count_user_reason=resolved_count.user_safe_reason,
+        preview_variation_index=_normalize_preview_variation_index(
+            preview_variation_index
+        ),
     )
 
 
@@ -781,6 +795,7 @@ def _select_from_rotated_top_options(
     recent_name_counts: dict[str, int],
     most_recent_plan_names: set[str],
     history_depth: int,
+    preview_variation_index: int = 0,
 ) -> tuple[str, list[str]]:
     ranked = sorted(allowed_options, key=lambda item: item[0], reverse=True)
     best_score = ranked[0][0]
@@ -817,9 +832,10 @@ def _select_from_rotated_top_options(
         f"{name}:{count}" for name, count in sorted(recent_name_counts.items())[:16]
     )
     rotation_seed = f"{slot_key}:{history_depth}:{recent_seed}"
-    rotation_index = _stable_rotation_index(
-        rotation_seed, len(top_options), user_id=user_id
-    )
+    rotation_index = (
+        _stable_rotation_index(rotation_seed, len(top_options), user_id=user_id)
+        + _normalize_preview_variation_index(preview_variation_index)
+    ) % len(top_options)
     _score, name, equipment_required = top_options[rotation_index]
     return name, equipment_required
 
@@ -830,6 +846,7 @@ def _select_exercise(
     *,
     user_id: int | None = None,
     slot_key: str | None = None,
+    preview_variation_index: int = 0,
 ) -> tuple[str, list[str]]:
     allowed_options: list[tuple[int, str, list[str]]] = []
     recent_name_counts = _recent_exercise_counts(workout_constraints)
@@ -869,6 +886,7 @@ def _select_exercise(
             recent_name_counts=recent_name_counts,
             most_recent_plan_names=most_recent_plan_names,
             history_depth=history_depth,
+            preview_variation_index=preview_variation_index,
         )
 
     name, equipment_required = options[-1]
@@ -920,6 +938,7 @@ def _exercise_from_options(
         options,
         user_id=context.user_id,
         slot_key=_selection_slot_key(options),
+        preview_variation_index=context.preview_variation_index,
     )
     return _exercise(
         name,
@@ -2979,11 +2998,13 @@ def build_crewai_approved_workout_plan_with_metadata(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> ApprovedWorkoutPlanResult:
     context = build_workout_context(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     return approve_workout_candidate_provider_or_fallback_with_metadata(
         generate_crewai_candidate_workout_plan_json,
@@ -2997,11 +3018,13 @@ def build_crewai_approved_workout_plan(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> ApprovedWorkoutPlan:
     return build_crewai_approved_workout_plan_with_metadata(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     ).approved_workout_plan
 
 
@@ -3017,6 +3040,7 @@ def build_configured_approved_workout_plan_with_metadata(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> ApprovedWorkoutPlanResult:
     """Build an ApprovedWorkoutPlan and runtime metadata for debug inspection."""
 
@@ -3024,6 +3048,7 @@ def build_configured_approved_workout_plan_with_metadata(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     provider = _configured_workout_candidate_provider()
 
@@ -3073,6 +3098,7 @@ def build_configured_approved_workout_plan(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> ApprovedWorkoutPlan:
     """Build an ApprovedWorkoutPlan through the configured provider.
 
@@ -3084,6 +3110,7 @@ def build_configured_approved_workout_plan(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     ).approved_workout_plan
 
 
@@ -3098,11 +3125,13 @@ def build_approved_workout_plan(
     health_state: UserHealthState,
     workout_size_preference: str | None = None,
     requested_target_count: int | None = None,
+    preview_variation_index: int | None = 0,
 ) -> ApprovedWorkoutPlan:
     context = build_workout_context(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     return build_approved_workout_plan_for_context(context)
 

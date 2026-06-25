@@ -144,12 +144,14 @@ def workout_plan_preview(
     user_id: int,
     workout_size_preference: str = "standard",
     requested_target_count: int | None = None,
+    preview_variation_index: int = 0,
 ):
     health_state = build_user_health_state(user_id)
     context = build_workout_context(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     approved_plan = build_approved_workout_plan_for_context(context)
 
@@ -178,17 +180,20 @@ def workout_plan_preview_debug(
     user_id: int,
     workout_size_preference: str = "standard",
     requested_target_count: int | None = None,
+    preview_variation_index: int = 0,
 ):
     health_state = build_user_health_state(user_id)
     context = build_workout_context(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     result = build_configured_approved_workout_plan_with_metadata(
         health_state,
         workout_size_preference=workout_size_preference,
         requested_target_count=requested_target_count,
+        preview_variation_index=preview_variation_index,
     )
     approved_plan = result.approved_workout_plan
 

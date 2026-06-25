@@ -1,21 +1,21 @@
 # Next Milestone
 
-Likely next milestone: Architecture review / QA acceptance for Daily Narrative Feedback-Driven Copy Rule Hardening v1.
+Likely next milestone: Architecture review / QA acceptance for Workout Exercise Variety Rotation v1.
 
 After acceptance, recommended next implementation options:
 
-- Daily Narrative Provider Example Alignment v1: update provider-facing examples and validation prompt guidance using the hardened deterministic copy families.
-- Workout Exercise Variety Rotation v1: address repeated exercise selections and add recent-exercise / modality rotation logic.
-- Weekly Coach Summary Voice Lab / Provider Quality v1: bring the same copy QA discipline to Weekly Summary.
+- Workout Preview Refresh Replacement UX v1: if Architecture wants a safe explicit path to replace an already selected workout with a new variation.
+- Workout Exercise Exposure Tracking v1: if a dedicated durable exposure model is needed beyond recent selected/completed workout history.
+- Daily Narrative Feedback Expansion / Scenario Coverage v1: broaden Daily Narrative scenario coverage after copy hardening.
+- Weekly Coach Summary Voice Lab / Provider Quality v1: bring the copy QA loop to Weekly Summary.
 
 Still deferred:
 
-- public/default Daily Narrative provider display
-- normal Today Daily Narrative provider display
-- Weekly Summary public/default display
-- automatic generation
+- AI/provider workout generation
+- CrewAI workout generation
+- automatic workout progression
+- weekly periodization
 - worker / queue / scheduler / polling
-- CrewAI
-- qwen3 / qwen3:32b promotion
-- 14B promotion
+- public/default Daily Narrative provider display
+- Weekly Summary public/default provider display
 - Streamlit Theme Cleanup

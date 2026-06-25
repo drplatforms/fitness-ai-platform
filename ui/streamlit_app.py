@@ -3819,14 +3819,28 @@ def workout_count_reason_from_payload(
     )
 
 
-def workout_preview_cache_key(
+def normalized_workout_size_preference(workout_size_preference: str | None) -> str:
+    normalized_size = (workout_size_preference or "standard").strip().lower()
+    if normalized_size not in WORKOUT_SIZE_OPTION_LABELS:
+        return "standard"
+    return normalized_size
+
+
+def workout_preview_base_key(
     user_id: int,
     workout_size_preference: str | None,
 ) -> str:
-    normalized_size = (workout_size_preference or "standard").strip().lower()
-    if normalized_size not in WORKOUT_SIZE_OPTION_LABELS:
-        normalized_size = "standard"
+    normalized_size = normalized_workout_size_preference(workout_size_preference)
     return f"{user_id}:{normalized_size}"
+
+
+def workout_preview_cache_key(
+    user_id: int,
+    workout_size_preference: str | None,
+    preview_variation_index: int = 0,
+) -> str:
+    base_key = workout_preview_base_key(user_id, workout_size_preference)
+    return f"{base_key}:variation:{max(0, int(preview_variation_index))}"
 
 
 def clear_workout_preview_cache(user_id: int | None = None) -> None:
@@ -3841,15 +3855,44 @@ def clear_workout_preview_cache(user_id: int | None = None) -> None:
     }
 
 
+def get_workout_preview_variation_index(
+    user_id: int, workout_size_preference: str | None
+) -> int:
+    variation_by_key = st.session_state.setdefault(
+        "workout_plan_preview_variation_index_by_user", {}
+    )
+    base_key = workout_preview_base_key(user_id, workout_size_preference)
+    return int(variation_by_key.get(base_key, 0))
+
+
+def bump_workout_preview_variation_index(
+    user_id: int, workout_size_preference: str | None
+) -> int:
+    variation_by_key = st.session_state.setdefault(
+        "workout_plan_preview_variation_index_by_user", {}
+    )
+    base_key = workout_preview_base_key(user_id, workout_size_preference)
+    next_index = int(variation_by_key.get(base_key, 0)) + 1
+    variation_by_key[base_key] = next_index
+    return next_index
+
+
 def get_stable_workout_plan_preview(
     user_id: int,
     workout_size_preference: str | None,
     force_refresh: bool = False,
 ) -> dict:
-    """Return a stable preview until the user explicitly refreshes it."""
+    """Return a stable preview until the user explicitly requests variation."""
 
     cache = st.session_state.setdefault("workout_plan_preview_by_user", {})
-    cache_key = workout_preview_cache_key(user_id, workout_size_preference)
+    preview_variation_index = (
+        bump_workout_preview_variation_index(user_id, workout_size_preference)
+        if force_refresh
+        else get_workout_preview_variation_index(user_id, workout_size_preference)
+    )
+    cache_key = workout_preview_cache_key(
+        user_id, workout_size_preference, preview_variation_index
+    )
 
     if not force_refresh and cache_key in cache:
         cached_preview = cache[cache_key]
@@ -3857,6 +3900,7 @@ def get_stable_workout_plan_preview(
             return cached_preview
 
     query = workout_size_query(workout_size_preference)
+    query = f"{query}&preview_variation_index={preview_variation_index}"
     workout_plan_data = api_get(f"/workout-plans/preview/{user_id}?{query}")
     if workout_plan_data.get("success"):
         cache[cache_key] = workout_plan_data
@@ -6230,16 +6274,27 @@ def render_workout_plan_section(user_id: int) -> None:
             "training constraints, equipment profile, and validator boundaries."
         )
         workout_size_preference = render_workout_size_preference_control("plan")
+        active_plan_response = get_active_plan_response(user_id)
+        has_selected_workout = bool(active_plan_response)
         force_preview_refresh = st.button(
-            "Refresh workout preview",
+            "Show different exercises",
             key="refresh_workout_plan_preview_button",
-            help="Generate a new preview only when you explicitly want different exercises.",
+            help=(
+                "Generate a new unselected preview variation. Selected and active "
+                "workouts stay unchanged."
+            ),
+            disabled=has_selected_workout,
         )
+        if has_selected_workout:
+            st.caption(
+                "A workout is already selected. The selected workout is frozen unless "
+                "you explicitly replace it in a future workflow."
+            )
         try:
             workout_plan_data = get_stable_workout_plan_preview(
                 user_id,
                 workout_size_preference,
-                force_refresh=force_preview_refresh,
+                force_refresh=force_preview_refresh and not has_selected_workout,
             )
         except requests.RequestException as exc:
             st.error(
@@ -6268,7 +6323,6 @@ def render_workout_plan_section(user_id: int) -> None:
 
             display_workout_plan_preview(approved_workout_plan, user_id=user_id)
 
-            active_plan_response = get_active_plan_response(user_id)
             if active_plan_response:
                 st.success("Selected workout plan is ready to customize.")
                 render_active_plan_summary(active_plan_response)

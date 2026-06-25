@@ -332,6 +332,129 @@ def test_scored_selection_uses_deterministic_top_k_rotation_by_user(
     assert user_102_selection[0] in {name for name, _equipment in options}
 
 
+def test_scored_selection_uses_variation_index_for_explicit_refresh(
+    tmp_path, monkeypatch
+):
+    _seeded_health_states(tmp_path, monkeypatch)
+    workout_constraints = WorkoutConstraints(
+        available_equipment=[
+            "bodyweight",
+            "barbell",
+            "cable",
+            "dumbbell",
+            "rope_cable_attachment",
+        ],
+        unavailable_equipment=["machine"],
+        confidence="High",
+        reason_codes=["test_home_gym_rotation"],
+    )
+    options = [
+        ("Romanian Deadlift", ["barbell"]),
+        ("Goblet Squat", ["dumbbell"]),
+        ("Cable Pull-Through", ["cable", "rope_cable_attachment"]),
+        ("Bodyweight Squat", ["bodyweight"]),
+    ]
+
+    initial_selection = _select_exercise(
+        workout_constraints,
+        options,
+        user_id=102,
+        slot_key="lower_body",
+        preview_variation_index=0,
+    )
+    refreshed_selection = _select_exercise(
+        workout_constraints,
+        options,
+        user_id=102,
+        slot_key="lower_body",
+        preview_variation_index=1,
+    )
+    repeated_refresh_selection = _select_exercise(
+        workout_constraints,
+        options,
+        user_id=102,
+        slot_key="lower_body",
+        preview_variation_index=1,
+    )
+
+    assert refreshed_selection == repeated_refresh_selection
+    assert refreshed_selection != initial_selection
+    assert refreshed_selection[0] in {name for name, _equipment in options}
+
+
+def test_workout_preview_variation_index_changes_unselected_preview_safely(
+    tmp_path, monkeypatch
+):
+    _seeded_health_states(tmp_path, monkeypatch)
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+    health_state = build_user_health_state(102)
+
+    initial_plan = build_approved_workout_plan(health_state, preview_variation_index=0)
+    refreshed_plan = build_approved_workout_plan(
+        health_state, preview_variation_index=1
+    )
+    repeated_refreshed_plan = build_approved_workout_plan(
+        health_state, preview_variation_index=1
+    )
+
+    initial_names = [exercise.name for exercise in initial_plan.exercises]
+    refreshed_names = [exercise.name for exercise in refreshed_plan.exercises]
+    repeated_names = [exercise.name for exercise in repeated_refreshed_plan.exercises]
+
+    assert refreshed_names == repeated_names
+    assert refreshed_names != initial_names
+    assert all(
+        "machine" not in exercise.equipment_required
+        for exercise in refreshed_plan.exercises
+    )
+    assert {
+        find_catalog_entry_by_name(exercise.name).movement_pattern
+        for exercise in refreshed_plan.exercises
+        if find_catalog_entry_by_name(exercise.name) is not None
+    }
+
+
+def test_workout_preview_endpoint_accepts_deterministic_variation_index(
+    tmp_path, monkeypatch
+):
+    _seeded_health_states(tmp_path, monkeypatch)
+    save_equipment_profile(
+        user_id=102,
+        training_environment="home_gym",
+        available_equipment=USER_HOME_GYM_EQUIPMENT,
+        unavailable_equipment=["machine"],
+    )
+    client = TestClient(app)
+
+    first_response = client.get("/workout-plans/preview/102?preview_variation_index=0")
+    second_response = client.get("/workout-plans/preview/102?preview_variation_index=1")
+    repeat_second_response = client.get(
+        "/workout-plans/preview/102?preview_variation_index=1"
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    first_plan = first_response.json()["approved_workout_plan"]
+    second_plan = second_response.json()["approved_workout_plan"]
+    repeat_second_plan = repeat_second_response.json()["approved_workout_plan"]
+
+    assert [exercise["name"] for exercise in second_plan["exercises"]] == [
+        exercise["name"] for exercise in repeat_second_plan["exercises"]
+    ]
+    assert [exercise["name"] for exercise in first_plan["exercises"]] != [
+        exercise["name"] for exercise in second_plan["exercises"]
+    ]
+    assert all(
+        "machine" not in exercise["equipment_required"]
+        for exercise in second_plan["exercises"]
+    )
+
+
 def test_home_gym_repeated_selected_previews_use_broader_pool(tmp_path, monkeypatch):
     _seeded_health_states(tmp_path, monkeypatch)
     save_equipment_profile(

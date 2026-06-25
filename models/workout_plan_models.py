@@ -22,6 +22,7 @@ class WorkoutContext:
     final_target_exercise_count: int = 5
     exercise_count_reason: str = "standard_session"
     exercise_count_user_reason: str = "Built as a standard 5-exercise session."
+    preview_variation_index: int = 0
 
 
 @dataclass

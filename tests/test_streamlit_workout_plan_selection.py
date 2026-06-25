@@ -23,8 +23,10 @@ def test_workout_plan_step_uses_stable_preview_cache() -> None:
 
     assert "get_stable_workout_plan_preview(" in source
     assert "workout_plan_preview_by_user" in source
-    assert "Refresh workout preview" in plan_source
+    assert "Show different exercises" in plan_source
     assert "force_preview_refresh" in plan_source
+    assert "preview_variation_index" in source
+    assert "workout_plan_preview_variation_index_by_user" in source
 
 
 def test_select_this_workout_uses_visible_approved_preview_payload() -> None:
@@ -61,3 +63,22 @@ def test_select_success_moves_to_active_workout_without_clearing_preview_cache()
     assert 'request_workout_flow_step("1. Plan")' not in success_branch
     assert "st.session_state.workout_plan_preview_by_user = {}" not in success_branch
     assert "Opening the active workout" in success_branch
+
+
+def test_preview_refresh_is_disabled_after_workout_selection() -> None:
+    plan_source = _function_source("render_workout_plan_section")
+
+    assert "has_selected_workout" in plan_source
+    assert "disabled=has_selected_workout" in plan_source
+    assert "Selected and active " in plan_source
+    assert "workouts stay unchanged." in plan_source
+
+
+def test_preview_cache_key_includes_variation_index() -> None:
+    cache_source = _function_source("workout_preview_cache_key")
+    stable_source = _function_source("get_stable_workout_plan_preview")
+
+    assert "preview_variation_index" in cache_source
+    assert ":variation:" in cache_source
+    assert "bump_workout_preview_variation_index" in stable_source
+    assert "preview_variation_index=" in stable_source

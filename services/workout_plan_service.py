@@ -260,9 +260,7 @@ def _normalize_equipment(equipment: str) -> str:
 
 
 def _text_blob(plan: CandidateWorkoutPlan) -> str:
-    exercise_text = " ".join(
-        f"{exercise.name} {exercise.notes}" for exercise in plan.exercises
-    )
+    exercise_notes_text = " ".join(exercise.notes for exercise in plan.exercises)
     return " ".join(
         [
             plan.title,
@@ -271,7 +269,7 @@ def _text_blob(plan: CandidateWorkoutPlan) -> str:
             plan.cooldown,
             plan.progression_guidance,
             plan.rationale,
-            exercise_text,
+            exercise_notes_text,
         ]
     ).lower()
 

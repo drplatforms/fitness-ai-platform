@@ -689,6 +689,15 @@ _LIGHTWEIGHT_CATALOG = {
         ["machine"],
         "beginner",
     ),
+    "Cable Internal Rotation": ExerciseCatalogEntry(
+        5,
+        "Cable Internal Rotation",
+        "strength",
+        "shoulder_health",
+        ["rotator_cuff", "shoulders"],
+        ["cable"],
+        "beginner",
+    ),
 }
 
 
@@ -921,6 +930,29 @@ def test_catalog_exercise_id_name_mismatch_is_rejected_by_validator(monkeypatch)
     violations = validate_candidate_workout_plan(candidate, context)
 
     assert any("catalog_exercise_id" in violation for violation in violations)
+
+
+def test_valid_catalog_exercise_name_with_internal_rotation_is_allowed(monkeypatch):
+    _patch_lightweight_catalog(monkeypatch)
+    context = _lightweight_workout_context(
+        available_equipment=[
+            "bodyweight",
+            "dumbbell",
+            "adjustable_bench",
+            "barbell",
+            "rack",
+            "plates",
+            "cable",
+        ],
+        unavailable_equipment=["machine"],
+    )
+    candidate = parse_candidate_workout_plan_json(
+        json.dumps(_candidate_payload_for_entry("Cable Internal Rotation"))
+    )
+
+    violations = validate_candidate_workout_plan(candidate, context)
+
+    assert "Workout plan contains internal/debug language." not in violations
 
 
 def test_unavailable_equipment_candidate_is_rejected_by_validator(monkeypatch):

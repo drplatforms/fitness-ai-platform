@@ -1,59 +1,11 @@
-# Current implementation update - Weekly Coach Summary Provider Runtime Design v1
+# Project Continuity Bootstrap
 
-Weekly Coach Summary Provider Runtime Design v1 is implemented on
-`feature/weekly-coach-summary-provider-runtime-design-v1` after accepted commit
-`be2f321 Add provider runtime resource lifecycle policy`.
+Current focus: AI Health Coach / fitness_ai.
 
-This milestone is design-only. It documents the future direct_ollama +
-qwen2.5:3b Weekly Coach Summary provider path against the existing bounded
-WeeklyCoachSummaryContext seam. It also adds non-executing provider contract
-models/tests so the future prototype has a concrete JSON shape and safety
-boundary.
+Latest implemented feature branch milestone: Daily Narrative QA Date Range Preview / Grounding v1.
 
-Current accepted foundations:
+Key rule: backend tells the truth; provider improves voice; validator decides what survives; deterministic fallback always works.
 
-- runtime DB source diagnostics
-- QA seed verification CLI
-- top-level Streamlit lazy navigation
-- Weekly Coach Summary QA Date Range Debug v2
-- Weekly Coach Summary QA Data Context Integration v1
-- Provider Runtime Resource Lifecycle Design v1
+Daily Narrative now has a Developer Mode-only QA seeded date/date-range preview seam. Use QA users 101-105 and the verified seeded window `2026-05-31` through `2026-06-06` for smoke testing. The preview context uses safe aggregate facts and missing-data reasons only. Normal Today behavior is unchanged.
 
-Live QA window:
-
-- `2026-05-31` through `2026-06-06`
-- happy path: user 102 `aligned_managed`
-- low-data path: user 105 `data_quality_limited`
-
-Provider boundary:
-
-- backend facts only
-- safe aggregate context only
-- qwen2.5:3b future prototype only
-- parser + validator gate required
-- deterministic fallback always remains
-- Provider Runtime Resource Lifecycle policy required
-- no raw rows, raw provider output, prompts, scratchpad, or rejected output in
-  user-facing display/persistence
-
-No provider runtime execution is added in this milestone.
-
-
-## Current Implementation Update - Weekly Coach Summary Provider Runtime Prototype v1
-
-Weekly Coach Summary Provider Runtime Prototype v1 is implemented on
-`feature/weekly-coach-summary-provider-runtime-prototype-v1`.
-
-Future chats must preserve these boundaries:
-
-- Developer Mode-only manual provider preview
-- qwen2.5:3b only
-- direct_ollama only
-- backend-owned bounded context only
-- parser/validator/fallback required
-- deterministic fallback remains authoritative
-- lifecycle keep_alive/unload policy required
-- no public/default display
-- no automatic generation
-- no CrewAI
-- no qwen3/qwen3:32b
+Previous accepted provider milestone: Weekly Coach Summary Provider Runtime Prototype v1 (`c0f7a84`).

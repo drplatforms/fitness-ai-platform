@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from models.daily_coach_narrative_models import (
@@ -11,6 +11,13 @@ from models.daily_coach_narrative_models import (
 )
 from models.daily_next_action_models import DailyNextAction
 from services.daily_next_action_service import build_daily_next_action
+from services.weekly_coach_summary_qa_data_service import (
+    DEFAULT_QA_DATE_RANGE_USER_ID,
+    DEFAULT_QA_LOW_DATA_USER_ID,
+    QA_USER_LABELS,
+    WeeklyCoachSummaryQADataError,
+    inspect_weekly_summary_qa_range,
+)
 
 _INTERNAL_METADATA_TERMS = {
     "raw",
@@ -111,6 +118,296 @@ def build_daily_coach_narrative_context_from_action(
         raise DailyCoachNarrativeContextValidationError("; ".join(violations))
 
     return context
+
+
+def build_daily_coach_narrative_qa_preview_context(
+    user_id: int,
+    *,
+    selected_date: str | None = None,
+    lookback_days: int = 1,
+) -> DailyCoachNarrativeContext:
+    """Build a Developer Mode QA Daily Narrative context for seeded dates.
+
+    This path mirrors the Weekly Coach Summary QA date-range seam: selected
+    user/date inputs are typed, backend-owned, and converted to safe aggregate
+    facts. It does not call a provider and does not expose raw rows, notes, food
+    logs, set rows, prompts, or provider output.
+    """
+
+    qa_user_id = int(user_id)
+    if qa_user_id not in QA_USER_LABELS:
+        raise DailyCoachNarrativeContextValidationError(
+            "Daily Narrative QA Preview supports QA users 101-105 only."
+        )
+
+    preview_date = date.fromisoformat(selected_date or "2026-06-06")
+    bounded_lookback = max(1, min(int(lookback_days or 1), 7))
+    start_date = preview_date - timedelta(days=bounded_lookback - 1)
+
+    try:
+        inventory = inspect_weekly_summary_qa_range(
+            user_id=qa_user_id,
+            start_date=start_date.isoformat(),
+            end_date=preview_date.isoformat(),
+        )
+    except WeeklyCoachSummaryQADataError as exc:
+        raise DailyCoachNarrativeContextValidationError(str(exc)) from exc
+
+    context = _build_daily_narrative_context_from_qa_inventory(
+        user_id=qa_user_id,
+        selected_date=preview_date.isoformat(),
+        lookback_days=bounded_lookback,
+        inventory=inventory,
+    )
+    violations = validate_daily_coach_narrative_context(context)
+    if violations:
+        raise DailyCoachNarrativeContextValidationError("; ".join(violations))
+    return context
+
+
+def daily_narrative_qa_default_user_id() -> int:
+    return DEFAULT_QA_DATE_RANGE_USER_ID
+
+
+def daily_narrative_qa_low_data_user_id() -> int:
+    return DEFAULT_QA_LOW_DATA_USER_ID
+
+
+def _build_daily_narrative_context_from_qa_inventory(
+    *,
+    user_id: int,
+    selected_date: str,
+    lookback_days: int,
+    inventory,
+) -> DailyCoachNarrativeContext:
+    fact_counts = inventory.fact_counts
+    nutrition_entries = int(fact_counts.get("nutrition", 0))
+    recovery_rows = int(fact_counts.get("recovery", 0))
+    workout_sessions = int(fact_counts.get("workout_sessions", 0))
+    workout_execution_sessions = int(fact_counts.get("workout_execution_sessions", 0))
+    actual_sets = int(fact_counts.get("workout_sets", 0))
+    planned_exercises = int(fact_counts.get("planned_workout_exercises", 0))
+    training_present = workout_sessions > 0 or workout_execution_sessions > 0
+    nutrition_present = nutrition_entries > 0
+    recovery_present = recovery_rows > 0
+    range_label = (
+        "selected date"
+        if inventory.start_date == inventory.end_date
+        else "selected range"
+    )
+
+    action_id, title, reason, workflow_target, priority, severity = _qa_daily_action(
+        range_label=range_label,
+        nutrition_present=nutrition_present,
+        recovery_present=recovery_present,
+        training_present=training_present,
+        selected_date=selected_date,
+        data_quality_label=inventory.data_quality_label,
+    )
+
+    approved_facts = [
+        f"Selected QA user: {user_id} {inventory.scenario}",
+        f"Selected date: {selected_date}",
+        f"Selected range: {inventory.start_date} through {inventory.end_date}",
+        f"Lookback days: {lookback_days}",
+        f"Data quality label: {inventory.data_quality_label}",
+        f"Daily next action: {title}",
+        f"Daily next action reason: {reason}",
+        f"Workflow target: {workflow_target}",
+        f"Recovery entries in {range_label}: {recovery_rows}",
+        f"Nutrition entries in {range_label}: {nutrition_entries}",
+        f"Workout sessions in {range_label}: {workout_sessions}",
+        f"Workout execution sessions in {range_label}: {workout_execution_sessions}",
+        f"Planned workout exercises in {range_label}: {planned_exercises}",
+        f"Actual set count in {range_label}: {actual_sets}",
+    ]
+    approved_facts.extend(
+        _qa_missing_data_reason_facts(
+            range_label=range_label,
+            nutrition_present=nutrition_present,
+            recovery_present=recovery_present,
+            training_present=training_present,
+            actual_sets=actual_sets,
+        )
+    )
+
+    limitations = list(inventory.limitations)
+    limitations.extend(
+        _qa_preview_limitations(
+            data_quality_label=inventory.data_quality_label,
+            range_label=range_label,
+            nutrition_present=nutrition_present,
+            recovery_present=recovery_present,
+            training_present=training_present,
+        )
+    )
+
+    context = DailyCoachNarrativeContext(
+        user_id=user_id,
+        date=selected_date,
+        next_action_id=action_id,
+        next_action_title=title,
+        next_action_reason=reason,
+        workflow_target=workflow_target,
+        priority=priority,
+        severity=severity,
+        approved_focus=title,
+        confidence_language=_qa_confidence_language(inventory.data_quality_label),
+        approved_facts=_dedupe_preserve_order(approved_facts),
+        approved_limitations=_dedupe_preserve_order(limitations),
+        forbidden_claims=list(DAILY_COACH_NARRATIVE_FORBIDDEN_CLAIMS_V1),
+        fallback_note=f"{title}: {reason}",
+        source_metadata={
+            "context_source": "daily_narrative_qa_preview",
+            "selected_date": selected_date,
+            "start_date": inventory.start_date,
+            "end_date": inventory.end_date,
+            "lookback_days": lookback_days,
+            "scenario": inventory.scenario,
+            "data_quality_label": inventory.data_quality_label,
+        },
+        context_status=DAILY_COACH_NARRATIVE_CONTEXT_STATUS_READY,
+    )
+    return context
+
+
+def _qa_daily_action(
+    *,
+    range_label: str,
+    nutrition_present: bool,
+    recovery_present: bool,
+    training_present: bool,
+    selected_date: str,
+    data_quality_label: str,
+) -> tuple[str, str, str, str, int, str]:
+    if training_present and not nutrition_present:
+        return (
+            "daily_narrative_qa_log_nutrition_for_training_day",
+            "Log a meal or snack",
+            (
+                f"Because training is present but nutrition is missing for the {range_label}, "
+                "one meal entry gives the coach something real to compare against the training day."
+            ),
+            "nutrition_quick_log",
+            3,
+            "info",
+        )
+    if not nutrition_present:
+        return (
+            "daily_narrative_qa_log_missing_nutrition",
+            "Log a meal or snack",
+            (
+                f"Because there are no nutrition entries for the {range_label} ending {selected_date}, "
+                "one simple meal or snack log gives the coach something real to work from."
+            ),
+            "nutrition_quick_log",
+            3,
+            "info",
+        )
+    if not recovery_present:
+        return (
+            "daily_narrative_qa_complete_recovery_checkin",
+            "Complete recovery check-in",
+            (
+                f"Because recovery detail is missing for the {range_label}, a quick check-in "
+                "keeps the day from being interpreted from nutrition or training alone."
+            ),
+            "today_recovery_checkin",
+            2,
+            "info",
+        )
+    if data_quality_label == "limited":
+        return (
+            "daily_narrative_qa_keep_logging_simple",
+            "Keep logging simple",
+            (
+                f"Because the {range_label} has limited data quality, the useful move is "
+                "to keep logging simple before drawing stronger conclusions."
+            ),
+            "daily_logging_review",
+            4,
+            "info",
+        )
+    return (
+        "daily_narrative_qa_compare_training_and_fueling",
+        "Compare training and fueling",
+        (
+            f"Because the {range_label} has recovery, nutrition, and training context, "
+            "the useful move is to compare effort with fueling instead of adding random detail."
+        ),
+        "daily_grounded_review",
+        4,
+        "success",
+    )
+
+
+def _qa_missing_data_reason_facts(
+    *,
+    range_label: str,
+    nutrition_present: bool,
+    recovery_present: bool,
+    training_present: bool,
+    actual_sets: int,
+) -> list[str]:
+    facts: list[str] = []
+    if not nutrition_present:
+        facts.append(
+            f"Missing data reason: no nutrition entries for the {range_label}."
+        )
+    if not recovery_present:
+        facts.append(
+            f"Missing data reason: no recovery check-in for the {range_label}."
+        )
+    if training_present and actual_sets == 0:
+        facts.append(
+            f"Missing data reason: training is present but actual set detail is absent for the {range_label}."
+        )
+    if not nutrition_present and training_present:
+        facts.append(
+            f"Grounding reason: training is present but nutrition is missing for the {range_label}."
+        )
+    if not facts:
+        facts.append(
+            f"Grounding reason: selected {range_label} has enough safe aggregate facts for a more specific narrative."
+        )
+    return facts
+
+
+def _qa_preview_limitations(
+    *,
+    data_quality_label: str,
+    range_label: str,
+    nutrition_present: bool,
+    recovery_present: bool,
+    training_present: bool,
+) -> list[str]:
+    limitations = [
+        "Daily Narrative QA Preview uses safe aggregate facts only.",
+        "Normal Today Daily Narrative behavior is unchanged by this Developer Mode preview.",
+    ]
+    if data_quality_label == "limited":
+        limitations.append(
+            "Keep conclusions cautious because this QA user has limited data quality."
+        )
+    if not nutrition_present:
+        limitations.append(
+            f"Nutrition interpretation is limited because the {range_label} has no nutrition entries."
+        )
+    if not recovery_present:
+        limitations.append(
+            f"Recovery interpretation is limited because the {range_label} has no recovery check-in."
+        )
+    if not training_present:
+        limitations.append(
+            f"Training interpretation is limited because the {range_label} has no workout session."
+        )
+    return limitations
+
+
+def _qa_confidence_language(data_quality_label: str) -> str:
+    if data_quality_label == "limited":
+        return "Confidence is limited because the selected QA context is intentionally sparse."
+    return "Confidence is based on the selected QA date range and safe aggregate facts."
 
 
 def validate_daily_coach_narrative_context(
@@ -313,7 +610,15 @@ def _contains_internal_terms(payload: Any) -> bool:
 
 def _contains_internal_fragment(text: str) -> bool:
     lowered = text.lower()
-    return any(term in lowered for term in _INTERNAL_METADATA_TERMS)
+    tokens = set(
+        "".join(
+            character if character.isalnum() else " " for character in lowered
+        ).split()
+    )
+    if tokens.intersection(_INTERNAL_METADATA_TERMS):
+        return True
+    normalized = " ".join(tokens)
+    return "validation error" in normalized or "validation errors" in normalized
 
 
 def _string_or_none(value: object) -> str | None:

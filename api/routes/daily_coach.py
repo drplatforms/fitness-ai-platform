@@ -404,6 +404,8 @@ def daily_coach_narrative_preview_debug(
     model: str | None = None,
     date: str | None = None,
     timeout_seconds: float = 300.0,
+    qa_preview: bool = False,
+    lookback_days: int = 1,
 ):
     """Return a public-safe developer-only Daily Coach Narrative preview.
 
@@ -419,6 +421,8 @@ def daily_coach_narrative_preview_debug(
             provider=provider,
             model_name=model,
             timeout_seconds=timeout_seconds,
+            qa_preview=qa_preview,
+            lookback_days=lookback_days,
         )
     except DailyCoachNarrativePreviewError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

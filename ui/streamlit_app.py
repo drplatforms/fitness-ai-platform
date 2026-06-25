@@ -4161,7 +4161,13 @@ def daily_coach_narrative_lane_key_from_label(label: str) -> str:
     return "deterministic"
 
 
-def build_daily_coach_narrative_preview_params(lane_key: str) -> dict[str, object]:
+def build_daily_coach_narrative_preview_params(
+    lane_key: str,
+    *,
+    target_date: str | None = None,
+    qa_preview: bool = False,
+    lookback_days: int = 1,
+) -> dict[str, object]:
     lane = DAILY_COACH_NARRATIVE_LANES.get(
         lane_key, DAILY_COACH_NARRATIVE_LANES["deterministic"]
     )
@@ -4173,6 +4179,11 @@ def build_daily_coach_narrative_preview_params(lane_key: str) -> dict[str, objec
     timeout_seconds = lane.get("timeout_seconds")
     if timeout_seconds:
         params["timeout_seconds"] = timeout_seconds
+    if target_date:
+        params["date"] = target_date
+    if qa_preview:
+        params["qa_preview"] = True
+        params["lookback_days"] = max(1, min(int(lookback_days or 1), 7))
 
     return params
 
@@ -4243,9 +4254,19 @@ def daily_coach_session_approved_card_text(record: dict) -> str:
 
 
 def fetch_daily_coach_narrative_preview(
-    user_id: int, lane_key: str = "deterministic"
+    user_id: int,
+    lane_key: str = "deterministic",
+    *,
+    target_date: str | None = None,
+    qa_preview: bool = False,
+    lookback_days: int = 1,
 ) -> dict | None:
-    params = build_daily_coach_narrative_preview_params(lane_key)
+    params = build_daily_coach_narrative_preview_params(
+        lane_key,
+        target_date=target_date,
+        qa_preview=qa_preview,
+        lookback_days=lookback_days,
+    )
     errors = st.session_state.daily_coach_narrative_preview_error_by_user
 
     try:
@@ -5015,6 +5036,12 @@ def render_daily_coach_async_persistence_inspection_panel(user_id: int) -> None:
             )
 
 
+def daily_narrative_qa_user_options() -> dict[int, str]:
+    from services.weekly_coach_summary_qa_data_service import QA_USER_LABELS
+
+    return dict(QA_USER_LABELS)
+
+
 def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -5025,14 +5052,76 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
             "shown only after backend parse and validation pass."
         )
 
-        fallback_preview = fetch_daily_coach_narrative_preview(user_id)
+        st.write("**Daily Narrative QA Date Range Preview / Grounding**")
+        st.caption(
+            "Developer Mode only. QA seeded-date preview. Normal Today Daily Narrative is unchanged."
+        )
+        qa_preview_enabled = st.checkbox(
+            "Use seeded QA date context",
+            value=True,
+            key=f"daily_narrative_qa_preview_enabled_{user_id}",
+            help="Uses typed QA user/date inputs and backend-owned safe aggregate context.",
+        )
+        qa_user_options = daily_narrative_qa_user_options()
+        qa_user_ids = list(qa_user_options.keys())
+        default_qa_index = (
+            qa_user_ids.index(user_id)
+            if user_id in qa_user_ids
+            else qa_user_ids.index(102)
+        )
+        qa_user_id = st.selectbox(
+            "Daily Narrative QA user",
+            options=qa_user_ids,
+            index=default_qa_index,
+            format_func=lambda value: qa_user_options.get(value, str(value)),
+            key=f"daily_narrative_qa_user_{user_id}",
+            help="Typed QA user id; UI label text is not parsed as source of truth.",
+            disabled=not qa_preview_enabled,
+        )
+        qa_col, lookback_col = st.columns([1, 1])
+        with qa_col:
+            qa_selected_date = st.date_input(
+                "Daily Narrative selected date",
+                value=date(2026, 6, 6),
+                key=f"daily_narrative_qa_selected_date_{user_id}",
+                help="Known seeded QA window recently verified: 2026-05-31 through 2026-06-06.",
+                disabled=not qa_preview_enabled,
+            )
+        with lookback_col:
+            qa_lookback_days = st.selectbox(
+                "Daily Narrative lookback",
+                options=[1, 3, 7],
+                index=0,
+                key=f"daily_narrative_qa_lookback_days_{user_id}",
+                disabled=not qa_preview_enabled,
+            )
+        preview_user_id = int(qa_user_id) if qa_preview_enabled else user_id
+        preview_target_date = (
+            qa_selected_date.isoformat()
+            if qa_preview_enabled
+            else datetime.today().date().isoformat()
+        )
+        preview_lookback_days = int(qa_lookback_days) if qa_preview_enabled else 1
+        preview_cache_key = (
+            f"{user_id}|qa:{qa_preview_enabled}|preview_user:{preview_user_id}|"
+            f"date:{preview_target_date}|lookback:{preview_lookback_days}"
+        )
+
+        fallback_preview = fetch_daily_coach_narrative_preview(
+            preview_user_id,
+            target_date=preview_target_date,
+            qa_preview=qa_preview_enabled,
+            lookback_days=preview_lookback_days,
+        )
         if fallback_preview:
-            st.write("**Deterministic fallback**")
+            st.write("**Deterministic grounded preview**")
             st.info(daily_coach_narrative_fallback_display(fallback_preview))
+            with st.expander("Public-safe QA context summary", expanded=False):
+                render_daily_coach_narrative_context_summary(fallback_preview)
         else:
             fallback_error = (
                 st.session_state.daily_coach_narrative_preview_error_by_user.get(
-                    user_id
+                    preview_user_id
                 )
             )
             st.warning(
@@ -5057,20 +5146,30 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
             "Run selected narrative preview",
             key=f"run_daily_coach_narrative_preview_{user_id}",
         ):
-            preview = fetch_daily_coach_narrative_preview(user_id, lane_key)
+            preview = fetch_daily_coach_narrative_preview(
+                preview_user_id,
+                lane_key,
+                target_date=preview_target_date,
+                qa_preview=qa_preview_enabled,
+                lookback_days=preview_lookback_days,
+            )
             if preview:
-                st.session_state.daily_coach_narrative_preview_by_user[user_id] = (
-                    preview
-                )
+                st.session_state.daily_coach_narrative_preview_by_user[
+                    preview_cache_key
+                ] = preview
             else:
                 st.session_state.daily_coach_narrative_preview_by_user.pop(
-                    user_id, None
+                    preview_cache_key, None
                 )
 
         preview_error = (
-            st.session_state.daily_coach_narrative_preview_error_by_user.get(user_id)
+            st.session_state.daily_coach_narrative_preview_error_by_user.get(
+                preview_user_id
+            )
         )
-        preview = st.session_state.daily_coach_narrative_preview_by_user.get(user_id)
+        preview = st.session_state.daily_coach_narrative_preview_by_user.get(
+            preview_cache_key
+        )
 
         if preview_error:
             st.warning(f"Narrative preview call failed safely: {preview_error}")

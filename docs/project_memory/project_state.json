@@ -2,220 +2,27 @@
   "project": {
     "name": "AI Health Coach",
     "repo": "fitness_ai",
-    "platform_repo": "fitness-ai-platform",
-    "canonical_branch": "main",
-    "windows_repo_path": "C:\\projects\\fitness_ai",
-    "linux_runtime_repo_path": "~/projects/fitness-ai-platform"
+    "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Provider Runtime Resource Lifecycle Design v1",
-    "latest_final_status": "PROVIDER_RUNTIME_RESOURCE_LIFECYCLE_DESIGN_V1_ACCEPTED",
-    "latest_accepted_commit": "be2f321",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_be2f321_add-provider-runtime-resource-lifecycle-policy.zip",
-    "latest_main_merge_commit": "be2f321",
-    "latest_main_merge_snapshot": "no additional main snapshot by policy",
-    "prior_accepted_milestone": "Weekly Coach Summary QA Data Context Integration v1",
-    "prior_final_status": "WEEKLY_COACH_SUMMARY_QA_DATA_CONTEXT_INTEGRATION_V1_ACCEPTED",
-    "prior_main_merge_commit": "0fd327d"
+    "latest_accepted_milestone": "Weekly Coach Summary Provider Runtime Prototype v1 - Developer Mode Only",
+    "latest_final_status": "WEEKLY_COACH_SUMMARY_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED_WITH_PROVIDER_QUALITY_FOLLOW_UP",
+    "latest_accepted_commit": "c0f7a84",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_c0f7a84_add-weekly-coach-summary-provider-prototype.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Weekly Coach Summary Provider Runtime Design v1",
-    "current_authorized_branch": "feature/weekly-coach-summary-provider-runtime-design-v1",
+    "current_authorized_milestone": "Daily Narrative QA Date Range Preview / Grounding v1",
+    "current_authorized_branch": "feature/daily-narrative-qa-date-range-preview-grounding-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "current_authorized_scope": "Design qwen2.5:3b Weekly Coach Summary provider input/output/parser/validator/fallback/persistence/lifecycle contract without runtime execution.",
-    "recommended_next_milestone_after_acceptance": "Weekly Coach Summary Provider Runtime Prototype v1 - Developer Mode Only",
-    "next_milestone_status": "NOT_AUTHORIZED_YET",
-    "next_milestone_reason": "Provider runtime prototype must wait for design acceptance.",
-    "codex": "DO NOT USE BY DEFAULT",
-    "selected_next_async_candidate": "Weekly Coach Summary Async Job",
-    "recommended_first_milestone_after_acceptance": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "required_prerequisite_commit": "be2f321 Add provider runtime resource lifecycle policy"
+    "recommended_next_milestone_after_acceptance": "Daily Narrative Voice + Grounding v1",
+    "codex": "DO NOT USE BY DEFAULT"
   },
-  "runtime_split": {
-    "windows": [
-      "source-of-truth development/control machine",
-      "Git orchestration",
-      "branch creation",
-      "patch apply",
-      "commit",
-      "push",
-      "snapshot creation",
-      "Ollama host"
-    ],
-    "linux": [
-      "canonical FastAPI + Streamlit runtime",
-      "repo path: ~/projects/fitness-ai-platform",
-      "tmux sessions: fitness-api and fitness-ui",
-      "Linux runtime uses Windows Ollama over LAN"
-    ],
-    "commands": {
-      "app": "Windows PowerShell command that talks to Linux over SSH and restarts FastAPI + Streamlit there",
-      "wapp": "Windows-local only",
-      "fports": "Windows-side visibility only",
-      "lstop": "Windows PowerShell command that sends LF-normalized Linux command text over SSH and stops Linux FastAPI + Streamlit",
-      "lrestart": "Windows PowerShell command that talks to Linux over SSH and restarts Linux FastAPI + Streamlit"
-    }
-  },
-  "model_provider_policy": {
-    "qwen2_5_3b": "bridge baseline only",
-    "qwen3": "not bridge-enabled",
-    "qwen3_32b": "research / future premium async candidate only",
-    "model_promotion": "No model promoted without Architecture approval.",
-    "fallback": "Deterministic fallback remains mandatory.",
-    "boundary": "Backend owns truth; provider proposes language; validator decides display safety.",
-    "weekly_coach_summary_future_provider_design": "direct_ollama + qwen2.5:3b + strict JSON schema + validator + deterministic fallback; design only until accepted.",
-    "weekly_coach_summary_provider_execution": "not authorized in Weekly Coach Summary Provider Runtime Design v1"
-  },
-  "daily_coach_async_boundary": {
-    "current": "Weekly Coach Summary Async Service Shell / No Worker v1 generates deterministic ApprovedWeeklyCoachSummary output from bounded fixture inputs. It is no-worker and does not persist, call providers, or touch UI.",
-    "normal_today_behavior": "unchanged; no Streamlit UI, API, provider runtime, persistence schema, automatic generation, or public/default display added",
-    "in_current_scope": [
-      "services/weekly_coach_summary_service.py",
-      "tests/test_weekly_coach_summary_service.py",
-      "tools/dev_weekly_coach_summary_preview.py",
-      "deterministic Weekly Coach Summary candidate generation",
-      "candidate approval into ApprovedWeeklyCoachSummary",
-      "deterministic fallback for limited data",
-      "project-memory pointer updates"
-    ],
-    "deferred": [
-      "Weekly Coach Summary persistence design/schema/service shell",
-      "Weekly Coach Summary Developer Mode inspection",
-      "Weekly Coach Summary provider runtime, if later authorized",
-      "Weekly Coach Summary API/UI exposure",
-      "worker / queue / scheduler / polling"
-    ],
-    "not_authorized": [
-      "persistence schema/migration",
-      "API endpoint",
-      "Streamlit UI",
-      "Developer Mode UI",
-      "provider runtime for Weekly Coach Summary",
-      "Ollama/CrewAI calls",
-      "normal Today behavior changes",
-      "public/default weekly summary display",
-      "automatic weekly summary generation",
-      "worker / queue / scheduler / polling",
-      "raw provider output persistence",
-      "rejected provider output persistence",
-      "prompt/raw context/scratchpad persistence",
-      "qwen3 bridge",
-      "qwen3 promotion",
-      "qwen3:32b promotion"
-    ],
-    "selected_next_async_candidate": "Weekly Coach Summary Async Job",
-    "recommended_first_milestone": "Weekly Coach Summary Async Service Shell / No Worker v1",
-    "lstop_crlf_hotfix": "implemented in scripts/fitness_commands.ps1 by LF-normalizing SSH command script content and transporting it as UTF-8/base64 before remote bash execution",
-    "weekly_coach_summary_contracts_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
-    "weekly_coach_summary_posture": "deterministic service shell; provider runtime deferred; persistence schema deferred; Developer Mode inspection later",
-    "weekly_coach_summary_service_shell_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW"
-  },
-  "codex_assisted_flow": {
-    "codex_role": "implementation worker only",
-    "codex_must_not": [
-      "decide architecture",
-      "merge",
-      "push main",
-      "snapshot",
-      "touch Linux",
-      "use git add ."
-    ],
-    "backend_user_role": "review, validate, stage explicit files, commit, push, snapshot, Linux pull, and hand off to Architecture after Codex finishes",
-    "status": "DO NOT USE BY DEFAULT",
-    "default": "chat-driven Backend implementation using apply scripts/patches"
-  },
-  "workflow_rules": {
-    "phase_separated_delivery": true,
-    "no_git_add_dot": true,
-    "long_handoffs_in_code_blocks": true,
-    "temporary_apply_artifacts_outside_repo": true,
-    "temporary_apply_artifact_root": "C:\\projects",
-    "run_apply_scripts_from_repo_as": "python ..\\<script>.py",
-    "apply_raw_patches_from_repo_as": "git apply --check ..\\<patch>.patch",
-    "no_broad_formatters_for_docs_only": true,
-    "feature_flow": "commit -> push -> snapshot -> Linux pull feature",
-    "main_flow": "merge -> validate -> push -> snapshot -> Linux pull main",
-    "merge_commands_only_when_merge_is_next_action": true
-  },
-  "first_files_to_read": {
-    "all_roles": [
-      "docs/project_memory/project_state.json",
-      "docs/project_memory/project_continuity_bootstrap.md",
-      "docs/project_memory/current_workflow_contract.md",
-      "docs/project_memory/next_milestone.md",
-      "docs/project_memory/current_state.md",
-      "docs/project_memory/open_questions.md",
-      "docs/project_memory/patterns/async_job_delivery_pattern_v1.md",
-      "docs/project_memory/milestones/async_job_delivery_pattern_playbook_v1.md",
-      "docs/project_memory/reviews/async_job_delivery_pattern_playbook_v1.md",
-      "models/weekly_coach_summary_models.py",
-      "docs/project_memory/milestones/weekly_coach_summary_async_contracts_data_model_v1.md",
-      "docs/project_memory/reviews/weekly_coach_summary_async_contracts_data_model_v1.md",
-      "services/weekly_coach_summary_service.py",
-      "tools/dev_weekly_coach_summary_preview.py",
-      "docs/project_memory/milestones/weekly_coach_summary_async_service_shell_no_worker_v1.md",
-      "docs/project_memory/reviews/weekly_coach_summary_async_service_shell_no_worker_v1.md"
-    ],
-    "architecture": [
-      "docs/project_memory/role_bootstrap_architecture.md"
-    ],
-    "backend": [
-      "docs/project_memory/role_bootstrap_backend.md"
-    ],
-    "qa": [
-      "docs/project_memory/role_bootstrap_qa.md"
-    ],
-    "devops_tooling": [
-      "docs/project_memory/role_bootstrap_devops_tooling.md"
-    ]
-  },
-  "definition_of_done": [
-    "project memory updated when behavior, architecture, tests, UI, provider behavior, persistence, routing, runtime commands, or accepted status changes",
-    "validation matched to scope",
-    "fsweep clean",
-    "no snapshots committed",
-    "no qa_artifacts committed"
-  ],
-  "weekly_coach_summary": {
-    "persistence_status": "accepted baseline before latency investigation",
-    "latency_investigation_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "root_cause": "Streamlit full-app rerun behavior during Developer Mode button interactions",
-    "fix": "Weekly Coach Summary Developer Mode panel uses Streamlit fragment reruns when available and shows Developer Mode-only timing diagnostics.",
-    "provider_runtime": "Developer Mode-only manual qwen2.5:3b prototype implemented; public/default display not authorized",
-    "public_default_display": "not authorized",
-    "qa_data_context_integration_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "qa_data_context_integration_branch": "feature/weekly-coach-summary-qa-data-context-integration-v1",
-    "qa_data_context_builder": "services/weekly_coach_summary_qa_context_service.py",
-    "provider_runtime_prototype_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "provider_runtime_prototype_branch": "feature/weekly-coach-summary-provider-runtime-prototype-v1",
-    "provider_runtime_prototype_model": "qwen2.5:3b",
-    "provider_runtime_prototype_scope": "Developer Mode-only manual provider preview; deterministic fallback remains authoritative",
-    "normal_today_display": "not authorized"
-  },
-  "runtime_db_source_verification": {
-    "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "branch": "feature/runtime-db-source-verification-v1",
-    "normal_ui": "unchanged; diagnostics are Developer Mode-only",
-    "provider_runtime": "not used",
-    "raw_rows": "not displayed"
-  },
-  "provider_lifecycle": {
-    "status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "branch": "feature/provider-runtime-resource-lifecycle-design-v1",
-    "policy_doc": "docs/project_memory/provider_runtime_resource_lifecycle_policy.md",
-    "service": "services/provider_lifecycle_service.py",
-    "diagnostic_tool": "tools/dev_ollama_lifecycle_diagnostics.py",
-    "default_keep_alive": "0",
-    "default_unload_after_request": true,
-    "manual_unload": "named-model only via Ollama API; no broad process kill",
-    "weekly_coach_summary_provider_runtime": "not authorized",
-    "backlog": [
-      "Daily Narrative Provider Quality + Grounding v1",
-      "Streamlit Theme Cleanup v1",
-      "Workout Exercise Variety Rotation v1"
-    ],
-    "weekly_provider_prototype_uses_policy": true,
-    "keep_alive_unload_policy_applies": true,
-    "manual_unload_helper": "fallback only; normal provider preview uses lifecycle policy automatically"
+  "boundaries": {
+    "normal_today_unchanged": true,
+    "developer_mode_only": true,
+    "provider_manual_only": true,
+    "no_public_default_provider_display": true,
+    "no_worker_queue_scheduler_polling": true,
+    "no_crewai": true
   }
 }

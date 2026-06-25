@@ -1,12 +1,9 @@
-# Backend Handoff Current
+# Current Handoff
 
-Current milestone: Weekly Coach Summary Provider Runtime Prototype v1 - Developer Mode Only
+Milestone: Daily Narrative QA Date Range Preview / Grounding v1
 
-Status: IMPLEMENTED / READY FOR ARCHITECTURE REVIEW
+Status: implemented / ready for review.
 
-Branch: `feature/weekly-coach-summary-provider-runtime-prototype-v1`
+Summary: Developer Mode-only Daily Narrative QA preview can use typed QA user/date/lookback inputs to build backend-owned safe aggregate context and deterministic `because` grounding. Normal Today behavior is unchanged.
 
-Summary:
-Implemented Developer Mode-only manual qwen2.5:3b provider preview using bounded Weekly Coach Summary context, strict JSON parser, validator, deterministic fallback, and provider lifecycle keep_alive/unload policy.
-
-No public/default display, automatic generation, CrewAI, qwen3, qwen3:32b, worker, queue, scheduler, polling, raw provider output persistence, or rejected output persistence was added.
+Boundaries preserved: no public/default Daily Narrative provider display, no automatic generation, no worker/queue/scheduler/polling, no CrewAI, no qwen3/14B/32B promotion, no raw rows/logs/notes/set rows, no secrets.

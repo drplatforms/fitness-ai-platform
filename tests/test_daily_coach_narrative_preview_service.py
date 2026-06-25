@@ -283,3 +283,59 @@ def test_preview_keeps_training_action_from_drifting_to_nutrition(monkeypatch):
     assert preview.fallback_used is True
     assert preview.fallback_reason == PUBLIC_SAFE_FALLBACK_PROVIDER_VALIDATION_FAILED
     assert preview.approved_narrative is None
+
+
+def test_preview_can_use_daily_narrative_qa_context(monkeypatch):
+    calls = {"qa_context": 0, "normal_context": 0, "provider": 0}
+    qa_context = build_daily_coach_narrative_context_from_action(
+        user_id=102,
+        action=_action(
+            reason=(
+                "Because training is present but nutrition is missing for the selected date, "
+                "one meal entry gives the coach something real to compare."
+            )
+        ),
+        context_date="2026-06-06",
+    )
+
+    def fake_qa_context(
+        user_id: int, *, selected_date: str | None = None, lookback_days: int = 1
+    ):
+        calls["qa_context"] += 1
+        assert user_id == 102
+        assert selected_date == "2026-06-06"
+        assert lookback_days == 7
+        return qa_context
+
+    def fake_normal_context(user_id: int, *, target_date: str | None = None):
+        calls["normal_context"] += 1
+        return qa_context
+
+    def fake_generate(*args, **kwargs):
+        calls["provider"] += 1
+        raise AssertionError(
+            "Provider should not be called for deterministic QA preview."
+        )
+
+    monkeypatch.setattr(
+        "services.daily_coach_narrative_preview_service.build_daily_coach_narrative_qa_preview_context",
+        fake_qa_context,
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_narrative_preview_service.build_daily_coach_narrative_context",
+        fake_normal_context,
+    )
+
+    preview = build_daily_coach_narrative_preview(
+        102,
+        target_date="2026-06-06",
+        provider=DAILY_COACH_NARRATIVE_PREVIEW_PROVIDER_DETERMINISTIC,
+        qa_preview=True,
+        lookback_days=7,
+        generate=fake_generate,
+    )
+
+    assert calls == {"qa_context": 1, "normal_context": 0, "provider": 0}
+    assert preview.date == "2026-06-06"
+    assert "Because" in preview.deterministic_fallback_note
+    assert preview.fallback_used is True

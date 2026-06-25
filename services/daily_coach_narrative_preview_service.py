@@ -13,6 +13,7 @@ from models.daily_coach_narrative_models import (
 )
 from services.daily_coach_narrative_context_service import (
     build_daily_coach_narrative_context,
+    build_daily_coach_narrative_qa_preview_context,
 )
 from services.daily_coach_narrative_provider_service import (
     DEFAULT_OLLAMA_BASE_URL,
@@ -54,6 +55,8 @@ def build_daily_coach_narrative_preview(
     model_name: str | None = None,
     timeout_seconds: float = 300.0,
     generate: DailyCoachNarrativeGenerateCallable | None = None,
+    qa_preview: bool = False,
+    lookback_days: int = 1,
 ) -> DailyCoachNarrativePreviewResult:
     """Build a public-safe developer preview of Daily Coach Narrative output.
 
@@ -68,10 +71,17 @@ def build_daily_coach_narrative_preview(
         selected_provider == DAILY_COACH_NARRATIVE_PREVIEW_PROVIDER_DIRECT_OLLAMA
     )
     selected_model = _normalize_model_name(model_name) if provider_enabled else None
-    context = build_daily_coach_narrative_context(
-        user_id,
-        target_date=target_date,
-    )
+    if qa_preview:
+        context = build_daily_coach_narrative_qa_preview_context(
+            user_id,
+            selected_date=target_date,
+            lookback_days=lookback_days,
+        )
+    else:
+        context = build_daily_coach_narrative_context(
+            user_id,
+            target_date=target_date,
+        )
 
     if not provider_enabled:
         return _fallback_result(
@@ -318,13 +328,20 @@ def _approved_narrative_payload(
 
 
 def _context_summary(context: DailyCoachNarrativeContext) -> dict[str, object]:
+    source_metadata = dict(context.source_metadata or {})
     return {
         "approved_facts_count": len(context.approved_facts),
-        "approved_facts_summary": list(context.approved_facts[:3]),
+        "approved_facts_summary": list(context.approved_facts[:6]),
         "approved_limitations_count": len(context.approved_limitations),
-        "approved_limitations_summary": list(context.approved_limitations[:3]),
+        "approved_limitations_summary": list(context.approved_limitations[:6]),
         "forbidden_claim_categories_count": len(context.forbidden_claims),
         "forbidden_claim_categories_summary": list(context.forbidden_claims[:5]),
+        "context_source": source_metadata.get("context_source"),
+        "selected_date": source_metadata.get("selected_date") or context.date,
+        "start_date": source_metadata.get("start_date"),
+        "end_date": source_metadata.get("end_date"),
+        "lookback_days": source_metadata.get("lookback_days"),
+        "data_quality_label": source_metadata.get("data_quality_label"),
     }
 
 

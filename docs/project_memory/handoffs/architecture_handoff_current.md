@@ -1,7 +1,9 @@
-# Architecture Handoff Current
+# Current Handoff
 
-Review requested: Weekly Coach Summary Provider Runtime Prototype v1
+Milestone: Daily Narrative QA Date Range Preview / Grounding v1
 
-Proposed acceptance: `WEEKLY_COACH_SUMMARY_PROVIDER_RUNTIME_PROTOTYPE_V1_ACCEPTED`
+Status: implemented / ready for review.
 
-The prototype is Developer Mode-only and manual-button-only. It uses qwen2.5:3b through direct Ollama, with bounded backend context, strict JSON parsing, validation, deterministic fallback, and lifecycle unload policy.
+Summary: Developer Mode-only Daily Narrative QA preview can use typed QA user/date/lookback inputs to build backend-owned safe aggregate context and deterministic `because` grounding. Normal Today behavior is unchanged.
+
+Boundaries preserved: no public/default Daily Narrative provider display, no automatic generation, no worker/queue/scheduler/polling, no CrewAI, no qwen3/14B/32B promotion, no raw rows/logs/notes/set rows, no secrets.

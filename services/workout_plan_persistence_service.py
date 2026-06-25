@@ -1368,121 +1368,141 @@ def update_actual_set(
     }
 
 
-def select_current_workout_plan(
+def approved_workout_plan_from_payload(raw_plan: dict) -> ApprovedWorkoutPlan:
+    """Build a validated ApprovedWorkoutPlan from an approved preview payload."""
+
+    if not isinstance(raw_plan, dict):
+        raise WorkoutPlanValidationError("approved_workout_plan must be an object.")
+
+    try:
+        approved_plan = _approved_workout_plan_from_dict(raw_plan)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise WorkoutPlanValidationError(
+            "approved_workout_plan payload is not a valid approved workout plan."
+        ) from exc
+
+    if not approved_plan.exercises:
+        raise WorkoutPlanValidationError(
+            "approved_workout_plan must include at least one exercise."
+        )
+
+    return approved_plan
+
+
+def _persist_selected_workout_plan(
     user_id: int,
-    workout_size_preference: str | None = None,
-    requested_target_count: int | None = None,
+    approved_plan: ApprovedWorkoutPlan,
 ) -> dict:
-    """Persist the current server-built ApprovedWorkoutPlan as selected.
-
-    The caller never submits a workout plan JSON payload in v1. The backend
-    rebuilds the current approved preview, snapshots it immutably, extracts
-    planned exercise rows, and creates a future execution-session bridge in
-    selected status.
-    """
-
     ensure_workout_plan_persistence_tables()
-    health_state = build_user_health_state(user_id)
-    approved_plan = build_approved_workout_plan(
-        health_state,
-        workout_size_preference=workout_size_preference,
-        requested_target_count=requested_target_count,
-    )
-
     conn = get_connection()
     cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    cursor.execute(
-        """
-        INSERT INTO workout_plan_instances (
-            user_id,
-            status,
-            scenario,
-            confidence,
-            title,
-            approved_workout_plan_json,
-            updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        """,
-        (
-            user_id,
-            "selected",
-            approved_plan.scenario,
-            approved_plan.confidence,
-            approved_plan.title,
-            _encode_json(asdict(approved_plan)),
-        ),
-    )
-    instance_id = cursor.lastrowid
-
-    for index, exercise in enumerate(approved_plan.exercises, start=1):
+    try:
         cursor.execute(
             """
-            INSERT INTO planned_workout_exercises (
-                workout_plan_instance_id,
-                exercise_order,
-                name,
-                sets,
-                reps_min,
-                reps_max,
-                rir_min,
-                rir_max,
-                notes,
-                equipment_required_json
+            INSERT INTO workout_plan_instances (
+                user_id,
+                status,
+                scenario,
+                confidence,
+                title,
+                approved_workout_plan_json,
+                selected_at,
+                created_at,
+                updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                instance_id,
-                index,
-                exercise.name,
-                exercise.sets,
-                exercise.reps_min,
-                exercise.reps_max,
-                exercise.rir_min,
-                exercise.rir_max,
-                exercise.notes,
-                _encode_json(exercise.equipment_required),
+                user_id,
+                "selected",
+                approved_plan.scenario,
+                approved_plan.confidence,
+                approved_plan.title,
+                _encode_json(asdict(approved_plan)),
+                now,
+                now,
+                now,
             ),
         )
+        instance_id = cursor.lastrowid
 
-    cursor.execute(
-        """
-        INSERT INTO workout_execution_sessions (
-            workout_plan_instance_id,
-            user_id,
-            status,
-            updated_at
+        for index, exercise in enumerate(approved_plan.exercises, start=1):
+            cursor.execute(
+                """
+                INSERT INTO planned_workout_exercises (
+                    workout_plan_instance_id,
+                    exercise_order,
+                    name,
+                    sets,
+                    reps_min,
+                    reps_max,
+                    rir_min,
+                    rir_max,
+                    notes,
+                    equipment_required_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    instance_id,
+                    index,
+                    exercise.name,
+                    exercise.sets,
+                    exercise.reps_min,
+                    exercise.reps_max,
+                    exercise.rir_min,
+                    exercise.rir_max,
+                    exercise.notes,
+                    _encode_json(exercise.equipment_required),
+                ),
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO workout_execution_sessions (
+                workout_plan_instance_id,
+                user_id,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (instance_id, user_id, "selected", now, now),
         )
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        """,
-        (instance_id, user_id, "selected"),
-    )
-    execution_session_id = cursor.lastrowid
+        execution_session_id = cursor.lastrowid
 
-    conn.commit()
+        conn.commit()
 
-    cursor.execute("SELECT * FROM workout_plan_instances WHERE id = ?", (instance_id,))
-    instance = _row_to_workout_plan_instance(cursor.fetchone())
+        cursor.execute(
+            "SELECT * FROM workout_plan_instances WHERE id = ?",
+            (instance_id,),
+        )
+        instance = _row_to_workout_plan_instance(cursor.fetchone())
 
-    cursor.execute(
-        """
-        SELECT *
-        FROM planned_workout_exercises
-        WHERE workout_plan_instance_id = ?
-        ORDER BY exercise_order
-        """,
-        (instance_id,),
-    )
-    planned_exercises = [_row_to_planned_exercise(row) for row in cursor.fetchall()]
+        cursor.execute(
+            """
+            SELECT *
+            FROM planned_workout_exercises
+            WHERE workout_plan_instance_id = ?
+            ORDER BY exercise_order
+            """,
+            (instance_id,),
+        )
+        planned_exercises = [_row_to_planned_exercise(row) for row in cursor.fetchall()]
 
-    cursor.execute(
-        "SELECT * FROM workout_execution_sessions WHERE id = ?",
-        (execution_session_id,),
-    )
-    execution_session = _row_to_execution_session(cursor.fetchone())
-    conn.close()
+        cursor.execute(
+            "SELECT * FROM workout_execution_sessions WHERE id = ?",
+            (execution_session_id,),
+        )
+        execution_session = _row_to_execution_session(cursor.fetchone())
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
     return {
         "workout_plan_instance": instance,
@@ -1490,6 +1510,37 @@ def select_current_workout_plan(
         "execution_session": execution_session,
         "approved_workout_plan": approved_plan,
     }
+
+
+def select_approved_workout_plan(
+    user_id: int,
+    approved_plan: ApprovedWorkoutPlan,
+) -> dict:
+    """Persist the exact already-approved workout preview selected by the user."""
+
+    return _persist_selected_workout_plan(user_id, approved_plan)
+
+
+def select_current_workout_plan(
+    user_id: int,
+    workout_size_preference: str | None = None,
+    requested_target_count: int | None = None,
+) -> dict:
+    """Persist a freshly built ApprovedWorkoutPlan as selected.
+
+    This fallback path remains available for API compatibility. Streamlit uses
+    select_approved_workout_plan through the select-preview endpoint so the
+    exact visible preview is selected without regenerating exercises.
+    """
+
+    health_state = build_user_health_state(user_id)
+    approved_plan = build_approved_workout_plan(
+        health_state,
+        workout_size_preference=workout_size_preference,
+        requested_target_count=requested_target_count,
+    )
+
+    return _persist_selected_workout_plan(user_id, approved_plan)
 
 
 def start_selected_workout_plan(workout_plan_instance_id: int) -> dict:

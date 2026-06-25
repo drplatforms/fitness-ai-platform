@@ -3377,6 +3377,8 @@ SESSION_DEFAULTS = {
     "selected_workout_plan_response": None,
     "started_workout_plan_response": None,
     "workout_plan_action_error": None,
+    "workout_plan_preview_by_user": {},
+    "main_navigation_page_override": None,
     "actual_set_logging_message": None,
     "completed_workout_plan_response": None,
     "workout_completion_message": None,
@@ -3442,6 +3444,12 @@ def request_workout_flow_step(step: str) -> None:
     st.session_state.workout_flow_step_override = step
 
 
+def request_main_navigation_page(page: str) -> None:
+    """Request a top-level navigation change for the next Streamlit rerun."""
+
+    st.session_state.main_navigation_page_override = page
+
+
 def reset_user_scoped_state() -> None:
     st.session_state.health_report = None
     st.session_state.health_report_timestamp = None
@@ -3454,6 +3462,8 @@ def reset_user_scoped_state() -> None:
     st.session_state.selected_workout_plan_response = None
     st.session_state.started_workout_plan_response = None
     st.session_state.workout_plan_action_error = None
+    st.session_state.workout_plan_preview_by_user = {}
+    st.session_state.main_navigation_page_override = None
     st.session_state.actual_set_logging_message = None
     st.session_state.completed_workout_plan_response = None
     st.session_state.workout_completion_message = None
@@ -3799,15 +3809,66 @@ def workout_count_reason_from_payload(
     )
 
 
+def workout_preview_cache_key(
+    user_id: int,
+    workout_size_preference: str | None,
+) -> str:
+    normalized_size = (workout_size_preference or "standard").strip().lower()
+    if normalized_size not in WORKOUT_SIZE_OPTION_LABELS:
+        normalized_size = "standard"
+    return f"{user_id}:{normalized_size}"
+
+
+def clear_workout_preview_cache(user_id: int | None = None) -> None:
+    cache = st.session_state.get("workout_plan_preview_by_user", {})
+    if user_id is None:
+        st.session_state.workout_plan_preview_by_user = {}
+        return
+
+    prefix = f"{user_id}:"
+    st.session_state.workout_plan_preview_by_user = {
+        key: value for key, value in cache.items() if not str(key).startswith(prefix)
+    }
+
+
+def get_stable_workout_plan_preview(
+    user_id: int,
+    workout_size_preference: str | None,
+    force_refresh: bool = False,
+) -> dict:
+    """Return a stable preview until the user explicitly refreshes it."""
+
+    cache = st.session_state.setdefault("workout_plan_preview_by_user", {})
+    cache_key = workout_preview_cache_key(user_id, workout_size_preference)
+
+    if not force_refresh and cache_key in cache:
+        cached_preview = cache[cache_key]
+        if isinstance(cached_preview, dict):
+            return cached_preview
+
+    query = workout_size_query(workout_size_preference)
+    workout_plan_data = api_get(f"/workout-plans/preview/{user_id}?{query}")
+    if workout_plan_data.get("success"):
+        cache[cache_key] = workout_plan_data
+    return workout_plan_data
+
+
 def select_today_workout(
     user_id: int,
     button_key: str,
     workout_size_preference: str | None = None,
+    approved_workout_plan: dict | None = None,
 ) -> None:
     if st.button("Select This Workout", key=button_key, type="primary"):
         try:
-            query = workout_size_query(workout_size_preference)
-            select_response = api_post(f"/workout-plans/{user_id}/select?{query}")
+            if approved_workout_plan:
+                select_response = api_post(
+                    f"/workout-plans/{user_id}/select-preview",
+                    {"approved_workout_plan": approved_workout_plan},
+                )
+            else:
+                query = workout_size_query(workout_size_preference)
+                select_response = api_post(f"/workout-plans/{user_id}/select?{query}")
         except requests.RequestException as exc:
             st.session_state.workout_plan_action_error = (
                 f"Workout plan selection failed: {extract_api_error_message(exc)}"
@@ -3818,6 +3879,7 @@ def select_today_workout(
             st.session_state.selected_workout_plan_response = select_response
             st.session_state.started_workout_plan_response = None
             st.session_state.workout_plan_action_error = None
+            st.session_state.workout_plan_preview_by_user = {}
             st.session_state.actual_set_logging_message = None
             st.session_state.completed_workout_plan_response = None
             st.session_state.workout_completion_message = None
@@ -3970,6 +4032,7 @@ def render_equipment_profile_editor(user_id: int) -> None:
             st.session_state.selected_workout_plan_response = None
             st.session_state.started_workout_plan_response = None
             st.session_state.workout_plan_action_error = None
+            st.session_state.workout_plan_preview_by_user = {}
             st.session_state.actual_set_logging_message = None
             st.session_state.completed_workout_plan_response = None
             st.session_state.workout_completion_message = None
@@ -5648,117 +5711,64 @@ def render_daily_recommendation_snapshot(user_id: int) -> None:
 def render_today_workout_panel(user_id: int) -> None:
     st.subheader("Today’s Workout")
     st.caption(
-        "Review the plan, start when ready, log sets, complete the workout, "
-        "then review what happened."
+        "Workout selection and execution now live on the Workout page so Today stays focused."
     )
 
     active_plan_response = get_active_plan_response(user_id)
 
     if active_plan_response:
-        plan_instance_id = get_plan_instance_id_from_response(active_plan_response)
+        workout_plan_instance = active_plan_response.get("workout_plan_instance") or {}
+        execution_session = active_plan_response.get("execution_session") or {}
+        approved_plan = active_plan_response.get("approved_workout_plan") or {}
+        planned_exercises = active_plan_response.get("planned_exercises") or []
 
-        render_active_plan_summary(active_plan_response)
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Workout", approved_plan.get("title", "Selected Workout"))
+        col2.metric(
+            "Duration", f"{approved_plan.get('duration_minutes', 'Unknown')} min"
+        )
+        col3.metric("Status", humanize_label(workout_plan_instance.get("status")))
 
-        if plan_instance_id is None:
-            st.warning("The active workout is missing a plan instance ID.")
-            return
+        st.write(
+            approved_plan.get("session_focus")
+            or "Continue the selected workout from the Workout page."
+        )
+        st.caption(
+            f"{len(planned_exercises)} planned exercises. "
+            "Open Workout to start, log sets, complete, or review details."
+        )
 
-        plan_status, execution_status = get_plan_statuses(active_plan_response)
+        plan_status = workout_plan_instance.get("status")
+        execution_status = execution_session.get("status")
+        if plan_status == "completed" or execution_status == "completed":
+            target_step = "3. Review"
+            button_label = "Review in Workout"
+        else:
+            target_step = "2. Do Workout"
+            button_label = "Continue in Workout"
 
-        if plan_status == "selected" or execution_status == "selected":
-            st.caption(
-                "Workout selected. Start here when ready, or use the Workout tab if you need substitutions first."
-            )
-            start_active_workout(active_plan_response, context_key="today")
+        if st.button(button_label, key="today_go_to_workout_active", type="primary"):
+            request_workout_flow_step(target_step)
+            request_main_navigation_page("Workout")
+            st.rerun()
 
-        refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
-        if refreshed_plan_response:
-            active_plan_response = refreshed_plan_response
-
-        if is_started_or_in_progress(active_plan_response):
-            st.divider()
-            st.markdown("### Log Sets")
-            display_actual_set_logging(plan_instance_id, context_key="today")
-
-        refreshed_plan_response = refresh_active_plan_response(plan_instance_id)
-        if refreshed_plan_response:
-            active_plan_response = refreshed_plan_response
-
-        if is_in_progress(active_plan_response):
-            st.divider()
-            st.markdown("### Complete Workout")
-            display_complete_workout_control(plan_instance_id, context_key="today")
-
-        completed_response = st.session_state.get("completed_workout_plan_response")
-        if completed_response:
-            st.divider()
-            st.markdown("### Result")
-            display_planned_vs_actual_summary(
-                completed_response.get("planned_vs_actual_summary", {})
-            )
-        elif get_plan_statuses(active_plan_response)[0] == "completed":
-            st.divider()
-            st.markdown("### Result")
-            try:
-                summary_response = api_get(
-                    f"/workout-plans/{plan_instance_id}/planned-vs-actual"
-                )
-            except requests.RequestException as exc:
-                st.info(
-                    "Workout is completed, but the summary could not be loaded: "
-                    f"{extract_api_error_message(exc)}"
-                )
-            else:
-                display_planned_vs_actual_summary(
-                    summary_response.get("planned_vs_actual_summary", {}),
-                    planned_exercises=summary_response.get("planned_exercises", []),
-                    actual_sets=summary_response.get("actual_sets", []),
-                )
-                developer_details(
-                    "Developer details: completed planned-vs-actual summary",
-                    summary_response,
-                )
-
+        developer_details(
+            "Developer details: compact Today workout state",
+            {
+                "workout_plan_instance": workout_plan_instance,
+                "execution_session": execution_session,
+                "planned_exercise_count": len(planned_exercises),
+            },
+        )
         return
 
-    try:
-        workout_plan_data = api_get(f"/workout-plans/preview/{user_id}")
-    except requests.RequestException as exc:
-        st.error(f"Failed to load workout preview: {extract_api_error_message(exc)}")
-        return
+    st.info("No active workout selected yet.")
+    st.write("Open Workout to preview and select today's plan.")
 
-    if not workout_plan_data.get("success"):
-        st.info("No workout plan preview is available for this user yet.")
-        return
-
-    approved_workout_plan = workout_plan_data.get("approved_workout_plan", {})
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Workout", approved_workout_plan.get("title", "Workout Plan"))
-    col2.metric(
-        "Duration", f"{approved_workout_plan.get('duration_minutes', 'Unknown')} min"
-    )
-    col3.metric("Confidence", workout_plan_data.get("confidence", "Unknown"))
-
-    st.write(f"**Focus:** {approved_workout_plan.get('session_focus', 'Unknown')}")
-    display_workout_plan_explanation(user_id)
-    render_preview_exercise_snapshot(approved_workout_plan)
-
-    select_today_workout(user_id, "select_today_workout_button")
-
-    with st.expander("Plan rationale and guidance", expanded=False):
-        if approved_workout_plan.get("rationale"):
-            st.write(f"**Why:** {approved_workout_plan.get('rationale')}")
-        if approved_workout_plan.get("progression_guidance"):
-            st.write(
-                f"**Progression:** {approved_workout_plan.get('progression_guidance')}"
-            )
-        if approved_workout_plan.get("warmup"):
-            st.write(f"**Warmup:** {approved_workout_plan.get('warmup')}")
-        if approved_workout_plan.get("cooldown"):
-            st.write(f"**Cooldown:** {approved_workout_plan.get('cooldown')}")
-
-    developer_details("Developer details: workout preview", workout_plan_data)
+    if st.button("Go to Workout", key="today_go_to_workout_no_active", type="primary"):
+        request_workout_flow_step("1. Plan")
+        request_main_navigation_page("Workout")
+        st.rerun()
 
 
 def render_recovery_checkin_card(user_id: int) -> None:
@@ -6034,9 +6044,17 @@ def render_workout_plan_section(user_id: int) -> None:
             "training constraints, equipment profile, and validator boundaries."
         )
         workout_size_preference = render_workout_size_preference_control("plan")
+        force_preview_refresh = st.button(
+            "Refresh workout preview",
+            key="refresh_workout_plan_preview_button",
+            help="Generate a new preview only when you explicitly want different exercises.",
+        )
         try:
-            query = workout_size_query(workout_size_preference)
-            workout_plan_data = api_get(f"/workout-plans/preview/{user_id}?{query}")
+            workout_plan_data = get_stable_workout_plan_preview(
+                user_id,
+                workout_size_preference,
+                force_refresh=force_preview_refresh,
+            )
         except requests.RequestException as exc:
             st.error(
                 f"Failed to load workout plan preview: {extract_api_error_message(exc)}"
@@ -6141,6 +6159,7 @@ def render_workout_plan_section(user_id: int) -> None:
                     user_id,
                     "select_workout_plan_button",
                     workout_size_preference=workout_size_preference,
+                    approved_workout_plan=approved_workout_plan,
                 )
 
             if st.session_state.get("developer_mode", False):
@@ -10117,6 +10136,11 @@ def render_main_navigation(user_id: int) -> None:
     finish expensive cold renders first. This radio-based navigation keeps the
     same top-level sections but executes exactly one selected page per rerun.
     """
+
+    navigation_override = st.session_state.get("main_navigation_page_override")
+    if navigation_override in MAIN_NAVIGATION_PAGES:
+        st.session_state.main_navigation_page = navigation_override
+        st.session_state.main_navigation_page_override = None
 
     selected_page = st.radio(
         "Main navigation",

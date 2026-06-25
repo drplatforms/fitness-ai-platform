@@ -5,16 +5,16 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Narrative QA Date Range Preview / Grounding v1",
-    "latest_final_status": "DAILY_NARRATIVE_QA_DATE_RANGE_PREVIEW_GROUNDING_V1_ACCEPTED",
-    "latest_accepted_commit": "43b61d9",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_43b61d9_add-daily-narrative-qa-date-range-preview.zip"
+    "latest_accepted_milestone": "Daily Narrative Rich-Day Targeting + Context Differentiation v1",
+    "latest_final_status": "DAILY_NARRATIVE_RICH_DAY_TARGETING_CONTEXT_DIFFERENTIATION_V1_ACCEPTED_WITH_COPY_TUNING_FOLLOW_UP",
+    "latest_accepted_commit": "a2d1133",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-24_a2d1133_add-daily-narrative-rich-day-targeting.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Daily Narrative Rich-Day Targeting + Context Differentiation v1",
-    "current_authorized_branch": "feature/daily-narrative-rich-day-targeting-context-differentiation-v1",
+    "current_authorized_milestone": "Workout Plan Selection Persistence + Today Workout De-dup v1",
+    "current_authorized_branch": "feature/workout-plan-selection-persistence-today-dedup-v1",
     "current_authorized_status": "IMPLEMENTED / READY FOR ARCHITECTURE REVIEW",
-    "recommended_next_milestone_after_acceptance": "Daily Narrative Voice + Grounding v1",
+    "recommended_next_milestone_after_acceptance": "Daily Narrative Voice + Grounding / Copy Tuning v1",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -23,6 +23,10 @@
     "provider_manual_only": true,
     "no_public_default_provider_display": true,
     "no_worker_queue_scheduler_polling": true,
-    "no_crewai": true
+    "no_crewai": true,
+    "workout_page_canonical": true,
+    "today_workout_dedup": true,
+    "no_provider_ai_workout_changes": true,
+    "no_exercise_variety_work": true
   }
 }

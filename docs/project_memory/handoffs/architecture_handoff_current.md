@@ -19,3 +19,9 @@ Validation should include:
 - rich day vs low-data day vs no-data day comparison in Developer Mode.
 
 No public/default Daily Narrative provider display, automatic generation, worker, queue, scheduler, polling, CrewAI, qwen3 promotion, 14B promotion, or 32B call was added.
+
+## Workout Plan Selection Persistence + Today Workout De-dup v1
+
+Current authorized hotfix: fix Workout preview -> Select This Workout -> Active Workout persistence and remove the duplicate full workout selection flow from Today. Workout page is canonical for Plan / Active / Review. Today shows only compact workout status and route-to-Workout behavior.
+
+Boundaries: no provider/AI workout generation, no CrewAI/Ollama changes, no automatic generation, no worker/queue/scheduler/polling, no exercise variety/rotation work, no Streamlit theme cleanup.

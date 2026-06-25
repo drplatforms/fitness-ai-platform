@@ -17,3 +17,9 @@ Still deferred:
 - 14B promotion
 - Streamlit theme cleanup
 - Workout variety rotation
+
+## Workout Plan Selection Persistence + Today Workout De-dup v1
+
+Current authorized hotfix: fix Workout preview -> Select This Workout -> Active Workout persistence and remove the duplicate full workout selection flow from Today. Workout page is canonical for Plan / Active / Review. Today shows only compact workout status and route-to-Workout behavior.
+
+Boundaries: no provider/AI workout generation, no CrewAI/Ollama changes, no automatic generation, no worker/queue/scheduler/polling, no exercise variety/rotation work, no Streamlit theme cleanup.

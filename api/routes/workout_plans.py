@@ -20,11 +20,13 @@ from services.workout_plan_persistence_service import (
     WorkoutPlanInvalidStatusError,
     WorkoutPlanNotFoundError,
     WorkoutPlanValidationError,
+    approved_workout_plan_from_payload,
     build_planned_vs_actual_summary,
     complete_workout_plan,
     get_execution_state,
     get_workout_plan_history,
     log_actual_set,
+    select_approved_workout_plan,
     select_current_workout_plan,
     start_selected_workout_plan,
     update_actual_set,
@@ -70,6 +72,10 @@ class ActualSetUpdatePayload(BaseModel):
 class ExerciseSubstitutionPayload(BaseModel):
     replacement_catalog_exercise_id: int
     substitution_reason: str | None = "user_selected"
+
+
+class WorkoutPlanSelectionPayload(BaseModel):
+    approved_workout_plan: dict
 
 
 @router.get("/workout-plans/current/{user_id}")
@@ -314,6 +320,36 @@ def select_workout_plan(
     workout_plan_instance = selected["workout_plan_instance"]
     execution_session = selected["execution_session"]
     approved_plan = selected["approved_workout_plan"]
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "scenario": approved_plan.scenario,
+        "confidence": approved_plan.confidence,
+        "workout_plan_instance": asdict(workout_plan_instance),
+        "planned_exercises": [
+            asdict(exercise) for exercise in selected["planned_exercises"]
+        ],
+        "execution_session": asdict(execution_session),
+        "approved_workout_plan": asdict(approved_plan),
+    }
+
+
+@router.post("/workout-plans/{user_id}/select-preview")
+def select_workout_plan_preview(
+    user_id: int,
+    payload: WorkoutPlanSelectionPayload,
+):
+    try:
+        approved_plan = approved_workout_plan_from_payload(
+            payload.approved_workout_plan
+        )
+        selected = select_approved_workout_plan(user_id, approved_plan)
+    except WorkoutPlanValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    workout_plan_instance = selected["workout_plan_instance"]
+    execution_session = selected["execution_session"]
 
     return {
         "success": True,

@@ -80,7 +80,8 @@ def test_rich_day_summary_selects_fact_based_action() -> None:
     assert candidate.recommended_test_label == DAILY_NARRATIVE_LABEL_RICH_DAY
     assert candidate.data_quality_label == "rich"
     assert candidate.richness_score > 0
-    assert candidate.next_action.title == "Compare training, fueling, and recovery"
+    assert candidate.next_action.title == "Read the day before adding more"
+    assert "useful move" not in candidate.next_action.reason.lower()
     assert "nutrition_present" in candidate.reason_codes
     assert "training_present" in candidate.reason_codes
     assert "actual_sets_present" in candidate.reason_codes
@@ -102,10 +103,12 @@ def test_training_without_nutrition_keeps_meal_logging_grounded() -> None:
         candidate.recommended_test_label
         == DAILY_NARRATIVE_LABEL_TRAINING_PRESENT_NUTRITION_MISSING
     )
-    assert candidate.next_action.title == "Log a meal or snack"
+    assert candidate.next_action.title == "Add a fueling anchor"
     assert (
-        "training is present but nutrition is missing" in candidate.next_action.reason
+        "training is present, but nutrition is missing"
+        in candidate.next_action.reason.lower()
     )
+    assert "useful move" not in candidate.next_action.reason.lower()
 
 
 def test_no_data_day_is_penalized_and_labeled() -> None:
@@ -133,6 +136,8 @@ def test_low_data_scenario_remains_cautious_even_with_counts() -> None:
     )
 
     assert candidate.data_quality_label == "limited"
+    assert candidate.next_action.title == "Verify the daily picture"
+    assert "light read" in candidate.next_action.reason
     assert "scenario_forces_caution" in candidate.reason_codes
 
 
@@ -149,6 +154,7 @@ def test_next_action_does_not_default_to_meal_logging_when_nutrition_present() -
         planned_exercises_count=4,
     )
 
-    assert action.title == "Compare training, fueling, and recovery"
+    assert action.title == "Read the day before adding more"
     assert action.workflow_target == "daily_grounded_review"
     assert "generic" not in action.title.lower()
+    assert "useful move" not in action.reason.lower()

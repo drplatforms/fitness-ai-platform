@@ -348,11 +348,12 @@ def _qa_daily_action(
         )
     if data_quality_label == "limited":
         return (
-            "daily_narrative_qa_keep_logging_simple",
-            "Keep logging simple",
+            "daily_narrative_qa_verify_daily_picture",
+            "Verify the daily picture",
             (
-                f"Because the {range_label} has limited data quality, the useful move is "
-                "to keep logging simple before drawing stronger conclusions."
+                f"The {range_label} has limited data quality, so treat it as "
+                "a light read. Verify the weak or missing details before drawing "
+                "stronger conclusions."
             ),
             "daily_logging_review",
             4,
@@ -362,8 +363,8 @@ def _qa_daily_action(
         "daily_narrative_qa_compare_training_and_fueling",
         "Compare training and fueling",
         (
-            f"Because the {range_label} has recovery, nutrition, and training context, "
-            "the useful move is to compare effort with fueling instead of adding random detail."
+            f"The {range_label} has recovery, nutrition, and training context. "
+            "Use it for a light comparison before adding more random detail."
         ),
         "daily_grounded_review",
         4,

@@ -45,9 +45,8 @@ def _context():
 def _payload(context, **overrides):
     payload = {
         "coach_note": (
-            "Today's useful move is to make the nutrition picture less fuzzy. "
-            "Log a meal or snack first, then add anything else you remember "
-            "without turning it into a project."
+            "Nutrition is the missing anchor for this date. Add one meal entry "
+            "so the coach can connect today's guidance to something concrete."
         ),
         "key_takeaway": "Today's nutrition state is limited until more food data is logged.",
         "recommended_focus": context.approved_focus,
@@ -79,13 +78,17 @@ def test_product_voice_prompt_adds_shape_without_expanding_authority() -> None:
     prompt = build_daily_coach_narrative_prompt(context)
 
     assert "PRODUCT_VOICE_TARGET" in prompt
-    assert "practical coach note" in prompt
+    assert "human coach" in prompt
     assert "two or three short sentences" in prompt
     assert (
         "Do not add facts, targets, trends, medical claims, or a second action."
         in prompt
     )
-    assert "based on the data provided" in prompt
+    assert "BANNED_DAILY_NARRATIVE_PHRASES" in prompt
+    assert "GOOD_STYLE_EXAMPLES" in prompt
+    assert "BAD_STYLE_EXAMPLES" in prompt
+    assert "useful move" in prompt
+    assert "clearer picture" in prompt
     assert "backend" not in prompt.lower()
     assert "provider default" not in prompt.lower()
 
@@ -115,6 +118,23 @@ def test_product_voice_validator_rejects_generic_template_and_meta_copy() -> Non
     joined = " ".join(validation.validation_errors)
     assert "Generic/template coach language" in joined
     assert "Generic filler language" in joined
+
+
+def test_product_voice_validator_rejects_mechanical_daily_narrative_phrases() -> None:
+    context = _context()
+    payload = _payload(
+        context,
+        coach_note=(
+            "Today's useful move is to keep logging simple so this builds a clearer picture "
+            "without overcomplicating it."
+        ),
+    )
+
+    validation = _validate_payload(payload, context)
+
+    assert validation.approved is False
+    joined = " ".join(validation.validation_errors)
+    assert "Mechanical Daily Narrative phrase" in joined
 
 
 def test_product_voice_validator_still_rejects_unsupported_claims() -> None:

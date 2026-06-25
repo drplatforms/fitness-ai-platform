@@ -5,6 +5,9 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+from services.daily_narrative_copy_service import (
+    build_daily_narrative_qa_copy_choice,
+)
 from services.qa_seed_data_verification_service import DEFAULT_QA_USER_IDS
 from services.weekly_coach_summary_qa_data_service import (
     QA_USER_LABELS,
@@ -265,104 +268,24 @@ def select_daily_narrative_qa_next_action(
 ) -> DailyNarrativeQANextAction:
     """Select a deterministic Daily Narrative action from selected safe facts."""
 
-    range_label = "selected date" if start_date == end_date else "selected range"
-    if training_present and nutrition_present and recovery_present:
-        if actual_sets_count > 0 or planned_exercises_count > 0:
-            return DailyNarrativeQANextAction(
-                action_id="daily_narrative_qa_compare_training_fueling_recovery",
-                title="Compare training, fueling, and recovery",
-                reason=(
-                    f"Because the {range_label} has recovery, nutrition, and training facts, "
-                    "the useful move is to compare effort with fueling and recovery instead "
-                    "of logging another random item."
-                ),
-                workflow_target="daily_grounded_review",
-                priority=4,
-                severity="success",
-            )
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_compare_training_and_fueling",
-            title="Compare training and fueling",
-            reason=(
-                f"Because the {range_label} has recovery, nutrition, and training context, "
-                "the useful move is to compare effort with fueling instead of defaulting "
-                "to generic logging advice."
-            ),
-            workflow_target="daily_grounded_review",
-            priority=4,
-            severity="success",
-        )
-    if training_present and nutrition_present:
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_compare_training_and_fueling",
-            title="Compare training and fueling",
-            reason=(
-                f"Because the {range_label} has both training and nutrition facts, "
-                "the useful move is to connect effort with fueling instead of asking "
-                "for another basic meal log."
-            ),
-            workflow_target="daily_grounded_review",
-            priority=4,
-            severity="success",
-        )
-    if training_present and not nutrition_present:
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_log_nutrition_for_training_day",
-            title="Log a meal or snack",
-            reason=(
-                f"Because training is present but nutrition is missing for the {range_label}, "
-                "one meal entry gives the coach something real to compare against the training day."
-            ),
-            workflow_target="nutrition_quick_log",
-            priority=3,
-            severity="info",
-        )
-    if nutrition_present and not training_present:
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_review_nutrition_context",
-            title="Review nutrition context",
-            reason=(
-                f"Because nutrition is present but training is missing for the {range_label}, "
-                "the useful move is to keep the day grounded without inventing a training story."
-            ),
-            workflow_target="nutrition_context_review",
-            priority=3,
-            severity="info",
-        )
-    if recovery_present and not nutrition_present and not training_present:
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_add_one_context_entry",
-            title="Add one context entry",
-            reason=(
-                f"Because only recovery is present for the {range_label}, one food or workout "
-                "detail would help connect how the day felt to what actually happened."
-            ),
-            workflow_target="daily_logging_review",
-            priority=3,
-            severity="info",
-        )
-    if data_quality_label == "limited":
-        return DailyNarrativeQANextAction(
-            action_id="daily_narrative_qa_keep_logging_simple",
-            title="Keep logging simple",
-            reason=(
-                f"Because the {range_label} has limited data quality, the useful move is "
-                "to keep logging simple before drawing stronger conclusions."
-            ),
-            workflow_target="daily_logging_review",
-            priority=4,
-            severity="info",
-        )
+    choice = build_daily_narrative_qa_copy_choice(
+        selected_date=selected_date,
+        start_date=start_date,
+        end_date=end_date,
+        data_quality_label=data_quality_label,
+        recovery_present=recovery_present,
+        nutrition_present=nutrition_present,
+        training_present=training_present,
+        actual_sets_count=actual_sets_count,
+        planned_exercises_count=planned_exercises_count,
+    )
     return DailyNarrativeQANextAction(
-        action_id="daily_narrative_qa_log_missing_nutrition",
-        title="Log a meal or snack",
-        reason=(
-            f"Because there are no nutrition entries for the {range_label} ending {selected_date}, "
-            "one simple meal or snack log gives the coach something real to work from."
-        ),
-        workflow_target="nutrition_quick_log",
-        priority=3,
-        severity="info",
+        action_id=choice.action_id,
+        title=choice.title,
+        reason=choice.reason,
+        workflow_target=choice.workflow_target,
+        priority=choice.priority,
+        severity=choice.severity,
     )
 
 

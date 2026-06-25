@@ -25,6 +25,11 @@ from services.daily_coach_narrative_validation_service import (
     score_daily_coach_narrative_candidate,
     validate_daily_coach_narrative_candidate,
 )
+from services.daily_narrative_copy_service import (
+    DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS,
+    DAILY_NARRATIVE_VOICE_BAD_EXAMPLES,
+    DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES,
+)
 from services.provider_lifecycle_service import (
     build_ollama_generate_payload,
     resolve_provider_lifecycle_policy,
@@ -66,28 +71,37 @@ def build_daily_coach_narrative_prompt(context: DailyCoachNarrativeContext) -> s
     )
     example_output = {
         "coach_note": (
-            "Today's useful move is to make the nutrition picture less fuzzy. "
-            "Log one meal or snack first, then add anything else you remember "
-            "without turning it into a project."
+            "Training is logged, but nutrition is blank for this date. Add one "
+            "meal entry so the coach can connect effort with fueling instead "
+            "of guessing."
         ),
-        "key_takeaway": "More food logging gives today's guidance a clearer base.",
-        "recommended_focus": "Log a meal or snack",
-        "confidence_language": "Keep this limited until more food data is logged.",
+        "key_takeaway": "The missing anchor is nutrition around a training day.",
+        "recommended_focus": "Add a fueling anchor",
+        "confidence_language": "Treat this as a focused gap, not a full-day verdict.",
         "used_approved_facts": [
-            "Daily next action: Log a meal or snack",
+            "Daily next action: Add a fueling anchor",
             (
-                "Daily next action reason: Today's nutrition state is limited until "
-                "more food data is logged."
+                "Daily next action reason: Training is present, but nutrition is "
+                "missing for the selected date."
             ),
         ],
         "avoided_claims": [
             "No food, exercise, target, recovery, or medical claim was invented."
         ],
     }
+    banned_phrases = "\n".join(
+        f'- "{phrase}"' for phrase in sorted(DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS)
+    )
+    good_examples = "\n".join(
+        f'- "{example}"' for example in DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES
+    )
+    bad_examples = "\n".join(
+        f'- "{example}"' for example in DAILY_NARRATIVE_VOICE_BAD_EXAMPLES
+    )
 
     return (
         "Write one short Daily Coach Narrative for AI Health Coach.\n"
-        "Today's action is already selected. Explain why it matters without "
+        "Today's action is already selected. Explain the reason without "
         "changing the action or adding a second action.\n"
         "Use only the listed fact strings and plain coach language.\n\n"
         "OUTPUT FORMAT:\n"
@@ -112,16 +126,23 @@ def build_daily_coach_narrative_prompt(context: DailyCoachNarrativeContext) -> s
         "prompts, objects, validators, services, data packets, routes, internal "
         "instructions, or whether facts were approved.\n\n"
         "PRODUCT_VOICE_TARGET:\n"
-        "- Sound like a practical coach note, not a system report.\n"
+        "- Sound like a human coach who has seen the selected facts, not a system report.\n"
         "- Make coach_note two or three short sentences.\n"
-        "- Sentence 1: name the useful priority for today.\n"
-        "- Sentence 2: explain why the selected action helps.\n"
+        "- Sentence 1: name what is actually going on in the selected date or range.\n"
+        "- Sentence 2: explain why it matters.\n"
         "- Final sentence: give one concrete, low-friction next step.\n"
         "- Be calm, direct, lightly encouraging, and specific to the selected action.\n"
         "- Do not add facts, targets, trends, medical claims, or a second action.\n"
         "- Do not use headings, bullet labels, hype, fake intimacy, or filler.\n"
         "- Avoid phrases like based on the data provided, you got this, "
-        "stay consistent, trust the process, and keep up the good work.\n\n"
+        "stay consistent, trust the process, and keep up the good work.\n"
+        "- Grounding should prevent hallucination, not strip out all human expression.\n\n"
+        "BANNED_DAILY_NARRATIVE_PHRASES:\n"
+        f"{banned_phrases}\n\n"
+        "GOOD_STYLE_EXAMPLES:\n"
+        f"{good_examples}\n\n"
+        "BAD_STYLE_EXAMPLES:\n"
+        f"{bad_examples}\n\n"
         "EXAMPLE SHAPE ONLY. Do not copy these placeholder values:\n"
         f"{json.dumps(example_output, indent=2)}\n\n"
         "SELECTED_ACTION_CONTEXT:\n"

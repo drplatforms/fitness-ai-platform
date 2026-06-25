@@ -18,6 +18,9 @@ from models.daily_coach_narrative_models import (
     DailyCoachNarrativeValidationResult,
 )
 from models.daily_next_action_models import DAILY_NEXT_ACTION_WORKFLOW_TARGETS
+from services.daily_narrative_copy_service import (
+    DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS,
+)
 
 _MAX_COACH_NOTE_CHARS = 420
 
@@ -288,6 +291,12 @@ def validate_daily_coach_narrative_candidate(
     for fragment in sorted(_GENERIC_FILLER_FRAGMENTS):
         if fragment in lowercase_public_text:
             validation_errors.append(f"Generic filler language found: {fragment}")
+
+    for fragment in sorted(DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS):
+        if fragment in lowercase_public_text:
+            validation_errors.append(
+                f"Mechanical Daily Narrative phrase found: {fragment}"
+            )
 
     for fragment in sorted(_template_copy_fragments_found(candidate)):
         validation_errors.append(f"Generic/template coach language found: {fragment}")

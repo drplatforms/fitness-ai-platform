@@ -1,17 +1,11 @@
 # Current State
 
-Latest implemented milestone: Daily Narrative Rich-Day Targeting + Context Differentiation v1.
+Latest implemented milestone: Daily Narrative Voice + Grounding / Copy Tuning v1.
 
-The project now has Developer Mode diagnostics for Daily Narrative rich-day targeting. QA can scan seeded users/dates, identify candidate days with meaningful recovery/nutrition/training signal, inspect public-safe per-day counts, data-quality label, reason codes, next-action reason, and deterministic Daily Narrative output.
+Daily Narrative now has a project-owned voice contract and copy service. Selected-date QA copy is driven by facts/reason families instead of generic default phrases. The app avoids mechanical “useful move” / “clearer picture” style language in deterministic QA preview copy, keeps limited-data copy cautious, and keeps rich-data copy focused on interpretation instead of generic meal/snack logging.
 
-Daily Narrative selected-date context now differentiates rich-data, low-data, and no-data days. Generic meal/snack logging is no longer the universal deterministic action when selected facts support a more specific review, such as comparing training and fueling.
+Provider-facing Daily Narrative prompt guidance now includes banned phrases plus good/bad examples. Provider candidates are still parsed and validated before approval, and mechanical copy is rejected by the validator.
 
-Normal/default Today behavior remains unchanged. Provider calls remain manual-only. No public/default Daily Narrative provider display, automatic generation, worker, queue, scheduler, polling, CrewAI, qwen3 promotion, 14B promotion, or 32B call was added.
+Previous accepted milestone: Workout Plan Selection Persistence + Today Workout De-dup v1 (`d1077cc`). Workout page remains canonical for Plan / Active / Review. Today remains compact and does not duplicate the full workout selection workflow.
 
-Previous accepted milestone: Daily Narrative QA Date Range Preview / Grounding v1 (`43b61d9`).
-
-## Workout Plan Selection Persistence + Today Workout De-dup v1
-
-Current authorized hotfix: fix Workout preview -> Select This Workout -> Active Workout persistence and remove the duplicate full workout selection flow from Today. Workout page is canonical for Plan / Active / Review. Today shows only compact workout status and route-to-Workout behavior.
-
-Boundaries: no provider/AI workout generation, no CrewAI/Ollama changes, no automatic generation, no worker/queue/scheduler/polling, no exercise variety/rotation work, no Streamlit theme cleanup.
+Boundaries remain: no model promotion, no public/default provider display, no automatic generation, no worker/queue/scheduler/polling, no CrewAI reintroduction, no raw rows/logs/notes/set rows exposure, and no Streamlit theme cleanup.

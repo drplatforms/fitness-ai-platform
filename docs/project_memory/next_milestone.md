@@ -1,25 +1,22 @@
 # Next Milestone
 
-Recommended next milestone: Daily Narrative Voice + Grounding v1.
+Likely next milestone: Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1.
 
-Purpose: use the proven rich-day and low-data contexts to tune Daily Narrative wording, "because" phrasing, provider prompt contract, and model comparison fairly.
+Purpose: apply the same voice-contract lessons to Weekly Coach Summary and compare model quality only after copy constraints are fixed.
 
-Alternative next milestone: Weekly Coach Summary Provider Quality + Model Selection / Voice Tuning v1.
+Alternative next milestone: Workout Exercise Variety Rotation v1.
+
+Purpose: improve exercise variety after workout selection persistence is functional again.
 
 Still deferred:
 
 - public/default Daily Narrative provider display
 - normal Today Daily Narrative provider display
+- Weekly Summary public/default display
+- approved preview bridge implementation
 - automatic generation
 - worker / queue / scheduler / polling
 - CrewAI
 - qwen3/qwen3:32b promotion
 - 14B promotion
-- Streamlit theme cleanup
-- Workout variety rotation
-
-## Workout Plan Selection Persistence + Today Workout De-dup v1
-
-Current authorized hotfix: fix Workout preview -> Select This Workout -> Active Workout persistence and remove the duplicate full workout selection flow from Today. Workout page is canonical for Plan / Active / Review. Today shows only compact workout status and route-to-Workout behavior.
-
-Boundaries: no provider/AI workout generation, no CrewAI/Ollama changes, no automatic generation, no worker/queue/scheduler/polling, no exercise variety/rotation work, no Streamlit theme cleanup.
+- Streamlit Theme Cleanup

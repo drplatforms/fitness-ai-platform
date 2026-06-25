@@ -3660,6 +3660,26 @@ def get_active_plan_response(user_id: int) -> dict | None:
     return None
 
 
+def has_current_workout_selection(active_plan_response: dict | None) -> bool:
+    """Return true only when today's daily state has a selected/active workout."""
+
+    daily_state_response = st.session_state.get("workout_daily_state_response") or {}
+    daily_state = daily_state_response.get("workout_daily_state") or {}
+    daily_state_name = str(daily_state.get("state") or "").strip().lower()
+
+    if daily_state_name in {"selected_today", "active_today", "completed_today"}:
+        return bool(active_plan_response)
+
+    if daily_state_name in {
+        "expired_uncompleted_prior",
+        "no_workout_today",
+        "none",
+    }:
+        return False
+
+    return bool(active_plan_response)
+
+
 def refresh_active_plan_response(plan_instance_id: int) -> dict | None:
     try:
         execution_response = api_get(f"/workout-plans/{plan_instance_id}/execution")
@@ -6275,7 +6295,7 @@ def render_workout_plan_section(user_id: int) -> None:
         )
         workout_size_preference = render_workout_size_preference_control("plan")
         active_plan_response = get_active_plan_response(user_id)
-        has_selected_workout = bool(active_plan_response)
+        has_selected_workout = has_current_workout_selection(active_plan_response)
         force_preview_refresh = st.button(
             "Show different exercises",
             key="refresh_workout_plan_preview_button",

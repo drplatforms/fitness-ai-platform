@@ -82,3 +82,14 @@ def test_preview_cache_key_includes_variation_index() -> None:
     assert ":variation:" in cache_source
     assert "bump_workout_preview_variation_index" in stable_source
     assert "preview_variation_index=" in stable_source
+
+
+def test_preview_refresh_ignores_expired_prior_uncompleted_state() -> None:
+    helper_source = _function_source("has_current_workout_selection")
+    plan_source = _function_source("render_workout_plan_section")
+
+    assert "expired_uncompleted_prior" in helper_source
+    assert "no_workout_today" in helper_source
+    assert "return False" in helper_source
+    assert "has_current_workout_selection(active_plan_response)" in plan_source
+    assert "disabled=has_selected_workout" in plan_source

@@ -143,7 +143,17 @@ def _build_candidate(
             "Name what is missing without sounding like a debug panel."
         )
     if scenario.scenario_id == "rich_day_multiple_domains":
-        quality_notes.append("Interpret the day before asking for more entries.")
+        quality_notes.append(
+            "Use the full-day view before asking for more entries; avoid optimal-results claims."
+        )
+    if scenario.scenario_id == "high_soreness_lower_body_planned":
+        quality_notes.append(
+            "Use conservative first-set language and let the body's response decide progression."
+        )
+    if scenario.scenario_id == "mixed_signals_day":
+        quality_notes.append(
+            "Name recovery/readiness as the weaker point only when supported; avoid unsupported physiology claims."
+        )
     return DailyNarrativeVoiceLabCandidate(
         variant_id=variant_id,
         title=title,
@@ -193,7 +203,7 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
         confidence="Low",
         reason_codes=("nutrition_present_training_missing", "training_missing"),
         safe_aggregate_facts=("Food was logged.", "No completed workout is present."),
-        next_action_intent="Give a nutrition-based read without pretending it is a full training recommendation.",
+        next_action_intent="Give a nutrition-based read without calling it a full training recommendation.",
         prohibited_claims=(
             "Do not claim workout effort.",
             "Do not provide training readiness conclusions.",
@@ -287,13 +297,13 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
         missing_domains=(),
         data_quality="rich",
         confidence="Moderate",
-        reason_codes=("rich_day_multiple_domains", "compare_domains"),
+        reason_codes=("rich_day_multiple_domains", "consider_domains"),
         safe_aggregate_facts=(
             "Recovery is logged.",
             "Food is logged.",
             "Training is logged.",
         ),
-        next_action_intent="Compare the day before asking for more entries.",
+        next_action_intent="Consider the full day before asking for more entries.",
         prohibited_claims=(
             "Do not claim causation.",
             "Do not make a medical or progress verdict.",
@@ -324,7 +334,7 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
     DailyNarrativeVoiceLabScenario(
         scenario_id="low_data_multiple_domains",
         scenario_label="Low data across several domains",
-        situation_summary="A few entries exist across domains, but detail is too thin for a strong coaching read.",
+        situation_summary="A handful of entries exist across domains, but detail is too thin for a strong coaching read.",
         domains_present=("recovery", "nutrition", "training"),
         missing_domains=("detail",),
         data_quality="limited",
@@ -334,7 +344,7 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
             "Several domains have partial entries.",
             "Detail is limited.",
         ),
-        next_action_intent="Ask for the easiest practical update without overclaiming.",
+        next_action_intent="List practical completion options without overclaiming.",
         prohibited_claims=(
             "Do not compare everything as if confidence is high.",
             "Do not make progress claims.",
@@ -371,7 +381,7 @@ _SCENARIOS: tuple[DailyNarrativeVoiceLabScenario, ...] = (
             "Nutrition logging is consistent.",
             "No training is logged.",
         ),
-        next_action_intent="Acknowledge nutrition consistency without pretending it is a full coaching read.",
+        next_action_intent="Acknowledge nutrition consistency while keeping the coaching read scoped.",
         prohibited_claims=(
             "Do not evaluate training progress.",
             "Do not assume rest was planned.",
@@ -402,7 +412,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Today's advice is limited",
-            "Log a recovery check-in, a meal or snack, or the workout you completed so the coach has enough to work with.",
+            "Log a recovery check-in, a meal/snack, or a completed workout so the coach has enough data to provide recommendations.",
             "no_data_start_point",
         ),
         (
@@ -430,7 +440,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Add the food around the workout",
-            "Training is logged, but food is missing. Add one meal or snack so the coach can connect the work you did with how you fueled it.",
+            "Your training session has been logged, but food entries are missing. Add any meals or snacks you've had today so the coach can connect the work you did with how you fueled it.",
             "training_without_fueling",
         ),
         (
@@ -458,7 +468,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Respect the soreness",
-            "Soreness is up and lower-body work is planned. Keep the first sets conservative and let how you move decide whether the session stays heavy.",
+            "Soreness is up and lower-body work is planned. Keep the first sets conservative, then let how your body reacts decide how the session progresses.",
             "recovery_limited_caution",
         ),
         (
@@ -472,7 +482,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Add set detail if progression matters",
-            "The workout is logged, but the set details are missing. Add sets, reps, or effort if you want the coach to judge progression instead of only attendance.",
+            "The workout is logged, but set details are missing. Add sets, reps, and effort/RIR so the coach can evaluate progression instead of only attendance.",
             "workout_detail_missing",
         ),
         (
@@ -485,14 +495,14 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
     "rich_day_multiple_domains": (
         (
             "primary",
-            "Compare the day",
-            "You have enough logged to review the day before adding more entries. Check whether training, food, and recovery point in the same direction before making a stronger call.",
+            "Use the full-day view",
+            "Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.",
             "rich_day_interpretation",
         ),
         (
             "alternate",
             "Read what is already there",
-            "Training, food, and recovery are all present. The next step is not more logging; it is seeing whether those pieces agree.",
+            "Training, food, and recovery are all present. Review that full-day view before changing the plan or asking for more entries.",
             "rich_day_interpretation",
         ),
     ),
@@ -500,13 +510,13 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Separate effort from readiness",
-            "Food and training are logged, but recovery looks less supportive. Treat that as a mismatch to watch, not proof that anything is broken.",
+            "Food and training are logged, but recovery is the weaker point today. Let readiness guide how aggressively you push the next session.",
             "mixed_signals",
         ),
         (
             "alternate",
-            "Do not force one story",
-            "The day has both work and recovery friction. Keep the read cautious and look for whether the next check-in confirms the pattern.",
+            "Keep recovery in the decision",
+            "Training and food are present, but readiness should still set the ceiling. Keep the next session honest until recovery looks more supportive.",
             "mixed_signals",
         ),
     ),
@@ -514,7 +524,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Let's get on the same page",
-            "There are a few entries here, but not enough detail for a strong coaching read. Add the easiest missing piece today so the next recommendation has more to work with.",
+            "There are a handful of entries here, but not enough detail for a strong coaching read. Complete a Recovery Check-in, log a meal/snack, or add the details of today's completed workout so the coach has more to work with.",
             "low_data_practical_next_step",
         ),
         (
@@ -542,7 +552,7 @@ _CANDIDATE_TEMPLATES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
         (
             "primary",
             "Nutrition is the reliable part",
-            "Food logging is showing up, which helps. Training is still missing, so keep today's read focused on nutrition rather than pretending it covers the whole plan.",
+            "Food logs are present, which gives the coach nutrition context for today. Add training details when available so the recommendation can account for more than food intake.",
             "nutrition_only_read",
         ),
         (

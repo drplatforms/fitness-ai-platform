@@ -1,6 +1,6 @@
 # Daily Narrative Voice Contract
 
-Status: Daily Narrative Coaching Intelligence + Voice Lab v1
+Status: Daily Narrative Feedback-Driven Copy Rule Hardening v1
 
 The Daily Narrative should sound like a practical coach who has seen the facts, not a compliance memo, debug template, or washer hardware manual.
 
@@ -40,6 +40,11 @@ The note should answer:
 - “verify the daily picture”
 - “nutrition note”
 - “food-context note”
+- “adding random data”
+- “before you treat the plan as automatic”
+- “let how you move decide whether the session stays heavy”
+- “does not support expended energy”
+- “optimal results” when backend facts do not prove alignment/results
 - generic “log one meal or snack” when nutrition is not actually missing or weak
 
 The words “useful” and “simple” are not impossible, but they must not become the house style.
@@ -62,22 +67,28 @@ Why it fails: “concrete anchor” is weird, “signal” sounds technical, “
 
 Preferred direction:
 
-> Today's advice is limited. Log a recovery check-in, a meal or snack, or the workout you completed so the coach has enough to work with.
+> Today's advice is limited. Log a recovery check-in, a meal/snack, or a completed workout so the coach has enough data to provide recommendations.
 
 ## Better examples
 
-> Training is logged, but food is missing. Add one meal or snack so the coach can connect the work you did with how you fueled it.
+> Your training session has been logged, but food entries are missing. Add any meals or snacks you've had today so the coach can connect the work you did with how you fueled it.
 
-> You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.
+> Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
 
-> There are a few entries here, but not enough detail for a strong coaching read. Add the easiest missing piece today so the next recommendation has more to work with.
+> Soreness is up and lower-body work is planned. Keep the first sets conservative, then let how your body reacts decide how the session progresses.
+
+> Food and training are logged, but recovery is the weaker point today. Let readiness guide how aggressively you push the next session.
+
+> There are a handful of entries here, but not enough detail for a strong coaching read. Complete a Recovery Check-in, log a meal/snack, or add the details of today's completed workout so the coach has more to work with.
 
 ## Reason-code copy families
 
 - `nutrition_present_training_missing`: food exists, workout is missing; keep the read nutrition-based.
 - `training_present_nutrition_missing`: training exists, food is missing; ask for food around the workout.
 - `multiple_domains_present_limited_confidence`: keep the next step practical and avoid strong comparison language.
-- `rich_day_multiple_domains`: interpret what is already logged instead of asking for more random logging.
+- `rich_day_multiple_domains`: use the full-day view to consider training load, food intake, and recovery without overclaiming alignment or optimal results.
+- `high_soreness_lower_body_planned`: keep first sets conservative and let the body response decide progression without diagnosing injury or requiring a deload.
+- `mixed_signals_day`: name recovery/readiness as the weaker point only when supported; avoid unsupported physiology claims.
 - `actual_sets_missing`: workout exists, set-level detail is missing; ask for workout detail if progression is the question.
 - `no_data_today`: say advice is limited and ask for one practical entry.
 

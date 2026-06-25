@@ -15,6 +15,10 @@ DAILY_NARRATIVE_BANNED_COPY_FRAGMENTS = {
     "adding random data",
     "random data",
     "before you treat the plan as automatic",
+    "let how you move decide",
+    "session stays heavy",
+    "does not support expended energy",
+    "optimal results",
 }
 
 DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS = {
@@ -30,6 +34,14 @@ DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS = {
     "food-context note",
     "because there is",
     "because nutrition",
+    "automatic plan",
+    "expended energy",
+    "treat that as a mismatch",
+    "easiest missing piece",
+    "pretending",
+    "pretend",
+    "compare training load",
+    "recovery is the limiting factor",
 }
 
 DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES = (
@@ -38,17 +50,27 @@ DAILY_NARRATIVE_VOICE_GOOD_EXAMPLES = (
         "nutrition-based read, not a full training recommendation."
     ),
     (
-        "Training is logged, but food is missing. Add one meal or snack so the "
-        "coach can connect the work you did with how you fueled it."
+        "Your training session has been logged, but food entries are missing. "
+        "Add any meals or snacks you've had today so the coach can connect the "
+        "work you did with how you fueled it."
     ),
     (
-        "Today's advice is limited. Log a recovery check-in, a meal or snack, or "
-        "the workout you completed so the coach has enough to work with."
+        "Today's advice is limited. Log a recovery check-in, a meal/snack, or a "
+        "completed workout so the coach has enough data to provide recommendations."
     ),
     (
-        "You have enough logged to review the day before adding more entries. "
-        "Check whether training, food, and recovery point in the same direction "
-        "before making a stronger call."
+        "Today’s logs give the coach enough context to consider training load, "
+        "food intake, and recovery together. Use that full-day view to decide "
+        "whether the plan should stay consistent or needs a small adjustment."
+    ),
+    (
+        "Soreness is up and lower-body work is planned. Keep the first sets "
+        "conservative, then let how your body reacts decide how the session "
+        "progresses."
+    ),
+    (
+        "Food and training are logged, but recovery is the weaker point today. "
+        "Let readiness guide how aggressively you push the next session."
     ),
 )
 
@@ -61,6 +83,9 @@ DAILY_NARRATIVE_VOICE_BAD_EXAMPLES = (
     "Verify the daily picture before drawing conclusions from this light read.",
     "You have enough logged to compare the day instead of adding random data.",
     "Use recovery before the workout before you treat the plan as automatic.",
+    "Let how you move decide whether the session stays heavy.",
+    "Food and training are logged, but recovery does not support expended energy.",
+    "Training intensity, food intake, and recovery align with keeping your plan consistent for optimal results.",
 )
 
 
@@ -100,8 +125,8 @@ def build_daily_narrative_qa_copy_choice(
             action_id="daily_narrative_qa_today_advice_limited",
             title="Today's advice is limited",
             reason=(
-                "Log a recovery check-in, a meal or snack, or the workout you "
-                "completed so the coach has enough to work with."
+                "Log a recovery check-in, a meal/snack, or a completed workout so "
+                "the coach has enough data to provide recommendations."
             ),
             workflow_target="daily_logging_review",
             priority=3,
@@ -114,9 +139,10 @@ def build_daily_narrative_qa_copy_choice(
             action_id="daily_narrative_qa_get_on_same_page",
             title="Let's get on the same page",
             reason=(
-                "There are a few entries here, but not enough detail for a strong "
-                "coaching read. Add the easiest missing piece today so the next "
-                "recommendation has more to work with."
+                "There are a handful of entries here, but not enough detail for a "
+                "strong coaching read. Complete a Recovery Check-in, log a "
+                "meal/snack, or add the details of today's completed workout so "
+                "the coach has more to work with."
             ),
             workflow_target="daily_logging_review",
             priority=4,
@@ -127,12 +153,13 @@ def build_daily_narrative_qa_copy_choice(
     if training_present and nutrition_present and recovery_present:
         if actual_sets_count > 0 or planned_exercises_count > 0:
             return DailyNarrativeCopyChoice(
-                action_id="daily_narrative_qa_compare_the_day",
-                title="Compare the day",
+                action_id="daily_narrative_qa_consider_the_day",
+                title="Consider the full day",
                 reason=(
-                    "You have enough logged to review the day before adding more "
-                    "entries. Check whether training, food, and recovery point in "
-                    "the same direction before making a stronger call."
+                    "Today's logs give the coach enough context to consider training "
+                    "load, food intake, and recovery together. Use that full-day "
+                    "view to decide whether the plan should stay consistent or needs "
+                    "a small adjustment."
                 ),
                 workflow_target="daily_grounded_review",
                 priority=4,
@@ -143,9 +170,9 @@ def build_daily_narrative_qa_copy_choice(
             action_id="daily_narrative_qa_read_what_is_there",
             title="Read what is already there",
             reason=(
-                "Recovery, food, and training are all present. Use them to make "
-                "one grounded read of the day instead of adding another generic "
-                "logging task."
+                "Recovery, food, and training are all present. Use that full-day "
+                "view to decide whether the plan should stay consistent or needs "
+                "a small adjustment."
             ),
             workflow_target="daily_grounded_review",
             priority=4,
@@ -172,8 +199,9 @@ def build_daily_narrative_qa_copy_choice(
             action_id="daily_narrative_qa_add_food_around_workout",
             title="Add the food around the workout",
             reason=(
-                "Training is logged, but food is missing. Add one meal or snack "
-                "so the coach can connect the work you did with how you fueled it."
+                "Your training session has been logged, but food entries are "
+                "missing. Add any meals or snacks you've had today so the coach "
+                "can connect the work you did with how you fueled it."
             ),
             workflow_target="nutrition_quick_log",
             priority=3,

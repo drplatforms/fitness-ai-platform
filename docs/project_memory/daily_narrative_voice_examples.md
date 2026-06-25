@@ -1,6 +1,6 @@
 # Daily Narrative Voice Examples
 
-Status: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
+Status: Daily Narrative Feedback-Driven Copy Rule Hardening v1
 
 This file is app-side memory for Daily Narrative copy QA. It records rejected wording, why it failed, and preferred directions. Future deterministic/provider copy should use these examples as style guidance without weakening factual grounding.
 
@@ -40,7 +40,7 @@ Why it fails:
 - The result sounds like an analytics panel, not a coach.
 
 Preferred:
-> Today's advice is limited. Log a recovery check-in, a meal or snack, or the workout you completed so the coach has enough to work with.
+> Today's advice is limited. Log a recovery check-in, a meal/snack, or a completed workout so the coach has enough data to provide recommendations.
 
 ## generic_logging
 
@@ -59,7 +59,7 @@ Only ask for logging when a specific missing piece changes the coaching read.
 
 Allowed facts:
 - Recovery, food, and training are present.
-- There is enough context to compare the day cautiously.
+- There is enough context to consider the day cautiously.
 
 Rejected:
 > You have enough logged to compare the day instead of adding random data. Check whether training, food, and recovery tell the same story before making a stronger call.
@@ -70,7 +70,7 @@ Why it fails:
 - The idea is right, but the phrase should be cleaner.
 
 Preferred:
-> You have enough logged to review the day before adding more entries. Check whether training, food, and recovery point in the same direction before making a stronger call.
+> Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
 
 ## recovery_present_training_planned
 
@@ -87,14 +87,72 @@ Why it fails:
 - The sentence over-explains what should be a direct coaching point.
 
 Preferred:
-> Plan the intensity of your workout around how recovered you feel today.
+> You checked in, and a workout is planned. Plan the intensity of your workout around how recovered you feel today.
+
+## high_soreness_lower_body_planned
+
+Allowed facts:
+- Soreness is elevated.
+- Lower-body training is planned.
+- The app should not diagnose injury or require a deload.
+
+Rejected:
+> Soreness is up and lower-body work is planned. Keep the first sets conservative and let how you move decide whether the session stays heavy.
+
+Why it fails:
+- “let how you move decide” is close but not natural enough.
+- “session stays heavy” over-focuses on load and sounds like a template.
+- The idea is right, but the coach should phrase it as body response guiding progression.
+
+Preferred:
+> Soreness is up and lower-body work is planned. Keep the first sets conservative, then let how your body reacts decide how the session progresses.
+
+## rich_day_multiple_domains
+
+Allowed facts:
+- Recovery, food, and training are present.
+- There is enough context to consider the day cautiously.
+- Backend facts may not prove true alignment or optimal outcomes.
+
+Rejected direction:
+> Today, your adherence to logging provides the coach with a clear picture. Training intensity, food intake, and recovery align with keeping your plan consistent for optimal results.
+
+Why it needs tightening:
+- “optimal results” is too strong unless backend facts prove it.
+- “align” may overclaim true agreement across domains.
+- The useful point is full-day context, not guaranteed progress.
+
+Preferred:
+> Today's logs give the coach enough context to consider training load, food intake, and recovery together. Use that full-day view to decide whether the plan should stay consistent or needs a small adjustment.
+
+## mixed_signals_day
+
+Allowed facts:
+- Food is logged.
+- Training is logged.
+- Recovery looks less supportive.
+
+Rejected direction:
+> Food and training are logged, but recovery does not support expended energy. Consider your readiness score before tomorrow's training session.
+
+Why it needs tightening:
+- “does not support expended energy” sounds like unsupported physiology.
+- “tomorrow's training session” should appear only when tomorrow/planned workout context exists.
+- The useful point is readiness limiting the next push.
+
+Preferred:
+> Food and training are logged, but recovery is the weaker point today. Let readiness guide how aggressively you push the next session.
 
 ## style notes
 
 - Use “today” for user-facing Today copy.
 - Do not use “selected date” outside Developer Mode diagnostics.
 - Do not use “signal,” “concrete anchor,” “light read,” or “verify the daily picture.”
-- Do not use “adding random data.” Prefer “before adding more entries” or “use what is already logged first.”
+- Do not use “adding random data.” Prefer “before adding more entries,” “use what is already logged first,” or “use the full-day view.”
+- Do not use “before you treat the plan as automatic.” Prefer recovery-based intensity planning.
+- Do not use “let how you move decide whether the session stays heavy.” Prefer body-reaction / session-progression language.
+- Do not use “does not support expended energy.” Prefer readiness/recovery-constraint language when supported.
+- Do not use “optimal results” unless backend facts can prove the claim.
 - Do not force “Because...” as a sentence starter.
 - Reduce colon-heavy labels and comma-heavy run-ons.
 - Keep the factual boundary, but make the sentence sound like a coach, not a debug trace.

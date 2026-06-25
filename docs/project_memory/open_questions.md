@@ -1,8 +1,12 @@
 # Open Questions
 
-## Daily Narrative provider quality
+## Daily Narrative voice quality
 
-The new QA date/date-range grounding seam should make future voice/model tuning fairer, but provider model quality remains unresolved. qwen2.5:3b is useful for plumbing but may be too weak for product-quality coaching language. qwen3:8b may be the next controlled voice-quality candidate. 32B remains manual-only and RAM-risky.
+Daily Narrative context differentiation should be proven before model escalation. Once rich-day, low-data, and no-data contexts clearly differ, the next question is whether qwen2.5:3b can produce acceptable voice or whether qwen3:8b should be a controlled candidate under strict lifecycle policy.
+
+## Rich seeded day availability
+
+The rich-day scan should be run against the active Linux runtime DB. If user 102 does not have a useful rich day in the expected window, the issue is seed coverage rather than model quality.
 
 ## Public display
 

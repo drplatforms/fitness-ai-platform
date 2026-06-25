@@ -142,6 +142,12 @@ def _inventory_from_user_summary(
         domain: _domain_row_count(summary)
         for domain, summary in user.selected_range_counts.items()
     }
+    planned_summary = user.selected_range_counts.get("planned_workouts")
+    fact_counts["planned_workout_exercises"] = (
+        int(planned_summary.planned_exercise_count or 0)
+        if planned_summary is not None
+        else 0
+    )
     data_quality_label = user.data_quality_label
     diagnosis_codes = list(user.diagnosis_codes)
     limitations = list(user.limitations)

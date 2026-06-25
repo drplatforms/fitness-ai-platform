@@ -87,3 +87,41 @@ def test_internal_term_filter_does_not_flag_drawing_as_raw():
     assert _contains_internal_fragment("raw rows")
     assert _contains_internal_fragment("provider output")
     assert _contains_internal_fragment("model metadata")
+
+
+def test_daily_narrative_context_summary_exposes_reason_codes_and_counts():
+    context = build_daily_coach_narrative_qa_preview_context(
+        102,
+        selected_date="2026-06-06",
+        lookback_days=1,
+    )
+
+    metadata = context.source_metadata
+    assert "reason_codes" in metadata
+    assert "recommended_test_label" in metadata
+    assert "richness_score" in metadata
+    assert "nutrition_entries_count" in metadata
+    assert "next_action_reason" in metadata
+    assert any(
+        "Daily Narrative reason codes:" in fact for fact in context.approved_facts
+    )
+
+
+def test_daily_narrative_context_differs_by_selected_date():
+    first = build_daily_coach_narrative_qa_preview_context(
+        102,
+        selected_date="2026-06-06",
+        lookback_days=1,
+    )
+    second = build_daily_coach_narrative_qa_preview_context(
+        102,
+        selected_date="2026-06-05",
+        lookback_days=1,
+    )
+
+    assert first.date != second.date
+    assert (
+        first.source_metadata["selected_date"]
+        != second.source_metadata["selected_date"]
+    )
+    assert first.approved_facts != second.approved_facts

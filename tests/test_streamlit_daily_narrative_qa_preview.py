@@ -50,3 +50,13 @@ def test_daily_narrative_provider_preview_remains_manual_button_only() -> None:
         "fetch_daily_coach_narrative_preview("
     )
     assert "Provider output is" in panel_source
+
+
+def test_daily_narrative_rich_day_scan_visible_in_developer_panel() -> None:
+    panel_source = _function_source("render_daily_coach_narrative_developer_panel")
+    today_source = _function_source("render_today_section")
+
+    assert "Recommended Daily Narrative rich-data days" in panel_source
+    assert "daily_narrative_rich_day_candidates(" in panel_source
+    assert "Active seed bounds for Daily Narrative QA scan" in panel_source
+    assert "Recommended Daily Narrative rich-data days" not in today_source

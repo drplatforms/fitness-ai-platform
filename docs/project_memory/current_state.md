@@ -1,9 +1,11 @@
 # Current State
 
-Latest implemented milestone: Daily Narrative QA Date Range Preview / Grounding v1.
+Latest implemented milestone: Daily Narrative Rich-Day Targeting + Context Differentiation v1.
 
-The project now has Developer Mode-only seeded QA date/date-range grounding for Daily Narrative preview. The preview can build backend-owned safe aggregate context for QA users 101-105, selected date, and lookback days. Deterministic Daily Narrative preview can explain the `because` from selected facts or missing-data reasons.
+The project now has Developer Mode diagnostics for Daily Narrative rich-day targeting. QA can scan seeded users/dates, identify candidate days with meaningful recovery/nutrition/training signal, inspect public-safe per-day counts, data-quality label, reason codes, next-action reason, and deterministic Daily Narrative output.
 
-Normal Today behavior remains unchanged. Provider calls remain manual-only if selected in Developer Mode. No public/default Daily Narrative provider display, automatic generation, worker, queue, scheduler, polling, CrewAI, qwen3 promotion, or 32B call was added.
+Daily Narrative selected-date context now differentiates rich-data, low-data, and no-data days. Generic meal/snack logging is no longer the universal deterministic action when selected facts support a more specific review, such as comparing training and fueling.
 
-Previous accepted milestone: Weekly Coach Summary Provider Runtime Prototype v1 — Developer Mode Only (`c0f7a84`).
+Normal/default Today behavior remains unchanged. Provider calls remain manual-only. No public/default Daily Narrative provider display, automatic generation, worker, queue, scheduler, polling, CrewAI, qwen3 promotion, 14B promotion, or 32B call was added.
+
+Previous accepted milestone: Daily Narrative QA Date Range Preview / Grounding v1 (`43b61d9`).

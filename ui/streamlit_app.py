@@ -4351,6 +4351,37 @@ def render_daily_coach_narrative_context_summary(preview: dict) -> None:
             ),
         },
     ]
+    metadata_rows = [
+        ("Selected date", context_summary.get("selected_date")),
+        ("Start date", context_summary.get("start_date")),
+        ("End date", context_summary.get("end_date")),
+        ("Lookback days", context_summary.get("lookback_days")),
+        ("Data quality label", context_summary.get("data_quality_label")),
+        (
+            "Weekly inventory label",
+            context_summary.get("weekly_inventory_data_quality_label"),
+        ),
+        ("Recommended test label", context_summary.get("recommended_test_label")),
+        ("Richness score", context_summary.get("richness_score")),
+        ("Domains present", context_summary.get("domains_present_count")),
+        ("Recovery entries", context_summary.get("recovery_checkins_count")),
+        ("Nutrition entries", context_summary.get("nutrition_entries_count")),
+        ("Workout sessions", context_summary.get("workout_sessions_count")),
+        ("Planned workouts", context_summary.get("planned_workouts_count")),
+        ("Planned exercises", context_summary.get("planned_exercises_count")),
+        ("Actual sets", context_summary.get("actual_sets_count")),
+        ("Next-action reason", context_summary.get("next_action_reason")),
+        ("Reason codes", ", ".join(context_summary.get("reason_codes") or [])),
+    ]
+    for label, value in metadata_rows:
+        if value not in (None, ""):
+            summary_rows.append(
+                {
+                    "Context": label,
+                    "Count": "",
+                    "Summary": daily_coach_preview_table_value(value),
+                }
+            )
     st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
 
 
@@ -5042,6 +5073,67 @@ def daily_narrative_qa_user_options() -> dict[int, str]:
     return dict(QA_USER_LABELS)
 
 
+def daily_narrative_rich_day_candidates(
+    *,
+    user_id: int,
+    start_date: str = "2026-05-31",
+    end_date: str = "2026-06-06",
+    top: int = 5,
+) -> list[dict]:
+    from services.daily_narrative_rich_day_service import (
+        scan_daily_narrative_rich_days,
+    )
+
+    result = scan_daily_narrative_rich_days(
+        user_id=int(user_id),
+        start_date=start_date,
+        end_date=end_date,
+        top=top,
+    )
+    return [candidate.to_dict() for candidate in result.top_candidates]
+
+
+def render_daily_narrative_rich_day_candidates(candidates: list[dict]) -> None:
+    if not candidates:
+        st.info("No Daily Narrative rich-day candidates found for this user/range.")
+        return
+    columns = [
+        "date",
+        "richness_score",
+        "data_quality_label",
+        "recommended_test_label",
+        "recovery_checkins_count",
+        "nutrition_entries_count",
+        "workout_sessions_count",
+        "planned_workouts_count",
+        "planned_exercises_count",
+        "actual_sets_count",
+    ]
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {column: candidate.get(column) for column in columns}
+                for candidate in candidates
+            ]
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+    best = candidates[0]
+    st.caption(
+        "Best rich-data candidate: "
+        f"{best.get('date')} ({best.get('recommended_test_label')}, "
+        f"score {best.get('richness_score')})."
+    )
+    with st.expander("Rich-day reason codes", expanded=False):
+        for candidate in candidates:
+            reason_codes = ", ".join(candidate.get("reason_codes") or [])
+            st.write(
+                f"- {candidate.get('date')} / {candidate.get('recommended_test_label')}: "
+                f"{reason_codes}"
+            )
+
+
 def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
     if not st.session_state.get("developer_mode", False):
         return
@@ -5095,6 +5187,32 @@ def render_daily_coach_narrative_developer_panel(user_id: int) -> None:
                 key=f"daily_narrative_qa_lookback_days_{user_id}",
                 disabled=not qa_preview_enabled,
             )
+        st.caption(
+            "Active seed bounds for Daily Narrative QA scan: 2026-05-31 through 2026-06-06"
+        )
+        if qa_preview_enabled:
+            try:
+                rich_day_candidates = daily_narrative_rich_day_candidates(
+                    user_id=int(qa_user_id),
+                    start_date="2026-05-31",
+                    end_date="2026-06-06",
+                    top=5,
+                )
+            except Exception as exc:
+                st.warning(
+                    "Daily Narrative rich-day scan failed safely: "
+                    f"{extract_api_error_message(exc)}"
+                )
+                rich_day_candidates = []
+            with st.expander(
+                "Recommended Daily Narrative rich-data days", expanded=False
+            ):
+                st.caption(
+                    "Read-only Developer Mode scan. It does not call a provider and does not "
+                    "change normal Today behavior."
+                )
+                render_daily_narrative_rich_day_candidates(rich_day_candidates)
+
         preview_user_id = int(qa_user_id) if qa_preview_enabled else user_id
         preview_target_date = (
             qa_selected_date.isoformat()

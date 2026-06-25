@@ -222,3 +222,21 @@ def test_cli_help_runs_from_repo_root_without_pythonpath():
     )
 
     assert "Daily Coach Narrative provider QA" in completed.stdout
+
+
+def test_provider_prompt_includes_selected_date_reason_codes_for_qa_context():
+    from services.daily_coach_narrative_context_service import (
+        build_daily_coach_narrative_qa_preview_context,
+    )
+
+    context = build_daily_coach_narrative_qa_preview_context(
+        102,
+        selected_date="2026-06-06",
+        lookback_days=1,
+    )
+
+    prompt = build_daily_coach_narrative_prompt(context)
+
+    assert "Selected date: 2026-06-06" in prompt
+    assert "Daily Narrative reason codes:" in prompt
+    assert "Daily next action reason:" in prompt

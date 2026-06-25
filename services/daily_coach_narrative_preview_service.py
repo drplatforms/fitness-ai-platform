@@ -342,6 +342,23 @@ def _context_summary(context: DailyCoachNarrativeContext) -> dict[str, object]:
         "end_date": source_metadata.get("end_date"),
         "lookback_days": source_metadata.get("lookback_days"),
         "data_quality_label": source_metadata.get("data_quality_label"),
+        "weekly_inventory_data_quality_label": source_metadata.get(
+            "weekly_inventory_data_quality_label"
+        ),
+        "reason_codes": list(source_metadata.get("reason_codes") or []),
+        "recommended_test_label": source_metadata.get("recommended_test_label"),
+        "richness_score": source_metadata.get("richness_score"),
+        "domains_present_count": source_metadata.get("domains_present_count"),
+        "recovery_checkins_count": source_metadata.get("recovery_checkins_count"),
+        "nutrition_entries_count": source_metadata.get("nutrition_entries_count"),
+        "workout_sessions_count": source_metadata.get("workout_sessions_count"),
+        "workout_execution_sessions_count": source_metadata.get(
+            "workout_execution_sessions_count"
+        ),
+        "planned_workouts_count": source_metadata.get("planned_workouts_count"),
+        "planned_exercises_count": source_metadata.get("planned_exercises_count"),
+        "actual_sets_count": source_metadata.get("actual_sets_count"),
+        "next_action_reason": source_metadata.get("next_action_reason"),
     }
 
 

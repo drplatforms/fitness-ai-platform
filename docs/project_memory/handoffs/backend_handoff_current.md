@@ -1,61 +1,74 @@
 # Backend Handoff Current
 
-Milestone: Nutrition Catalog + Serving Foundation Planning v1
+Milestone: Nutrition Catalog Diagnostic v1
 
-Status: planning request / no runtime implementation.
+Status: implemented diagnostic / pending final validation and Architecture review.
 
-Source baseline: `main` at `f469c89`.
+Source baseline: `main` at `94dc8fd`.
 
-Branch: `feature/nutrition-catalog-serving-foundation-planning-v1`.
+Branch: `feature/nutrition-catalog-diagnostic-v1`.
 
-## Backend planning direction
+## Backend implementation summary
 
-Backend should prepare for nutrition work in this order:
+Implemented diagnostic/data-audit support for the nutrition catalog foundation.
 
-1. Diagnose the current nutrition catalog state.
-2. Review whether current models can support canonical foods, aliases, per-100g nutrients, source/confidence metadata, and active flags.
-3. Curate 150-300 high-value app-facing foods.
-4. Add serving units for 50-100 high-value foods.
-5. Support food logs by grams or approved serving unit.
-6. Track actuals confidence.
-7. Build deterministic food suggestions from macro gaps.
-8. Only then allow provider meal/snack candidates using backend-approved facts.
+Expected changed code/test files:
 
-## Backend ownership
+- `services/nutrition_catalog_diagnostic_service.py`
+- `tools/nutrition_catalog_diagnostic.py`
+- `tests/test_nutrition_catalog_diagnostic_v1.py`
 
-Backend owns food truth, canonical foods, nutrients, serving conversions, grams, confidence, logged actuals, targets, gaps, validation, and fallback.
+The diagnostic is intentionally read-only. It does not add foods, serving units, migrations, logging behavior, nutrition calculation changes, provider behavior, Streamlit UI changes, workout changes, or recovery changes.
 
-Provider/AI must not invent foods, serving units, grams, macros, targets, actuals, or unsupported claims.
+## Diagnostic command
 
-## Two-layer catalog doctrine
+```powershell
+python tools/nutrition_catalog_diagnostic.py --output ..\nutrition_catalog_diagnostic_v1.json
+```
 
-Use raw/source data as staging/enrichment. Use canonical app foods for normal logging, suggestions, and provider contracts.
+## Key findings
 
-Do not expose a huge raw import directly to user-facing food logging, deterministic suggestions, or provider contracts.
+- Legacy food records: 3,475.
+- Canonical food records: 222.
+- Active canonical food records: 222.
+- Raw/source food records: 0.
+- Canonical foods safe for logging/suggestions: 222.
+- Alias rows: 555.
+- Foods with aliases: 222.
+- Complete core macro foods: 222 / 222.
+- ServingUnit model/table: not present.
+- Household units: not supported.
+- Foods with no serving-unit metadata: 222.
+- High-value staples present: 43.
+- High-value staples missing: 1, mixed nuts.
+- Logs are grams-based and linked to food id.
+- Logs do not support quantity/unit, servings, meal grouping, or meal type.
+- Macros are recalculated from food/nutrient tables.
+- Actuals assume grams.
+- Confidence is not represented.
+- Food suggestion readiness: limited.
+- AI/provider grounding readiness: limited until serving units and confidence exist.
 
-## Current non-goals
+## Recommended next backend milestone
 
-Do not implement nutrition code in this planning milestone.
+Recommended: Nutrition Serving Unit Data Model v1.
 
-Do not modify food logging, nutrition calculations, provider/Ollama behavior, Streamlit UI, workouts, recovery, migrations, dependencies, snapshots, qa_artifacts, or local patch scripts.
+Reason: the catalog is more complete than expected, but serving-unit and confidence infrastructure is absent. Serving-based logging and food suggestions should not proceed until backend-owned serving conversions and confidence/range semantics exist.
 
-Do not use `git add .`.
+Architecture may choose Nutrition Canonical Food Model Review v1 first if it wants to settle canonical/legacy write-through and source-confidence semantics before model/schema work.
 
-## Expected next backend milestone
+## Backend non-goals preserved
 
-Nutrition Catalog Diagnostic v1.
-
-Expected diagnostic output:
-
-- canonical food counts;
-- active food counts;
-- nutrient completeness;
-- alias coverage;
-- serving-unit coverage;
-- foods with no serving units;
-- foods with incomplete nutrient data;
-- duplicate/near-duplicate foods;
-- high-value staples missing;
-- current logging assumptions;
-- target/actuals calculation dependencies;
-- whether deterministic suggestions can safely use current data.
+- No catalog expansion.
+- No serving-unit implementation.
+- No household conversion.
+- No food logging behavior change.
+- No macro/target/report calculation change.
+- No provider/Ollama/OpenAI change.
+- No AI meal/snack generation.
+- No Streamlit UI change.
+- No workout or recovery change.
+- No migration.
+- No dependency change.
+- No snapshots, qa_artifacts, local runtime artifacts, or patch/apply scripts committed.
+- No `git add .`.

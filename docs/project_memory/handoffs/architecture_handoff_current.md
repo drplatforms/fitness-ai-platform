@@ -1,49 +1,58 @@
 # Architecture Handoff Current
 
-Milestone: Nutrition Catalog + Serving Foundation Planning v1
+Milestone: Nutrition Catalog Diagnostic v1
 
-Status: authorized / planning request.
+Status: diagnostic implemented / ready for Architecture review after final validation.
 
-Source baseline: `main` at `f469c89`.
+Source baseline: `main` at `94dc8fd`.
 
-Branch: `feature/nutrition-catalog-serving-foundation-planning-v1`.
+Branch: `feature/nutrition-catalog-diagnostic-v1`.
 
-Milestone type: planning / architecture / project memory only.
+Milestone type: diagnostic / data audit / project memory update.
 
 ## Review focus
 
-Architecture should make and document the nutrition foundation decisions before backend implementation begins.
+Architecture should review the diagnostic findings and choose the next nutrition foundation milestone.
 
 Primary decisions:
 
-- confirm Nutrition Catalog Diagnostic v1 as the next implementation milestone;
-- confirm two-layer raw/source plus canonical app food catalog strategy;
-- confirm serving-unit / household-measure model direction;
-- confirm default grams + min/max range + confidence strategy;
-- confirm backend ownership of conversions and nutrition truth;
-- confirm deterministic suggestions before AI meal/snack generation;
-- confirm provider can only assemble/explain backend-approved foods, servings, actuals, targets, and gaps;
-- confirm workouts are good enough for now and recovery remains deferred behind nutrition foundation.
+- whether to accept Nutrition Catalog Diagnostic v1;
+- whether Nutrition Serving Unit Data Model v1 should be next;
+- whether a smaller Nutrition Canonical Food Model Review v1 is needed before serving-unit model work;
+- how to handle canonical/legacy write-through before serving-based logging;
+- whether optional nutrients such as fiber, sugar, and sodium are required before deterministic suggestions;
+- how confidence should be modeled across serving units, logged actuals, suggestions, and provider contracts.
 
-## Planning recommendation
+## Diagnostic findings summary
 
-Recommended sequence:
+- 222 active canonical foods are present.
+- 222 / 222 canonical foods have complete core macros.
+- aliases/search are present for all canonical foods.
+- two-layer tables exist, but raw/source staging has 0 records.
+- serving-unit tables are not present.
+- household units are not supported.
+- logs are grams-only and food-id linked.
+- actuals assume grams and do not represent confidence.
+- high-value staple coverage is broad: 43 present, 1 missing.
+- missing high-value staple: mixed nuts.
+- deterministic suggestions exist but readiness is limited by missing serving units and confidence.
+- provider grounding is limited until serving units and confidence are backend-owned and validated.
 
-1. Nutrition Catalog Diagnostic v1.
-2. Nutrition Canonical Food Model Review v1.
-3. Curated Food Catalog Expansion v1.
-4. Serving Unit Normalization / Household Measure Conversion v1.
-5. Nutrition Logging Backend Contract v1.
-6. Nutrition Actuals Confidence v1.
-7. Nutrition Deterministic Food Suggestions v1.
-8. Nutrition AI Meal/Snack Candidate Contract v1.
+## Recommended next milestone
 
-## Non-goals
+Recommended: Nutrition Serving Unit Data Model v1.
 
-No catalog expansion, serving unit implementation, USDA/source import, food logging changes, nutrition calculation changes, provider/Ollama behavior, AI meal generation, Streamlit UI, workout generation, recovery engine, migrations, or dependencies are authorized by this planning milestone.
+Alternative: Nutrition Canonical Food Model Review v1 if Architecture wants a design checkpoint before schema/model work.
 
 ## Acceptance intent
 
-Accept this milestone if the nutrition sequence, two-layer catalog doctrine, serving unit strategy, confidence model, provider boundary, and next implementation milestone are documented and docs validation is green.
+Accept this milestone if Architecture agrees that:
 
-Proposed final status after successful closeout: `NUTRITION_CATALOG_SERVING_FOUNDATION_PLANNING_V1_ACCEPTED`.
+- diagnostic-first process was followed;
+- diagnostic tool exists and runs;
+- focused tests exist and pass;
+- project memory captures the findings;
+- no runtime/app behavior changed;
+- no catalog expansion, serving units, logging changes, nutrition calculation changes, provider behavior, UI, workouts, recovery, migrations, or dependencies were added.
+
+Proposed final status after successful closeout: `NUTRITION_CATALOG_DIAGNOSTIC_V1_ACCEPTED`.

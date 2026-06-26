@@ -112,3 +112,24 @@ Long handoffs must be one copy/paste-ready code block.
 ## Current Daily Coach async boundary
 
 Do not implement provider runtime, persistence, worker, queue, scheduler, normal Today provider call, or public async narrative display unless Architecture explicitly authorizes that exact milestone.
+
+## Complex backend quality gate
+
+Backend must not blindly patch complex scoring, selection, state, persistence, provider, nutrition-target, workout-generation, recommendation, or user-visible workflow behavior.
+
+For complex features, Backend must:
+
+1. diagnose current behavior before implementation,
+2. identify the exact failing, missing, or underperforming user path,
+3. add a failing regression test, diagnostic test, or coverage test where practical,
+4. confirm the test fails or exposes the gap before implementation,
+5. apply the smallest safe implementation change,
+6. prove the new test passes,
+7. run prior milestone regression tests,
+8. reproduce the original smoke/user path,
+9. update project memory,
+10. request Architecture acceptance.
+
+Bigger milestone is okay. Bigger single patch is not okay.
+
+Backend must stop and produce a diagnostic handoff if patch stacking begins to hide the real failure, the same bug survives two implementation patches, Linux smoke fails after Windows green, tests pass but browser smoke fails, a patch fails due to drift and the next step is not obvious, the branch exceeds the expected file-change budget, or implementation starts crossing into deferred v2 scope.

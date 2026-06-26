@@ -1,11 +1,19 @@
 # Architecture Handoff Current
 
-Milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
+Milestone: Test-First Quality Gate Development Plan v1
 
-Status: ready for architecture review.
+Status: authorized / docs-only process canonization.
 
-Decision request: accept the Developer Mode feedback capture loop as the first app-side memory layer for Daily Narrative copy QA.
+Source baseline: `main` at `b343a47`.
 
-Boundaries preserved: Developer Mode-only, no public/default provider display, no provider call on save/page load, no model promotion, no CrewAI, no raw rows/logs/notes/set rows, no prompts/scratchpad/chain-of-thought, no normal Today behavior change.
+Decision request after implementation: accept the Complex Backend Quality Gate, risk-based process model, bigger milestone / narrow patch doctrine, patch-stacking stop conditions, bug-to-regression-test rule, v1/v2 scope rule, and complex milestone Definition of Done as permanent project doctrine.
 
-Recommended next milestone: Daily Narrative Feedback-Driven Copy Rule Hardening v1.
+Architecture focus:
+
+- verify the process is discoverable from repo project memory, not just chat;
+- verify recent accepted commits/snapshots are recorded;
+- verify Backend, Architecture, and QA role docs reflect the process;
+- verify no runtime behavior changed;
+- verify validation is docs-only and green.
+
+Proposed final status after review: `TEST_FIRST_QUALITY_GATE_DEVELOPMENT_PLAN_V1_ACCEPTED`.

@@ -347,3 +347,44 @@ streamlit run ui/streamlit_app.py --server.address 0.0.0.0 --server.port 8502
 - qwen3 remains evaluation-only, not production-approved.
 - Normal Today UI narrative integration remains separate future work.
 - Do not add Claude-specific workflow files or commands.
+
+## Complex Feature Development Workflow
+
+For complex backend or user-visible features, use this workflow:
+
+```text
+diagnostic
+→ failing/coverage test
+→ narrow implementation
+→ targeted validation
+→ prior-regression validation
+→ original smoke reproduction
+→ project memory update
+→ Architecture acceptance
+```
+
+This workflow applies especially to state, scoring, selection, persistence, provider output, routing, nutrition targets, workout generation, recommendation logic, and user-visible workflow behavior.
+
+### Risk-based process model
+
+Low-risk changes, such as docs updates, typo fixes, isolated helpers, small test cleanup, and non-behavioral refactors, may use normal patch and focused validation.
+
+Medium-risk changes, such as deterministic service behavior, simple backend contracts, small UI/backend integrations, report section behavior, and bounded data model expansion, should use light diagnostic, focused test, narrow patch, regression validation, and smoke if user-visible.
+
+High-risk changes, such as workout generation, exercise catalog selection/scoring, persistence/state behavior, nutrition targets/suggestions, AI/provider output, recommendation logic, and cross-domain coaching synthesis, require diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke reproduction, Linux/browser smoke, project memory update, and Architecture acceptance.
+
+### Bigger bites rule
+
+Bigger milestone is okay. Bigger single patch is not okay.
+
+Large objectives may be authorized only when internally phased. Single patches stay narrow.
+
+### Patch stacking stop conditions
+
+Backend must stop and return to Architecture if the same bug survives two implementation patches, tests pass but browser smoke fails, Linux smoke fails after Windows green, candidate pools/data shape are unclear, implementation needs broader scope than approved, file-change budget is exceeded, persistence/state becomes unstable, patch drift blocks an obvious next step, the branch accumulates unrelated fixes, or implementation crosses into deferred v2 scope.
+
+When this happens, do not reset blindly and do not continue blind patching. Produce a short diagnostic handoff and ask Architecture for a decision.
+
+### Complex milestone Definition of Done
+
+For complex milestones, Definition of Done includes diagnostic evidence, failing/coverage test where practical, narrow implementation, targeted tests green, prior milestone regressions green, original smoke path replayed, browser smoke green when user-visible, Linux smoke green when runtime-relevant, project memory updated, clean working tree, feature branch committed and pushed, feature snapshot after green smoke, Architecture acceptance before merge, main merge confirmed, and Linux main pull after merge when runtime-relevant.

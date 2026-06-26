@@ -98,6 +98,34 @@ AI Health Coach currently supports:
 The app is local-first and currently designed for controlled development, QA, and portfolio demonstration rather than production healthcare use.
 ## Architecture
 
+
+## Complex Feature Development Workflow
+
+For complex backend or user-visible behavior, the canonical workflow is:
+
+```text
+diagnostic
+→ failing/coverage test
+→ narrow implementation
+→ targeted validation
+→ prior-regression validation
+→ original smoke reproduction
+→ project memory update
+→ Architecture acceptance
+```
+
+Do not treat generic green tests as sufficient if the product-critical path is not represented.
+
+Use the risk-based process model from `docs/project_memory/milestones/test_first_quality_gate_development_plan_v1.md`:
+
+- Low-risk: normal patch and focused validation.
+- Medium-risk: light diagnostic, focused test, narrow patch, regression validation, smoke if user-visible.
+- High-risk: diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke reproduction, Linux/browser smoke when runtime-relevant, project memory update, Architecture acceptance.
+
+Bigger milestone is okay. Bigger single patch is not okay.
+
+Repeated patch loops must be tied to newly understood failures, diagnostics, failing tests, lint/pre-commit failures, or smoke regressions. If a stop condition triggers, pause and return a diagnostic handoff to Architecture instead of continuing blind patching.
+
 The project follows a validation-first pipeline:
 
 ```text

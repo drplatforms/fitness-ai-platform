@@ -1,18 +1,15 @@
 # QA Handoff Current
 
-Milestone: Daily Narrative User Feedback Capture + Preferred Rewrite Loop v1
+Milestone: Test-First Quality Gate Development Plan v1
 
 QA focus:
-- feedback labels: bad / better / approved
-- rejected phrase capture
-- preferred rewrite capture
-- feedback persists after rerun
-- list/export works
-- feedback excludes raw/private/debug data
-- saving feedback does not call provider
-- normal Today remains unchanged with Developer Mode off
-- workout selection regression still passes
 
-Manual smoke examples:
-- recovery_present_training_planned: reject "before you treat the plan as automatic" and save preferred rewrite.
-- rich_day_multiple_domains: reject "adding random data" and save preferred rewrite.
+- confirm this is docs-only;
+- confirm no app/runtime behavior changed;
+- confirm docs distinguish targeted validation, regression tests, browser smoke, Linux smoke, and accepted product behavior;
+- confirm smoke failures are documented as regression-test candidates, diagnostic/coverage tests, documented limitations, or backlog items;
+- confirm the real-path quality-gate process is visible to future QA agents.
+
+No browser smoke is required for this docs-only milestone.
+
+No Linux runtime smoke is required unless Architecture changes the policy for docs-only work.

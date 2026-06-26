@@ -33,3 +33,21 @@ Common runtime checks:
 ## No live provider in pytest
 
 Ollama/direct provider calls belong in explicit runtime QA, not automated pytest.
+
+## Real-path quality gates
+
+QA validates the actual user path, not only generic test status.
+
+For complex milestones, QA should distinguish:
+
+- targeted validation green,
+- regression tests green,
+- browser smoke green,
+- Linux smoke green,
+- accepted product behavior.
+
+When smoke fails, QA should ask whether the failed path is represented in an automated regression test, diagnostic/coverage test, documented limitation, or backlog item.
+
+Every major smoke failure should become one of those four outcomes. It should not remain tribal knowledge.
+
+QA should treat browser smoke and Linux smoke failures as process signals. If Windows validation is green but Linux smoke fails, the branch is not acceptance-ready.

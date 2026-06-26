@@ -58,3 +58,23 @@ This milestone improves approved narrative copy inside the accepted manual same-
 ## Historical docs
 
 Historical milestone, review, runtime QA, and architecture docs are preserved. Do not rewrite history to pretend failed smoke tests did not happen. Classify old branches and decisions instead.
+
+## Test-first quality gate doctrine
+
+The current process doctrine is recorded in `milestones/test_first_quality_gate_development_plan_v1.md`.
+
+Future agents must follow the Complex Backend Quality Gate for complex state, scoring, selection, persistence, provider, nutrition, workout, recommendation, or user-visible workflow behavior.
+
+The short version:
+
+```text
+diagnostic
+→ failing/coverage test
+→ narrow implementation
+→ targeted validation
+→ original smoke reproduction
+→ project memory update
+→ Architecture acceptance
+```
+
+Bigger milestone is okay. Bigger single patch is not okay.

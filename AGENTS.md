@@ -152,3 +152,24 @@ A milestone is not done if project memory still describes older project truth.
 
 - Daily Coach same-session bridge retry memory: `docs/project_memory/milestones/daily_coach_same_session_approved_preview_bridge_v1_retry.md` and `docs/project_memory/reviews/daily_coach_same_session_approved_preview_bridge_v1_retry.md`.
 - Daily Coach narrative product voice polish memory: `docs/project_memory/milestones/daily_coach_narrative_product_voice_polish_v1.md` and `docs/project_memory/reviews/daily_coach_narrative_product_voice_polish_v1.md`.
+
+## Complex backend quality gates
+
+For complex features involving state, scoring, selection, persistence, provider output, routing, nutrition targets, workout generation, recommendation logic, or user-visible workflow behavior, follow the repo's Complex Backend Quality Gate:
+
+```text
+diagnostic
+→ failing/coverage test
+→ narrow implementation
+→ targeted validation
+→ prior-regression validation
+→ original smoke reproduction
+→ project memory update
+→ Architecture acceptance
+```
+
+Do not treat generic green tests as sufficient when the product-critical path is not covered.
+
+Bigger milestone is okay. Bigger single patch is not okay.
+
+Repeated patches must be tied to newly understood failures, diagnostics, failing tests, lint/pre-commit failures, or smoke regressions. If a stop condition triggers, stop and request Architecture direction instead of blindly patching.

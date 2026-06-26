@@ -118,3 +118,13 @@ Not authorized unless a later Architecture milestone says so:
 - DB persistence
 - normal Today provider call
 - public async narrative display
+
+## V1 / V2 and quality-gate ownership
+
+Architecture defines v1 acceptance and deferred v2 scope before implementation when a feature can expand.
+
+Architecture should reject test-green-only branches when the real smoke path or user-critical behavior is not covered by tests, diagnostics, or documented smoke reproduction.
+
+Architecture owns acceptance. Architecture may authorize larger milestones only when they are internally phased into narrow diagnostic/test/implementation/review gates.
+
+Architecture enforces stop conditions. If repeated patching, patch drift, Linux smoke failure after Windows green, unclear candidate pools, state instability, file-budget growth, or v2 scope creep appears, Architecture should pause implementation and require a diagnostic handoff before more patching.

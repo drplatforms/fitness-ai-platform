@@ -71,3 +71,19 @@ QA should cite:
 - pass/fail criteria
 - issues found
 - final recommendation
+
+## Real user path validation
+
+QA identifies and validates the exact user path, not only generic tests.
+
+QA should distinguish:
+
+- targeted validation green,
+- regression tests green,
+- browser smoke green,
+- Linux smoke green,
+- accepted product behavior.
+
+QA should ask whether each real failed path is represented in automated regression tests, diagnostic/coverage tests, documented limitations, or backlog items.
+
+QA treats smoke failures as regression-test candidates and process signals. Browser smoke failure after green tests, or Linux smoke failure after Windows green, means the branch is not acceptance-ready.

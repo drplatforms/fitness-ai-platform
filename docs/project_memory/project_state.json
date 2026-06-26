@@ -5,19 +5,25 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Workout Generation Sizing + Persistence Stabilization v1",
-    "latest_final_status": "WORKOUT_GENERATION_SIZING_PERSISTENCE_STABILIZATION_V1_ACCEPTED",
-    "latest_accepted_commit": "b1ed119",
-    "latest_main_merge_commit": "current_main_after_workout_sizing_persistence_stabilization_closeout",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-25_b1ed119_stabilize-workout-sizing-and-persistence.zip"
+    "latest_accepted_milestone": "Exercise Catalog Utilization / Specialized Movement Coverage v1",
+    "latest_final_status": "EXERCISE_CATALOG_UTILIZATION_SPECIALIZED_MOVEMENT_COVERAGE_V1_ACCEPTED",
+    "latest_accepted_commit": "1d44b3d",
+    "latest_main_merge_commit": "b343a47",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip",
+    "previous_accepted_milestone": "Workout Preview Full-Slot Rotation v1",
+    "previous_feature_commit": "3b32f97",
+    "previous_main_merge_commit": "f39b403",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-25_3b32f97_fix-first-refresh-workout-slot-rotation.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Workout Preview Full-Slot Rotation v1",
-    "current_authorized_branch": "feature/workout-preview-full-slot-rotation-v1",
-    "current_authorized_status": "AUTHORIZED FOR IMPLEMENTATION",
-    "recommended_next_milestone_after_acceptance": "Exercise Catalog Utilization / Specialized Movement Coverage v2 or Streamlit Workout Save/Selection Latency Investigation v2",
+    "current_authorized_milestone": "Test-First Quality Gate Development Plan v1",
+    "current_authorized_branch": "feature/test-first-quality-gate-development-plan-v1",
+    "current_authorized_status": "AUTHORIZED / DOCS-ONLY IMPLEMENTATION REQUEST",
+    "source_main_commit": "b343a47",
+    "recommended_next_milestone_after_acceptance": "Exercise Eligibility Matrix v1, Catalog Reachability Audit v2, Workout Preview Rolling Exposure Rotation v2, or provider/process planning milestone as needed",
     "codex": "DO NOT USE BY DEFAULT",
-    "delivery_flow": "downloadable patch -> preflight -> apply patch -> validate -> stage -> commit -> push -> Linux pull/smoke -> feature snapshot -> Architecture handoff"
+    "delivery_flow": "downloadable patch -> preflight -> apply patch -> validate -> stage explicit files -> commit -> push -> feature snapshot -> Architecture handoff",
+    "process_doctrine": "Bite by bite, just bigger bites. Bigger milestone is okay. Bigger single patch is not okay."
   },
   "boundaries": {
     "normal_today_unchanged": true,
@@ -47,6 +53,64 @@
     "active_workout_preserved": true,
     "workout_generation_sizing_persistence_stabilization": true,
     "paused_catalog_utilization_branch_checkpoint_only": true,
-    "workout_preview_full_slot_rotation": true
+    "workout_preview_full_slot_rotation": true,
+    "test_first_quality_gate_development_plan": true,
+    "complex_backend_quality_gate": true,
+    "bigger_milestone_narrow_patch_doctrine": true,
+    "patch_stacking_stop_conditions": true,
+    "bug_to_regression_test_rule": true,
+    "v1_v2_scope_rule": true,
+    "exercise_catalog_utilization_specialized_movement_coverage": true,
+    "no_runtime_changes_for_current_docs_milestone": true,
+    "no_workout_generation_changes_for_current_docs_milestone": true,
+    "no_exercise_catalog_logic_changes_for_current_docs_milestone": true,
+    "no_nutrition_changes_for_current_docs_milestone": true,
+    "no_provider_changes_for_current_docs_milestone": true
+  },
+  "process_doctrine": {
+    "complex_backend_quality_gate": [
+      "Diagnose current behavior before patching.",
+      "Identify the exact failing, missing, or underperforming user path.",
+      "Add a failing regression test, diagnostic test, or coverage test where practical.",
+      "Confirm the test fails or exposes the gap before implementation.",
+      "Apply the smallest safe implementation change.",
+      "Prove the new test passes.",
+      "Re-run prior milestone regression tests.",
+      "Re-run the original manual/browser smoke path.",
+      "Update project memory.",
+      "Only then request Architecture acceptance."
+    ],
+    "risk_model": {
+      "low": "docs/typo/isolated helper: normal patch and focused validation",
+      "medium": "deterministic service or bounded integration: light diagnostic, focused test, narrow patch, regression validation, smoke if user-visible",
+      "high": "workout generation, catalog selection/scoring, state/persistence, nutrition targets, provider output, recommendations: diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke, Linux/browser smoke, project memory, Architecture acceptance"
+    },
+    "stop_conditions": [
+      "same bug survives two implementation patches",
+      "tests pass but browser smoke fails",
+      "Linux smoke fails after Windows green",
+      "candidate pools or data shape are unclear",
+      "implementation requires broader scope than approved",
+      "expected file-change budget is exceeded",
+      "persistence/state behavior becomes unstable",
+      "patch fails to apply because of drift and next step is not obvious",
+      "branch accumulates unrelated fixes",
+      "implementation crosses into deferred v2 scope"
+    ],
+    "bug_to_regression_rule": "Every real smoke failure becomes automated regression test, diagnostic/coverage test, documented limitation, or backlog item.",
+    "v1_v2_scope_rule": "Architecture defines v1 acceptance and deferred v2 scope before implementation when a feature could expand.",
+    "provider_ai_rule": "Provider may propose. Backend validates. User sees only approved output."
+  },
+  "historical_required_context": {
+    "daily_coach_async_provider_runtime_design": "Daily Coach Async Provider Runtime Design v1 / DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED",
+    "project_continuity_system": "Project Continuity System v2 / feature/project-continuity-system-v2",
+    "daily_coach_async_persistence_design": "Daily Coach Async Persistence Design v1 / DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED",
+    "daily_coach_async_persistence_contracts": "Daily Coach Async Persistence Contracts + Schema v1 / feature/daily-coach-async-persistence-contracts-schema-v1",
+    "disallowed_persistence": "provider runtime implementation, raw provider output persistence, rejected provider output persistence are not authorized unless explicitly scoped",
+    "patch_paths": "C:\\projects; python ..\\<script>.py; git apply --check ..\\<patch>.patch",
+    "daily_coach_async_persistence_service_shell": "Daily Coach Async Persistence Service Shell v1 / feature/daily-coach-async-persistence-service-shell-v1 / service/repository shell only",
+    "model_boundaries": "qwen3 is not bridge-enabled; qwen3:32b is research / future premium async candidate only",
+    "fallback": "Deterministic fallback remains mandatory.",
+    "not_authorized": "normal Today provider call; public async narrative display"
   }
 }

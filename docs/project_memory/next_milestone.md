@@ -1,36 +1,86 @@
 # Next Milestone
 
-Current milestone in progress: Workout Preview Full-Slot Rotation v1.
+Current milestone in progress: Test-First Quality Gate Development Plan v1.
 
-Acceptance is blocked until:
+Recommended branch: `feature/test-first-quality-gate-development-plan-v1`.
 
-- Refreshed previews attempt to change every exercise slot when safe alternatives exist.
-- If a slot repeats, there is a legitimate movement/equipment/safety constraint reason.
-- Quick remains 3-4 exercises when valid.
-- Standard remains 4-5 exercises when valid.
-- Full remains 6-7 exercises when valid.
-- Standard and Full do not silently collapse to the same 4-exercise output.
-- `Show different exercises` changes only unselected previews and preserves size intent.
-- Selected workout persists the exact visible exercise list after refresh/rerun.
-- Active Workout loads the persisted selected/active workout exactly after refresh/rerun.
-- Today does not duplicate the full workout selection flow.
-- Linux smoke is green.
-- Browser smoke is green.
-- Feature snapshot is created only after final smoke is green.
+Source branch: `main`.
 
-After acceptance, recommended next milestones:
+Required source main commit: `b343a47`.
 
-- Exercise Catalog Utilization / Specialized Movement Coverage v2, rebuilt cleanly after preview rotation and persistence are stable.
-- Streamlit Workout Save/Selection Latency Investigation v2, measured separately from preview rotation work.
-- Workout Selected Replacement Flow Design v1, only if an explicit user-approved replacement flow is desired.
-- Provider Data Access Audit / Cross-Domain Context Map v1, before broader provider voice work.
+Milestone type: docs / project memory / process canonization only.
 
-Still deferred:
+## Acceptance is blocked until
 
-- broad catalog utilization across all 200+ exercises
-- AI/provider workout generation
-- CrewAI/Ollama/OpenAI/PydanticAI/LangGraph workout generation
-- worker / queue / scheduler / polling
-- Daily Narrative behavior changes
-- Weekly Summary behavior changes
-- Streamlit latency optimization
+- `current_state.md` records `main` at `b343a47` and the two recent accepted workout milestones.
+- `project_continuity_bootstrap.md` documents the Complex Backend Quality Gate.
+- Backend, Architecture, and QA role bootstrap docs document their responsibilities in the new process.
+- The risk-based process model is documented.
+- The bigger milestone / narrow patch doctrine is documented.
+- Patch-stacking stop conditions are documented.
+- The bug-to-regression-test rule is documented.
+- The v1/v2 scope rule is documented.
+- Definition of Done for complex milestones is documented.
+- Recent accepted commits and snapshots are recorded.
+- No app/runtime behavior changed.
+- Docs/project-memory validation is green.
+
+## Validation
+
+Docs-only validation:
+
+```powershell
+git diff --check
+python tools/project_memory_check.py
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+python tools/dev_assistant.py continuity-brief
+scripts/dev_commit_check.ps1 -Mode docs
+```
+
+Optional:
+
+```powershell
+pytest tests/test_project_memory_check.py -q
+```
+
+No browser smoke is required for this docs-only milestone.
+
+No Linux runtime smoke is required unless project policy changes.
+
+## Recommended next milestones after acceptance
+
+- Exercise Eligibility Matrix v1.
+- Catalog Reachability Audit v2.
+- Workout Preview Rolling Exposure Rotation v2.
+- Provider/process planning milestone as needed.
+- Nutrition deterministic suggestions / nutrition AI candidate contracts later.
+
+## Deferred / not authorized by this milestone
+
+- workout generation changes
+- exercise catalog logic changes
+- nutrition logic changes
+- provider/Ollama/CrewAI/OpenAI behavior changes
+- Streamlit runtime changes
+- database changes
+- new app features
+- catalog-utilization follow-up implementation
+- nutrition expansion
+- provider strategy implementation
+
+## Historical project-memory requirements still present
+
+Some older project-memory tooling still checks for retained phrases related to prior Daily Coach async work:
+
+- Daily Coach Async Provider Runtime Design v1
+- DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED
+- Project Continuity System v2
+- Daily Coach Async Persistence Design v1
+- DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED
+- Daily Coach Async Persistence Contracts + Schema v1
+- feature/daily-coach-async-persistence-contracts-schema-v1
+- schema/contracts
+- NOT_AUTHORIZED_YET
+
+These are historical continuity markers only. They do not authorize old async/provider implementation work.

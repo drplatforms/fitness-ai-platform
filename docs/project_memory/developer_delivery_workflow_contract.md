@@ -390,3 +390,24 @@ Local workflow helper commands are maintained in `scripts/fitness_commands.ps1` 
 The command menu exists to encode this contract in reusable local commands. Relevant helpers include `fbranch` for clean feature branch creation, `fsnap` for standard snapshots, `fsweep` for artifact contamination checks, `fmem` for project-memory checks, and `fpull`/`lpull` for Windows/Linux sync.
 
 The PowerShell profile should only dot-source the repo script; project command logic should not live only in hidden local profile state.
+
+## Complex Backend Quality Gate
+
+For complex features involving state, scoring, selection, persistence, provider output, routing, nutrition targets, workout generation, recommendation logic, or user-visible workflow behavior:
+
+1. Diagnose current behavior before patching.
+2. Identify the exact failing, missing, or underperforming user path.
+3. Add a failing regression test, diagnostic test, or coverage test that captures the real path where practical.
+4. Confirm the test fails or exposes the gap before implementation.
+5. Apply the smallest safe implementation change.
+6. Prove the new test passes.
+7. Re-run prior milestone regression tests.
+8. Re-run the original manual/browser smoke path.
+9. Update project memory.
+10. Only then request Architecture acceptance.
+
+Generic green tests are not sufficient when the product-critical path is not covered.
+
+Patch stacking is not the goal. Repeated patches must correspond to newly understood failures, diagnostics, failing tests, lint/pre-commit failures, or smoke regressions.
+
+Bigger milestone is okay. Bigger single patch is not okay.

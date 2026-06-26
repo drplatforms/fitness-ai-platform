@@ -1,58 +1,76 @@
 # Architecture Handoff Current
 
-Milestone: Nutrition Catalog Diagnostic v1
+Milestone: Nutrition Serving Unit Data Model v1
 
-Status: diagnostic implemented / ready for Architecture review after final validation.
+Status: implemented / scoped validation green / ready for Architecture review after feature snapshot.
 
-Source baseline: `main` at `94dc8fd`.
+Source baseline: `main` at `8b2c4c3`.
 
-Branch: `feature/nutrition-catalog-diagnostic-v1`.
+Branch: `feature/nutrition-serving-unit-data-model-v1`.
 
-Milestone type: diagnostic / data audit / project memory update.
+Milestone type: backend data model / service / seed script / tests / project memory update.
 
 ## Review focus
 
-Architecture should review the diagnostic findings and choose the next nutrition foundation milestone.
+Architecture should review whether the backend-owned serving-unit model is sufficient as the foundation for future serving-based logging, deterministic food suggestions, and AI explanations.
 
 Primary decisions:
 
-- whether to accept Nutrition Catalog Diagnostic v1;
-- whether Nutrition Serving Unit Data Model v1 should be next;
-- whether a smaller Nutrition Canonical Food Model Review v1 is needed before serving-unit model work;
-- how to handle canonical/legacy write-through before serving-based logging;
-- whether optional nutrients such as fiber, sugar, and sodium are required before deterministic suggestions;
-- how confidence should be modeled across serving units, logged actuals, suggestions, and provider contracts.
+- whether to accept Nutrition Serving Unit Data Model v1;
+- whether `canonical_food_serving_units` is the correct persistence shape for v1;
+- whether the confidence vocabulary `Low` / `Moderate` / `High` is acceptable;
+- whether the starter seed set is sufficient for the next logging-contract design;
+- whether Nutrition Serving Unit Logging Contract Design v1 should be next;
+- whether Nutrition Actuals Confidence Model v1 should happen before serving-unit logging.
 
-## Diagnostic findings summary
+## Implementation summary
 
-- 222 active canonical foods are present.
-- 222 / 222 canonical foods have complete core macros.
-- aliases/search are present for all canonical foods.
-- two-layer tables exist, but raw/source staging has 0 records.
-- serving-unit tables are not present.
-- household units are not supported.
-- logs are grams-only and food-id linked.
-- actuals assume grams and do not represent confidence.
-- high-value staple coverage is broad: 43 present, 1 missing.
-- missing high-value staple: mixed nuts.
-- deterministic suggestions exist but readiness is limited by missing serving units and confidence.
-- provider grounding is limited until serving units and confidence are backend-owned and validated.
+Added:
+
+- `models/nutrition_serving_unit_models.py`
+- `services/nutrition_serving_unit_service.py`
+- `scripts/seed_canonical_food_serving_units.py`
+- `tests/test_nutrition_serving_unit_data_model_v1.py`
+- project-memory closeout docs
+
+## Seed summary
+
+Manual/backend seed smoke produced:
+
+- first run inserted 18 serving units;
+- second run inserted 0 and updated 18;
+- active serving-unit count is 18;
+- foods with active serving units is 12;
+- missing canonical foods is empty.
+
+Starter units cover rice, egg, banana, peanut butter, Greek yogurt, oats, chicken breast, olive oil, baked potato, apple, and whey protein powder.
+
+## Scope preserved
+
+No food logging behavior changed.
+
+No user-facing serving-unit logging was added.
+
+No Streamlit UI changed.
+
+No Target-vs-Actual behavior changed.
+
+No provider/Ollama/CrewAI behavior changed.
+
+No catalog expansion, USDA import, meal planning, workout generation, recovery, or report behavior changed.
+
+## Baseline exception
+
+Full pytest has 7 unrelated Daily Coach / Daily Narrative failures that reproduce on source main `8b2c4c3`.
+
+They are not caused by this serving-unit branch and were not fixed here because they are outside the milestone scope.
 
 ## Recommended next milestone
 
-Recommended: Nutrition Serving Unit Data Model v1.
+Recommended: Nutrition Serving Unit Logging Contract Design v1.
 
-Alternative: Nutrition Canonical Food Model Review v1 if Architecture wants a design checkpoint before schema/model work.
+Purpose: design how serving-unit metadata should enter nutrition logging while preserving grams-based actuals, confidence, target-vs-actual safety, and auditability.
 
-## Acceptance intent
+Alternative: Nutrition Actuals Confidence Model v1 if Architecture wants explicit confidence semantics before logging-contract design.
 
-Accept this milestone if Architecture agrees that:
-
-- diagnostic-first process was followed;
-- diagnostic tool exists and runs;
-- focused tests exist and pass;
-- project memory captures the findings;
-- no runtime/app behavior changed;
-- no catalog expansion, serving units, logging changes, nutrition calculation changes, provider behavior, UI, workouts, recovery, migrations, or dependencies were added.
-
-Proposed final status after successful closeout: `NUTRITION_CATALOG_DIAGNOSTIC_V1_ACCEPTED`.
+Proposed final status after successful closeout: `NUTRITION_SERVING_UNIT_DATA_MODEL_V1_ACCEPTED`.

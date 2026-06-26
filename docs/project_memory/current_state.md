@@ -1,20 +1,20 @@
 # Current State
 
-Latest accepted milestone: Nutrition Catalog + Serving Foundation Planning v1.
+Latest accepted milestone: Nutrition Catalog Diagnostic v1.
 
-Latest accepted feature commit: `8c72f23`.
+Latest accepted feature commit: `9f1285f`.
 
-Latest main merge commit: `94dc8fd`.
+Latest main merge commit: `8b2c4c3`.
 
-Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_8c72f23_plan-nutrition-catalog-and-serving-foundation.zip`.
+Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip`.
 
-Current implementation milestone: Nutrition Catalog Diagnostic v1.
+Current implementation milestone: Nutrition Serving Unit Data Model v1.
 
-Current branch: `feature/nutrition-catalog-diagnostic-v1`.
+Current branch: `feature/nutrition-serving-unit-data-model-v1`.
 
-Source baseline: `main` at `94dc8fd`.
+Source baseline: `main` at `8b2c4c3`.
 
-Milestone type: diagnostic / data audit / project memory update.
+Milestone type: backend data model / service / tests / project memory update.
 
 ## Current process doctrine
 
@@ -105,25 +105,34 @@ Accepted and merged.
 
 This milestone pivoted the project from the workout foundation pass to the nutrition foundation phase.
 
-## Current diagnostic milestone
+### Nutrition Catalog Diagnostic v1
 
-Nutrition Catalog Diagnostic v1 is the active implementation milestone.
+Accepted and merged through diagnostic project-memory/code closeout.
 
-The diagnostic answers what the current nutrition catalog and food logging foundation actually look like before any expansion, serving-unit work, household measure conversion, logging changes, or provider behavior is added.
+- Feature implementation commit: `6765abb`
+- Diagnostic code closeout commit: `9f1285f`
+- Main merge commit: `8b2c4c3`
+- Source snapshot for the current branch: `fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip`
+- Accepted scope: diagnostic service, diagnostic CLI, focused tests, project-memory closeout, and no app/runtime behavior change.
+- Preserved: no catalog expansion, no serving units, no food logging behavior changes, no nutrition calculation changes, no provider/Ollama behavior changes, no Streamlit changes, no workout changes, no recovery changes.
 
-Implemented diagnostic surfaces:
+This milestone established that the canonical food catalog is stronger than expected and that serving-unit/confidence infrastructure is the immediate blocker before practical household-measure logging or food suggestions.
 
-- catalog counts
-- nutrient completeness
-- serving-unit readiness
-- alias/search readiness
-- high-value staple coverage
-- duplicate/near-duplicate risks
-- current logging assumptions
-- actuals/targets dependencies
-- deterministic food suggestion readiness
-- AI/provider grounding readiness
-- recommended next steps
+## Current implementation milestone
+
+Nutrition Serving Unit Data Model v1 is the active implementation milestone.
+
+The milestone adds backend-owned serving-unit metadata for canonical foods without changing normal nutrition logging behavior, Streamlit behavior, target-vs-actual behavior, provider behavior, workout behavior, or recovery behavior.
+
+Implemented surfaces:
+
+- serving-unit model/dataclass contracts
+- serving-unit persistence/schema initialization
+- deterministic serving-unit lookup and conversion helpers
+- starter serving-unit seed script
+- idempotent seed behavior
+- focused model/service/seed tests
+- project-memory closeout
 
 ## Nutrition Catalog Diagnostic v1 findings
 
@@ -224,7 +233,7 @@ AI/provider grounding readiness:
 
 ## Recommended next nutrition milestone
 
-Recommended next milestone after Nutrition Catalog Diagnostic v1 acceptance: Nutrition Serving Unit Data Model v1.
+Recommended next milestone after Nutrition Serving Unit Data Model v1 acceptance: Nutrition Serving Unit Logging Contract Design v1.
 
 Reason:
 
@@ -233,6 +242,35 @@ Reason:
 - grams-only logs and legacy write-through cannot represent household measures, confidence, or estimated serving conversions safely yet.
 
 Architecture may still choose a short Nutrition Canonical Food Model Review v1 first if it wants to settle canonical/legacy write-through and source-confidence semantics before schema work.
+
+## Nutrition Serving Unit Data Model v1 implementation checkpoint
+
+Current serving-unit implementation adds trusted backend metadata only. It does not expose serving-based logging yet.
+
+Implemented files:
+
+- `models/nutrition_serving_unit_models.py`
+- `services/nutrition_serving_unit_service.py`
+- `scripts/seed_canonical_food_serving_units.py`
+- `tests/test_nutrition_serving_unit_data_model_v1.py`
+
+Current seed smoke result on Windows:
+
+- first seed run inserted serving units: 18
+- second seed run inserted serving units: 0
+- second seed run updated serving units: 18
+- active serving-unit count: 18
+- foods with active serving units: 12
+- missing canonical foods: none
+- confidence vocabulary used: High / Moderate
+
+Seeded examples include cooked white rice, cooked brown rice, large egg, banana, peanut butter, Greek yogurt, dry oats, cooked chicken breast, olive oil, baked potato, apple, and whey protein powder.
+
+Known validation note:
+
+- Full pytest on source main `8b2c4c3` already has 7 unrelated Daily Coach / Daily Narrative baseline failures.
+- Those failures reproduced on the source baseline and are not caused by Nutrition Serving Unit Data Model v1.
+- Serving-unit focused validation, related nutrition/canonical validation, seed smoke, idempotency smoke, and full suite excluding the known baseline Daily Coach / Daily Narrative failures were green before project-memory closeout.
 
 ## Nutrition foundation direction
 
@@ -320,12 +358,12 @@ Do not treat generic green tests as sufficient if the product-critical path is n
 
 ## Current next-roadmap candidates
 
-After Nutrition Catalog Diagnostic v1 is accepted, likely roadmap candidates are:
+After Nutrition Serving Unit Data Model v1 is accepted, likely roadmap candidates are:
 
-- Nutrition Serving Unit Data Model v1.
-- Nutrition Canonical Food Model Review v1 if Architecture wants a design gate before data-model work.
+- Nutrition Serving Unit Logging Contract Design v1.
+- Nutrition Actuals Confidence Model v1 if Architecture wants confidence semantics before serving-based logging.
+- Nutrition Logging Backend Contract v1 after serving-unit logging direction is accepted.
 - Curated Food Catalog Expansion v1 after serving-unit/confidence model decisions.
-- Nutrition Logging Backend Contract v1 after serving-unit model direction is accepted.
 - Nutrition Actuals Confidence v1.
 - Nutrition Deterministic Food Suggestions v1.
 - Nutrition AI Meal/Snack Candidate Contract v1.

@@ -1,157 +1,163 @@
 # Next Milestone
 
-Current milestone in progress: Nutrition Catalog Diagnostic v1.
+Current milestone in progress: Nutrition Serving Unit Data Model v1.
 
-Recommended branch: `feature/nutrition-catalog-diagnostic-v1`.
+Recommended branch: `feature/nutrition-serving-unit-data-model-v1`.
 
 Source branch: `main`.
 
-Required source main commit: `94dc8fd`.
+Required source main commit: `8b2c4c3`.
 
-Milestone type: diagnostic / data audit / project memory update.
+Milestone type: backend data model / service / tests / project memory update.
 
-## Diagnostic objective
+## Objective
 
-Measure and report the current nutrition catalog and food logging foundation before any catalog expansion, serving-unit work, household measure conversion, logging changes, nutrition calculation changes, provider behavior, or UI/runtime changes.
+Add backend-owned serving-unit metadata for canonical foods so future nutrition logging, food suggestions, and AI explanations can safely reference practical household units without AI inventing grams, macros, or conversions.
 
-Nutrition Catalog Diagnostic v1 should answer:
+The milestone creates trusted metadata only. Normal nutrition logging remains grams-first and unchanged.
 
-- how many canonical and legacy foods exist;
-- how many active canonical foods exist;
-- nutrient completeness;
-- alias/search coverage;
-- serving-unit support and gaps;
-- duplicate or near-duplicate risks;
-- high-value staple coverage;
-- current logging assumptions;
-- current actuals/targets dependencies;
-- deterministic food suggestion readiness;
-- AI/provider grounding readiness.
+## Implemented behavior
 
-## Diagnostic findings captured
+Implemented files:
 
-Current diagnostic output found:
+- `models/nutrition_serving_unit_models.py`
+- `services/nutrition_serving_unit_service.py`
+- `scripts/seed_canonical_food_serving_units.py`
+- `tests/test_nutrition_serving_unit_data_model_v1.py`
 
-- 3,475 total legacy food records.
-- 222 total canonical food records.
-- 222 active canonical food records.
-- 0 inactive canonical food records.
-- 0 raw/source food records.
-- 222 canonical foods safe for logging and suggestions.
-- 555 alias rows.
-- 222 foods with aliases and 0 foods without aliases.
-- 682 known searchable values.
-- 222 / 222 canonical foods with complete core macro data.
-- 0 foods missing one or more core macro fields.
-- 0 fiber/sugar/sodium optional nutrient coverage in the current diagnostic.
-- ServingUnit model/table is not present.
-- Household units are not supported.
-- 222 foods have gram default units/default grams.
-- 222 foods have no serving-unit metadata.
-- 43 high-value staple groups are present.
-- 1 high-value staple group is missing: mixed nuts.
-- Logs are grams-based and linked to food ids.
-- Logs do not support quantity/unit, servings, free-text names, meal grouping, or meal type.
-- Macros are recalculated from food/nutrient tables rather than persisted directly on logs.
-- Actuals assume grams.
-- Macro gaps exist.
-- Confidence is not represented.
-- Deterministic suggestion service exists but readiness is limited.
-- Provider grounding is limited until serving units and confidence exist.
+Implemented concepts:
 
-## Recommended next milestone after acceptance
+- serving-unit model/dataclass layer
+- serving-unit schema/table initialization
+- canonical-food-linked serving units
+- positive grams/default range validation
+- constrained confidence vocabulary: Low, Moderate, High
+- deterministic lookup helpers
+- deterministic gram conversion helper
+- deterministic nutrient estimate helper
+- idempotent starter seed behavior
 
-Recommended: Nutrition Serving Unit Data Model v1.
+## Seed smoke result
 
-Reason:
+Windows seed smoke produced:
 
-- The canonical catalog is not empty or broken; it already has 222 active canonical foods, aliases, complete core macros, and broad staple coverage.
-- The major blocker is that household serving units, confidence/range metadata, and estimated serving conversions do not exist.
-- Food logs currently store grams only and cannot safely represent serving-unit estimates without model/schema work.
+- first run inserted: 18
+- second run inserted: 0
+- second run updated: 18
+- skipped: 0
+- active serving-unit count: 18
+- foods with active serving units: 12
+- missing canonical foods: []
 
-Architecture may choose Nutrition Canonical Food Model Review v1 first if it wants a smaller design gate around canonical/legacy write-through, raw/source staging, and source-confidence semantics.
+Seeded examples:
 
-## Strict non-goals for Nutrition Catalog Diagnostic v1
+- 1/2 cup cooked white rice: 90g, range 80-100g, Moderate
+- 1 cup cooked white rice: 180g, range 160-200g, Moderate
+- 1 large egg: 50g, range 45-55g, High
+- 1 medium banana: 118g, range 100-136g, Moderate
+- 1 tablespoon peanut butter: 16g, range 14-18g, High
+- 1 cup Greek yogurt, plain: 245g, range 225-265g, Moderate
+- 1/2 cup dry oats: 40g, range 35-45g, High
+- 100g cooked chicken breast: 100g, range 100-100g, High
+- 4 oz cooked chicken breast: 113g, range 110-116g, High
+- 1 tablespoon olive oil: 14g, range 13-15g, High
+- 1 medium baked potato: 173g, range 150-200g, Moderate
+- 1 medium apple: 182g, range 160-205g, Moderate
+- 1 scoop whey protein powder: 30g, range 25-35g, Moderate
 
-Do not add new foods.
+## Known baseline validation exception
 
-Do not add 150-300 curated foods yet.
+Full pytest on source main `8b2c4c3` has 7 unrelated Daily Coach / Daily Narrative failures.
 
-Do not add serving units.
+Affected baseline files:
 
-Do not add household measure conversion.
+- `tests/test_daily_coach_narrative_preview_route.py`
+- `tests/test_daily_narrative_rich_day_service.py`
 
-Do not add grams_default / grams_min / grams_max schema yet.
+These failures reproduced on source main before serving-unit changes and are not caused by this milestone. Do not fix those files inside this milestone unless Architecture explicitly authorizes a separate Daily Coach / Daily Narrative baseline repair.
 
-Do not modify food logging.
+Scoped serving-unit validation is expected to pass. Full-suite validation should either document the known baseline exception or run with those known baseline-failing files excluded until the separate baseline repair happens.
 
-Do not modify macro calculations.
+## Strict non-goals
 
-Do not modify nutrition targets.
+Do not change `/nutrition/log` behavior yet.
 
-Do not modify nutrition reports.
+Do not allow users to log food by serving unit yet.
 
-Do not modify AI/provider behavior.
+Do not modify Streamlit nutrition logging UI.
 
-Do not add qwen/direct_ollama nutrition generation.
+Do not modify Target-vs-Actual calculations.
 
-Do not add OpenAI or any high-tier provider.
+Do not modify nutrition target formula behavior.
+
+Do not modify nutrition food suggestion behavior.
+
+Do not modify Daily Coach synthesis behavior.
+
+Do not modify AI nutrition explanation behavior.
+
+Do not modify provider/Ollama/CrewAI behavior.
+
+Do not add meal planning.
+
+Do not add barcode scanning.
 
 Do not import USDA/source data.
 
-Do not add raw/staging food rows.
+Do not expand the canonical food catalog broadly.
 
-Do not add database migrations unless Architecture explicitly pauses and approves.
+Do not change workout generation.
 
-Do not touch workout generation.
+Do not change recovery logic.
 
-Do not touch recovery engine.
-
-Do not touch Streamlit UI unless only to avoid import/test failures.
-
-Do not commit snapshots, qa_artifacts, patch/apply scripts, or local runtime artifacts.
+Do not commit snapshots, qa_artifacts, local JSON/text seed output, patch files, or apply scripts.
 
 Do not use `git add .`.
 
-## Validation for this diagnostic milestone
+## Validation
 
 ```powershell
 git diff --check
+
+python -m py_compile models/nutrition_serving_unit_models.py
+python -m py_compile services/nutrition_serving_unit_service.py
+python -m py_compile scripts/seed_canonical_food_serving_units.py
+python -m py_compile tests/test_nutrition_serving_unit_data_model_v1.py
+python -m py_compile ui/streamlit_app.py
+
+ruff check models/nutrition_serving_unit_models.py services/nutrition_serving_unit_service.py scripts/seed_canonical_food_serving_units.py tests/test_nutrition_serving_unit_data_model_v1.py
+
+pytest tests/test_nutrition_serving_unit_data_model_v1.py -q
 pytest tests/test_nutrition_catalog_diagnostic_v1.py -q
-python tools/nutrition_catalog_diagnostic.py --output ..\nutrition_catalog_diagnostic_v1.json
+pytest tests/test_project_memory_check.py -q
+
+python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_first.json
+python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_second.json
+
 python tools/project_memory_check.py
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
 python tools/dev_assistant.py continuity-brief
-pytest tests/test_project_memory_check.py -q
+
 scripts/dev_commit_check.ps1 -Mode code
 ```
 
-Compile touched Python files:
+## Recommended next milestone after acceptance
 
-```powershell
-python -m py_compile services/nutrition_catalog_diagnostic_service.py
-python -m py_compile tools/nutrition_catalog_diagnostic.py
-```
+Recommended: Nutrition Serving Unit Logging Contract Design v1.
 
-Linux validation is recommended because the diagnostic inspects runtime data paths.
+Purpose: design how serving-unit metadata should enter food logging without corrupting grams-based actuals.
 
-Browser smoke is not required unless runtime/UI behavior changes.
+Questions to answer later:
 
-Expected runtime/UI behavior change: none.
+- Should logs store `serving_unit_id`?
+- Should logs store original quantity/unit plus resolved grams?
+- Should logs store grams_default used at the time of logging?
+- Should logs preserve grams_min/grams_max?
+- Should logs preserve confidence/source?
+- How should Target-vs-Actual display estimated vs weighed entries?
+- How should user overrides work?
+- Should serving-unit entries be editable after logging?
+- How should canonical-food logging endpoint accept serving units?
 
-## Historical project-memory requirements still present
-
-Some older project-memory tooling still checks for retained phrases related to prior Daily Coach async work:
-
-- Daily Coach Async Provider Runtime Design v1
-- DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED
-- Project Continuity System v2
-- Daily Coach Async Persistence Design v1
-- DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED
-- Daily Coach Async Persistence Contracts + Schema v1
-- feature/daily-coach-async-persistence-contracts-schema-v1
-- schema/contracts
-- NOT_AUTHORIZED_YET
-
-These are historical continuity markers only. They do not authorize old async/provider implementation work.
+Alternative next milestone: Nutrition Actuals Confidence Model v1.

@@ -901,10 +901,25 @@ def _select_from_rotated_top_options(
     base_rotation_index = _stable_rotation_index(
         rotation_seed, len(top_options), user_id=user_id
     )
-    rotation_index = (base_rotation_index + variation_index) % len(top_options)
+    starts_from_primary_default = (
+        variation_index == 0
+        and "|" in (slot_key or "")
+        and "additional_slot" not in (slot_key or "")
+    )
+
+    if starts_from_primary_default:
+        rotation_index = 0
+    else:
+        rotation_index = (base_rotation_index + variation_index) % len(top_options)
 
     if variation_index > 0 and len(top_options) > 1:
         previous_index = (base_rotation_index + variation_index - 1) % len(top_options)
+        if (
+            variation_index == 1
+            and "|" in (slot_key or "")
+            and "additional_slot" not in (slot_key or "")
+        ):
+            previous_index = 0
         if rotation_index == previous_index:
             rotation_index = (rotation_index + 1) % len(top_options)
 

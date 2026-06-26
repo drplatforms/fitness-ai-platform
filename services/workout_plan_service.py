@@ -676,6 +676,17 @@ def _equipment_modality(equipment_required: list[str]) -> str:
     return "unknown"
 
 
+def _exercise_rotation_group(name: str) -> str:
+    normalized = _normalize_exercise_name(name)
+    if "pallof press" in normalized:
+        return "pallof_press"
+    return normalized
+
+
+def _exercise_rotation_groups(names: set[str]) -> set[str]:
+    return {_exercise_rotation_group(name) for name in names}
+
+
 def _recent_equipment_modality_counts(
     workout_constraints: WorkoutConstraints,
 ) -> dict[str, int]:
@@ -810,12 +821,12 @@ def _select_from_rotated_top_options(
 ) -> tuple[str, list[str]]:
     ranked = sorted(allowed_options, key=lambda item: item[0], reverse=True)
     best_score = ranked[0][0]
-    top_options = [item for item in ranked[:5] if best_score - item[0] <= 180]
+    strict_top_options = [item for item in ranked[:5] if best_score - item[0] <= 180]
 
     primary_slot_pattern = (slot_key or "").split("|", 1)[0]
+    same_pattern_options: list[tuple[int, str, list[str]]] = []
     if primary_slot_pattern:
-        same_pattern_options = []
-        for item in top_options:
+        for item in ranked:
             _score, option_name, _equipment_required = item
             catalog_entry = find_catalog_entry_by_name(option_name)
             if (
@@ -823,8 +834,15 @@ def _select_from_rotated_top_options(
                 and catalog_entry.movement_pattern == primary_slot_pattern
             ):
                 same_pattern_options.append(item)
-        if same_pattern_options:
-            top_options = same_pattern_options
+
+    if same_pattern_options:
+        # Use one stable same-pattern candidate pool for all preview variations.
+        # If variation 0 and variation 1 are selected from different pools, the
+        # first refresh can repeat a strong default even when later variation
+        # indexes prove valid alternatives are reachable.
+        top_options = same_pattern_options
+    else:
+        top_options = strict_top_options
 
     if most_recent_plan_names and len(top_options) > 1:
         non_recent_options = [
@@ -835,6 +853,17 @@ def _select_from_rotated_top_options(
         if non_recent_options:
             top_options = non_recent_options
 
+    if len(top_options) == 1 and len(ranked) > 1:
+        only_option_name = _normalize_exercise_name(top_options[0][1])
+        if recent_name_counts.get(only_option_name, 0):
+            non_recent_ranked = [
+                item
+                for item in ranked
+                if _normalize_exercise_name(item[1]) != only_option_name
+            ]
+            if non_recent_ranked:
+                top_options = non_recent_ranked[:5]
+
     if user_id is None or len(top_options) <= 1:
         _score, name, equipment_required = top_options[0]
         return name, equipment_required
@@ -843,10 +872,17 @@ def _select_from_rotated_top_options(
         f"{name}:{count}" for name, count in sorted(recent_name_counts.items())[:16]
     )
     rotation_seed = f"{slot_key}:{history_depth}:{recent_seed}"
-    rotation_index = (
-        _stable_rotation_index(rotation_seed, len(top_options), user_id=user_id)
-        + _normalize_preview_variation_index(preview_variation_index)
-    ) % len(top_options)
+    base_rotation_index = _stable_rotation_index(
+        rotation_seed, len(top_options), user_id=user_id
+    )
+    variation_index = _normalize_preview_variation_index(preview_variation_index)
+    rotation_index = (base_rotation_index + variation_index) % len(top_options)
+
+    if variation_index > 0 and len(top_options) > 1:
+        previous_index = (base_rotation_index + variation_index - 1) % len(top_options)
+        if rotation_index == previous_index:
+            rotation_index = (rotation_index + 1) % len(top_options)
+
     _score, name, equipment_required = top_options[rotation_index]
     return name, equipment_required
 
@@ -1457,6 +1493,13 @@ _ADDITIONAL_WORKOUT_EXERCISE_SLOTS: list[
     (
         [
             ("Dumbbell Lateral Raise", ["dumbbell"]),
+            ("Dumbbell Shoulder Press", ["dumbbell"]),
+            ("Cable Lateral Raise", ["cable"]),
+            ("Arnold Press", ["dumbbell"]),
+            ("Seated Dumbbell Shoulder Press", ["dumbbell", "adjustable_bench"]),
+            ("Dumbbell Front Raise", ["dumbbell"]),
+            ("Band Lateral Raise", ["resistance_band"]),
+            ("Cable Y Raise", ["cable"]),
             ("Band Face Pull", ["resistance_band"]),
             ("Rope Face Pull", ["cable", "rope_cable_attachment"]),
             ("Cable Face Pull", ["cable"]),
@@ -1488,9 +1531,13 @@ def _option_is_available_and_new(
     context: WorkoutContext,
     option: tuple[str, list[str]],
     existing_names: set[str],
+    existing_rotation_groups: set[str],
 ) -> bool:
     catalog_name, catalog_equipment = _catalog_equipment_for_option(*option)
-    if _normalize_exercise_name(catalog_name) in existing_names:
+    normalized_name = _normalize_exercise_name(catalog_name)
+    if normalized_name in existing_names:
+        return False
+    if _exercise_rotation_group(normalized_name) in existing_rotation_groups:
         return False
     return _equipment_allowed(catalog_equipment, context.workout_constraints)
 
@@ -1499,6 +1546,7 @@ def _next_additional_exercise(
     context: WorkoutContext,
     slot_index: int,
     existing_names: set[str],
+    existing_rotation_groups: set[str],
 ) -> CandidateWorkoutExercise | None:
     options, sets, reps_min, reps_max, notes = _ADDITIONAL_WORKOUT_EXERCISE_SLOTS[
         slot_index % len(_ADDITIONAL_WORKOUT_EXERCISE_SLOTS)
@@ -1506,7 +1554,9 @@ def _next_additional_exercise(
     available_options = [
         option
         for option in options
-        if _option_is_available_and_new(context, option, existing_names)
+        if _option_is_available_and_new(
+            context, option, existing_names, existing_rotation_groups
+        )
     ]
     if not available_options:
         return None
@@ -1524,7 +1574,9 @@ def _next_additional_exercise(
         rir_max,
         notes,
     )
-    existing_names.add(_normalize_exercise_name(exercise.name))
+    normalized_name = _normalize_exercise_name(exercise.name)
+    existing_names.add(normalized_name)
+    existing_rotation_groups.add(_exercise_rotation_group(normalized_name))
     return exercise
 
 
@@ -1557,12 +1609,15 @@ def _finalize_candidate_workout_plan(
         return plan
 
     existing_names = {_normalize_exercise_name(exercise.name) for exercise in exercises}
+    existing_rotation_groups = _exercise_rotation_groups(existing_names)
     slot_index = 0
     while (
         len(exercises) < target_count
         and slot_index < len(_ADDITIONAL_WORKOUT_EXERCISE_SLOTS) * 2
     ):
-        next_exercise = _next_additional_exercise(context, slot_index, existing_names)
+        next_exercise = _next_additional_exercise(
+            context, slot_index, existing_names, existing_rotation_groups
+        )
         if next_exercise is not None:
             exercises.append(next_exercise)
         slot_index += 1

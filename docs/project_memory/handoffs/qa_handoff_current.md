@@ -1,94 +1,95 @@
 # QA Handoff Current
 
-Milestone: Nutrition Serving Unit Data Model v1
+Milestone: Nutrition Serving Unit Logging Contract Design v1
 
-QA status: scoped backend/data validation green with documented baseline full-suite exception.
+QA status: docs-only contract validation required.
 
-Branch: `feature/nutrition-serving-unit-data-model-v1`.
+Branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
+
+Commit-check mode: docs-only.
 
 ## QA focus
 
-Validate that serving-unit metadata exists, seeds safely, converts deterministically, and does not change user-facing nutrition logging or unrelated app behavior.
+This milestone has no runtime behavior.
+
+QA should validate that only approved docs/project-memory files changed and that the design contract preserves all non-goals.
 
 Primary checks:
 
-- schema initializes safely;
-- focused serving-unit tests pass;
-- seed script runs on Windows;
-- seed script runs on Linux;
-- seed script is idempotent;
-- active serving units are available for starter foods;
-- conversion helper returns expected grams;
-- serving units are linked to canonical foods;
-- confidence is constrained;
-- invalid grams/ranges are rejected;
-- missing canonical foods are skipped safely;
-- existing canonical search remains stable;
-- existing canonical logging remains stable;
-- Target-vs-Actual remains stable;
-- no provider/Ollama/OpenAI/CrewAI is required;
-- no Streamlit behavior changed.
+- no Python files changed;
+- no API routes changed;
+- no database/schema code changed;
+- no tests changed;
+- no Streamlit files changed;
+- no provider/Ollama/CrewAI files changed;
+- no food suggestion, workout, recovery, or report behavior changed;
+- project memory is internally aligned with main baseline `9cb1d41` and current contract milestone;
+- design doc answers the Architecture questions;
+- future implementation scope remains clearly separated from this docs-only milestone.
 
 ## Expected validation
 
 ```powershell
 git diff --check
-python -m py_compile models/nutrition_serving_unit_models.py
-python -m py_compile services/nutrition_serving_unit_service.py
-python -m py_compile scripts/seed_canonical_food_serving_units.py
-python -m py_compile tests/test_nutrition_serving_unit_data_model_v1.py
-ruff check models/nutrition_serving_unit_models.py services/nutrition_serving_unit_service.py scripts/seed_canonical_food_serving_units.py tests/test_nutrition_serving_unit_data_model_v1.py
-pytest tests/test_nutrition_serving_unit_data_model_v1.py -q
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_first.json
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_second.json
+
 python tools/project_memory_check.py
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
 python tools/dev_assistant.py continuity-brief
 pytest tests/test_project_memory_check.py -q
-scripts/dev_commit_check.ps1 -Mode code
+
+scripts/dev_commit_check.ps1 -Mode docs-only
+
+. .\scripts\fitness_commands.ps1
+fsweep
+
+git status --short
 ```
 
-Relevant nutrition/canonical tests should remain stable where present:
+Expected changed files:
 
-```powershell
-pytest tests/test_nutrition_catalog_diagnostic_v1.py -q
-pytest tests/test_food_normalization_service.py -q
-pytest tests/test_food_canonical_search_api.py -q
-pytest tests/test_canonical_food_logging_api.py -q
-pytest tests/test_nutrition_target_vs_actual_service.py -q
-```
+- `docs/nutrition_serving_unit_logging_contract_design.md`
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/next_milestone.md`
+- `docs/project_memory/open_questions.md`
+- `docs/project_memory/project_state.json`
+- `docs/project_memory/milestones/nutrition_serving_unit_logging_contract_design_v1.md`
+- `docs/project_memory/handoffs/backend_handoff_current.md`
+- `docs/project_memory/handoffs/architecture_handoff_current.md`
+- `docs/project_memory/handoffs/qa_handoff_current.md`
 
-## Seed smoke expected result
+If any other files appear, stop and correct scope.
 
-First run:
+## Runtime smoke
 
-- inserted_count: 18
-- active_serving_unit_count: 18
-- foods_with_active_serving_units: 12
-- missing_canonical_foods: []
+Not required.
 
-Second run:
+No browser smoke is required because there are no Streamlit or backend runtime changes.
 
-- inserted_count: 0
-- updated_count: 18
-- active_serving_unit_count: 18
-- foods_with_active_serving_units: 12
-- missing_canonical_foods: []
+## Future QA expectations
 
-## Known baseline exception
+For the later Nutrition Serving Unit Logging Backend v1, QA should expect tests for:
 
-Full pytest has 7 failures in unrelated Daily Coach / Daily Narrative tests that reproduce on source main `8b2c4c3`.
+- active canonical food can be logged by serving unit;
+- inactive canonical food is rejected;
+- inactive serving unit is rejected;
+- serving unit must belong to canonical food;
+- serving quantity must be positive;
+- resolved grams are persisted;
+- provenance metadata is persisted;
+- existing grams logging remains stable;
+- existing canonical grams logging remains stable;
+- Target-vs-Actual sees serving-unit logs through resolved grams;
+- missing nutrients remain unknown, not zero;
+- no raw source payloads are exposed;
+- no provider/Ollama/CrewAI call occurs.
 
-Known baseline failing files:
+## Runtime command continuity anchor
 
-- `tests/test_daily_coach_narrative_preview_route.py`
-- `tests/test_daily_narrative_rich_day_service.py`
+Local Command Menu App Runtime Correction v1 remains in effect.
 
-Scoped full validation may exclude those files and document the exception.
+`app` means Linux canonical app runtime.
 
-## Browser smoke
+`wapp` remains Windows-local only.
 
-Not required unless Streamlit/UI behavior changes.
-
-Expected: no Streamlit/UI behavior changes.
+`fports` remains available for local port inspection.

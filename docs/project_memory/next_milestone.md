@@ -1,163 +1,192 @@
 # Next Milestone
 
-Current milestone in progress: Nutrition Serving Unit Data Model v1.
+Current milestone in progress: Nutrition Serving Unit Logging Contract Design v1.
 
-Recommended branch: `feature/nutrition-serving-unit-data-model-v1`.
+Recommended branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
 
 Source branch: `main`.
 
-Required source main commit: `8b2c4c3`.
+Required source main commit: `9cb1d41`.
 
-Milestone type: backend data model / service / tests / project memory update.
+Milestone type: backend design / contract / project memory only.
+
+Commit-check mode: docs-only.
 
 ## Objective
 
-Add backend-owned serving-unit metadata for canonical foods so future nutrition logging, food suggestions, and AI explanations can safely reference practical household units without AI inventing grams, macros, or conversions.
+Design how backend-owned serving-unit metadata should enter future nutrition logging while preserving the existing grams-based actuals bridge.
 
-The milestone creates trusted metadata only. Normal nutrition logging remains grams-first and unchanged.
+The design should define the contract before implementation touches:
 
-## Implemented behavior
+- `/nutrition/log`;
+- `/nutrition/{user_id}/log-canonical`;
+- Streamlit nutrition logging;
+- Target-vs-Actual;
+- provider/Ollama/CrewAI paths.
 
-Implemented files:
+## Approved deliverable
 
-- `models/nutrition_serving_unit_models.py`
-- `services/nutrition_serving_unit_service.py`
-- `scripts/seed_canonical_food_serving_units.py`
-- `tests/test_nutrition_serving_unit_data_model_v1.py`
+- `docs/nutrition_serving_unit_logging_contract_design.md`
 
-Implemented concepts:
+## Approved project-memory updates
 
-- serving-unit model/dataclass layer
-- serving-unit schema/table initialization
-- canonical-food-linked serving units
-- positive grams/default range validation
-- constrained confidence vocabulary: Low, Moderate, High
-- deterministic lookup helpers
-- deterministic gram conversion helper
-- deterministic nutrient estimate helper
-- idempotent starter seed behavior
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/next_milestone.md`
+- `docs/project_memory/open_questions.md`
+- `docs/project_memory/project_state.json`
+- `docs/project_memory/milestones/nutrition_serving_unit_logging_contract_design_v1.md`
+- `docs/project_memory/handoffs/backend_handoff_current.md`
+- `docs/project_memory/handoffs/architecture_handoff_current.md`
+- `docs/project_memory/handoffs/qa_handoff_current.md`
 
-## Seed smoke result
+## Design baseline approved by Architecture
 
-Windows seed smoke produced:
+Architecture approved these preliminary directions for the design contract:
 
-- first run inserted: 18
-- second run inserted: 0
-- second run updated: 18
-- skipped: 0
-- active serving-unit count: 18
-- foods with active serving units: 12
-- missing canonical foods: []
+1. Keep `food_entries` as the grams-based actuals bridge.
+2. Prefer a companion serving-unit provenance table for future implementation.
+3. Prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`.
+4. Persist resolved grams used at log time.
+5. Preserve serving-unit provenance:
+   - `canonical_food_id`
+   - `serving_unit_id`
+   - serving quantity
+   - resolved grams
+   - `grams_min`
+   - `grams_max`
+   - confidence
+   - amount source
+   - original serving display
+6. Do not change Target-vs-Actual immediately.
+7. Do not expose serving-unit internals to AI/provider yet.
+8. Do not allow Streamlit to invent mappings.
+9. Do not allow AI/provider to invent serving units, grams, conversions, macros, or actuals.
+10. Treat serving-unit logging as a backend-owned convenience layer that resolves to grams.
 
-Seeded examples:
+## Questions the contract must answer
 
-- 1/2 cup cooked white rice: 90g, range 80-100g, Moderate
-- 1 cup cooked white rice: 180g, range 160-200g, Moderate
-- 1 large egg: 50g, range 45-55g, High
-- 1 medium banana: 118g, range 100-136g, Moderate
-- 1 tablespoon peanut butter: 16g, range 14-18g, High
-- 1 cup Greek yogurt, plain: 245g, range 225-265g, Moderate
-- 1/2 cup dry oats: 40g, range 35-45g, High
-- 100g cooked chicken breast: 100g, range 100-100g, High
-- 4 oz cooked chicken breast: 113g, range 110-116g, High
-- 1 tablespoon olive oil: 14g, range 13-15g, High
-- 1 medium baked potato: 173g, range 150-200g, Moderate
-- 1 medium apple: 182g, range 160-205g, Moderate
-- 1 scoop whey protein powder: 30g, range 25-35g, Moderate
-
-## Known baseline validation exception
-
-Full pytest on source main `8b2c4c3` has 7 unrelated Daily Coach / Daily Narrative failures.
-
-Affected baseline files:
-
-- `tests/test_daily_coach_narrative_preview_route.py`
-- `tests/test_daily_narrative_rich_day_service.py`
-
-These failures reproduced on source main before serving-unit changes and are not caused by this milestone. Do not fix those files inside this milestone unless Architecture explicitly authorizes a separate Daily Coach / Daily Narrative baseline repair.
-
-Scoped serving-unit validation is expected to pass. Full-suite validation should either document the known baseline exception or run with those known baseline-failing files excluded until the separate baseline repair happens.
+- Should serving-unit logs extend `food_entries`?
+- Should serving-unit logs use a companion provenance table?
+- Should a new canonical nutrition log table be created?
+- Should resolved grams be persisted?
+- Should min/max grams and confidence be copied onto the log?
+- Should logs store canonical food id, legacy food id, or both?
+- How should `amount_source` be represented?
+- Which confidence vocabulary should be canonical?
+- Should Target-vs-Actual change immediately?
+- Should serving-unit logging affect actuals confidence?
+- Should user overrides be supported in v1?
+- Should future implementation use an existing endpoint or a new endpoint?
+- Should the serving-unit endpoint allow grams override?
+- What validation is required?
+- How should missing nutrients behave?
+- How should serving-unit logs display in history?
+- Should serving-unit logs enter AI/provider context immediately?
 
 ## Strict non-goals
 
-Do not change `/nutrition/log` behavior yet.
+Do not implement serving-unit logging.
 
-Do not allow users to log food by serving unit yet.
+Do not modify `/nutrition/log`.
 
-Do not modify Streamlit nutrition logging UI.
+Do not modify `/nutrition/{user_id}/log-canonical`.
 
-Do not modify Target-vs-Actual calculations.
+Do not add a new API endpoint.
 
-Do not modify nutrition target formula behavior.
+Do not modify schema/code migrations.
 
-Do not modify nutrition food suggestion behavior.
+Do not modify food_entries schema in code.
 
-Do not modify Daily Coach synthesis behavior.
+Do not modify Target-vs-Actual behavior.
 
-Do not modify AI nutrition explanation behavior.
+Do not modify Streamlit.
 
-Do not modify provider/Ollama/CrewAI behavior.
+Do not modify nutrition actuals math.
+
+Do not modify AI/provider behavior.
+
+Do not modify CrewAI/Ollama behavior.
 
 Do not add meal planning.
 
-Do not add barcode scanning.
+Do not add food suggestion changes.
+
+Do not add nutrition explanation changes.
+
+Do not change canonical food search.
+
+Do not expand serving-unit seed coverage.
 
 Do not import USDA/source data.
 
-Do not expand the canonical food catalog broadly.
+Do not add barcode scanning.
 
 Do not change workout generation.
 
 Do not change recovery logic.
 
-Do not commit snapshots, qa_artifacts, local JSON/text seed output, patch files, or apply scripts.
+Do not add dependencies.
+
+Do not commit snapshots, qa_artifacts, runtime JSON, patch scripts, or temp files.
 
 Do not use `git add .`.
+
+Do not run broad formatters for docs-only work.
 
 ## Validation
 
 ```powershell
 git diff --check
 
-python -m py_compile models/nutrition_serving_unit_models.py
-python -m py_compile services/nutrition_serving_unit_service.py
-python -m py_compile scripts/seed_canonical_food_serving_units.py
-python -m py_compile tests/test_nutrition_serving_unit_data_model_v1.py
-python -m py_compile ui/streamlit_app.py
-
-ruff check models/nutrition_serving_unit_models.py services/nutrition_serving_unit_service.py scripts/seed_canonical_food_serving_units.py tests/test_nutrition_serving_unit_data_model_v1.py
-
-pytest tests/test_nutrition_serving_unit_data_model_v1.py -q
-pytest tests/test_nutrition_catalog_diagnostic_v1.py -q
-pytest tests/test_project_memory_check.py -q
-
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_first.json
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_second.json
-
 python tools/project_memory_check.py
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
 python tools/dev_assistant.py continuity-brief
+pytest tests/test_project_memory_check.py -q
 
-scripts/dev_commit_check.ps1 -Mode code
+scripts/dev_commit_check.ps1 -Mode docs-only
+
+. .\scripts\fitness_commands.ps1
+fsweep
+
+git status --short
 ```
+
+Expected changed files are docs/project-memory files only.
+
+If Python/runtime/API/Streamlit/test files appear in `git status`, stop and correct scope before commit.
 
 ## Recommended next milestone after acceptance
 
-Recommended: Nutrition Serving Unit Logging Contract Design v1.
+Recommended: Nutrition Serving Unit Logging Backend v1.
 
-Purpose: design how serving-unit metadata should enter food logging without corrupting grams-based actuals.
+Purpose:
 
-Questions to answer later:
+- add backend-owned serving-unit logging endpoint/service;
+- resolve serving-unit quantity to grams;
+- write resolved grams through existing actuals bridge;
+- persist serving-unit provenance;
+- preserve Target-vs-Actual behavior;
+- preserve existing grams and canonical logging behavior.
 
-- Should logs store `serving_unit_id`?
-- Should logs store original quantity/unit plus resolved grams?
-- Should logs store grams_default used at the time of logging?
-- Should logs preserve grams_min/grams_max?
-- Should logs preserve confidence/source?
-- How should Target-vs-Actual display estimated vs weighed entries?
-- How should user overrides work?
-- Should serving-unit entries be editable after logging?
-- How should canonical-food logging endpoint accept serving units?
+Suggested next implementation sequence after this design is accepted:
 
-Alternative next milestone: Nutrition Actuals Confidence Model v1.
+1. Nutrition Serving Unit Logging Backend v1.
+2. Nutrition Actuals Confidence Model v1.
+3. Streamlit Serving Unit Logging UI v1.
+4. Target-vs-Actual Confidence Display v1.
+5. Nutrition Food Suggestions Serving-Aware v1.
+
+## Historical authorization anchors
+
+The following historical phrases remain required project-memory continuity anchors, not active scope for this milestone:
+
+- Daily Coach Async Provider Runtime Design v1
+- DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED
+- Project Continuity System v2
+- Daily Coach Async Persistence Design v1
+- DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED
+- Daily Coach Async Persistence Contracts + Schema v1
+- `feature/daily-coach-async-persistence-contracts-schema-v1`
+- schema/contracts
+- NOT_AUTHORIZED_YET

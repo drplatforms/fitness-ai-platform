@@ -1,76 +1,95 @@
 # Architecture Handoff Current
 
-Milestone: Nutrition Serving Unit Data Model v1
+Milestone: Nutrition Serving Unit Logging Contract Design v1
 
-Status: implemented / scoped validation green / ready for Architecture review after feature snapshot.
+Status: docs-only contract drafted / ready for Architecture review.
 
-Source baseline: `main` at `8b2c4c3`.
+Source baseline: `main` at `9cb1d41`.
 
-Branch: `feature/nutrition-serving-unit-data-model-v1`.
+Branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
 
-Milestone type: backend data model / service / seed script / tests / project memory update.
+Milestone type: backend design / contract / project memory only.
 
 ## Review focus
 
-Architecture should review whether the backend-owned serving-unit model is sufficient as the foundation for future serving-based logging, deterministic food suggestions, and AI explanations.
+Architecture should review whether the proposed serving-unit logging contract is sufficient before backend implementation begins.
 
-Primary decisions:
+Primary review decisions:
 
-- whether to accept Nutrition Serving Unit Data Model v1;
-- whether `canonical_food_serving_units` is the correct persistence shape for v1;
-- whether the confidence vocabulary `Low` / `Moderate` / `High` is acceptable;
-- whether the starter seed set is sufficient for the next logging-contract design;
-- whether Nutrition Serving Unit Logging Contract Design v1 should be next;
-- whether Nutrition Actuals Confidence Model v1 should happen before serving-unit logging.
+1. Accept or revise the companion provenance table direction.
+2. Confirm whether the future endpoint should be `POST /nutrition/{user_id}/log-serving`.
+3. Confirm that `food_entries` remains the grams-based actuals bridge for v1.
+4. Confirm that resolved grams, gram range, confidence, amount source, and original serving display should be persisted at log time.
+5. Confirm that Target-vs-Actual should remain unchanged in the first implementation.
+6. Confirm that actuals-confidence behavior should be a later milestone.
+7. Confirm that Streamlit must not invent serving mappings.
+8. Confirm that AI/provider should not receive serving-unit internals yet.
 
-## Implementation summary
+## Design recommendation
 
-Added:
+Architecture should accept the following design baseline:
 
-- `models/nutrition_serving_unit_models.py`
-- `services/nutrition_serving_unit_service.py`
-- `scripts/seed_canonical_food_serving_units.py`
-- `tests/test_nutrition_serving_unit_data_model_v1.py`
-- project-memory closeout docs
+```text
+canonical_food_id + serving_unit_id + serving_quantity
+-> backend validates canonical food and serving unit
+-> backend resolves grams
+-> backend writes resolved grams to food_entries
+-> backend writes serving-unit provenance to companion table
+-> Target-vs-Actual reads grams exactly as it does today
+```
 
-## Seed summary
+Preferred future table:
 
-Manual/backend seed smoke produced:
+- `nutrition_serving_unit_log_metadata`
 
-- first run inserted 18 serving units;
-- second run inserted 0 and updated 18;
-- active serving-unit count is 18;
-- foods with active serving units is 12;
-- missing canonical foods is empty.
+Acceptable alternate:
 
-Starter units cover rice, egg, banana, peanut butter, Greek yogurt, oats, chicken breast, olive oil, baked potato, apple, and whey protein powder.
+- `food_entry_serving_unit_metadata`
+
+Preferred future endpoint:
+
+- `POST /nutrition/{user_id}/log-serving`
 
 ## Scope preserved
 
-No food logging behavior changed.
+The docs-only milestone does not:
 
-No user-facing serving-unit logging was added.
+- implement serving-unit logging;
+- add API endpoints;
+- change schema/code;
+- modify `/nutrition/log`;
+- modify `/nutrition/{user_id}/log-canonical`;
+- modify Target-vs-Actual;
+- modify Streamlit;
+- modify provider/Ollama/CrewAI behavior;
+- change food suggestions, meal planning, workouts, recovery, or reports.
 
-No Streamlit UI changed.
+## Recommended final Architecture decision
 
-No Target-vs-Actual behavior changed.
+Accept Nutrition Serving Unit Logging Contract Design v1.
 
-No provider/Ollama/CrewAI behavior changed.
+Recommended final status:
 
-No catalog expansion, USDA import, meal planning, workout generation, recovery, or report behavior changed.
-
-## Baseline exception
-
-Full pytest has 7 unrelated Daily Coach / Daily Narrative failures that reproduce on source main `8b2c4c3`.
-
-They are not caused by this serving-unit branch and were not fixed here because they are outside the milestone scope.
+`NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED`
 
 ## Recommended next milestone
 
-Recommended: Nutrition Serving Unit Logging Contract Design v1.
+Nutrition Serving Unit Logging Backend v1.
 
-Purpose: design how serving-unit metadata should enter nutrition logging while preserving grams-based actuals, confidence, target-vs-actual safety, and auditability.
+Recommended sequence after acceptance:
 
-Alternative: Nutrition Actuals Confidence Model v1 if Architecture wants explicit confidence semantics before logging-contract design.
+1. backend endpoint/service/provenance implementation;
+2. actuals-confidence model design/implementation;
+3. Streamlit serving-unit logging UI;
+4. Target-vs-Actual confidence display;
+5. serving-aware food suggestions.
 
-Proposed final status after successful closeout: `NUTRITION_SERVING_UNIT_DATA_MODEL_V1_ACCEPTED`.
+## Runtime command continuity anchor
+
+Local Command Menu App Runtime Correction v1 remains in effect.
+
+`app` is now the canonical Linux runtime launcher.
+
+`wapp` remains Windows-local only.
+
+Linux is the canonical FastAPI + Streamlit app runtime.

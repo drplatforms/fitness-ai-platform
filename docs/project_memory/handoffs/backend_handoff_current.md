@@ -1,93 +1,120 @@
 # Backend Handoff Current
 
-Milestone: Nutrition Serving Unit Data Model v1
+Milestone: Nutrition Serving Unit Logging Contract Design v1
 
-Status: implemented / scoped validation green / pending Architecture review and final snapshot.
+Status: docs-only contract drafted / ready for Architecture review.
 
-Source baseline: `main` at `8b2c4c3`.
+Source baseline: `main` at `9cb1d41`.
 
-Branch: `feature/nutrition-serving-unit-data-model-v1`.
+Branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
 
-## Backend implementation summary
+Commit-check mode: docs-only.
 
-Implemented backend-owned serving-unit metadata for canonical foods.
+## Backend scope
 
-Changed files:
+Backend drafted the serving-unit logging contract only.
 
-- `models/nutrition_serving_unit_models.py`
-- `services/nutrition_serving_unit_service.py`
-- `scripts/seed_canonical_food_serving_units.py`
-- `tests/test_nutrition_serving_unit_data_model_v1.py`
+No runtime implementation was added.
 
-Project-memory files were updated for milestone closeout.
+Primary deliverable:
 
-## Service behavior
+- `docs/nutrition_serving_unit_logging_contract_design.md`
 
-The serving-unit service supports:
+Project-memory updates:
 
-- schema initialization for `canonical_food_serving_units`;
-- idempotent starter seed upsert;
-- active serving-unit lookup by canonical food id;
-- individual serving-unit lookup;
-- grams estimation from serving-unit quantity;
-- nutrient estimation using canonical food nutrient data.
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/next_milestone.md`
+- `docs/project_memory/open_questions.md`
+- `docs/project_memory/project_state.json`
+- `docs/project_memory/milestones/nutrition_serving_unit_logging_contract_design_v1.md`
+- `docs/project_memory/handoffs/backend_handoff_current.md`
+- `docs/project_memory/handoffs/architecture_handoff_current.md`
+- `docs/project_memory/handoffs/qa_handoff_current.md`
 
-## Seed behavior
+## Contract summary
 
-Seed script:
+The contract recommends that future serving-unit logging should:
 
-```powershell
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_first.json
-python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_second.json
+- keep `food_entries` as the grams-based actuals bridge;
+- add a companion serving-unit provenance table;
+- prefer a dedicated endpoint: `POST /nutrition/{user_id}/log-serving`;
+- persist resolved grams used at log time;
+- copy `grams_min`, `grams_max`, confidence, amount source, serving quantity, and original serving display into provenance;
+- preserve `canonical_food_id` and `serving_unit_id` in provenance;
+- keep legacy `food_entries.food_id` for current actuals compatibility;
+- reject grams override in v1;
+- reject user-defined serving overrides in v1;
+- keep Target-vs-Actual math unchanged;
+- keep Streamlit from inventing mappings;
+- keep AI/provider from inventing serving units, grams, conversions, macros, or actuals.
+
+## Recommended future implementation shape
+
+Future backend endpoint:
+
+```text
+POST /nutrition/{user_id}/log-serving
 ```
 
-Observed seed smoke:
+Future request:
 
-- first run inserted: 18
-- second run inserted: 0
-- second run updated: 18
-- skipped: 0
-- active serving-unit count: 18
-- foods with active serving units: 12
-- missing canonical foods: none
+```json
+{
+  "canonical_food_id": 1,
+  "serving_unit_id": 10,
+  "serving_quantity": 1.0,
+  "entry_date": "2026-06-26"
+}
+```
 
-## Starter serving units
+Future response should include:
 
-Seeded examples include:
+- success;
+- user id;
+- logged food entry id;
+- canonical food id;
+- serving unit id;
+- display name;
+- serving display;
+- serving quantity;
+- resolved grams;
+- grams min/max;
+- confidence;
+- amount source;
+- logged date;
+- public-safe nutrient summary where available.
 
-- 1/2 cup cooked white rice, about 90g, range 80g..100g, Moderate confidence
-- 1 cup cooked white rice, about 180g, range 160g..200g, Moderate confidence
-- 1 large egg, about 50g, range 45g..55g, High confidence
-- 1 medium banana, about 118g, range 100g..136g, Moderate confidence
-- 1 tablespoon peanut butter, about 16g, range 14g..18g, High confidence
-- 1 cup Greek yogurt, plain, about 245g, range 225g..265g, Moderate confidence
-- 1/2 cup dry oats, about 40g, range 35g..45g, High confidence
-- 4 oz cooked chicken breast, about 113g, range 110g..116g, High confidence
-- 1 tablespoon olive oil, about 14g, range 13g..15g, High confidence
-- 1 medium baked potato, about 173g, range 150g..200g, Moderate confidence
-- 1 medium apple, about 182g, range 160g..205g, Moderate confidence
-- 1 scoop whey protein powder, about 30g, range 25g..35g, Moderate confidence
+## Backend validation expectations for next implementation
 
-## Backend non-goals preserved
+Future implementation must validate:
 
-- No `/nutrition/log` behavior change.
-- No serving-unit logging endpoint.
-- No Streamlit nutrition logging change.
-- No Target-vs-Actual behavior change.
-- No nutrition target formula change.
-- No Daily Coach synthesis change.
-- No provider/Ollama/CrewAI change.
-- No AI serving-size inference.
-- No broad food catalog expansion.
-- No USDA/source import.
-- No workout or recovery change.
+- active canonical food exists;
+- active serving unit exists;
+- serving unit belongs to canonical food;
+- serving quantity is positive;
+- resolved grams are positive;
+- ranges are internally consistent;
+- entry date is valid;
+- canonical nutrient data is usable;
+- caller cannot submit grams override;
+- caller cannot submit arbitrary confidence or amount source.
 
-## Validation note
+## Scope preserved
 
-Scoped validation passed. Full pytest has a documented baseline exception: 7 Daily Coach / Daily Narrative tests fail on source main `8b2c4c3`, so they are not treated as serving-unit regressions.
+No Python, API, database, Streamlit, provider, workout, recovery, report, or Target-vs-Actual behavior changed in this docs-only milestone.
 
 ## Next backend recommendation
 
-Nutrition Serving Unit Logging Contract Design v1.
+After Architecture accepts this contract, proceed to Nutrition Serving Unit Logging Backend v1.
 
-Do not implement serving-unit logging until Architecture decides how logs should preserve original quantity/unit, resolved grams, grams ranges, and confidence.
+Do not start Streamlit serving-unit UI until the backend endpoint/provenance path is stable.
+
+## Runtime command continuity anchor
+
+Local Command Menu App Runtime Correction v1 remains in effect.
+
+`app` restarts Linux FastAPI + Streamlit through SSH.
+
+`wapp` remains Windows-local only.
+
+No backend app runtime code changed.

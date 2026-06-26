@@ -6,29 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Catalog Diagnostic v1",
-    "latest_final_status": "NUTRITION_CATALOG_DIAGNOSTIC_V1_ACCEPTED",
-    "latest_accepted_commit": "9f1285f",
-    "latest_main_merge_commit": "8b2c4c3",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip",
-    "previous_accepted_milestone": "Nutrition Catalog + Serving Foundation Planning v1",
-    "previous_feature_commit": "8c72f23",
-    "previous_main_merge_commit": "94dc8fd",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_8c72f23_plan-nutrition-catalog-and-serving-foundation.zip",
-    "previous_previous_accepted_milestone": "Test-First Quality Gate Development Plan v1",
-    "previous_previous_feature_commit": "227990e",
-    "previous_previous_main_merge_commit": "37d210f",
-    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip"
+    "latest_accepted_milestone": "Nutrition Serving Unit Data Model v1",
+    "latest_final_status": "NUTRITION_SERVING_UNIT_DATA_MODEL_V1_ACCEPTED",
+    "latest_accepted_commit": "e2c467d",
+    "latest_main_merge_commit": "9cb1d41",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip",
+    "previous_accepted_milestone": "Nutrition Catalog Diagnostic v1",
+    "previous_feature_commit": "6765abb / 9f1285f closeout",
+    "previous_main_merge_commit": "8b2c4c3",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip",
+    "previous_previous_accepted_milestone": "Nutrition Catalog + Serving Foundation Planning v1",
+    "previous_previous_feature_commit": "8c72f23",
+    "previous_previous_main_merge_commit": "94dc8fd",
+    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_8c72f23_plan-nutrition-catalog-and-serving-foundation.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Nutrition Serving Unit Data Model v1",
-    "current_authorized_status": "IMPLEMENTED / WINDOWS SCOPED VALIDATION GREEN / PROJECT MEMORY CLOSEOUT IN PROGRESS",
-    "current_authorized_branch": "feature/nutrition-serving-unit-data-model-v1",
-    "source_main_commit": "8b2c4c3",
-    "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Logging Contract Design v1",
+    "current_authorized_milestone": "Nutrition Serving Unit Logging Contract Design v1",
+    "current_authorized_status": "DOCS-ONLY CONTRACT PATCH AUTHORIZED BY ARCHITECTURE",
+    "current_authorized_branch": "feature/nutrition-serving-unit-logging-contract-design-v1",
+    "source_main_commit": "9cb1d41",
+    "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Logging Backend v1",
     "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
-    "process_doctrine": "Backend-owned serving-unit metadata first; no serving-unit logging until logging contract and confidence semantics are designed.",
-    "delivery_flow": "serving-unit model/service/seed/tests -> focused validation -> seed smoke -> project memory closeout -> commit/push -> Linux validation -> snapshot -> Architecture handoff",
+    "process_doctrine": "Backend-owned serving-unit logging contract first; no runtime serving-unit logging until Architecture accepts the contract.",
+    "delivery_flow": "docs-only contract -> project memory update -> docs-only validation -> commit/push -> Linux docs validation -> snapshot -> Architecture handoff",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -112,7 +112,22 @@
     "no_workout_changes_for_current_diagnostic_milestone": true,
     "no_recovery_changes_for_current_diagnostic_milestone": true,
     "serving_unit_model_missing": true,
-    "nutrition_actuals_confidence_missing": true
+    "nutrition_actuals_confidence_missing": true,
+    "nutrition_serving_unit_data_model_v1_accepted": true,
+    "nutrition_serving_unit_logging_contract_design_v1": true,
+    "no_runtime_changes_for_current_contract_milestone": true,
+    "no_api_changes_for_current_contract_milestone": true,
+    "no_schema_changes_for_current_contract_milestone": true,
+    "no_food_logging_changes_for_current_contract_milestone": true,
+    "no_target_vs_actual_changes_for_current_contract_milestone": true,
+    "no_streamlit_changes_for_current_contract_milestone": true,
+    "no_provider_changes_for_current_contract_milestone": true,
+    "backend_owns_serving_unit_logging_contract": true,
+    "food_entries_remain_grams_bridge_for_serving_unit_v1": true,
+    "serving_unit_provenance_companion_table_preferred": true,
+    "dedicated_log_serving_endpoint_preferred": true,
+    "streamlit_must_not_invent_serving_mappings": true,
+    "provider_must_not_invent_serving_units_or_grams": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -456,5 +471,11 @@
     },
     "recommended_next_milestone": "Nutrition Serving Unit Logging Contract Design v1",
     "alternative_next_milestone": "Nutrition Actuals Confidence Model v1"
+  },
+  "nutrition_serving_unit_logging_contract_design_v1": {
+    "status": "docs-only contract drafted",
+    "preferred_future_endpoint": "POST /nutrition/{user_id}/log-serving",
+    "preferred_persistence": "food_entries grams bridge plus companion serving-unit provenance table",
+    "final_status_target": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED"
   }
 }

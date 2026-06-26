@@ -1,74 +1,93 @@
 # Backend Handoff Current
 
-Milestone: Nutrition Catalog Diagnostic v1
+Milestone: Nutrition Serving Unit Data Model v1
 
-Status: implemented diagnostic / pending final validation and Architecture review.
+Status: implemented / scoped validation green / pending Architecture review and final snapshot.
 
-Source baseline: `main` at `94dc8fd`.
+Source baseline: `main` at `8b2c4c3`.
 
-Branch: `feature/nutrition-catalog-diagnostic-v1`.
+Branch: `feature/nutrition-serving-unit-data-model-v1`.
 
 ## Backend implementation summary
 
-Implemented diagnostic/data-audit support for the nutrition catalog foundation.
+Implemented backend-owned serving-unit metadata for canonical foods.
 
-Expected changed code/test files:
+Changed files:
 
-- `services/nutrition_catalog_diagnostic_service.py`
-- `tools/nutrition_catalog_diagnostic.py`
-- `tests/test_nutrition_catalog_diagnostic_v1.py`
+- `models/nutrition_serving_unit_models.py`
+- `services/nutrition_serving_unit_service.py`
+- `scripts/seed_canonical_food_serving_units.py`
+- `tests/test_nutrition_serving_unit_data_model_v1.py`
 
-The diagnostic is intentionally read-only. It does not add foods, serving units, migrations, logging behavior, nutrition calculation changes, provider behavior, Streamlit UI changes, workout changes, or recovery changes.
+Project-memory files were updated for milestone closeout.
 
-## Diagnostic command
+## Service behavior
+
+The serving-unit service supports:
+
+- schema initialization for `canonical_food_serving_units`;
+- idempotent starter seed upsert;
+- active serving-unit lookup by canonical food id;
+- individual serving-unit lookup;
+- grams estimation from serving-unit quantity;
+- nutrient estimation using canonical food nutrient data.
+
+## Seed behavior
+
+Seed script:
 
 ```powershell
-python tools/nutrition_catalog_diagnostic.py --output ..\nutrition_catalog_diagnostic_v1.json
+python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_first.json
+python scripts/seed_canonical_food_serving_units.py --output ..\nutrition_serving_unit_seed_v1_second.json
 ```
 
-## Key findings
+Observed seed smoke:
 
-- Legacy food records: 3,475.
-- Canonical food records: 222.
-- Active canonical food records: 222.
-- Raw/source food records: 0.
-- Canonical foods safe for logging/suggestions: 222.
-- Alias rows: 555.
-- Foods with aliases: 222.
-- Complete core macro foods: 222 / 222.
-- ServingUnit model/table: not present.
-- Household units: not supported.
-- Foods with no serving-unit metadata: 222.
-- High-value staples present: 43.
-- High-value staples missing: 1, mixed nuts.
-- Logs are grams-based and linked to food id.
-- Logs do not support quantity/unit, servings, meal grouping, or meal type.
-- Macros are recalculated from food/nutrient tables.
-- Actuals assume grams.
-- Confidence is not represented.
-- Food suggestion readiness: limited.
-- AI/provider grounding readiness: limited until serving units and confidence exist.
+- first run inserted: 18
+- second run inserted: 0
+- second run updated: 18
+- skipped: 0
+- active serving-unit count: 18
+- foods with active serving units: 12
+- missing canonical foods: none
 
-## Recommended next backend milestone
+## Starter serving units
 
-Recommended: Nutrition Serving Unit Data Model v1.
+Seeded examples include:
 
-Reason: the catalog is more complete than expected, but serving-unit and confidence infrastructure is absent. Serving-based logging and food suggestions should not proceed until backend-owned serving conversions and confidence/range semantics exist.
-
-Architecture may choose Nutrition Canonical Food Model Review v1 first if it wants to settle canonical/legacy write-through and source-confidence semantics before model/schema work.
+- 1/2 cup cooked white rice, about 90g, range 80g..100g, Moderate confidence
+- 1 cup cooked white rice, about 180g, range 160g..200g, Moderate confidence
+- 1 large egg, about 50g, range 45g..55g, High confidence
+- 1 medium banana, about 118g, range 100g..136g, Moderate confidence
+- 1 tablespoon peanut butter, about 16g, range 14g..18g, High confidence
+- 1 cup Greek yogurt, plain, about 245g, range 225g..265g, Moderate confidence
+- 1/2 cup dry oats, about 40g, range 35g..45g, High confidence
+- 4 oz cooked chicken breast, about 113g, range 110g..116g, High confidence
+- 1 tablespoon olive oil, about 14g, range 13g..15g, High confidence
+- 1 medium baked potato, about 173g, range 150g..200g, Moderate confidence
+- 1 medium apple, about 182g, range 160g..205g, Moderate confidence
+- 1 scoop whey protein powder, about 30g, range 25g..35g, Moderate confidence
 
 ## Backend non-goals preserved
 
-- No catalog expansion.
-- No serving-unit implementation.
-- No household conversion.
-- No food logging behavior change.
-- No macro/target/report calculation change.
-- No provider/Ollama/OpenAI change.
-- No AI meal/snack generation.
-- No Streamlit UI change.
+- No `/nutrition/log` behavior change.
+- No serving-unit logging endpoint.
+- No Streamlit nutrition logging change.
+- No Target-vs-Actual behavior change.
+- No nutrition target formula change.
+- No Daily Coach synthesis change.
+- No provider/Ollama/CrewAI change.
+- No AI serving-size inference.
+- No broad food catalog expansion.
+- No USDA/source import.
 - No workout or recovery change.
-- No migration.
-- No dependency change.
-- No snapshots, qa_artifacts, local runtime artifacts, or patch/apply scripts committed.
-- No `git add .`.
+
+## Validation note
+
+Scoped validation passed. Full pytest has a documented baseline exception: 7 Daily Coach / Daily Narrative tests fail on source main `8b2c4c3`, so they are not treated as serving-unit regressions.
+
+## Next backend recommendation
+
+Nutrition Serving Unit Logging Contract Design v1.
+
+Do not implement serving-unit logging until Architecture decides how logs should preserve original quantity/unit, resolved grams, grams ranges, and confidence.

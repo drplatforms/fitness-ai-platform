@@ -1,5 +1,53 @@
 # Open Questions
 
+## Nutrition Serving Unit Data Model v1 results
+
+Resolved implementation findings:
+
+- Serving-unit model/service/schema support now exists in the active branch.
+- Serving units are linked to canonical foods.
+- `grams_default` is required and positive.
+- `grams_min` / `grams_max` ranges are supported.
+- Service/model validation enforces `grams_min <= grams_default <= grams_max` when ranges are present.
+- Confidence vocabulary for this milestone is Low / Moderate / High.
+- Starter seed is idempotent.
+- First seed run inserted 18 serving units.
+- Second seed run inserted 0 and updated 18, proving no duplicate rows were created.
+- Active serving-unit count is 18.
+- Foods with active serving units: 12.
+- Missing canonical foods: none.
+- Normal nutrition logging remains unchanged.
+- Target-vs-Actual remains unchanged.
+- Streamlit remains unchanged.
+- Provider/Ollama/CrewAI behavior remains unchanged.
+
+## Architecture decision needed after Serving Unit Data Model v1
+
+1. Should the next milestone be Nutrition Serving Unit Logging Contract Design v1?
+
+Recommended answer: yes. Serving-unit metadata exists, but logging by serving unit is intentionally not exposed yet.
+
+2. Should Nutrition Actuals Confidence Model v1 happen before serving-unit logging implementation?
+
+Recommended answer: Architecture should decide. Estimated serving-unit logs need confidence semantics before they are treated the same as weighed gram logs.
+
+3. Should logs preserve original serving quantity/unit and resolved grams?
+
+Recommended answer: yes for future logging, so user intent and backend-calculated grams remain auditable.
+
+4. Should logs preserve `grams_default`, `grams_min`, `grams_max`, confidence, and source at the time of logging?
+
+Recommended answer: likely yes, to avoid historical actuals changing if serving-unit metadata is updated later.
+
+5. Should serving-unit logging mutate existing grams-based behavior?
+
+Recommended answer: no. Serving-unit logging should resolve to grams through backend-owned metadata while preserving estimate/confidence context.
+
+6. Should provider/AI use serving units now?
+
+Recommended answer: not in user-facing output until logging and actuals-confidence contracts are accepted. Provider may eventually explain backend-approved serving units only.
+
+
 ## Nutrition Catalog Diagnostic v1 results
 
 Diagnostic answered the first catalog baseline questions.

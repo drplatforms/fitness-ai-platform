@@ -1,5 +1,26 @@
 # Open Questions
 
+## Exercise Eligibility Matrix v1 follow-up
+
+Exercise Eligibility Matrix v1 created an explicit generator-facing eligibility service and developer diagnostic, but it intentionally did not force full catalog reachability.
+
+Current known findings from the diagnostic baseline:
+
+- 240 active catalog exercises.
+- 237 equipment-compatible exercises.
+- 232 generator-eligible exercises.
+- 54 exercises appeared in the 10-variation deterministic sweep.
+- 186 generator-eligible exercises did not appear in that sweep.
+- top exclusion reason: `not_supported_by_current_generator_candidate_pools` (170).
+- weak movement families: arms_biceps, arms_triceps, mobility.
+
+Open follow-up questions:
+
+- Should arms work remain mostly deferred, or should a future accessory slot make limited biceps/triceps work reachable?
+- Should mobility exercises stay excluded until warmup/mobility slots exist?
+- Should catalog reachability be improved through candidate-pool scoring, slot expansion, or a separate reachability audit first?
+- Should the diagnostic eventually consume the eligibility service directly? An optional refactor patch failed to apply during v1 and was deliberately deferred instead of stacked blindly.
+
 ## Rolling multi-refresh novelty
 
 Workout Preview Full-Slot Rotation v1 accepted immediate previous-preview anti-repeat only.
@@ -8,23 +29,25 @@ Rolling multi-refresh novelty is deferred to Workout Preview Rolling Exposure Ro
 
 Open question: should long-window exercise exposure tracking be session-only, persisted, or derived from selected workout history?
 
-## Full exercise eligibility
+## Full exercise eligibility and catalog reachability
 
-Exercise Catalog Utilization / Specialized Movement Coverage v1 improved deterministic catalog breadth and specialized movement reachability, but it did not complete the full eligibility model.
+Exercise Catalog Utilization / Specialized Movement Coverage v1 improved deterministic catalog breadth and specialized movement reachability.
+
+Exercise Eligibility Matrix v1 makes eligibility explicit but does not complete all reachability work.
 
 Future work remains:
 
-- Exercise Eligibility Matrix v1.
 - Catalog Reachability Audit v2.
 - complete catalog reachability.
 - deeper movement-family de-duplication.
 - clearer equipment/movement-pattern compatibility rules.
+- decision on whether candidate-only exercises should be promoted by scoring, rotation, or new slots.
 
 ## Provider strategy roadmap
 
 Provider strategy remains pending.
 
-Possible future planning should compare local-first `qwen` / `direct_ollama` paths with higher-tier OpenAI/provider adapter options, but no provider strategy implementation is authorized by the current docs-only process milestone.
+Possible future planning should compare local-first `qwen` / `direct_ollama` paths with higher-tier OpenAI/provider adapter options, but no provider strategy implementation is authorized by the current exercise eligibility milestone.
 
 Provider may propose. Backend validates. User sees only approved output.
 

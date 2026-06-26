@@ -6,25 +6,32 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Exercise Catalog Utilization / Specialized Movement Coverage v1",
-    "latest_final_status": "EXERCISE_CATALOG_UTILIZATION_SPECIALIZED_MOVEMENT_COVERAGE_V1_ACCEPTED",
-    "latest_accepted_commit": "1d44b3d",
-    "latest_main_merge_commit": "b343a47",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip",
-    "previous_accepted_milestone": "Workout Preview Full-Slot Rotation v1",
-    "previous_feature_commit": "3b32f97",
-    "previous_main_merge_commit": "f39b403",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-25_3b32f97_fix-first-refresh-workout-slot-rotation.zip"
+    "latest_accepted_milestone": "Test-First Quality Gate Development Plan v1",
+    "latest_final_status": "TEST_FIRST_QUALITY_GATE_DEVELOPMENT_PLAN_V1_ACCEPTED",
+    "latest_accepted_commit": "227990e",
+    "latest_main_merge_commit": "37d210f",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip",
+    "previous_accepted_milestone": "Exercise Catalog Utilization / Specialized Movement Coverage v1",
+    "previous_feature_commit": "1d44b3d",
+    "previous_main_merge_commit": "b343a47",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip",
+    "previous_previous_accepted_milestone": "Workout Preview Full-Slot Rotation v1",
+    "previous_previous_feature_commit": "3b32f97",
+    "previous_previous_main_merge_commit": "f39b403",
+    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-25_3b32f97_fix-first-refresh-workout-slot-rotation.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Test-First Quality Gate Development Plan v1",
-    "current_authorized_branch": "feature/test-first-quality-gate-development-plan-v1",
-    "current_authorized_status": "AUTHORIZED / DOCS-ONLY IMPLEMENTATION REQUEST",
-    "source_main_commit": "b343a47",
-    "recommended_next_milestone_after_acceptance": "Exercise Eligibility Matrix v1, Catalog Reachability Audit v2, Workout Preview Rolling Exposure Rotation v2, or provider/process planning milestone as needed",
+    "current_authorized_milestone": "Exercise Eligibility Matrix v1",
+    "current_authorized_branch": "feature/exercise-eligibility-matrix-v1",
+    "current_authorized_status": "IMPLEMENTATION CHECKPOINT / LINUX GREEN / FINAL CLOSEOUT VALIDATION PENDING",
+    "source_main_commit": "37d210f",
+    "recommended_next_milestone_after_acceptance": "Nutrition Deterministic Food Suggestions v1, Nutrition AI Meal/Snack Candidate Contract v1, Catalog Reachability Audit v2, or Workout Preview Rolling Exposure Rotation v2 later",
     "codex": "DO NOT USE BY DEFAULT",
-    "delivery_flow": "downloadable patch -> preflight -> apply patch -> validate -> stage explicit files -> commit -> push -> feature snapshot -> Architecture handoff",
-    "process_doctrine": "Bite by bite, just bigger bites. Bigger milestone is okay. Bigger single patch is not okay."
+    "delivery_flow": "diagnostic -> failing/coverage test -> narrow implementation -> regression validation -> manual smoke -> project memory -> snapshot -> Architecture handoff",
+    "process_doctrine": "Bite by bite, just bigger bites. Bigger milestone is okay. Bigger single patch is not okay.",
+    "current_feature_checkpoint_commit": "05d319e",
+    "current_feature_checkpoint_message": "Add exercise eligibility matrix quality gate",
+    "current_feature_checkpoint_snapshot": "fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip"
   },
   "boundaries": {
     "normal_today_unchanged": true,
@@ -66,7 +73,17 @@
     "no_workout_generation_changes_for_current_docs_milestone": true,
     "no_exercise_catalog_logic_changes_for_current_docs_milestone": true,
     "no_nutrition_changes_for_current_docs_milestone": true,
-    "no_provider_changes_for_current_docs_milestone": true
+    "no_provider_changes_for_current_docs_milestone": true,
+    "exercise_eligibility_matrix_v1": true,
+    "exercise_eligibility_matrix_quality_gate": true,
+    "exercise_eligibility_matrix_diagnostic": true,
+    "no_rolling_exposure_for_current_milestone": true,
+    "no_persistent_exercise_exposure_tracking_for_current_milestone": true,
+    "no_nutrition_changes_for_current_milestone": true,
+    "no_recovery_changes_for_current_milestone": true,
+    "no_provider_ai_workout_generation_for_current_milestone": true,
+    "no_streamlit_ui_rewrite_for_current_milestone": true,
+    "optional_diagnostic_service_refactor_deferred": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -115,8 +132,12 @@
     "not_authorized": "normal Today provider call; public async narrative display"
   },
   "runtime_split": {
-    "windows": "Primary development workstation at C:\\projects\\fitness_ai. Use Windows for patch application, validation, explicit staging, commit, push, and feature snapshots.",
-    "linux": "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
+    "windows": [
+      "Primary development workstation at C:\\projects\\fitness_ai. Use Windows for patch application, validation, explicit staging, commit, push, and feature snapshots."
+    ],
+    "linux": [
+      "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
+    ]
   },
   "model_policy": {
     "qwen2_5_3b": "Approved local bridge/default experimental model for direct_ollama nutrition explanation provider paths when explicitly enabled.",
@@ -189,6 +210,41 @@
       "docs/project_memory/role_bootstrap_backend.md",
       "docs/project_memory/role_bootstrap_qa.md",
       "docs/project_memory/qa_workflow.md"
+    ]
+  },
+  "exercise_eligibility_matrix_v1": {
+    "status": "implementation checkpoint committed and Linux-validated; final closeout validation/smoke pending",
+    "branch": "feature/exercise-eligibility-matrix-v1",
+    "source_main_commit": "37d210f",
+    "checkpoint_commit": "05d319e",
+    "checkpoint_snapshot": "fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip",
+    "diagnostic_totals": {
+      "total_active_exercises": 240,
+      "total_equipment_compatible_exercises": 237,
+      "total_exercises_with_usable_metadata": 240,
+      "total_specialized_or_accessory_movements": 135,
+      "total_generator_eligible": 232,
+      "total_reachable_in_deterministic_sweep": 54,
+      "total_not_reachable_in_deterministic_sweep": 186,
+      "top_exclusion_reason": "not_supported_by_current_generator_candidate_pools (170)",
+      "weak_movement_families": [
+        "arms_biceps",
+        "arms_triceps",
+        "mobility"
+      ]
+    },
+    "files_added": [
+      "services/exercise_eligibility_matrix_service.py",
+      "tools/exercise_eligibility_matrix_diagnostic.py",
+      "tests/test_exercise_eligibility_matrix_v1.py"
+    ],
+    "quality_gate": "test was added before service existed and failed with ModuleNotFoundError, then passed after narrow implementation",
+    "deferred": [
+      "optional diagnostic-service refactor",
+      "complete catalog reachability",
+      "rolling multi-refresh novelty",
+      "persistent exercise exposure tracking",
+      "arms/mobility slot expansion"
     ]
   }
 }

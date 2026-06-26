@@ -1,18 +1,22 @@
 # Current State
 
-Latest accepted milestone: Exercise Catalog Utilization / Specialized Movement Coverage v1.
+Latest accepted milestone: Test-First Quality Gate Development Plan v1.
 
-Latest accepted feature commit: `1d44b3d`.
+Latest accepted feature commit: `227990e`.
 
-Latest main merge commit: `b343a47`.
+Latest main merge commit: `37d210f`.
 
-Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip`.
+Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip`.
 
-Current implementation milestone: Test-First Quality Gate Development Plan v1.
+Current implementation milestone: Exercise Eligibility Matrix v1.
 
-Current branch: `feature/test-first-quality-gate-development-plan-v1`.
+Current branch: `feature/exercise-eligibility-matrix-v1`.
 
-Source baseline: `main` at `b343a47`. The uploaded `fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip` is the same code as `b343a47` before/at merge closeout and is the source-of-truth snapshot for this docs-only process milestone.
+Source baseline: `main` at `37d210f`.
+
+Current feature checkpoint: `05d319e` (`Add exercise eligibility matrix quality gate`).
+
+Current checkpoint snapshot: `fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip`.
 
 ## Current process doctrine
 
@@ -58,13 +62,50 @@ Accepted and merged.
 
 This milestone proved the value of stop conditions. The first breadth implementation improved utilization but regressed preview rotation. Linux smoke later caught a home-gym hinge/vertical_pull regression. Patch drift also occurred. The final accepted branch succeeded only after each failure was treated as a diagnostic signal instead of continuing blind patch stacking.
 
-## Current docs-only milestone
+### Test-First Quality Gate Development Plan v1
 
-Test-First Quality Gate Development Plan v1 is authorized as docs/project-memory/process canonization only.
+Accepted and merged.
 
-No app/runtime behavior changes are authorized in this milestone.
+- Feature commit: `227990e`
+- Main merge commit: `37d210f`
+- Snapshot: `fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip`
+- Accepted scope: canonized diagnostic-first / test-first quality gate process.
+- Preserved: no app/runtime behavior changes, no service changes, no provider changes, no workout/nutrition/catalog behavior changes.
 
-This milestone updates project memory, bootstrap/onboarding docs, workflow docs, and handoff docs so future agents can discover the process from the repo rather than relying on chat memory.
+This milestone made the current quality doctrine repo-discoverable instead of chat-only.
+
+## Current implementation milestone
+
+Exercise Eligibility Matrix v1 is in progress on `feature/exercise-eligibility-matrix-v1`.
+
+Current accepted implementation checkpoint:
+
+- Feature checkpoint commit: `05d319e`
+- Checkpoint snapshot: `fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip`
+- Diagnostic-first process: completed.
+- Failing/coverage quality gate: completed; the new test first failed because `services.exercise_eligibility_matrix_service` did not exist.
+- Narrow implementation: completed; `services/exercise_eligibility_matrix_service.py` now provides explicit generator-facing eligibility profiles.
+- Diagnostic tool: added as `tools/exercise_eligibility_matrix_diagnostic.py`.
+- Focused test file: added as `tests/test_exercise_eligibility_matrix_v1.py`.
+- Linux checkpoint validation: green.
+- Optional diagnostic-service refactor: attempted, patch did not apply, and was deliberately stopped/deferred rather than stacked blindly.
+
+Diagnostic baseline from current branch:
+
+- total active catalog exercises: 240
+- equipment-compatible exercises: 237
+- generator-eligible exercises classified by matrix/diagnostic: 232
+- exercises selected in 10-variation deterministic sweep: 54
+- largest exclusion reason: `not_supported_by_current_generator_candidate_pools` (170)
+- weak movement families called out by diagnostic: arms_biceps, arms_triceps, mobility
+
+V1 acceptance intent:
+
+- The matrix does not force all catalog exercises into workouts.
+- The matrix makes generator-facing eligibility explicit.
+- Active/equipment-compatible exercises can be classified as eligible or excluded with reason.
+- Known primary, specialized/accessory, core, carry, conditioning, and equipment-excluded examples are covered.
+- Existing workout generation behavior remains stable.
 
 ## Complex Backend Quality Gate
 
@@ -116,16 +157,17 @@ Process: diagnostic first, failing/coverage test, narrow patch, regression valid
 - No worker/queue/scheduler/polling is accepted unless explicitly scoped.
 - No broad rewrite is authorized by process docs.
 - Codex is not used by default.
+- Exercise Eligibility Matrix v1 does not authorize rolling exposure, persistent exercise exposure tracking, nutrition, recovery, provider work, or Streamlit UI rewrites.
 
 ## Current next-roadmap candidates
 
-After this docs-only process milestone is accepted, likely roadmap candidates are:
+After Exercise Eligibility Matrix v1 is accepted, likely roadmap candidates are:
 
-- Exercise Eligibility Matrix v1.
+- Nutrition Deterministic Food Suggestions v1.
+- Nutrition AI Meal/Snack Candidate Contract v1.
 - Catalog Reachability Audit v2.
 - Workout Preview Rolling Exposure Rotation v2.
-- Provider/process planning milestone as needed.
-- Nutrition deterministic suggestions / nutrition AI candidate contracts later.
+- Recovery engine improvements later.
 
 ## Historical continuity reminders
 

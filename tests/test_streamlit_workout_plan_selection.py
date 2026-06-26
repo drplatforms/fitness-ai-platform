@@ -24,7 +24,7 @@ def test_workout_plan_step_uses_stable_preview_cache() -> None:
     assert "get_stable_workout_plan_preview(" in source
     assert "workout_plan_preview_by_user" in source
     assert "Show different exercises" in plan_source
-    assert "force_preview_refresh" in plan_source
+    assert "on_click=bump_workout_preview_variation_index" in plan_source
     assert "preview_variation_index" in source
     assert "workout_plan_preview_variation_index_by_user" in source
 
@@ -65,13 +65,24 @@ def test_select_success_moves_to_active_workout_without_clearing_preview_cache()
     assert "Opening the active workout" in success_branch
 
 
-def test_preview_refresh_is_disabled_after_workout_selection() -> None:
+def test_preview_refresh_is_unselected_preview_only() -> None:
     plan_source = _function_source("render_workout_plan_section")
+    selected_controls_source = _function_source("render_selected_workout_plan_controls")
+    selected_branch = plan_source.split("if active_plan_response:", maxsplit=1)[1]
+    selected_branch = selected_branch.split("else:", maxsplit=1)[0]
+    preview_branch = plan_source.split("else:", maxsplit=1)[1]
 
-    assert "has_selected_workout" in plan_source
-    assert "disabled=has_selected_workout" in plan_source
-    assert "Selected and active " in plan_source
-    assert "workouts stay unchanged." in plan_source
+    assert "Show different exercises" not in selected_branch
+    assert "get_stable_workout_plan_preview(" not in selected_branch
+    assert (
+        "render_selected_workout_plan_controls(active_plan_response)" in selected_branch
+    )
+    assert "Show different exercises" in preview_branch
+    assert "Selected and active " in preview_branch
+    assert "workouts stay unchanged." in preview_branch
+    assert (
+        "render_active_plan_summary(active_plan_response)" in selected_controls_source
+    )
 
 
 def test_preview_cache_key_includes_variation_index() -> None:

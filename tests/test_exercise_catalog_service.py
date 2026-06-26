@@ -454,7 +454,7 @@ def test_recovery_limited_accessory_slot_avoids_aggressive_finisher_language(
         + [exercise.notes for exercise in approved.exercises]
     ).lower()
 
-    assert len(approved.exercises) == 4
+    assert 4 <= len(approved.exercises) <= 5
     assert all(exercise.rir_min >= 2 for exercise in approved.exercises)
     assert "max effort" not in rendered
     assert "to failure" not in rendered

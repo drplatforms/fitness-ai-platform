@@ -5,17 +5,17 @@
     "platform_repo": "fitness-ai-platform"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Narrative Feedback-Driven Copy Rule Hardening v1",
-    "latest_final_status": "DAILY_NARRATIVE_FEEDBACK_DRIVEN_COPY_RULE_HARDENING_V1_ACCEPTED",
-    "latest_accepted_commit": "07ce8dc",
-    "latest_main_merge_commit": "updated_main_after_copy_hardening_closeout",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-25_07ce8dc_revise-daily-narrative-copy-hardening.zip"
+    "latest_accepted_milestone": "Workout Exercise Variety Rotation v1",
+    "latest_final_status": "WORKOUT_EXERCISE_VARIETY_ROTATION_V1_ACCEPTED",
+    "latest_accepted_commit": "240e8c0",
+    "latest_main_merge_commit": "current_main_after_workout_variety_closeout",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-25_240e8c0_improve-workout-exercise-variety-rotation.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Workout Exercise Variety Rotation v1",
-    "current_authorized_branch": "feature/workout-exercise-variety-rotation-v1",
-    "current_authorized_status": "IMPLEMENTED / READY FOR VALIDATION",
-    "recommended_next_milestone_after_acceptance": "Workout Preview Refresh Replacement UX v1 or Workout Exercise Exposure Tracking v1",
+    "current_authorized_milestone": "Workout Generation Sizing + Persistence Stabilization v1",
+    "current_authorized_branch": "feature/workout-generation-sizing-persistence-stabilization-v1",
+    "current_authorized_status": "AUTHORIZED FOR CLEAN IMPLEMENTATION",
+    "recommended_next_milestone_after_acceptance": "Exercise Catalog Utilization / Specialized Movement Coverage v1 or Streamlit Workout Save/Selection Latency Investigation v2",
     "codex": "DO NOT USE BY DEFAULT",
     "delivery_flow": "downloadable patch -> preflight -> apply patch -> validate -> stage -> commit -> push -> Linux pull/smoke -> feature snapshot -> Architecture handoff"
   },
@@ -44,6 +44,8 @@
     "workout_exercise_variety_rotation": true,
     "workout_preview_explicit_refresh_only": true,
     "selected_workout_frozen_after_selection": true,
-    "active_workout_preserved": true
+    "active_workout_preserved": true,
+    "workout_generation_sizing_persistence_stabilization": true,
+    "paused_catalog_utilization_branch_checkpoint_only": true
   }
 }

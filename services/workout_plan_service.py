@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import time
 from collections.abc import Callable
 from dataclasses import asdict
@@ -273,6 +274,13 @@ def _text_blob(plan: CandidateWorkoutPlan) -> str:
     ).lower()
 
 
+def _internal_debug_text_blob(plan: CandidateWorkoutPlan) -> str:
+    text = _text_blob(plan)
+    return re.sub(
+        r"\b(?:cable\s+)?(?:internal|external)\s+rotation\b", "rotation", text
+    )
+
+
 def _normalize_preview_variation_index(value: int | None) -> int:
     if value is None:
         return 0
@@ -292,11 +300,16 @@ def build_workout_context(
     coaching_decision = build_coaching_decision(health_state)
     training_constraints = build_training_constraints(health_state, coaching_decision)
     workout_constraints = build_workout_constraints(health_state)
+    normalized_preview_variation_index = _normalize_preview_variation_index(
+        preview_variation_index
+    )
     resolved_count = resolve_workout_exercise_count(
         requested_size=workout_size_preference,
         requested_target_count=requested_target_count,
         scenario=coaching_decision.scenario,
         confidence=coaching_decision.confidence,
+        user_id=health_state.user_id,
+        preview_variation_index=normalized_preview_variation_index,
     )
 
     return WorkoutContext(
@@ -322,9 +335,7 @@ def build_workout_context(
         final_target_exercise_count=resolved_count.final_count,
         exercise_count_reason=resolved_count.clamp_reason,
         exercise_count_user_reason=resolved_count.user_safe_reason,
-        preview_variation_index=_normalize_preview_variation_index(
-            preview_variation_index
-        ),
+        preview_variation_index=normalized_preview_variation_index,
     )
 
 
@@ -1528,17 +1539,24 @@ def _finalize_candidate_workout_plan(
     plan: CandidateWorkoutPlan,
 ) -> CandidateWorkoutPlan:
     target_count = min(context.final_target_exercise_count, MAX_WORKOUT_EXERCISE_COUNT)
-    if len(plan.exercises) >= target_count:
+    exercises = list(plan.exercises)
+
+    if len(exercises) > target_count:
+        plan.exercises = exercises[:target_count]
         plan.duration_minutes = _duration_for_exercise_count(
             plan.duration_minutes,
             len(plan.exercises),
         )
         return plan
 
-    existing_names = {
-        _normalize_exercise_name(exercise.name) for exercise in plan.exercises
-    }
-    exercises = list(plan.exercises)
+    if len(exercises) == target_count:
+        plan.duration_minutes = _duration_for_exercise_count(
+            plan.duration_minutes,
+            len(exercises),
+        )
+        return plan
+
+    existing_names = {_normalize_exercise_name(exercise.name) for exercise in exercises}
     slot_index = 0
     while (
         len(exercises) < target_count
@@ -1850,9 +1868,10 @@ def validate_candidate_workout_plan(
         violations.extend(_catalog_validation_violations(exercise, context))
 
     text = _text_blob(candidate)
+    debug_text = _internal_debug_text_blob(candidate)
 
     for term in _INTERNAL_DEBUG_TERMS:
-        if term in text:
+        if term in debug_text:
             violations.append("Workout plan contains internal/debug language.")
             break
 

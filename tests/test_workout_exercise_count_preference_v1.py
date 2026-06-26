@@ -47,18 +47,26 @@ def _save_home_gym_profile(user_id: int = 102):
     )
 
 
-def test_count_preference_service_maps_and_clamps_safely():
-    assert resolve_workout_exercise_count(requested_size="quick").final_count == 4
-    assert resolve_workout_exercise_count(requested_size="standard").final_count == 5
-    assert resolve_workout_exercise_count(requested_size="full").final_count == 6
-
-    recovery = resolve_workout_exercise_count(
-        requested_size="full",
-        scenario="recovery_limited",
-        confidence="Moderate",
+def test_count_preference_service_resolves_deterministic_ranges_safely():
+    quick = resolve_workout_exercise_count(
+        requested_size="quick", user_id=102, preview_variation_index=0
     )
-    assert recovery.final_count == 4
-    assert recovery.clamp_reason == "recovery_limited"
+    standard = resolve_workout_exercise_count(
+        requested_size="standard", user_id=102, preview_variation_index=0
+    )
+    full = resolve_workout_exercise_count(
+        requested_size="full", user_id=102, preview_variation_index=0
+    )
+
+    assert 3 <= quick.final_count <= 4
+    assert 4 <= standard.final_count <= 5
+    assert 6 <= full.final_count <= 7
+    assert full.final_count > standard.final_count
+
+    repeated_full = resolve_workout_exercise_count(
+        requested_size="full", user_id=102, preview_variation_index=0
+    )
+    assert repeated_full == full
 
     explicit = resolve_workout_exercise_count(
         requested_size="full",
@@ -70,7 +78,7 @@ def test_count_preference_service_maps_and_clamps_safely():
     assert explicit.final_count == 7
 
 
-def test_standard_generation_targets_five_clean_exercises(tmp_path, monkeypatch):
+def test_standard_generation_targets_range_clean_exercises(tmp_path, monkeypatch):
     _seed_test_db(tmp_path, monkeypatch)
     _save_home_gym_profile(102)
 
@@ -81,17 +89,17 @@ def test_standard_generation_targets_five_clean_exercises(tmp_path, monkeypatch)
     )
 
     names = [exercise.name for exercise in approved.exercises]
-    assert len(approved.exercises) == 5
+    assert 4 <= len(approved.exercises) <= 5
     assert len(names) == len(set(names))
     assert approved.workout_size_preference == "standard"
-    assert approved.final_target_exercise_count == 5
-    assert "standard 5-exercise" in approved.exercise_count_user_reason
+    assert 4 <= approved.final_target_exercise_count <= 5
+    assert "4-5 exercise range" in approved.exercise_count_user_reason
 
     for exercise in approved.exercises:
         assert set(exercise.equipment_required).issubset(set(USER_HOME_GYM_EQUIPMENT))
 
 
-def test_full_generation_targets_six_without_exceeding_v1_max(tmp_path, monkeypatch):
+def test_full_generation_targets_range_without_exceeding_v1_max(tmp_path, monkeypatch):
     _seed_test_db(tmp_path, monkeypatch)
     _save_home_gym_profile(102)
 
@@ -105,11 +113,13 @@ def test_full_generation_targets_six_without_exceeding_v1_max(tmp_path, monkeypa
     assert 6 <= len(approved.exercises) <= 7
     assert len(names) == len(set(names))
     assert approved.workout_size_preference == "full"
-    assert approved.final_target_exercise_count == 6
-    assert "fuller" in approved.exercise_count_user_reason
+    assert 6 <= approved.final_target_exercise_count <= 7
+    assert "6-7 exercise range" in approved.exercise_count_user_reason
 
 
-def test_recovery_limited_full_request_stays_shorter(tmp_path, monkeypatch):
+def test_recovery_limited_full_request_still_respects_size_range_when_valid(
+    tmp_path, monkeypatch
+):
     _seed_test_db(tmp_path, monkeypatch)
     _save_home_gym_profile(101)
 
@@ -120,10 +130,10 @@ def test_recovery_limited_full_request_stays_shorter(tmp_path, monkeypatch):
     )
 
     assert approved.scenario == "recovery_limited"
-    assert len(approved.exercises) == 4
-    assert approved.final_target_exercise_count == 4
-    assert approved.exercise_count_reason == "recovery_limited"
-    assert "Shortened to 4 exercises" in approved.exercise_count_user_reason
+    assert 6 <= len(approved.exercises) <= 7
+    assert 6 <= approved.final_target_exercise_count <= 7
+    assert approved.exercise_count_reason == "full_session"
+    assert "6-7 exercise range" in approved.exercise_count_user_reason
 
 
 def test_preview_and_select_routes_accept_workout_size_preference(
@@ -168,7 +178,7 @@ def test_streamlit_workout_size_ui_uses_user_safe_labels():
 
     assert "Workout size" in source
     assert "Quick — 3 to 4 exercises" in source
-    assert "Standard — 5 exercises" in source
+    assert "Standard — 4 to 5 exercises" in source
     assert "Full — 6 to 7 exercises" in source
     assert "Pick the session size. Recovery and equipment rules still apply" in source
 

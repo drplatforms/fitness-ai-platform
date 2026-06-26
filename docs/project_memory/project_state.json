@@ -6,28 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Exercise Eligibility Matrix v1",
-    "latest_final_status": "EXERCISE_ELIGIBILITY_MATRIX_V1_ACCEPTED",
-    "latest_accepted_commit": "851a7ca",
-    "latest_main_merge_commit": "f469c89",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_851a7ca_update-exercise-eligibility-matrix-project-memory.zip",
-    "previous_accepted_milestone": "Test-First Quality Gate Development Plan v1",
-    "previous_feature_commit": "227990e",
-    "previous_main_merge_commit": "37d210f",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip",
-    "previous_previous_accepted_milestone": "Exercise Catalog Utilization / Specialized Movement Coverage v1",
-    "previous_previous_feature_commit": "1d44b3d",
-    "previous_previous_main_merge_commit": "b343a47",
-    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip"
+    "latest_accepted_milestone": "Nutrition Catalog + Serving Foundation Planning v1",
+    "latest_final_status": "NUTRITION_CATALOG_SERVING_FOUNDATION_PLANNING_V1_ACCEPTED",
+    "latest_accepted_commit": "8c72f23",
+    "latest_main_merge_commit": "94dc8fd",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_8c72f23_plan-nutrition-catalog-and-serving-foundation.zip",
+    "previous_accepted_milestone": "Exercise Eligibility Matrix v1",
+    "previous_feature_commit": "851a7ca",
+    "previous_main_merge_commit": "f469c89",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_851a7ca_update-exercise-eligibility-matrix-project-memory.zip",
+    "previous_previous_accepted_milestone": "Test-First Quality Gate Development Plan v1",
+    "previous_previous_feature_commit": "227990e",
+    "previous_previous_main_merge_commit": "37d210f",
+    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_227990e_clarify-continuity-brief-metadata.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Nutrition Catalog + Serving Foundation Planning v1",
-    "current_authorized_status": "AUTHORIZED / PLANNING REQUEST / DOCS ONLY",
-    "current_authorized_branch": "feature/nutrition-catalog-serving-foundation-planning-v1",
-    "source_main_commit": "f469c89",
-    "recommended_next_milestone_after_acceptance": "Nutrition Catalog Diagnostic v1",
-    "process_doctrine": "Bite by bite, just bigger bites. Bigger milestone is okay. Bigger single patch is not okay.",
-    "delivery_flow": "downloadable docs-only patch -> preflight -> apply patch -> docs validation -> stage explicit files -> commit -> push -> feature snapshot -> Architecture handoff",
+    "current_authorized_milestone": "Nutrition Catalog Diagnostic v1",
+    "current_authorized_status": "IMPLEMENTED / DIAGNOSTIC COMPLETE / PROJECT MEMORY UPDATE IN PROGRESS",
+    "current_authorized_branch": "feature/nutrition-catalog-diagnostic-v1",
+    "source_main_commit": "94dc8fd",
+    "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Data Model v1",
+    "alternative_next_milestone": "Nutrition Canonical Food Model Review v1",
+    "process_doctrine": "Diagnostic first, focused tests, read-only data audit, project memory closeout, Linux validation, Architecture acceptance before merge.",
+    "delivery_flow": "diagnostic patch -> focused validation -> diagnostic output -> project memory update -> full validation -> push -> Linux pull/diagnostic validation -> feature snapshot -> Architecture handoff",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -97,7 +98,21 @@
     "no_recovery_changes_for_current_planning_milestone": true,
     "two_layer_food_catalog_strategy": true,
     "serving_unit_confidence_range_strategy": true,
-    "backend_owns_serving_conversions": true
+    "backend_owns_serving_conversions": true,
+    "nutrition_catalog_diagnostic_v1": true,
+    "nutrition_catalog_diagnostic_read_only": true,
+    "no_catalog_expansion_for_current_diagnostic_milestone": true,
+    "no_serving_unit_implementation_for_current_diagnostic_milestone": true,
+    "no_usda_source_import_for_current_diagnostic_milestone": true,
+    "no_raw_source_rows_for_current_diagnostic_milestone": true,
+    "no_food_logging_changes_for_current_diagnostic_milestone": true,
+    "no_nutrition_calculation_changes_for_current_diagnostic_milestone": true,
+    "no_provider_changes_for_current_diagnostic_milestone": true,
+    "no_streamlit_changes_for_current_diagnostic_milestone": true,
+    "no_workout_changes_for_current_diagnostic_milestone": true,
+    "no_recovery_changes_for_current_diagnostic_milestone": true,
+    "serving_unit_model_missing": true,
+    "nutrition_actuals_confidence_missing": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -292,5 +307,109 @@
       "database migrations",
       "dependency changes"
     ]
+  },
+  "nutrition_catalog_diagnostic_v1": {
+    "status": "implemented / diagnostic complete / pending Architecture acceptance",
+    "source_main_commit": "94dc8fd",
+    "branch": "feature/nutrition-catalog-diagnostic-v1",
+    "tools": [
+      "tools/nutrition_catalog_diagnostic.py"
+    ],
+    "services": [
+      "services/nutrition_catalog_diagnostic_service.py"
+    ],
+    "tests": [
+      "tests/test_nutrition_catalog_diagnostic_v1.py"
+    ],
+    "catalog_summary": {
+      "total_legacy_food_records": 3475,
+      "total_canonical_food_records": 222,
+      "active_canonical_food_records": 222,
+      "inactive_canonical_food_records": 0,
+      "raw_source_food_records": 0,
+      "canonical_foods_safe_for_logging": 222,
+      "canonical_foods_safe_for_suggestions": 222,
+      "alias_rows": 555,
+      "foods_with_aliases": 222,
+      "foods_without_aliases": 0,
+      "known_searchable_values": 682
+    },
+    "nutrient_completeness": {
+      "complete_core_macro_foods": 222,
+      "missing_one_or_more_core_macro_foods": 0,
+      "complete_core_macro_percent": 100.0,
+      "optional_nutrient_counts": {
+        "fiber": 0,
+        "sugar": 0,
+        "sodium": 0
+      },
+      "macro_calorie_warning_examples": [
+        "Asparagus",
+        "Mushrooms",
+        "Spinach"
+      ]
+    },
+    "serving_unit_readiness": {
+      "grams_supported_for_logging": true,
+      "canonical_default_grams_supported": true,
+      "serving_unit_model_or_table_present": false,
+      "household_units_supported": false,
+      "foods_with_no_serving_unit_metadata": 222,
+      "serving_units_representable_without_schema_change": false
+    },
+    "logging_assumptions": {
+      "uses_food_id_linkage": true,
+      "uses_grams": true,
+      "uses_quantity_and_unit": false,
+      "uses_servings": false,
+      "uses_meal_grouping": false,
+      "uses_meal_type": false,
+      "macros_persisted_directly_on_logs": false,
+      "macros_recalculated_from_food_nutrients": true,
+      "current_summary": "Food logs are grams-based and linked to legacy foods. Canonical logging uses write-through into legacy food/nutrient tables."
+    },
+    "actuals_targets_dependencies": {
+      "daily_actuals_service": "services.nutrition_service.get_daily_nutrition",
+      "target_vs_actual_service": "services.nutrition_target_vs_actual_service.build_target_vs_actual_nutrition_summary",
+      "depends_on_tables": [
+        "food_entries",
+        "food_nutrients",
+        "nutrients"
+      ],
+      "actuals_assume_grams": true,
+      "macro_gaps_exist": true,
+      "confidence_represented": false
+    },
+    "high_value_staple_coverage": {
+      "present": 43,
+      "missing": 1,
+      "missing_examples": [
+        "mixed nuts"
+      ],
+      "present_but_incomplete": 0
+    },
+    "food_suggestion_readiness": {
+      "readiness": "limited",
+      "deterministic_suggestion_service_present": true,
+      "serving_amounts_ready": false,
+      "confidence_source_present": false,
+      "blockers": [
+        "serving_unit_model_missing",
+        "actuals_confidence_missing",
+        "source_confidence_not_catalog_level",
+        "high_value_staple_gaps_exist"
+      ]
+    },
+    "ai_provider_grounding_readiness": {
+      "readiness": "limited_until_serving_units_and_confidence_exist",
+      "can_quote_actuals": true,
+      "can_quote_targets": true,
+      "can_quote_gaps": true,
+      "can_quote_canonical_food_names": true,
+      "can_use_serving_units_safely": false,
+      "risk_of_invented_foods_or_macros": "medium_until_serving_and_catalog_contracts_are_hardened"
+    },
+    "recommended_next_milestone": "Nutrition Serving Unit Data Model v1",
+    "alternative_next_milestone": "Nutrition Canonical Food Model Review v1"
   }
 }

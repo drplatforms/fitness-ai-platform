@@ -1,59 +1,74 @@
 # Open Questions
 
-## Nutrition Catalog + Serving Foundation Planning v1
+## Nutrition Catalog Diagnostic v1 results
 
-Current planning questions for Architecture:
+Diagnostic answered the first catalog baseline questions.
 
-1. Should the next implementation milestone be Nutrition Catalog Diagnostic v1?
+Resolved findings:
+
+- The app has both legacy food tables and canonical food tables.
+- Legacy food records: 3,475.
+- Canonical food records: 222.
+- Active canonical foods: 222.
+- Raw/source food records: 0.
+- Serving-unit tables: none.
+- Alias rows: 555.
+- Foods with aliases: 222.
+- Foods without aliases: 0.
+- Canonical core macro completeness: 222 / 222.
+- Optional nutrient coverage for fiber/sugar/sodium: 0 in current diagnostic.
+- High-value staple coverage: 43 present, 1 missing.
+- Missing high-value staple: mixed nuts.
+- Logs are grams-based, linked to food id, and do not support quantity/unit or servings.
+- Actuals assume grams.
+- Confidence is not represented.
+- Deterministic food suggestions exist but are limited by missing serving units and confidence.
+- Provider grounding is limited until serving units and confidence are added.
+
+## Architecture decision needed after diagnostic
+
+1. Should the next implementation milestone be Nutrition Serving Unit Data Model v1?
+
+Recommended answer: yes, unless Architecture wants a smaller Nutrition Canonical Food Model Review v1 first.
+
+2. Should Nutrition Canonical Food Model Review v1 happen before serving-unit schema work?
+
+Recommended answer: optional. The current diagnostic shows canonical foods, aliases, and nutrients are already usable, but canonical logging still writes through legacy tables and source-confidence semantics are not catalog-level yet.
+
+3. Should curated catalog expansion happen next?
+
+Recommended answer: not yet. Catalog coverage is better than expected. Serving-unit/confidence infrastructure is the bigger blocker.
+
+4. Should ServingUnit include default grams, min/max range, confidence, source, and source note?
 
 Recommended answer: yes.
 
-2. Should curated canonical food expansion come before serving units?
+5. Should serving-unit estimates be allowed in actuals before confidence exists?
 
-Recommended answer: yes, but serving-unit modeling should be designed before expansion so the catalog schema does not need rework.
+Recommended answer: no.
 
-3. Should raw USDA/source import be implemented before curated expansion?
+6. Should provider/AI use serving units before backend serving units are approved?
 
-Recommended answer: no, not as the first implementation. Use curated expansion first, then raw/staging import later.
+Recommended answer: no.
 
-4. Should serving sizes be exact numbers or ranges?
+7. Should missing `mixed nuts` be added in the next catalog expansion?
 
-Recommended answer: ranges plus default grams and confidence.
+Recommended answer: yes, but it does not need to block serving-unit model work.
 
-5. Should serving-unit logging be allowed immediately in the UI?
+8. Should optional nutrients fiber/sugar/sodium be included in the next model review?
 
-Recommended answer: not necessarily. Backend contract first, UI later.
+Recommended answer: yes, decide whether they are required for v1 suggestions or deferred.
 
-6. Should AI/provider participate in serving conversion?
+## Remaining nutrition catalog and serving follow-up questions
 
-Recommended answer: no. Backend owns conversions.
-
-7. Should AI/provider participate in meal/snack generation later?
-
-Recommended answer: yes, but only from backend-approved foods, servings, actuals, targets, and gaps.
-
-8. Should nutrition suggestions come before AI meal generation?
-
-Recommended answer: yes. Deterministic food suggestions should come before AI-generated meal/snack candidates.
-
-9. Should recovery be tackled before nutrition?
-
-Recommended answer: no. Recovery is weaker, but nutrition is the better next learning/personal-use priority.
-
-10. Should workouts continue before nutrition?
-
-Recommended answer: no, unless a blocking workout regression appears. Workout foundation is good enough for now.
-
-## Nutrition catalog and serving follow-up questions
-
-- What is the current shape of food catalog tables/services?
-- How many current foods are true canonical foods versus seed/demo foods?
-- Which fields currently support aliases, source metadata, active flags, and per-100g nutrients?
-- Where should serving units live: schema table, JSON metadata, or service-owned mapping first?
-- What confidence enum should be used across logging, suggestions, and provider contracts?
-- Which 150-300 foods should be included in the first curated expansion?
-- Which 50-100 foods need serving units first?
-- Should user-specific serving overrides be allowed in v1 or deferred?
+- What should the ServingUnit table/model be named?
+- Should serving units be global per canonical food or user-overridable from v1?
+- Which confidence enum should be shared by logging, suggestions, and provider contracts?
+- Should confidence live on serving units, logged actuals, or both?
+- Should raw/source staging remain empty until after serving units, or should it be populated before expansion v1?
+- Should optional nutrients fiber/sugar/sodium be added to canonical food nutrients before suggestions?
+- Should meal type and meal grouping be added before serving-based logging?
+- Should canonical logging stop writing through legacy food tables, or is write-through acceptable for now?
 
 ## Exercise Eligibility Matrix v1 follow-up
 
@@ -78,39 +93,12 @@ Open follow-up questions:
 
 ## Rolling multi-refresh novelty
 
-Workout Preview Full-Slot Rotation v1 accepted immediate previous-preview anti-repeat only.
+- Should rolling multi-refresh novelty be session-only or persisted?
+- Should exposure tracking be global, per user, or per generated-workout context?
+- Should movement-family exposure count separately from exact exercise exposure?
 
-Rolling multi-refresh novelty is deferred to Workout Preview Rolling Exposure Rotation v2.
+## Provider strategy
 
-Open question: should long-window exercise exposure tracking be session-only, persisted, or derived from selected workout history?
-
-## Provider strategy roadmap
-
-Provider strategy remains pending.
-
-Possible future planning should compare local-first `qwen` / `direct_ollama` paths with higher-tier OpenAI/provider adapter options, but no provider strategy implementation is authorized by the current nutrition planning milestone.
-
-Provider may propose. Backend validates. User sees only approved output.
-
-## Complex milestone process tuning
-
-The current process doctrine is now: bite by bite, just bigger bites.
-
-Open questions for future process/tooling work:
-
-- Should dev assistant generate complexity scores for proposed milestones?
-- Should dev assistant generate expected file-change budgets automatically?
-- Should stop-condition handoffs get a repo-owned template?
-- Should feature branch validation check whether the original smoke failure has a corresponding regression or diagnostic test?
-
-## Daily Narrative feedback hardening
-
-The first feedback-driven deterministic copy hardening pass is implemented. A future milestone may decide whether to continue provider-facing examples and validation prompt guidance, or pause Daily Narrative while workout/catalog/nutrition systems continue maturing.
-
-## Feedback storage lifecycle
-
-The v1 feedback store is local JSONL and should not be committed by default. A future milestone may decide whether selected approved examples should be manually promoted from runtime feedback into project-memory docs. Raw runtime JSONL should not be committed.
-
-## Model selection
-
-Do not treat bad copy or strict-schema failures as a model-size issue by default. The current priority is better approved context, stricter contracts, deterministic fallback, diagnostics, and well-scoped provider experiments.
+- Should nutrition provider work remain `direct_ollama` only until deterministic food suggestions and serving units are safe?
+- Should qwen2.5:3b remain the only approved local nutrition bridge model until an explicit model evaluation milestone?
+- Should qwen3/qwen3:32b remain research-only until provider runtime, latency, and validation gates are stronger?

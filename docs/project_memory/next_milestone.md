@@ -1,219 +1,144 @@
 # Next Milestone
 
-Current milestone in progress: Nutrition Catalog + Serving Foundation Planning v1.
+Current milestone in progress: Nutrition Catalog Diagnostic v1.
 
-Recommended branch: `feature/nutrition-catalog-serving-foundation-planning-v1`.
+Recommended branch: `feature/nutrition-catalog-diagnostic-v1`.
 
 Source branch: `main`.
 
-Required source main commit: `f469c89`.
+Required source main commit: `94dc8fd`.
 
-Milestone type: planning / architecture / project memory only.
+Milestone type: diagnostic / data audit / project memory update.
 
-## Planning objective
+## Diagnostic objective
 
-Define the nutrition backend foundation sequence before implementation begins.
+Measure and report the current nutrition catalog and food logging foundation before any catalog expansion, serving-unit work, household measure conversion, logging changes, nutrition calculation changes, provider behavior, or UI/runtime changes.
 
-The planning milestone should document:
+Nutrition Catalog Diagnostic v1 should answer:
 
-- the preferred nutrition foundation roadmap;
-- two-layer food catalog strategy;
-- serving-unit / household-measure strategy;
-- confidence/range model for estimated servings;
-- nutrition actuals confidence strategy;
-- deterministic food suggestion future contract;
-- AI meal/snack candidate future contract;
-- strict backend/provider boundary;
-- the next implementation milestone.
-
-No app/runtime behavior should change.
-
-## Recommended planning decisions
-
-### 1. Next implementation milestone
-
-Recommended next implementation milestone: Nutrition Catalog Diagnostic v1.
-
-Purpose: measure and report the current nutrition catalog state before expansion.
-
-Diagnostic should answer:
-
-- how many canonical foods exist;
-- how many active foods exist;
+- how many canonical and legacy foods exist;
+- how many active canonical foods exist;
 - nutrient completeness;
-- alias coverage;
-- serving-unit coverage;
-- foods with no serving units;
-- foods with incomplete nutrient data;
-- duplicate or near-duplicate foods;
-- high-value staples missing;
+- alias/search coverage;
+- serving-unit support and gaps;
+- duplicate or near-duplicate risks;
+- high-value staple coverage;
 - current logging assumptions;
-- current target/actuals calculation dependencies;
-- whether food suggestions can safely use current data.
+- current actuals/targets dependencies;
+- deterministic food suggestion readiness;
+- AI/provider grounding readiness.
 
-Expected output: diagnostic tool/report and project memory update. No large catalog expansion yet.
+## Diagnostic findings captured
 
-### 2. Two-layer food catalog
+Current diagnostic output found:
 
-Preferred model:
+- 3,475 total legacy food records.
+- 222 total canonical food records.
+- 222 active canonical food records.
+- 0 inactive canonical food records.
+- 0 raw/source food records.
+- 222 canonical foods safe for logging and suggestions.
+- 555 alias rows.
+- 222 foods with aliases and 0 foods without aliases.
+- 682 known searchable values.
+- 222 / 222 canonical foods with complete core macro data.
+- 0 foods missing one or more core macro fields.
+- 0 fiber/sugar/sodium optional nutrient coverage in the current diagnostic.
+- ServingUnit model/table is not present.
+- Household units are not supported.
+- 222 foods have gram default units/default grams.
+- 222 foods have no serving-unit metadata.
+- 43 high-value staple groups are present.
+- 1 high-value staple group is missing: mixed nuts.
+- Logs are grams-based and linked to food ids.
+- Logs do not support quantity/unit, servings, free-text names, meal grouping, or meal type.
+- Macros are recalculated from food/nutrient tables rather than persisted directly on logs.
+- Actuals assume grams.
+- Macro gaps exist.
+- Confidence is not represented.
+- Deterministic suggestion service exists but readiness is limited.
+- Provider grounding is limited until serving units and confidence exist.
 
-Layer 1: raw / source food data.
+## Recommended next milestone after acceptance
 
-- large imported food datasets;
-- USDA or other source records;
-- not directly user-facing;
-- useful for search, enrichment, mapping, future expansion.
+Recommended: Nutrition Serving Unit Data Model v1.
 
-Layer 2: canonical app food catalog.
+Reason:
 
-- curated food names;
-- aliases;
-- nutrients per 100g;
-- approved serving units;
-- confidence/source metadata;
-- safe for logging;
-- safe for deterministic suggestions;
-- safe for provider contracts.
+- The canonical catalog is not empty or broken; it already has 222 active canonical foods, aliases, complete core macros, and broad staple coverage.
+- The major blocker is that household serving units, confidence/range metadata, and estimated serving conversions do not exist.
+- Food logs currently store grams only and cannot safely represent serving-unit estimates without model/schema work.
 
-Do not expose a huge raw import directly to normal logging, suggestions, or AI/provider contracts.
+Architecture may choose Nutrition Canonical Food Model Review v1 first if it wants a smaller design gate around canonical/legacy write-through, raw/source staging, and source-confidence semantics.
 
-### 3. Serving unit model
+## Strict non-goals for Nutrition Catalog Diagnostic v1
 
-The backend should eventually support weighed grams and practical serving units.
+Do not add new foods.
 
-Possible model:
+Do not add 150-300 curated foods yet.
 
-CanonicalFood:
+Do not add serving units.
 
-- food_id
-- canonical_name
-- aliases
-- nutrients_per_100g
-- source
-- confidence
-- active
+Do not add household measure conversion.
 
-ServingUnit:
-
-- serving_unit_id
-- food_id
-- unit_name
-- unit_quantity
-- grams_default
-- grams_min
-- grams_max
-- confidence
-- source
-- source_note
-- user_override_allowed
-- active
-
-### 4. Confidence/range rule
-
-Use default grams, ranges, and confidence.
-
-Do not present household measures as exact.
-
-Example:
-
-`1/2 cup cooked white rice`
-
-- grams_default: 90g
-- grams_min: 80g
-- grams_max: 100g
-- confidence: medium
-
-### 5. Nutrition actuals confidence
-
-Potential confidence sources:
-
-- weighed_grams
-- package_label
-- serving_unit_estimate
-- user_saved_serving
-- copied_previous_meal
-- AI_candidate_user_confirmed
-- unknown_or_low_confidence
-
-This should allow coaching copy like “This is an estimate,” “Weighed grams would be more precise,” or “Good enough for today.”
-
-### 6. Deterministic food suggestions
-
-Future deterministic suggestions should use backend-approved actuals, targets, gaps, canonical foods, serving units, and confidence.
-
-Backend creates approved candidates. AI may later explain or assemble only those approved candidates.
-
-### 7. AI/provider boundary
-
-Provider input must include only approved facts:
-
-- canonical foods;
-- approved serving units;
-- approved actuals;
-- approved targets;
-- approved gaps;
-- confidence notes;
-- user constraints/preferences;
-- forbidden claims.
-
-Backend validation must reject invented food, serving unit, grams, macros, targets, unsupported claims, missing required fields, non-schema output, and unsafe recommendations.
-
-## Recommended full nutrition foundation roadmap
-
-1. Nutrition Catalog Diagnostic v1.
-2. Nutrition Canonical Food Model Review v1.
-3. Curated Food Catalog Expansion v1.
-4. Serving Unit Normalization / Household Measure Conversion v1.
-5. Nutrition Logging Backend Contract v1.
-6. Nutrition Actuals Confidence v1.
-7. Nutrition Deterministic Food Suggestions v1.
-8. Nutrition AI Meal/Snack Candidate Contract v1.
-
-## Strict non-goals for the current planning milestone
-
-Do not implement catalog expansion.
-
-Do not implement serving units.
-
-Do not import USDA/source data.
+Do not add grams_default / grams_min / grams_max schema yet.
 
 Do not modify food logging.
 
-Do not modify nutrition calculations.
+Do not modify macro calculations.
 
-Do not modify provider/Ollama behavior.
+Do not modify nutrition targets.
 
-Do not add AI meal generation.
+Do not modify nutrition reports.
 
-Do not modify Streamlit UI.
+Do not modify AI/provider behavior.
 
-Do not modify workout generation.
+Do not add qwen/direct_ollama nutrition generation.
 
-Do not modify recovery engine.
+Do not add OpenAI or any high-tier provider.
 
-Do not add migrations.
+Do not import USDA/source data.
 
-Do not add dependencies.
+Do not add raw/staging food rows.
 
-Do not commit snapshots, qa_artifacts, patch scripts, or local artifacts.
+Do not add database migrations unless Architecture explicitly pauses and approves.
+
+Do not touch workout generation.
+
+Do not touch recovery engine.
+
+Do not touch Streamlit UI unless only to avoid import/test failures.
+
+Do not commit snapshots, qa_artifacts, patch/apply scripts, or local runtime artifacts.
 
 Do not use `git add .`.
 
-## Required validation for this docs-only milestone
+## Validation for this diagnostic milestone
 
 ```powershell
 git diff --check
+pytest tests/test_nutrition_catalog_diagnostic_v1.py -q
+python tools/nutrition_catalog_diagnostic.py --output ..\nutrition_catalog_diagnostic_v1.json
 python tools/project_memory_check.py
 python tools/dev_assistant.py memory-check
 python tools/dev_assistant.py stale-doc-check
 python tools/dev_assistant.py continuity-brief
 pytest tests/test_project_memory_check.py -q
-scripts/dev_commit_check.ps1 -Mode docs-only
+scripts/dev_commit_check.ps1 -Mode code
 ```
 
-No browser smoke required.
+Compile touched Python files:
 
-No Linux runtime smoke required unless project policy chooses to pull docs milestones on Linux.
+```powershell
+python -m py_compile services/nutrition_catalog_diagnostic_service.py
+python -m py_compile tools/nutrition_catalog_diagnostic.py
+```
+
+Linux validation is recommended because the diagnostic inspects runtime data paths.
+
+Browser smoke is not required unless runtime/UI behavior changes.
+
+Expected runtime/UI behavior change: none.
 
 ## Historical project-memory requirements still present
 

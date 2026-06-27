@@ -1,158 +1,77 @@
-# Current State Update — Daily Coach Narrative Value-Aware Provider Comparison v1
+# Current State Update — Daily Coach Narrative Approved Value Quote Validation v1
 
 Current source of truth: `main`.
 
-Required source main commit: `e1f7bd3`.
+Required source main commit: `f13a898`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-Previous accepted nutrition/debug milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
+Previous milestone status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Current backend milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Current backend milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
-Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
+Branch: `feature/daily-coach-narrative-approved-value-quote-validation-v1`.
 
 Commit-check mode: code.
 
-QA class: CLASS 2 / CLASS 5 HYBRID — opt-in provider-backed user-facing narrative candidate path with parser/validator/fallback boundaries.
+QA class: CLASS 5 / PROVIDER SAFETY + CLAIM VALIDATION.
 
-Status: backend implementation complete / ready for Architecture review.
+Status: backend implementation in progress.
 
-Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
+Requested final status: `DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
-## Implemented provider-comparison path
+## Goal
 
-Added the first value-aware Daily Coach narrative provider-comparison path over `DailyCoachSynthesis`:
+Add an explicit approved value claim registry and quote/value validation layer for Daily Coach value-aware provider narratives.
 
-- normal endpoint: `GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
-- debug endpoint: `GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
+Provider output may quote deterministic backend values only when those values are:
 
-The normal endpoint returns approved narrative content only.
+- backend-approved;
+- public-safe;
+- present in `approved_value_claims`;
+- marked `display_allowed=true`;
+- declared by key in `quoted_values_used`;
+- validated before rendering.
 
-The debug endpoint returns the same approved content plus public-safe runtime metadata and provider-context summary for QA/developer inspection.
+## Implemented direction
 
-## Provider options
+The Daily Coach narrative candidate contract now includes `quoted_values_used`.
 
-Supported configured providers:
+The approved narrative contract also carries `quoted_values_used` for public-safe traceability.
 
-- `deterministic` — default;
-- `direct_ollama` — opt-in local/offline developer comparison provider;
-- `openai` — opt-in hosted comparison provider.
+The provider context includes `approved_value_claims` built from approved recovery, nutrition actuals, target/gap status, food suggestion, training/RIR, confidence, limitation, and recommendation context where available.
 
-Environment variables:
-
-- `DAILY_COACH_NARRATIVE_PROVIDER`
-- `DAILY_COACH_NARRATIVE_MODEL`
-- `DAILY_COACH_NARRATIVE_DIRECT_OLLAMA_TIMEOUT_SECONDS`
-- `DAILY_COACH_NARRATIVE_OPENAI_TIMEOUT_SECONDS`
-- `OLLAMA_BASE_URL`
-- `OPENAI_API_KEY`
-- `OPENAI_BASE_URL` optional.
-
-## Value-aware provider context
-
-Provider candidates receive a compact backend-approved value context.
-
-Allowed context may include:
-
-- approved recovery readiness;
-- approved fatigue risk;
-- approved sleep/energy/soreness summary;
-- approved nutrition actuals;
-- approved macro target/gap status;
-- approved food suggestion context;
-- approved workout guidance;
-- approved training/execution context;
-- approved limitations/confidence.
-
-Providers may quote values only when the values are present in the approved context.
-
-## Backend approval boundary
-
-The implemented pattern is:
-
-`DailyCoachSynthesis -> value-aware provider context -> CandidateDailyCoachValueNarrative -> strict parser -> backend validator -> ApprovedDailyCoachValueNarrative -> deterministic renderer -> deterministic fallback if provider fails`
-
-Provider output is never user-facing unless parser and validator approve it.
-
-## Guardrails added
-
-Provider candidates are rejected when they:
-
-- use extra/missing schema keys;
-- return markdown/code fences/prose wrappers;
-- use invalid confidence;
-- contradict `DailyCoachSynthesis.confidence`;
-- say recovery is missing when recovery signal/context exists;
-- say `without needing to address training or recovery`;
-- say `no recovery notes` when recovery context exists;
-- claim the user is under-eating without backend approval;
-- quote calorie targets when calorie targets are not display-approved;
-- prescribe exact food amounts without approved food suggestion context;
-- expose raw/debug/provider/internal metadata;
-- include forbidden causal/medical/training claims.
-
-## Regression case protected
-
-User/date parity case protected:
-
-- user 102 / 2026-06-27;
-- recovery state exists;
-- recovery score 90;
-- fatigue risk Low;
-- readiness High;
-- `DailyCoachSynthesis.recovery_signal` exists.
-
-Provider narrative must not claim recovery is missing for this case.
+The validator checks both declared `quoted_values_used` and the narrative prose for obvious undeclared value claims such as numbers, grams, calories, percentages, scores, RIR ranges, readiness/fatigue statuses, serving amounts, and target/gap language.
 
 ## Scope boundaries
 
-No nutrition actuals provenance debug endpoint behavior changed.
+Deterministic remains default.
 
-No Target-vs-Actual totals changed.
+`direct_ollama` remains opt-in.
 
-No nutrition logging behavior changed.
+`openai` remains opt-in.
 
-No workout/recommendation behavior changed.
+No live provider calls are allowed in automated tests.
 
-No report behavior changed.
+No Streamlit provider controls are added.
 
-No Streamlit UI changed.
+No raw provider output is exposed.
 
-No provider is enabled by default.
+No runtime metadata is exposed in the normal endpoint.
 
-No snapshots committed.
+No provider narrative persistence is added.
 
-## Files updated
+No nutrition target, nutrition actual, food suggestion, workout, recovery, report, or schema behavior is changed.
 
-Runtime/model/service/test files:
-
-- `models/daily_coach_value_narrative_models.py`
-- `services/daily_coach_value_narrative_service.py`
-- `services/daily_coach_narrative_validation_service.py`
-- `api/routes/daily_coach.py`
-- `tests/test_daily_coach_value_narrative_service.py`
-- `tests/test_daily_coach_value_narrative_api.py`
-
-Project-memory files:
-
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/open_questions.md`
-- `docs/project_memory/project_continuity_bootstrap.md`
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/handoffs/backend_handoff_current.md`
-- `docs/project_memory/handoffs/architecture_handoff_current.md`
-- `docs/project_memory/handoffs/qa_handoff_current.md`
-- `docs/project_memory/milestones/daily_coach_narrative_value_aware_provider_comparison_v1.md`
+No snapshots are committed.
 
 ## Architecture review step
 
-Return to Architecture for review and acceptance decision.
+Return to Architecture after implementation and validation.
 
 Requested final status:
 
-`DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
+`DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
 
 ## Historical continuity anchors — reference-only

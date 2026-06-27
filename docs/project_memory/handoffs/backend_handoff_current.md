@@ -1,44 +1,28 @@
-# Backend Handoff Current — Daily Coach Narrative Value-Aware Provider Comparison v1
+# Backend Handoff Current — Daily Coach Narrative Approved Value Quote Validation v1
 
 Recipient: Backend Development / Data Layer.
 
-Current source of truth: `main` at `e1f7bd3`.
+Current source of truth: `main` at `f13a898`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-Current milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Previous milestone status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
+Current milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
-Status: backend implementation complete / ready for Architecture review.
+Branch: `feature/daily-coach-narrative-approved-value-quote-validation-v1`.
 
-Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
+Status: authorized for backend implementation.
 
-## Backend implementation summary
+Requested final status: `DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
-Backend added a provider-comparison path for Daily Coach narrative synthesis.
+## Backend implementation target
 
-Normal route:
+Add an approved value claim registry to the Daily Coach provider context and require provider candidates to declare every quoted backend value through `quoted_values_used`.
 
-`GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
+The validator must reject invented, display-blocked, undeclared, or unknown value claims and use deterministic fallback when quote/value validation fails.
 
-Debug route:
-
-`GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
-
-Provider options:
-
-- deterministic default;
-- `direct_ollama` opt-in;
-- `openai` opt-in.
-
-## Value-aware behavior
-
-Provider candidates receive compact backend-approved value context and may quote approved values such as readiness, fatigue risk, nutrition actuals, macro status, food suggestion context, workout guidance, training context, limitations, and confidence.
-
-Provider candidates are rejected if they quote values or claims that are not approved/display-safe.
-
-## Runtime files changed
+## Likely runtime files
 
 - `models/daily_coach_value_narrative_models.py`
 - `services/daily_coach_value_narrative_service.py`
@@ -47,33 +31,18 @@ Provider candidates are rejected if they quote values or claims that are not app
 - `tests/test_daily_coach_value_narrative_service.py`
 - `tests/test_daily_coach_value_narrative_api.py`
 
-## Validation focus
-
-Focused validation should include:
-
-- targeted Ruff/Black checks on touched Python files;
-- value-aware Daily Coach narrative service tests;
-- value-aware Daily Coach narrative API tests;
-- Daily Coach synthesis tests;
-- existing Daily Coach narrative preview route tests;
-- API smoke;
-- project-memory checks.
-
 ## Scope boundaries
 
 No Streamlit changes.
 
-No nutrition actuals provenance debug endpoint behavior changes.
+No provider default changes.
 
-No nutrition logging behavior changes.
+No live provider calls in tests.
 
-No Target-vs-Actual totals changes.
-
-No workout/recommendation/report behavior changes.
-
-No provider is enabled by default.
+No nutrition/workout/recovery/report behavior changes.
 
 No snapshots committed.
+
 
 ## Historical command/runtime anchors — reference-only
 

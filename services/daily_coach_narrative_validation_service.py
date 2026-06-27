@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 from models.daily_coach_narrative_models import (
     DAILY_COACH_NARRATIVE_DECISION_FAIL,
@@ -682,6 +683,11 @@ def parse_daily_coach_value_narrative_candidate(
         isinstance(item, str) and item.strip() for item in reason_codes
     ):
         return None, "reason_codes_must_be_non_empty_string_array"
+    quoted_values_used = parsed["quoted_values_used"]
+    if not isinstance(quoted_values_used, list) or not all(
+        isinstance(item, str) and item.strip() for item in quoted_values_used
+    ):
+        return None, "quoted_values_used_must_be_string_array"
     if parsed["confidence"] not in DAILY_COACH_VALUE_NARRATIVE_CONFIDENCE_VALUES:
         return None, "invalid_confidence"
     return (
@@ -694,6 +700,7 @@ def parse_daily_coach_value_narrative_candidate(
             priority_action=parsed["priority_action"].strip(),
             confidence=parsed["confidence"].strip(),
             reason_codes=[item.strip() for item in reason_codes],
+            quoted_values_used=[item.strip() for item in quoted_values_used],
         ),
         None,
     )
@@ -763,7 +770,157 @@ def validate_daily_coach_value_narrative_candidate(
     if _contains_internal_metadata_value_narrative(text_lower):
         errors.append("candidate must not expose raw/debug/provider/internal metadata.")
 
+    errors.extend(_validate_value_quote_claims(candidate, value_context))
+
     return _dedupe_preserve_order(errors)
+
+
+def _validate_value_quote_claims(
+    candidate: CandidateDailyCoachValueNarrative,
+    value_context: dict,
+) -> list[str]:
+    errors: list[str] = []
+    approved_claims = _approved_value_claim_map(value_context)
+    declared_keys = list(dict.fromkeys(candidate.quoted_values_used))
+    declared_claims: dict[str, dict[str, Any]] = {}
+
+    for key in declared_keys:
+        claim = approved_claims.get(key)
+        if claim is None:
+            errors.append(f"quoted_values_used contains unapproved value: {key}")
+            continue
+        if not bool(claim.get("display_allowed", True)):
+            errors.append(f"quoted value is not display-approved: {key}")
+            continue
+        declared_claims[key] = claim
+
+    public_text = _daily_coach_value_candidate_text(candidate)
+    text_lower = public_text.lower()
+    declared_aliases = _declared_value_aliases(declared_claims)
+
+    numeric_claims = _numeric_claim_fragments(public_text)
+    for fragment in numeric_claims:
+        if not _fragment_is_covered(fragment, declared_aliases):
+            errors.append(
+                f"narrative contains undeclared numeric value claim: {fragment}"
+            )
+
+    for phrase, claim_key in [
+        ("readiness is high", "recovery.readiness_level"),
+        ("readiness high", "recovery.readiness_level"),
+        ("readiness is low", "recovery.readiness_level"),
+        ("readiness low", "recovery.readiness_level"),
+        ("fatigue risk is low", "recovery.fatigue_risk"),
+        ("fatigue risk low", "recovery.fatigue_risk"),
+        ("fatigue risk is high", "recovery.fatigue_risk"),
+        ("fatigue risk high", "recovery.fatigue_risk"),
+        ("protein is below target", "nutrition.protein.status"),
+        ("protein below target", "nutrition.protein.status"),
+        ("calories below target", "nutrition.calories.status"),
+        ("calorie target", "nutrition.calories.target_min"),
+    ]:
+        if phrase in text_lower and claim_key not in declared_claims:
+            errors.append(
+                f"narrative contains undeclared approved value claim: {phrase}"
+            )
+
+    if re.search(r"\b\d+(?:\.\d+)?\s*(?:oz|ounces)\b", text_lower):
+        if not any(
+            str(claim.get("claim_type")) == "recommendation"
+            and str(claim.get("unit")) in {"g", "gram", "grams"}
+            for claim in declared_claims.values()
+        ):
+            errors.append(
+                "serving amount claims require an approved food suggestion claim."
+            )
+
+    invented_fragments = [
+        "calorie deficit",
+        "calorie surplus",
+        "500 calorie deficit",
+        "900 calories under",
+        "overtraining",
+        "dropped 15 points",
+        "increase weight by 10 pounds",
+    ]
+    for fragment in invented_fragments:
+        if fragment in text_lower and not _fragment_is_covered(
+            fragment, declared_aliases
+        ):
+            errors.append(f"narrative contains invented value claim: {fragment}")
+    return errors
+
+
+def _approved_value_claim_map(value_context: dict) -> dict[str, dict[str, Any]]:
+    claims = value_context.get("approved_value_claims") or []
+    if not isinstance(claims, list):
+        return {}
+    mapped: dict[str, dict[str, Any]] = {}
+    for claim in claims:
+        if not isinstance(claim, dict):
+            continue
+        key = claim.get("key")
+        if isinstance(key, str) and key.strip():
+            mapped[key.strip()] = claim
+    return mapped
+
+
+def _declared_value_aliases(claims: dict[str, dict[str, Any]]) -> set[str]:
+    aliases: set[str] = set()
+    for key, claim in claims.items():
+        aliases.add(key.lower())
+        value = claim.get("value")
+        unit = claim.get("unit")
+        if value is not None:
+            value_text = _claim_value_text(value)
+            aliases.add(value_text.lower())
+            if unit:
+                aliases.add(f"{value_text}{unit}".lower())
+                aliases.add(f"{value_text} {unit}".lower())
+            label = claim.get("label")
+            if isinstance(label, str) and label:
+                aliases.add(f"{label} {value_text}".lower())
+                aliases.add(f"{label} is {value_text}".lower())
+                if unit:
+                    aliases.add(f"{label} {value_text}{unit}".lower())
+                    aliases.add(f"{label} {value_text} {unit}".lower())
+        for alias in claim.get("aliases") or []:
+            if isinstance(alias, str) and alias.strip():
+                aliases.add(alias.strip().lower())
+    return aliases
+
+
+def _claim_value_text(value: Any) -> str:
+    if isinstance(value, float):
+        return f"{value:g}"
+    return str(value)
+
+
+def _numeric_claim_fragments(public_text: str) -> list[str]:
+    pattern = re.compile(
+        r"\b(?:RIR\s*)?\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?\s*(?:g|grams?|kcal|calories?|%|percent|score|points?|lb|lbs|pounds?|oz|ounces|minutes?|mins?|hours?|hrs?)?\b",
+        re.IGNORECASE,
+    )
+    fragments: list[str] = []
+    for match in pattern.finditer(public_text):
+        fragment = re.sub(r"\s+", " ", match.group(0).strip())
+        if not fragment:
+            continue
+        fragments.append(fragment)
+    return fragments
+
+
+def _fragment_is_covered(fragment: str, aliases: set[str]) -> bool:
+    normalized = fragment.lower().replace(" ", "")
+    for alias in aliases:
+        compact_alias = alias.lower().replace(" ", "")
+        if (
+            normalized == compact_alias
+            or normalized in compact_alias
+            or compact_alias in normalized
+        ):
+            return True
+    return False
 
 
 def _daily_coach_value_candidate_text(

@@ -1,69 +1,57 @@
-# Next Milestone — Daily Coach Narrative Value-Aware Provider Comparison v1 Review
+# Next Milestone — Daily Coach Narrative Approved Value Quote Validation v1
 
-Current backend milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Current backend milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
 Owner: Backend Development / Data Layer.
 
 Secondary owner: Agent Engineering for provider/prompt/schema review.
 
-Status: backend implementation complete / ready for Architecture review.
+Status: authorized for backend implementation.
 
-Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
+Requested final status: `DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
 ## Current accepted baseline
 
 Current source of truth: `main`.
 
-Required source main commit: `e1f7bd3`.
+Required source main commit: `f13a898`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-## Review focus
+Previous status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Architecture should review whether the new Daily Coach narrative value-aware provider comparison path:
+## Implementation focus
 
-- keeps deterministic as default;
-- keeps `direct_ollama` opt-in;
-- keeps `openai` opt-in;
-- uses strict CandidateDailyCoachValueNarrative JSON parsing;
-- validates provider candidates against `DailyCoachSynthesis` and approved values;
-- allows approved recovery/nutrition/training values to be quoted only when provided;
-- rejects recovery-missing claims when recovery context exists;
-- rejects `without needing to address training or recovery`;
-- rejects unapproved calorie-target/under-eating/exact-serving claims;
-- preserves deterministic fallback;
-- hides runtime metadata on the normal endpoint;
-- exposes runtime metadata on the debug endpoint only;
-- preserves nutrition/workout/report behavior.
+Add explicit quote/value validation for Daily Coach provider narratives:
 
-## Implemented endpoints
-
-Normal endpoint:
-
-`GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
-
-Debug endpoint:
-
-`GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
+- add approved value claim model/registry;
+- add `approved_value_claims` to provider context;
+- add `quoted_values_used` to candidate and approved narratives;
+- require provider candidates to declare every quoted value;
+- reject quoted values not present in the approved value registry;
+- reject display-blocked values;
+- scan prose for undeclared numbers/statuses/target/gap claims;
+- fall back deterministically on quote/value validation failure.
 
 ## QA expectation
 
-QA class: CLASS 2 / CLASS 5 HYBRID.
+QA class: CLASS 5 / PROVIDER SAFETY + CLAIM VALIDATION.
 
-Recommended QA: focused backend/API/provider-contract smoke with mocked providers plus optional manual runtime provider comparison.
+Recommended QA: focused backend/API/provider-contract smoke with mocked providers.
 
 Not required:
 
 - full Streamlit workflow QA;
-- full nutrition actuals QA;
-- full workout/recovery/report QA;
-- live provider calls in pytest.
+- live OpenAI calls;
+- live Ollama calls;
+- nutrition actuals full regression beyond adjacent focused tests;
+- workout/recovery/report full QA.
 
 ## Post-acceptance routing
 
-After Architecture acceptance, route focused QA for backend/API provider-contract validation.
+After Architecture acceptance, route focused QA for quote/value validation and provider-safety regression.
 
-Future milestones may decide whether this narrative appears in Developer Mode, Today, or Daily Command Center. Normal Streamlit UI is unchanged in this milestone.
+Potential follow-up: Daily Coach Narrative Provider Runtime Trial Matrix v1 or Developer Mode rendering of debug metadata.
 
 
 ## Historical continuity anchors — reference-only

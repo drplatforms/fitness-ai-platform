@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 DAILY_COACH_VALUE_NARRATIVE_PROVIDERS = {
     "deterministic",
@@ -20,6 +20,7 @@ DAILY_COACH_VALUE_NARRATIVE_CANDIDATE_KEYS = {
     "priority_action",
     "confidence",
     "reason_codes",
+    "quoted_values_used",
 }
 
 DAILY_COACH_VALUE_NARRATIVE_PARSE_SUCCESS = "success"
@@ -41,6 +42,34 @@ DAILY_COACH_VALUE_NARRATIVE_SOURCE_DETERMINISTIC_FALLBACK = "deterministic_fallb
 
 
 @dataclass(frozen=True)
+class ApprovedNarrativeValueClaim:
+    """Backend-approved value that a provider may quote in narrative copy."""
+
+    key: str
+    label: str
+    value: str | int | float | bool
+    unit: str | None = None
+    aliases: list[str] = field(default_factory=list)
+    claim_type: Literal[
+        "recovery",
+        "nutrition_actual",
+        "nutrition_target",
+        "nutrition_gap",
+        "training",
+        "workout",
+        "confidence",
+        "limitation",
+        "recommendation",
+    ] = "recommendation"
+    display_allowed: bool = True
+    source: str = "backend"
+    confidence: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class CandidateDailyCoachValueNarrative:
     """Strict provider candidate for value-aware Daily Coach narrative copy.
 
@@ -57,6 +86,7 @@ class CandidateDailyCoachValueNarrative:
     priority_action: str
     confidence: str
     reason_codes: list[str] = field(default_factory=list)
+    quoted_values_used: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -76,6 +106,7 @@ class ApprovedDailyCoachValueNarrative:
     source: str
     reason_codes: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
+    quoted_values_used: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

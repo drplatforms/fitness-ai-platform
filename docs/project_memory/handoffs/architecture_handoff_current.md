@@ -1,89 +1,61 @@
-# Architecture Handoff Current — Daily Coach Narrative Value-Aware Provider Comparison v1
+# Backend Handoff Current — Daily Coach Narrative Approved Value Quote Validation v1
 
 Recipient: Architecture.
 
-CC: Backend Development / Data Layer, Agent Engineering, Streamlit UI, QA / Regression Testing, TPM / Project Control.
+Current source of truth: `main` at `f13a898`.
 
-Current source of truth: `main` at `e1f7bd3`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
+Previous milestone status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Current milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
-Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
+Branch: `feature/daily-coach-narrative-approved-value-quote-validation-v1`.
 
-Status: backend implementation complete / ready for Architecture review.
+Status: backend implementation in progress / pending validation.
 
-Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
+Requested final status: `DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
-## Summary
+## Backend implementation target
 
-Backend added a strict provider-candidate comparison path for value-aware Daily Coach narrative synthesis.
+Add an approved value claim registry to the Daily Coach provider context and require provider candidates to declare every quoted backend value through `quoted_values_used`.
 
-Pattern implemented:
+The validator must reject invented, display-blocked, undeclared, or unknown value claims and use deterministic fallback when quote/value validation fails.
 
-`DailyCoachSynthesis -> approved value context -> provider candidate JSON -> parser -> validator -> ApprovedDailyCoachValueNarrative -> deterministic renderer -> deterministic fallback`
+## Likely runtime files
 
-## Endpoints
+- `models/daily_coach_value_narrative_models.py`
+- `services/daily_coach_value_narrative_service.py`
+- `services/daily_coach_narrative_validation_service.py`
+- `api/routes/daily_coach.py`
+- `tests/test_daily_coach_value_narrative_service.py`
+- `tests/test_daily_coach_value_narrative_api.py`
 
-Normal endpoint:
+## Scope boundaries
 
-`GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
+No Streamlit changes.
 
-Debug endpoint:
+No provider default changes.
 
-`GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
+No live provider calls in tests.
 
-Normal endpoint hides runtime metadata.
-
-Debug endpoint exposes public-safe runtime metadata and provider-context summary.
-
-## Provider support
-
-- deterministic default;
-- `direct_ollama` opt-in;
-- `openai` opt-in.
-
-## Architecture review request
-
-Please review whether this is the correct first value-aware provider comparison path for Daily Coach user-facing narrative content.
-
-## Public-safe value context
-
-Provider context may include approved recovery, nutrition, food-suggestion, workout, training/execution, limitation, and confidence values.
-
-Provider candidates may quote only those approved values.
-
-## Scope confirmation
-
-No nutrition/debug endpoint behavior changed.
-
-No Target-vs-Actual totals changed.
-
-No logging behavior changed.
-
-No Streamlit changed.
-
-No report changed.
-
-No provider enabled by default.
+No nutrition/workout/recovery/report behavior changes.
 
 No snapshots committed.
 
-## Requested decision
-
-Accept this backend/API/provider comparison path as Daily Coach Narrative Value-Aware Provider Comparison v1.
-
-Requested status:
-
-`DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
 
 ## Historical command/runtime anchors — reference-only
 
 Local Command Menu App Runtime Correction v1 remains the accepted command-menu correction milestone.
 
-`app` is now the canonical Linux runtime launcher.
+`app` restarts Linux FastAPI + Streamlit through SSH.
 
 `wapp` remains Windows-local only.
+
+No backend app runtime code changed.
+
+## Historical command/runtime anchors — required continuity phrases
+
+The app` is now the canonical Linux runtime launcher.
 
 Linux is the canonical FastAPI + Streamlit app runtime.

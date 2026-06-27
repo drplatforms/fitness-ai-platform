@@ -6,29 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Actuals Provenance Debug / Integration Design v1",
-    "latest_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
-    "latest_accepted_commit": "e1f7bd3",
-    "latest_main_merge_commit": "e1f7bd3",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip",
-    "previous_accepted_milestone": "Future Feature & Technology Inventory v1",
-    "previous_main_merge_commit": "9b7430c",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
-    "current_source_of_truth": "main at e1f7bd3",
+    "latest_accepted_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
+    "latest_final_status": "DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED",
+    "latest_accepted_commit": "f13a898",
+    "latest_main_merge_commit": "f13a898",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip",
+    "previous_accepted_milestone": "Nutrition Actuals Provenance Debug / Integration Design v1",
+    "previous_main_merge_commit": "e1f7bd3",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip",
+    "current_source_of_truth": "main at f13a898",
     "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
     "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-    "active_backend_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
-    "active_backend_status": "backend implementation complete / ready for Architecture review"
+    "active_backend_milestone": "Daily Coach Narrative Approved Value Quote Validation v1",
+    "active_backend_status": "authorized for backend implementation"
   },
   "active_roadmap": {
-    "current_recommended_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
-    "current_recommended_status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW",
+    "current_recommended_milestone": "Daily Coach Narrative Approved Value Quote Validation v1",
+    "current_recommended_status": "AUTHORIZED_FOR_BACKEND_IMPLEMENTATION",
     "recommended_owner": "Backend Development / Data Layer",
-    "source_main_commit": "e1f7bd3",
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip",
+    "source_main_commit": "f13a898",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip",
     "commit_check_mode": "code",
-    "qa_class": "CLASS 2 / CLASS 5 HYBRID",
-    "primary_question": "Can DailyCoachSynthesis support value-aware provider candidate narrative copy while preserving parser, validator, and fallback boundaries?",
+    "qa_class": "CLASS 5 / PROVIDER SAFETY + CLAIM VALIDATION",
+    "primary_question": "Can Daily Coach provider narratives quote only approved backend values and fall back when invented or undeclared values appear?",
     "secondary_owner": "Agent Engineering"
   },
   "boundaries": {
@@ -156,7 +156,14 @@
     "daily_coach_narrative_debug_endpoint_metadata_only": true,
     "no_nutrition_debug_endpoint_changes_for_current_milestone": true,
     "no_logging_changes_for_current_milestone": true,
-    "no_report_changes_for_current_milestone": true
+    "no_report_changes_for_current_milestone": true,
+    "daily_coach_narrative_approved_value_quote_validation_v1": true,
+    "daily_coach_narrative_quoted_values_used_required": true,
+    "daily_coach_narrative_approved_value_claim_registry": true,
+    "daily_coach_narrative_invented_value_claims_rejected": true,
+    "daily_coach_narrative_display_blocked_values_rejected": true,
+    "no_provider_default_change_for_current_milestone": true,
+    "no_live_provider_calls_in_tests_for_current_milestone": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [

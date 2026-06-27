@@ -1,20 +1,20 @@
-# Project Continuity Bootstrap — Daily Coach Narrative Value-Aware Provider Comparison v1
+# Project Continuity Bootstrap — Daily Coach Narrative Approved Value Quote Validation v1
 
-Current source of truth: `main` at `e1f7bd3`.
+Current source of truth: `main` at `f13a898`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-Current milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Previous milestone status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
+Current milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
-Status: backend implementation complete / ready for Architecture review.
+Branch: `feature/daily-coach-narrative-approved-value-quote-validation-v1`.
 
-Implemented normal endpoint: `GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`.
+Status: authorized for backend implementation.
 
-Implemented debug endpoint: `GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`.
+The milestone adds an approved value claim registry plus quote/value validation fence for Daily Coach value-aware provider narratives.
 
-The milestone adds a strict provider-candidate comparison path over `DailyCoachSynthesis` with approved value context, parser, validator, approved narrative contract, deterministic renderer, and deterministic fallback.
+Provider candidates must declare quoted value keys through `quoted_values_used`, and the validator scans prose for undeclared/invented numeric or status claims.
 
 ## First files to read
 
@@ -60,22 +60,22 @@ Deterministic fallback remains mandatory.
 - normal Today provider call remains disallowed unless explicitly configured
 - sound right and be right
 
-## Accepted historical workflow anchors — reference-only
+What Future Chats Must Do First: read current_state, project_state, next_milestone, current handoffs, and this bootstrap before acting.
 
-Current Accepted Milestone Stack is maintained by `current_state.md` and `project_state.json`.
+## Accepted historical workflow anchors — reference-only
 
 Sound right and be right remains the provider/coach-copy doctrine.
 
-Daily Coach Async Service Shell / No Worker v1 remains a historical accepted milestone.
+The app` command launches Linux runtime.
+
+qwen3 is not bridge-enabled.
+
+Daily Coach Async Service Shell / No Worker v1 remains service shell only.
+
+Historical async work added no provider runtime yet.
 
 Daily Coach Async Developer-Only Prototype v1 remains a historical accepted milestone.
 
 Developer Mode-only manual lifecycle prototype remains reference-only.
 
-The `app` command launches Linux runtime.
-
-qwen3 is not bridge-enabled.
-
-Historical Daily Coach async work was service shell only with no provider runtime yet.
-
-What Future Chats Must Do First: read current_state, project_state, next_milestone, current handoffs, and this bootstrap before acting.
+Current Accepted Milestone Stack is maintained by current_state.md and project_state.json.

@@ -1,68 +1,61 @@
-# QA Handoff Current — Daily Coach Narrative Value-Aware Provider Comparison v1
+# Backend Handoff Current — Daily Coach Narrative Approved Value Quote Validation v1
 
-Milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
+Recipient: QA / Regression Testing.
 
-QA class: CLASS 2 / CLASS 5 HYBRID.
+Current source of truth: `main` at `f13a898`.
 
-Status: backend implementation complete / ready for Architecture review.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip`.
 
-## QA expectation
+Previous milestone status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED_AND_QA_PASSED`.
 
-Focused backend/API/provider-contract smoke is recommended.
+Current milestone: Daily Coach Narrative Approved Value Quote Validation v1.
 
-QA should validate:
+Branch: `feature/daily-coach-narrative-approved-value-quote-validation-v1`.
 
-- normal endpoint exists and hides runtime metadata;
-- debug endpoint exists and exposes public-safe runtime metadata;
-- deterministic provider remains default;
-- direct_ollama is opt-in;
-- openai is opt-in;
-- exact-schema mocked provider output approves;
-- extra-key provider output falls back;
-- markdown-wrapped provider output falls back;
-- missing OpenAI key falls back;
-- provider exceptions/timeouts fall back;
-- user 102 recovery parity case is protected;
-- provider cannot claim `no recovery notes` when recovery signal/context exists;
-- provider cannot say `without needing to address training or recovery`;
-- provider cannot quote unapproved calorie targets or exact servings;
-- no raw provider output, prompts, tracebacks, SQL, or debug internals leak into normal response;
-- existing DailyCoachSynthesis behavior remains stable;
-- existing nutrition actuals provenance debug endpoint remains stable.
+Status: QA pending after Backend implementation.
 
-## Suggested smoke routes
+Requested final status: `DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED`.
 
-Normal endpoint:
+## Backend implementation target
 
-`GET /daily-coach/102/narrative?date=2026-06-27`
+Add an approved value claim registry to the Daily Coach provider context and require provider candidates to declare every quoted backend value through `quoted_values_used`.
 
-Debug endpoint:
+The validator must reject invented, display-blocked, undeclared, or unknown value claims and use deterministic fallback when quote/value validation fails.
 
-`GET /daily-coach/102/narrative/debug?date=2026-06-27`
+## Likely runtime files
 
-## Not required
+- `models/daily_coach_value_narrative_models.py`
+- `services/daily_coach_value_narrative_service.py`
+- `services/daily_coach_narrative_validation_service.py`
+- `api/routes/daily_coach.py`
+- `tests/test_daily_coach_value_narrative_service.py`
+- `tests/test_daily_coach_value_narrative_api.py`
 
-- full Streamlit workflow QA;
-- full nutrition actuals QA;
-- full workout/recovery/report QA;
-- live provider calls in pytest.
+## Scope boundaries
 
-## Scope confirmation
+No Streamlit changes.
 
-No normal Streamlit UI behavior changed.
+No provider default changes.
 
-No nutrition logging behavior changed.
+No live provider calls in tests.
 
-No Target-vs-Actual totals changed.
+No nutrition/workout/recovery/report behavior changes.
 
 No snapshots committed.
+
 
 ## Historical command/runtime anchors — reference-only
 
 Local Command Menu App Runtime Correction v1 remains the accepted command-menu correction milestone.
 
-`app` means Linux canonical app runtime.
+`app` restarts Linux FastAPI + Streamlit through SSH.
 
 `wapp` remains Windows-local only.
 
-`fports` remains the command-menu helper for port inspection.
+No backend app runtime code changed.
+
+## Historical command/runtime anchors — required continuity phrases
+
+The app` means Linux canonical app runtime.
+
+fports remains a local helper command reference.

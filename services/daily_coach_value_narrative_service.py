@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping
@@ -20,6 +21,7 @@ from models.daily_coach_value_narrative_models import (
     DAILY_COACH_VALUE_NARRATIVE_VALIDATION_NOT_ATTEMPTED,
     DAILY_COACH_VALUE_NARRATIVE_VALIDATION_SUCCESS,
     ApprovedDailyCoachValueNarrative,
+    ApprovedNarrativeValueClaim,
     CandidateDailyCoachValueNarrative,
     DailyCoachValueNarrativeResult,
     DailyCoachValueNarrativeRuntimeMetadata,
@@ -72,6 +74,7 @@ _CANDIDATE_SCHEMA: dict[str, Any] = {
         "priority_action",
         "confidence",
         "reason_codes",
+        "quoted_values_used",
     ],
     "properties": {
         "headline": {"type": "string"},
@@ -85,6 +88,7 @@ _CANDIDATE_SCHEMA: dict[str, Any] = {
             "enum": ["Limited", "Low", "Moderate", "High"],
         },
         "reason_codes": {"type": "array", "items": {"type": "string"}},
+        "quoted_values_used": {"type": "array", "items": {"type": "string"}},
     },
 }
 
@@ -288,7 +292,7 @@ def build_daily_coach_value_aware_provider_context(
 ) -> dict[str, Any]:
     """Build compact backend-approved value context for provider candidates."""
 
-    return {
+    context = {
         "user_id": user_id,
         "narrative_date": narrative_date,
         "daily_coach_synthesis": _synthesis_provider_context(synthesis),
@@ -298,12 +302,14 @@ def build_daily_coach_value_aware_provider_context(
         "approved_limitations": list(synthesis.limitations),
         "approved_reason_codes": _bounded_list(synthesis.reason_codes, limit=12),
     }
+    context["approved_value_claims"] = _build_approved_value_claims(context)
+    return context
 
 
 def build_minimal_value_context_from_synthesis(
     synthesis: DailyCoachSynthesis,
 ) -> dict[str, Any]:
-    return {
+    context = {
         "user_id": synthesis.user_id,
         "narrative_date": synthesis.synthesis_date,
         "daily_coach_synthesis": _synthesis_provider_context(synthesis),
@@ -313,6 +319,8 @@ def build_minimal_value_context_from_synthesis(
         "approved_limitations": list(synthesis.limitations),
         "approved_reason_codes": _bounded_list(synthesis.reason_codes, limit=12),
     }
+    context["approved_value_claims"] = _build_approved_value_claims(context)
+    return context
 
 
 def build_daily_coach_value_narrative_prompt(
@@ -329,10 +337,16 @@ def build_daily_coach_value_narrative_prompt(
         "priority_action": "Keep today's plan controlled and well logged.",
         "confidence": synthesis.confidence,
         "reason_codes": ["provider_candidate_value_aware"],
+        "quoted_values_used": [
+            "recovery.readiness_level",
+            "recovery.fatigue_risk",
+            "nutrition.protein.status",
+            "training.rir_range",
+        ],
     }
     return (
         "Write a concise Daily Coach narrative for AI Health Coach.\n"
-        "Use only approved backend context. You may quote values only when they appear in approved_value_context.\n"
+        "Use only approved backend context. You may quote values only when they appear in approved_value_claims.\n"
         "Return one raw JSON object only. No markdown, no code fences, no prose wrapper, no extra keys.\n"
         "Do not calculate targets, gaps, readiness, fatigue, servings, or nutrition values.\n"
         "Do not say recovery is missing when recovery_signal or approved recovery values exist.\n"
@@ -493,6 +507,7 @@ def _deterministic_narrative(
             limit=16,
         ),
         limitations=list(synthesis.limitations),
+        quoted_values_used=[],
     )
 
 
@@ -516,6 +531,7 @@ def _approved_from_candidate(
             limit=16,
         ),
         limitations=list(synthesis.limitations),
+        quoted_values_used=list(candidate.quoted_values_used),
     )
 
 
@@ -698,6 +714,244 @@ def _approved_nutrition_context(user_id: int, narrative_date: str) -> dict[str, 
     return context
 
 
+def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]]:
+    claims: list[ApprovedNarrativeValueClaim] = []
+    recovery = context.get("approved_recovery") or {}
+    if isinstance(recovery, dict):
+        _add_claim(
+            claims,
+            key="recovery.readiness_level",
+            label="readiness",
+            value=recovery.get("readiness_level"),
+            claim_type="recovery",
+            aliases=[f"readiness is {recovery.get('readiness_level')}"],
+            source="approved_recovery",
+            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+        )
+        _add_claim(
+            claims,
+            key="recovery.fatigue_risk",
+            label="fatigue risk",
+            value=recovery.get("fatigue_risk"),
+            claim_type="recovery",
+            aliases=[f"fatigue risk is {recovery.get('fatigue_risk')}"],
+            source="approved_recovery",
+            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+        )
+        _add_claim(
+            claims,
+            key="recovery.recovery_score",
+            label="recovery score",
+            value=recovery.get("recovery_score"),
+            claim_type="recovery",
+            aliases=[
+                f"recovery score is {recovery.get('recovery_score')}",
+                str(recovery.get("recovery_score")),
+            ],
+            source="approved_recovery",
+            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+        )
+        for key, label in [
+            ("avg_sleep", "average sleep"),
+            ("avg_energy", "average energy"),
+            ("avg_soreness", "average soreness"),
+        ]:
+            value = recovery.get(key)
+            _add_claim(
+                claims,
+                key=f"recovery.{key}",
+                label=label,
+                value=value,
+                claim_type="recovery",
+                aliases=[str(value), f"{label} {value}"],
+                source="approved_recovery",
+                confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            )
+
+    nutrition = context.get("approved_nutrition") or {}
+    if isinstance(nutrition, dict):
+        actuals = nutrition.get("actuals") or {}
+        if isinstance(actuals, dict):
+            for key, label, unit in [
+                ("logged_calories", "logged calories", "kcal"),
+                ("logged_protein_g", "logged protein", "g"),
+                ("logged_carbs_g", "logged carbohydrates", "g"),
+                ("logged_fat_g", "logged fat", "g"),
+            ]:
+                value = actuals.get(key)
+                _add_claim(
+                    claims,
+                    key=f"nutrition.actuals.{key}",
+                    label=label,
+                    value=value,
+                    unit=unit,
+                    claim_type="nutrition_actual",
+                    aliases=[
+                        _format_value_alias(value, unit),
+                        f"{label} {_format_value_alias(value, unit)}",
+                    ],
+                    source="target_vs_actual_summary",
+                    confidence=nutrition.get("confidence"),
+                )
+        macro_status = nutrition.get("macro_status") or {}
+        if isinstance(macro_status, dict):
+            for macro_name, macro in macro_status.items():
+                if not isinstance(macro, dict):
+                    continue
+                display_allowed = bool(macro.get("display_allowed"))
+                target_status = macro.get("target_status")
+                _add_claim(
+                    claims,
+                    key=f"nutrition.{macro_name}.status",
+                    label=f"{macro_name} status",
+                    value=target_status,
+                    claim_type="nutrition_gap",
+                    aliases=[
+                        f"{macro_name} is {target_status}",
+                        f"{macro_name} {target_status}",
+                    ],
+                    display_allowed=display_allowed,
+                    source="target_vs_actual_summary",
+                    confidence=macro.get("confidence") or nutrition.get("confidence"),
+                )
+                for key in ["target_min", "target_max", "delta_min", "delta_max"]:
+                    _add_claim(
+                        claims,
+                        key=f"nutrition.{macro_name}.{key}",
+                        label=f"{macro_name} {key}",
+                        value=macro.get(key),
+                        unit="kcal" if macro_name == "calories" else "g",
+                        claim_type=(
+                            "nutrition_target" if "target" in key else "nutrition_gap"
+                        ),
+                        aliases=[
+                            _format_value_alias(
+                                macro.get(key),
+                                "kcal" if macro_name == "calories" else "g",
+                            )
+                        ],
+                        display_allowed=display_allowed,
+                        source="target_vs_actual_summary",
+                        confidence=macro.get("confidence")
+                        or nutrition.get("confidence"),
+                    )
+        suggestions = nutrition.get("approved_food_suggestions") or []
+        if isinstance(suggestions, list):
+            for index, suggestion in enumerate(suggestions[:3], start=1):
+                if not isinstance(suggestion, dict):
+                    continue
+                prefix = f"nutrition.food_suggestion.{index}"
+                display_name = suggestion.get("display_name")
+                _add_claim(
+                    claims,
+                    key=f"{prefix}.display_name",
+                    label="food suggestion",
+                    value=display_name,
+                    claim_type="recommendation",
+                    aliases=[str(display_name)],
+                    source="approved_food_suggestions",
+                    confidence=suggestion.get("confidence")
+                    or nutrition.get("food_suggestion_confidence"),
+                )
+                _add_claim(
+                    claims,
+                    key=f"{prefix}.suggested_grams",
+                    label="suggested grams",
+                    value=suggestion.get("suggested_grams"),
+                    unit="g",
+                    claim_type="recommendation",
+                    aliases=[
+                        _format_value_alias(suggestion.get("suggested_grams"), "g")
+                    ],
+                    source="approved_food_suggestions",
+                    confidence=suggestion.get("confidence")
+                    or nutrition.get("food_suggestion_confidence"),
+                )
+
+    training = context.get("approved_training") or {}
+    if isinstance(training, dict):
+        training_text = " ".join(str(value) for value in training.values() if value)
+        rir_match = re.search(
+            r"RIR\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)",
+            training_text,
+            re.IGNORECASE,
+        )
+        if rir_match:
+            rir_value = f"{rir_match.group(1)}-{rir_match.group(2)}"
+            _add_claim(
+                claims,
+                key="training.rir_range",
+                label="RIR range",
+                value=rir_value,
+                claim_type="training",
+                aliases=[
+                    f"RIR {rir_value}",
+                    f"RIR {rir_match.group(1)}-{rir_match.group(2)}",
+                ],
+                source="daily_coach_synthesis",
+                confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            )
+
+    for index, limitation in enumerate(
+        context.get("approved_limitations") or [], start=1
+    ):
+        _add_claim(
+            claims,
+            key=f"limitation.{index}",
+            label="limitation",
+            value=limitation,
+            claim_type="limitation",
+            aliases=[str(limitation)],
+            source="daily_coach_synthesis",
+            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+        )
+    return [claim.to_dict() for claim in claims]
+
+
+def _add_claim(
+    claims: list[ApprovedNarrativeValueClaim],
+    *,
+    key: str,
+    label: str,
+    value: Any,
+    claim_type: str,
+    unit: str | None = None,
+    aliases: list[str] | None = None,
+    display_allowed: bool = True,
+    source: str,
+    confidence: str | None = None,
+) -> None:
+    if value is None:
+        return
+    if isinstance(value, str) and value in {"", "Unknown", "unknown"}:
+        return
+    claims.append(
+        ApprovedNarrativeValueClaim(
+            key=key,
+            label=label,
+            value=value,
+            unit=unit,
+            aliases=[
+                alias for alias in (aliases or []) if alias and "None" not in str(alias)
+            ],
+            claim_type=claim_type,  # type: ignore[arg-type]
+            display_allowed=display_allowed,
+            source=source,
+            confidence=confidence,
+        )
+    )
+
+
+def _format_value_alias(value: Any, unit: str | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, float):
+        value_text = f"{value:g}"
+    else:
+        value_text = str(value)
+    return f"{value_text}{unit}" if unit else value_text
+
+
 def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
     nutrition = value_context.get("approved_nutrition") or {}
     recovery = value_context.get("approved_recovery") or {}
@@ -711,6 +965,9 @@ def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
         ),
         "approved_reason_codes_count": len(
             value_context.get("approved_reason_codes") or []
+        ),
+        "approved_value_claim_count": len(
+            value_context.get("approved_value_claims") or []
         ),
     }
 

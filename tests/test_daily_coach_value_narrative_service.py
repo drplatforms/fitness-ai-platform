@@ -61,6 +61,85 @@ def _value_context() -> dict:
         "approved_limitations": [
             "Because logging is incomplete, calorie interpretation should stay cautious."
         ],
+        "approved_value_claims": [
+            {
+                "key": "recovery.readiness_level",
+                "label": "readiness",
+                "value": "High",
+                "unit": None,
+                "aliases": ["readiness is High", "readiness High"],
+                "claim_type": "recovery",
+                "display_allowed": True,
+                "source": "approved_recovery",
+                "confidence": "High",
+            },
+            {
+                "key": "recovery.fatigue_risk",
+                "label": "fatigue risk",
+                "value": "Low",
+                "unit": None,
+                "aliases": ["fatigue risk is Low", "fatigue risk Low"],
+                "claim_type": "recovery",
+                "display_allowed": True,
+                "source": "approved_recovery",
+                "confidence": "High",
+            },
+            {
+                "key": "recovery.recovery_score",
+                "label": "recovery score",
+                "value": 90,
+                "unit": None,
+                "aliases": ["recovery score is 90", "90"],
+                "claim_type": "recovery",
+                "display_allowed": True,
+                "source": "approved_recovery",
+                "confidence": "High",
+            },
+            {
+                "key": "nutrition.actuals.logged_protein_g",
+                "label": "logged protein",
+                "value": 3.7,
+                "unit": "g",
+                "aliases": ["3.7g", "logged protein 3.7g"],
+                "claim_type": "nutrition_actual",
+                "display_allowed": True,
+                "source": "target_vs_actual_summary",
+                "confidence": "Moderate",
+            },
+            {
+                "key": "nutrition.protein.status",
+                "label": "protein status",
+                "value": "below_target",
+                "unit": None,
+                "aliases": ["protein is below target", "protein below target"],
+                "claim_type": "nutrition_gap",
+                "display_allowed": True,
+                "source": "target_vs_actual_summary",
+                "confidence": "Moderate",
+            },
+            {
+                "key": "nutrition.calories.target_min",
+                "label": "calories target_min",
+                "value": 2400,
+                "unit": "kcal",
+                "aliases": ["2400 calories", "2400kcal"],
+                "claim_type": "nutrition_target",
+                "display_allowed": False,
+                "source": "target_vs_actual_summary",
+                "confidence": "Limited",
+            },
+            {
+                "key": "training.rir_range",
+                "label": "RIR range",
+                "value": "2-4",
+                "unit": None,
+                "aliases": ["RIR 2-4", "RIR 2–4"],
+                "claim_type": "training",
+                "display_allowed": True,
+                "source": "daily_coach_synthesis",
+                "confidence": "High",
+            },
+        ],
     }
 
 
@@ -75,6 +154,11 @@ def _valid_candidate() -> str:
             "priority_action": "Use the approved workout plan and close the approved protein gap if it fits.",
             "confidence": "High",
             "reason_codes": ["provider_candidate_value_aware"],
+            "quoted_values_used": [
+                "recovery.readiness_level",
+                "recovery.fatigue_risk",
+                "nutrition.protein.status",
+            ],
         }
     )
 
@@ -274,6 +358,170 @@ def test_build_value_context_includes_recovery_values_from_health_state() -> Non
     assert recovery["readiness_level"] == "High"
     assert recovery["fatigue_risk"] == "Low"
     assert recovery["recovery_score"] == 90
+
+
+def test_candidate_requires_quoted_values_used() -> None:
+    bad = json.loads(_valid_candidate())
+    bad.pop("quoted_values_used")
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.candidate_parse_status == "failed"
+    assert "missing_keys" in result.runtime_metadata.fallback_reason
+
+
+def test_provider_can_quote_recovery_score_when_approved() -> None:
+    good = json.loads(_valid_candidate())
+    good["recovery_note"] = (
+        "Recovery score is 90, readiness is High, and fatigue risk is Low."
+    )
+    good["quoted_values_used"] = [
+        "recovery.recovery_score",
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(good),
+    )
+
+    assert result.runtime_metadata.fallback_used is False
+    assert (
+        "recovery.recovery_score"
+        in result.approved_daily_coach_narrative.quoted_values_used
+    )
+
+
+def test_provider_can_quote_logged_protein_when_approved() -> None:
+    good = json.loads(_valid_candidate())
+    good["nutrition_note"] = (
+        "Logged protein is 3.7g, and protein is below target based on logged meals."
+    )
+    good["quoted_values_used"] = [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+        "nutrition.actuals.logged_protein_g",
+        "nutrition.protein.status",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(good),
+    )
+
+    assert result.runtime_metadata.fallback_used is False
+    assert (
+        "nutrition.actuals.logged_protein_g"
+        in result.approved_daily_coach_narrative.quoted_values_used
+    )
+
+
+def test_provider_can_quote_rir_range_when_approved() -> None:
+    good = json.loads(_valid_candidate())
+    good["training_note"] = (
+        "Aim for RIR 2-4 today while staying tied to the approved plan context."
+    )
+    good["quoted_values_used"] = [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+        "training.rir_range",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(good),
+    )
+
+    assert result.runtime_metadata.fallback_used is False
+    assert (
+        "training.rir_range" in result.approved_daily_coach_narrative.quoted_values_used
+    )
+
+
+def test_provider_cannot_mention_number_without_declaring_it() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["recovery_note"] = (
+        "Recovery score is 90, readiness is High, and fatigue risk is Low."
+    )
+    bad["quoted_values_used"] = [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "undeclared numeric" in err for err in result.runtime_metadata.validation_errors
+    )
+
+
+def test_provider_cannot_declare_unknown_quoted_value() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["quoted_values_used"] = ["nutrition.protein.target_max"]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "unapproved value" in err for err in result.runtime_metadata.validation_errors
+    )
+
+
+def test_provider_cannot_quote_display_blocked_value() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["nutrition_note"] = "You need 2400 calories today to stay on target."
+    bad["quoted_values_used"] = ["nutrition.calories.target_min"]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "not display-approved" in err
+        for err in result.runtime_metadata.validation_errors
+    )
+
+
+def test_normal_endpoint_approved_narrative_includes_quoted_values_but_hides_metadata() -> (
+    None
+):
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={},
+    )
+
+    payload = result.to_public_dict()
+    assert "quoted_values_used" in payload["approved_daily_coach_narrative"]
+    assert "runtime_metadata" not in payload
 
 
 def test_invalid_provider_config_falls_back_to_deterministic() -> None:

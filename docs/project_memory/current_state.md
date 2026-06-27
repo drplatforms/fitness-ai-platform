@@ -1,184 +1,147 @@
-# Current State Update — Nutrition Actuals Provenance & Confidence Model v1 Implemented
+# Current State Update — Future Feature & Technology Inventory v1
 
-Current source baseline for this feature branch: `main` after Streamlit UI project-memory closeout.
+Current source of truth: `main`.
 
-Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
+Current accepted main commit: `9d66514`.
 
-Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
+Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
 
-Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+Previous accepted milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Implementation branch: `feature/nutrition-actuals-provenance-confidence-model-v1`.
+Previous QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
 
-Milestone: Nutrition Actuals Provenance & Confidence Model v1.
+Current project-memory milestone: Future Feature & Technology Inventory v1.
 
-Status: backend implementation complete / ready for Architecture and focused QA review.
+Milestone type: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
+Branch: `feature/future-feature-technology-inventory-v1`.
+
+Status: docs/project-memory update complete / ready for Architecture review.
+
+Requested final status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+
+## Current accepted nutrition capability
+
+The accepted nutrition chain is now:
+
+```text
+canonical food search
+-> backend-approved serving-unit discovery
+-> Streamlit serving-unit selection
+-> quantity entry
+-> backend log-serving
+-> resolved grams
+-> food_entries actuals bridge
+-> serving-unit provenance metadata
+-> actuals provenance/confidence interpretation
+-> Target-vs-Actual compatibility
+```
+
+Recently closed chain:
+
+1. Nutrition Serving Unit Logging Backend v1
+2. Canonical Serving Unit Discovery API v1
+3. Nutrition Serving Unit Logging Streamlit UI v1
+4. Nutrition Actuals Provenance & Confidence Model v1
 
 ## Why this milestone exists
 
-The serving-unit logging chain is accepted end-to-end:
+The project is now moving fast enough that high-value product, technology, AI, workflow, UX, learning, and architecture ideas can get lost in development-controlled chaos.
 
-```text
-GET /foods/canonical/search
--> user selects canonical food
--> GET /foods/canonical/{canonical_food_id}/serving-units
--> user selects backend-approved serving unit
--> user enters quantity
--> POST /nutrition/{user_id}/log-serving
--> backend validates food/unit/ownership
--> backend resolves grams
--> backend writes food_entries
--> backend writes serving-unit provenance metadata
--> existing Target-vs-Actual reads resolved grams
-```
+Future Feature & Technology Inventory v1 creates a durable project-memory inventory so future Architecture, Backend, Streamlit, QA, TPM, and AI-provider work has a shared north star.
 
-The current backend can log actual intake by grams, canonical grams, and canonical serving unit. This milestone adds a deterministic interpretation layer so downstream services can understand how reliable a logged actual is without changing logging totals or UI behavior.
+This milestone does not authorize implementation.
 
-## Implemented backend contract
+## North star recorded
 
-Added a public-safe model/service pair:
+Fitness AI Platform is a personal AI health operating system.
 
-- `models/nutrition_actuals_confidence_models.py`
-- `services/nutrition_actuals_confidence_service.py`
+It is not just a workout tracker, macro tracker, chatbot, meal generator, or report generator.
 
-Primary service functions:
+The platform is intended to become a private, data-grounded coaching platform that understands training, nutrition, recovery, readiness, equipment, preferences, schedule constraints, adherence, friction, history, goals, uncertainty, provenance, and confidence.
 
-- `build_nutrition_actual_interpretation(food_entry_id)`
-- `build_nutrition_actual_interpretations_for_date(user_id, target_date)`
-- `build_public_nutrition_actual_interpretation(food_entry_id)`
+## Doctrine recorded
 
-The service classifies logged nutrition actuals by:
+Backend owns facts.
 
-- source type;
-- precision;
-- confidence level;
-- serving-unit metadata presence;
-- gram range presence/width/percent;
-- nutrient completeness;
-- public-safe reason codes;
-- public-safe limitations;
-- public-safe display flags.
+Backend owns validation.
 
-## Source types implemented
+Backend owns persistence.
 
-The model distinguishes:
+Backend owns provenance/confidence.
 
-- `raw_grams`
-- `canonical_grams`
-- `canonical_serving_unit`
-- `unknown`
+Backend owns safety boundaries.
 
-## Precision values implemented
+Streamlit renders approved fields and collects user input.
 
-The model distinguishes:
+AI may explain, summarize, propose, or generate candidates only inside strict backend-approved contracts.
 
-- `exact`
-- `estimated`
-- `ranged`
-- `low_confidence`
-- `unknown`
+AI must not become the source of truth.
 
-## Confidence values implemented
+## Inventory document
 
-The model exposes normalized public-safe confidence values:
+Primary new inventory doc:
 
-- `high`
-- `moderate`
-- `low`
-- `unknown`
+- `docs/project_memory/future_feature_technology_inventory_v1.md`
 
-Serving-unit confidence is derived from persisted `nutrition_serving_unit_log_metadata.serving_unit_confidence` when available.
+Milestone record:
 
-Raw grams and canonical grams are treated as user-entered exact gram amounts with moderate confidence unless a future milestone adds stronger source metadata.
+- `docs/project_memory/milestones/future_feature_technology_inventory_v1.md`
 
-## Nutrient completeness implemented
+## Ideas preserved
 
-The service classifies core nutrient coverage for logged actuals:
+The inventory records future ideas including:
 
-- `complete`
-- `partial`
-- `missing_nutrients`
-- `unknown`
+- AI meal generation;
+- meal planning / meal prep;
+- AI workout explanations / interpretations;
+- nutrition label scanning;
+- barcode scanning;
+- photo-assisted food logging;
+- restaurant/menu parsing;
+- grocery list generation;
+- receipt/grocery import eventually;
+- What-If simulator;
+- weekly/monthly coach review;
+- RAG-powered education layer;
+- coach memory / personalization;
+- wearable integrations;
+- mobile-first / PWA future;
+- premium Daily Command Center.
 
-Missing nutrient values remain missing/unknown. They are not coerced to zero.
+## Boundary
 
-## Serving-unit provenance interpretation
+This docs patch records ideas only.
 
-Serving-unit entries are recognized by companion metadata in `nutrition_serving_unit_log_metadata`.
+It does not authorize implementation.
 
-The service exposes public-safe values such as:
+Every future idea still requires scoped milestone authorization, tests, validation, project-memory update, QA classification, Architecture acceptance, and canonical main snapshot after merge.
 
-- resolved grams;
-- grams min/max when present;
-- grams range width;
-- grams range percent;
-- amount source;
-- serving-unit confidence;
-- reason codes and limitations.
+## Scope confirmation
 
-Wide gram ranges add a limitation and reason code.
+No runtime code changed.
 
-Low-confidence serving units add a limitation and reason code.
+No API code changed.
 
-## Boundaries preserved
+No schema changed.
 
-No Streamlit behavior changed.
+No Streamlit changed.
 
-No logging endpoint behavior changed.
+No provider/Ollama/CrewAI changed.
 
-No Target-vs-Actual totals changed.
+No nutrition behavior changed.
 
-No macro target formula behavior changed.
+No training/workout behavior changed.
 
-No AI/provider/CrewAI/direct_ollama behavior changed.
-
-No food suggestion or meal planning behavior changed.
-
-No schema migration was added.
-
-No snapshots were committed.
-
-## Tests added
-
-Added focused tests in:
-
-- `tests/test_nutrition_actuals_confidence_service.py`
-
-Coverage includes:
-
-- raw grams classification;
-- canonical grams classification;
-- canonical serving-unit classification;
-- resolved grams from persisted backend value;
-- ranged serving-unit interpretation;
-- wide range limitation;
-- low-confidence serving-unit limitation;
-- missing serving-unit metadata safety;
-- missing nutrient values as missing, not zero;
-- unknown source safety;
-- public-safe output exclusion of raw/source/SQL/debug fields;
-- deterministic per-date ordering;
-- Target-vs-Actual totals unchanged after interpretation.
-
-## Validation status
-
-Focused sandbox validation:
-
-- `pytest tests/test_nutrition_actuals_confidence_service.py -q`: 11 passed
-- adjacent focused nutrition/API/project-memory tests: 117 passed
-- `python -m py_compile` for new model/service/test: PASS
-
-Sandbox note: Ruff/Black executables were not available in the sandbox. Local and Linux validation should run targeted Ruff/Black on the touched Python files only.
+No snapshots committed.
 
 ## Next review step
 
-Return to Architecture for acceptance review and focused QA routing.
+Return to Architecture for docs/project-memory acceptance review.
 
-Recommended QA class remains:
+Requested final status:
 
-CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
+`FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
 
 ## Historical continuity anchors — reference-only
 

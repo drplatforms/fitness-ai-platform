@@ -6,33 +6,27 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
-    "latest_final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED",
-    "latest_accepted_commit": "0ebb1b4",
-    "latest_main_merge_commit": "0ebb1b4",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-    "previous_accepted_milestone": "Canonical Serving Unit Discovery API v1",
-    "previous_feature_commit": "e6d8578",
-    "previous_main_merge_commit": "fd87538",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
-    "streamlit_feature_commit": "15aa150",
-    "current_source_of_truth": "feature/nutrition-actuals-provenance-confidence-model-v1 pending Architecture acceptance; accepted product baseline remains main at 0ebb1b4",
-    "latest_accepted_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-    "active_feature_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
-    "active_feature_status": "backend implementation complete / ready for Architecture and focused QA review"
+    "latest_accepted_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
+    "latest_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
+    "latest_accepted_commit": "9d66514",
+    "latest_main_merge_commit": "9d66514",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "previous_accepted_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
+    "previous_main_merge_commit": "0ebb1b4",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "current_source_of_truth": "main at 9d66514",
+    "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
+    "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review"
   },
   "active_roadmap": {
-    "current_recommended_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
-    "current_recommended_status": "RECOMMENDED_PENDING_ARCHITECTURE_AUTHORIZATION",
-    "recommended_owner": "Backend Development / Data Layer",
-    "source_main_commit": "0ebb1b4",
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-    "commit_check_mode": "code_after_authorization",
-    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
-    "primary_question": "How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?",
-    "implementation_status": "Do not implement until Architecture issues an explicit implementation handoff.",
-    "process_doctrine": "Backend owns actuals confidence/provenance interpretation. No Target-vs-Actual redesign, UI changes, or AI/provider changes without separate authorization.",
-    "codex": "DO NOT USE BY DEFAULT"
+    "current_recommended_milestone": "Future Feature & Technology Inventory v1",
+    "current_recommended_status": "DOCS_PROJECT_MEMORY_UPDATE_READY_FOR_ARCHITECTURE_REVIEW",
+    "recommended_owner": "Project Memory / TPM",
+    "source_main_commit": "9d66514",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "commit_check_mode": "docs",
+    "qa_class": "CLASS 0 — DOCS / PROJECT MEMORY ONLY",
+    "primary_question": "Can the project preserve future product, technology, AI, UX, workflow, learning, and platform ideas without authorizing implementation?"
   },
   "boundaries": {
     "normal_today_unchanged": true,
@@ -596,18 +590,17 @@
     "next_milestone_completed": "Nutrition Serving Unit Logging Streamlit UI v1"
   },
   "recent_updates": {
-    "nutrition_serving_unit_logging_streamlit_ui_v1": {
-      "status": "ACCEPTED_AND_MERGED",
-      "main_merge_commit": "0ebb1b4",
-      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-      "qa_status": "PASS via manual Streamlit workflow smoke"
-    },
     "nutrition_actuals_provenance_confidence_model_v1": {
-      "status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_AND_QA_REVIEW",
-      "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
-      "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
-      "owner": "Backend Development / Data Layer",
-      "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS"
+      "status": "ACCEPTED_AND_MERGED",
+      "main_merge_commit": "9d66514",
+      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+      "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS"
+    },
+    "future_feature_technology_inventory_v1": {
+      "status": "DOCS_PROJECT_MEMORY_UPDATE_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW",
+      "branch": "feature/future-feature-technology-inventory-v1",
+      "requested_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED",
+      "qa_class": "CLASS 0 — DOCS / PROJECT MEMORY ONLY"
     }
   },
   "nutrition_serving_unit_logging_streamlit_ui_v1": {
@@ -645,14 +638,14 @@
     "recommended_next_milestone": "Nutrition Actuals Provenance & Confidence Model v1"
   },
   "nutrition_actuals_provenance_confidence_model_v1": {
-    "status": "backend implementation complete / ready for Architecture and focused QA review",
+    "status": "accepted and merged",
     "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
     "known_accepted_runtime_product_baseline": "0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1",
     "known_project_memory_closeout_feature_commit": "d9a3906 Close Streamlit serving unit UI project memory",
     "canonical_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
     "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
     "owner": "Backend Development / Data Layer",
-    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
+    "qa_class": "CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
     "implemented_files": [
       "models/nutrition_actuals_confidence_models.py",
       "services/nutrition_actuals_confidence_service.py",
@@ -703,6 +696,41 @@
       "adjacent_focused_tests": "117 passed",
       "py_compile": "PASS",
       "ruff_black_note": "not available in sandbox; run targeted local/Linux checks only"
-    }
+    },
+    "main_merge_commit": "9d66514",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS",
+    "next_project_memory_milestone": "Future Feature & Technology Inventory v1"
+  },
+  "future_feature_technology_inventory_v1": {
+    "status": "docs/project-memory update complete / ready for Architecture review",
+    "branch": "feature/future-feature-technology-inventory-v1",
+    "source_main_commit": "9d66514",
+    "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "requested_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED",
+    "qa_class": "CLASS 0 — DOCS / PROJECT MEMORY ONLY",
+    "primary_doc": "docs/project_memory/future_feature_technology_inventory_v1.md",
+    "milestone_doc": "docs/project_memory/milestones/future_feature_technology_inventory_v1.md",
+    "purpose": "Preserve future product, technology, architecture, AI, workflow, UX, learning, and platform ideas without authorizing implementation.",
+    "north_star": "Fitness AI Platform is a personal AI health operating system.",
+    "ideas_recorded": [
+      "AI meal generation",
+      "meal planning / meal prep",
+      "AI workout explanations / interpretations",
+      "nutrition label scanning",
+      "barcode scanning",
+      "photo-assisted food logging",
+      "restaurant/menu parsing",
+      "grocery list generation",
+      "receipt/grocery import eventually",
+      "What-If simulator",
+      "weekly/monthly coach review",
+      "RAG-powered education layer",
+      "coach memory / personalization",
+      "wearable integrations",
+      "mobile-first / PWA future",
+      "premium Daily Command Center"
+    ],
+    "non_authorization_boundary": "Inventory items require scoped milestone, Architecture handoff, owner, tests, QA classification, acceptance, and canonical main snapshot before implementation."
   }
 }

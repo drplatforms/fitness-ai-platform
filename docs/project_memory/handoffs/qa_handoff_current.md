@@ -1,65 +1,40 @@
-# QA Handoff Current
+# QA Handoff Current — Future Feature & Technology Inventory v1
 
-Milestone: Nutrition Actuals Provenance & Confidence Model v1
+Milestone: Future Feature & Technology Inventory v1.
 
-Branch: `feature/nutrition-actuals-provenance-confidence-model-v1`
+QA class: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
 
-Status: backend implementation complete / ready for focused QA.
+Status: docs/project-memory update complete / ready for Architecture review.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
+## QA expectation
 
-QA class:
+No behavioral QA is required for this milestone unless Architecture explicitly requests docs review.
 
-CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
+Recommended validation is docs/project-memory only:
 
-## QA focus
+- `git diff --check`
+- `python tools/project_memory_check.py`
+- `pytest tests/test_project_memory_check.py -q`
+- optional dev assistant memory/stale/continuity checks
 
-Validate classification correctness for persisted nutrition actuals/provenance.
+## Scope confirmation
 
-Focused QA should confirm:
+No runtime/API/schema/Streamlit/provider behavior changed.
 
-1. Raw/source grams entry classifies as `raw_grams`.
-2. Canonical grams entry classifies as `canonical_grams`.
-3. Serving-unit entry with metadata classifies as `canonical_serving_unit`.
-4. Serving-unit interpretation exposes resolved grams from persisted backend value.
-5. Serving-unit entry with `grams_min` / `grams_max` is marked `ranged`.
-6. Wide gram range adds public-safe limitation/reason code.
-7. Low serving-unit confidence adds public-safe limitation/reason code.
-8. Missing serving-unit metadata does not crash classification.
-9. Missing nutrient values are classified as missing/unknown, not zero.
-10. Unknown source classifies safely as `unknown`.
-11. Public-safe output excludes raw source payloads and SQL/debug internals.
-12. Existing serving-unit logging remains stable.
-13. Existing canonical grams logging remains stable.
-14. Existing raw/source nutrition logging remains stable.
-15. Existing Target-vs-Actual totals remain stable.
-16. No Streamlit behavior changed.
-17. No AI/provider behavior changed.
+No nutrition/training behavior changed.
 
-## Tests added
+No snapshots committed.
 
-New focused test file:
+## QA note
 
-- `tests/test_nutrition_actuals_confidence_service.py`
+This milestone records ideas only. It does not authorize implementation or change accepted behavior.
 
-Sandbox focused result:
+## Historical command/runtime anchors — reference-only
 
-- 11 passed for the new confidence service test file.
-- 117 passed across adjacent focused nutrition/API/project-memory regression set.
+Local Command Menu App Runtime Correction v1 remains the accepted command-menu correction milestone.
 
-## Not required
+`app` means Linux canonical app runtime.
 
-This milestone does not require full Streamlit workflow QA.
+`wapp` remains Windows-local only.
 
-This milestone does not require AI/provider QA.
-
-This milestone does not require workout/recovery/report QA.
-
-## Historical continuity anchors
-
-These phrases are reference-only for project-memory continuity:
-
-- Local Command Menu App Runtime Correction v1
-- app` means Linux canonical app runtime
-- wapp
-- fports
+`fports` remains the command-menu helper for port inspection.

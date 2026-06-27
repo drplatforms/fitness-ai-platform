@@ -1,93 +1,68 @@
-# Architecture Handoff Current
+# Architecture Handoff Current — Future Feature & Technology Inventory v1
 
-Milestone: Nutrition Actuals Provenance & Confidence Model v1
+Recipient: Architecture.
 
-Branch: `feature/nutrition-actuals-provenance-confidence-model-v1`
+CC: Project Memory / TPM, Backend Development / Data Layer, Streamlit UI, QA / Regression Testing.
 
-Status: backend implementation complete / ready for Architecture review.
+Current source of truth: `main` at `9d66514`.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
+Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
 
-Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
+Milestone: Future Feature & Technology Inventory v1.
 
-Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
+Milestone type: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
 
-Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+Branch: `feature/future-feature-technology-inventory-v1`.
 
-## Architecture review summary
+Status: docs/project-memory update complete / ready for Architecture review.
 
-Backend implemented the authorized narrow interpretation layer for nutrition actuals confidence/provenance.
+Requested final status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
 
-The feature does not redesign Target-vs-Actual. It prepares future nutrition transparency/product work by producing public-safe interpretation objects for logged actual entries.
+## Summary
 
-## Implemented contract
+This docs-only milestone creates durable project memory for future product, technology, architecture, AI, workflow, UX, learning, and platform ideas.
 
-New model/service files:
+Primary document:
 
-- `models/nutrition_actuals_confidence_models.py`
-- `services/nutrition_actuals_confidence_service.py`
+- `docs/project_memory/future_feature_technology_inventory_v1.md`
 
-Primary functions:
+Milestone document:
 
-- `build_nutrition_actual_interpretation(food_entry_id)`
-- `build_nutrition_actual_interpretations_for_date(user_id, target_date)`
-- `build_public_nutrition_actual_interpretation(food_entry_id)`
+- `docs/project_memory/milestones/future_feature_technology_inventory_v1.md`
 
-Output distinguishes:
+## Architecture review request
 
-- raw grams entries;
-- canonical grams entries;
-- canonical serving-unit entries;
-- unknown/unclassified entries;
-- exact, estimated, ranged, low-confidence, and unknown precision;
-- high/moderate/low/unknown confidence;
-- complete, partial, missing, and unknown nutrient completeness.
+Please review whether the inventory accurately captures:
 
-## Public-safe boundary
+- personal AI health operating system north star;
+- backend-truth doctrine;
+- AI/provider/RAG/orchestration boundaries;
+- high-end future product features;
+- current/near/medium/advanced technology inventory;
+- explicit non-authorization boundary.
 
-The service exposes public-safe fields only:
+## Requested decision
 
-- source type;
-- precision;
-- confidence level;
-- resolved grams;
-- optional grams range summary;
-- nutrient completeness;
-- reason codes;
-- display flags;
-- limitations.
+Accept Future Feature & Technology Inventory v1 as project-memory continuity baseline.
 
-It does not expose raw SQL rows, raw source payloads, provider runtime metadata, tracebacks, raw DB object dumps, validator internals, private debug context, or raw AI output.
+Requested final status:
+
+`FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
 
 ## Scope confirmation
 
-No Streamlit changes.
-
-No logging behavior changes.
-
-No Target-vs-Actual totals changes.
-
-No API route changes.
-
-No schema migration.
-
-No AI/provider behavior changes.
+No runtime/API/schema/Streamlit/provider changes.
 
 No snapshots committed.
 
-## Review request
+No implementation authorization created.
 
-Please review the v1 classification vocabulary, public-safe output contract, and focused tests.
+## Historical command/runtime anchors — reference-only
 
-Requested decision:
+Local Command Menu App Runtime Correction v1 remains the accepted command-menu correction milestone.
 
-Accept Nutrition Actuals Provenance & Confidence Model v1 as the backend baseline for future actuals confidence/provenance interpretation.
+`app` is now the canonical Linux runtime launcher.
 
-## Historical continuity anchors
+`wapp` remains Windows-local only.
 
-These phrases are reference-only for project-memory continuity:
-
-- Local Command Menu App Runtime Correction v1
-- app` is now the canonical Linux runtime launcher
-- wapp
-- Linux is the canonical FastAPI + Streamlit app runtime
+Linux is the canonical FastAPI + Streamlit app runtime.

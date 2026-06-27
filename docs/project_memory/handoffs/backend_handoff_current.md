@@ -1,102 +1,63 @@
-# Backend Handoff Current
+# Backend Handoff Current — Future Feature & Technology Inventory v1
 
-Milestone: Nutrition Actuals Provenance & Confidence Model v1
+Recipient: Backend Development / Data Layer.
 
-Branch: `feature/nutrition-actuals-provenance-confidence-model-v1`
+Current source of truth: `main` at `9d66514`.
 
-Status: backend implementation complete / ready for Architecture and focused QA review.
+Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
+Current project-memory milestone: Future Feature & Technology Inventory v1.
 
-Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
+Status: docs/project-memory update complete / ready for Architecture review.
 
-Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
+## Backend relevance
 
-Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+This milestone does not assign backend implementation work.
 
-## Implementation summary
+It records future product and technology ideas so future backend milestones can be scoped cleanly.
 
-Backend added a narrow deterministic actuals confidence/provenance interpretation layer.
+Backend should treat the inventory as a north-star reference only until Architecture authorizes a specific implementation milestone.
 
-New files:
+## Current accepted backend nutrition capability
 
-- `models/nutrition_actuals_confidence_models.py`
-- `services/nutrition_actuals_confidence_service.py`
-- `tests/test_nutrition_actuals_confidence_service.py`
+- canonical food search;
+- serving-unit discovery;
+- serving-unit logging;
+- food_entries actuals bridge;
+- serving-unit provenance metadata;
+- actuals provenance/confidence interpretation;
+- Target-vs-Actual compatibility.
 
-Primary service functions:
+## Ideas relevant to future Backend work
 
-- `build_nutrition_actual_interpretation(food_entry_id)`
-- `build_nutrition_actual_interpretations_for_date(user_id, target_date)`
-- `build_public_nutrition_actual_interpretation(food_entry_id)`
+Future Backend candidates captured in inventory include:
 
-The service classifies logged nutrition actuals by source type, precision, confidence level, nutrient completeness, serving-unit metadata presence, grams range, public-safe reason codes, limitations, and display flags.
+- deterministic Daily Command Center data contract;
+- meal planning / meal prep services;
+- AI meal candidate validation contracts;
+- food scanning extraction validation;
+- barcode/catalog lookup boundaries;
+- What-If simulator deterministic core;
+- coach memory service;
+- actuals confidence/provenance integration;
+- adaptive training services;
+- background job design;
+- provider adapter registry;
+- RAG/education retrieval boundaries;
+- observability and QA artifact generation.
 
-## Classification implemented
+## Non-authorization
 
-Source types:
+Do not start implementing any inventory item from this handoff alone.
 
-- `raw_grams`
-- `canonical_grams`
-- `canonical_serving_unit`
-- `unknown`
+Future implementation still requires a scoped Architecture handoff and acceptance criteria.
 
-Precision values:
+## Historical command/runtime anchors — reference-only
 
-- `exact`
-- `estimated`
-- `ranged`
-- `low_confidence`
-- `unknown`
+Local Command Menu App Runtime Correction v1 remains the accepted command-menu correction milestone.
 
-Confidence values:
+`app` restarts Linux FastAPI + Streamlit through SSH.
 
-- `high`
-- `moderate`
-- `low`
-- `unknown`
+`wapp` remains Windows-local only.
 
-Nutrient completeness values:
-
-- `complete`
-- `partial`
-- `missing_nutrients`
-- `unknown`
-
-## Boundaries preserved
-
-- No Streamlit changes.
-- No logging endpoint behavior changes.
-- No Target-vs-Actual totals changes.
-- No macro target formula changes.
-- No AI/provider/CrewAI/direct_ollama changes.
-- No food suggestion or meal planning changes.
-- No schema migration added.
-- No snapshots committed.
-
-## Validation notes
-
-Focused sandbox validation:
-
-- `pytest tests/test_nutrition_actuals_confidence_service.py -q`: 11 passed
-- adjacent focused nutrition/API/project-memory tests: 117 passed
-- `python -m py_compile` for new model/service/test: PASS
-
-Sandbox note: Ruff/Black executables were not available in the sandbox. Local and Linux validation should run targeted Ruff/Black on touched Python files only.
-
-## QA recommendation
-
-QA class:
-
-CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
-
-Focus QA on classification correctness, missing nutrient handling, public-safe output, no regression to logging, no regression to Target-vs-Actual totals, no Streamlit changes, and no AI/provider changes.
-
-## Historical continuity anchors
-
-These phrases are reference-only for project-memory continuity:
-
-- Local Command Menu App Runtime Correction v1
-- app` restarts Linux FastAPI + Streamlit through SSH
-- wapp
-- No backend app runtime code changed.
+No backend app runtime code changed.

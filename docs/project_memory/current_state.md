@@ -1,24 +1,22 @@
 # Current State
 
-Latest accepted milestone: Nutrition Serving Unit Logging Contract Design v1.
+Latest accepted milestone: Project Memory Warning Review v1.
 
-Latest accepted feature commit: `68ca6c3`.
+Latest accepted feature commit: `b395e0a`.
 
-Latest main merge commit: `4abf453`.
+Latest main merge commit: `d74ddec`.
 
-Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`.
+Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip`.
 
-Current maintenance milestone: Project Memory Warning Review v1.
+Current implementation milestone: Nutrition Serving Unit Logging Backend v1.
 
-Current branch: `feature/project-memory-warning-review-v1`.
+Current branch: `feature/nutrition-serving-unit-logging-backend-v1`.
 
-Source baseline: `main` at `4abf453`.
+Source baseline: `main` at `d74ddec`.
 
-Milestone type: project memory / continuity / docs-only cleanup.
+Milestone type: backend implementation / service / endpoint / tests / project memory.
 
-Commit-check mode: docs-only.
-
-Next implementation milestone: Nutrition Serving Unit Logging Backend v1.
+Commit-check mode: code.
 
 ## Current process doctrine
 
@@ -53,50 +51,40 @@ Accepted foundation:
 - Seed coverage: 18 active serving units across 12 canonical foods.
 - Missing canonical foods from the starter seed: none.
 
-Nutrition Serving Unit Logging Contract Design v1 is also accepted and merged.
+Nutrition Serving Unit Logging Contract Design v1 is accepted and merged.
 
-Accepted contract baseline:
+Project Memory Warning Review v1 is accepted and merged.
 
-- keep `food_entries` as the grams-based actuals bridge;
-- prefer a companion serving-unit provenance table for future implementation;
-- prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`;
-- persist resolved grams used at log time;
-- preserve serving-unit provenance: canonical food id, serving unit id, serving quantity, resolved grams, gram range, confidence, amount source, and original serving display;
-- keep Target-vs-Actual unchanged in the first serving-unit logging implementation;
-- keep Streamlit as a renderer/selector of backend-approved fields only;
-- keep AI/provider away from serving-unit conversion and raw serving-unit internals.
-
-Scope still not implemented:
-
-- no serving-unit logging endpoint exists yet;
-- no companion provenance table exists yet;
-- no Streamlit serving-unit logging UI exists yet;
-- no Target-vs-Actual confidence display for serving estimates exists yet;
-- no provider/Ollama/CrewAI serving-unit path exists.
-
-## Current maintenance milestone
-
-Project Memory Warning Review v1 is authorized from `main` at `4abf453`.
-
-Purpose:
-
-Review the recurring project-memory warning summary and clean current canonical project-memory files after Nutrition Serving Unit Logging Contract Design v1 merged to main.
-
-The warning baseline is not a failing check. Current observed summary before this cleanup remains:
+Current project-memory baseline after warning review:
 
 ```text
-PASS=605 WARN=43 FAIL=0
+PASS=620 WARN=28 FAIL=0
 ```
 
-The goal is to resolve current/actionable stale state and document remaining warnings as accepted historical/archive noise where appropriate.
+Remaining project-memory warnings are accepted as historical/archive/non-actionable continuity noise unless future checks prove otherwise.
+
+## Current serving-unit logging backend milestone
+
+Nutrition Serving Unit Logging Backend v1 is authorized from `main` at `d74ddec`.
+
+This branch implements the smallest safe backend vertical slice:
+
+- dedicated endpoint: `POST /nutrition/{user_id}/log-serving`;
+- backend validation for canonical food, serving unit, active state, ownership, and positive quantity;
+- backend-owned serving quantity to grams resolution;
+- existing `food_entries` row insertion using resolved grams;
+- companion provenance table: `nutrition_serving_unit_log_metadata`;
+- public-safe serving-unit logging response;
+- focused service/API/Target-vs-Actual regression tests;
+- project-memory updates.
 
 ## Current serving-unit design decision baseline
 
-Architecture accepted these directions for the next implementation milestone:
+Architecture accepted these directions for the implementation milestone:
 
 1. Keep `food_entries` as the grams-based actuals bridge.
-2. Prefer a companion serving-unit provenance table for future implementation.
-3. Prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`.
+2. Add a companion serving-unit provenance table.
+3. Use a dedicated endpoint: `POST /nutrition/{user_id}/log-serving`.
 4. Persist resolved grams used at log time.
 5. Preserve serving-unit provenance:
    - canonical food id;
@@ -107,29 +95,32 @@ Architecture accepted these directions for the next implementation milestone:
    - confidence;
    - amount source;
    - original serving display.
-6. Do not change Target-vs-Actual immediately.
-7. Do not expose serving-unit internals to AI/provider yet.
+6. Do not change Target-vs-Actual behavior.
+7. Do not expose serving-unit internals to AI/provider.
 8. Do not allow Streamlit to invent mappings.
 9. Do not allow AI/provider to invent serving units, grams, conversions, macros, or actuals.
 10. Treat serving-unit logging as a backend-owned convenience layer that resolves to grams.
 
+## Scope still not implemented
+
+- no Streamlit serving-unit logging UI exists yet;
+- no Target-vs-Actual confidence display for serving estimates exists yet;
+- no provider/Ollama/CrewAI serving-unit path exists;
+- no serving-aware food suggestion behavior exists yet.
+
 ## Strict current non-goals
 
-The warning-review milestone must not implement runtime behavior.
+The backend implementation milestone must not change:
 
-Do not change:
-
-- Python/runtime files;
-- API routes;
-- schema/migrations/code;
-- `/nutrition/log`;
-- `/nutrition/{user_id}/log-canonical`;
 - Streamlit;
-- Target-vs-Actual;
+- Target-vs-Actual behavior/design;
 - provider/Ollama/CrewAI behavior;
+- nutrition target formula behavior;
 - food suggestions;
 - meal planning;
-- workout/recovery/report behavior.
+- workout/recovery/report behavior;
+- raw/source food import behavior;
+- canonical food normalization/search behavior beyond existing compatibility.
 
 ## Recent accepted nutrition milestones
 

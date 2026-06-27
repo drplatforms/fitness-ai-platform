@@ -2,13 +2,13 @@
 
 Current focus: AI Health Coach / fitness_ai.
 
-Current source baseline: `main` at `4abf453` after Nutrition Serving Unit Logging Contract Design v1 was accepted and merged.
+Current source baseline: `main` at `d74ddec` after Project Memory Warning Review v1 was accepted and merged.
 
-Current authorized milestone: Project Memory Warning Review v1.
+Current authorized milestone: Nutrition Serving Unit Logging Backend v1.
 
-Milestone type: project memory / continuity / docs-only cleanup.
+Milestone type: backend implementation / service / endpoint / tests / project memory.
 
-No application behavior, service code, Streamlit UI, database schema, provider runtime, nutrition actuals behavior, workout generation behavior, recovery behavior, or AI/provider behavior may change in this milestone.
+Backend is authorized to add the narrow serving-unit logging path. Streamlit UI, provider/Ollama/CrewAI behavior, Target-vs-Actual behavior/design, nutrition targets, food suggestions, meal planning, workout generation, recovery behavior, and report behavior remain out of scope.
 
 ## What Future Chats Must Do First
 
@@ -82,19 +82,18 @@ Accepted contract baseline:
 - Streamlit must not invent mappings;
 - AI/provider must not invent serving units, grams, conversions, macros, or actuals.
 
-## Current maintenance milestone
 
-Project Memory Warning Review v1.
+### Project Memory Warning Review v1
 
-Observed warning baseline:
+Accepted and merged.
 
-```text
-PASS=605 WARN=43 FAIL=0
-```
+- Feature commit: `b395e0a`
+- Main merge commit: `d74ddec`
+- Snapshot: `fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip`
 
-The warning count is not a failing check. This cleanup pass resolves current/actionable stale references and documents remaining historical/archive warnings as accepted noise.
+Accepted scope: docs-only current project-memory cleanup. Current warning baseline after review: `PASS=620 WARN=28 FAIL=0`. Remaining warnings are accepted as historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
-## Next implementation milestone
+## Current implementation milestone
 
 Nutrition Serving Unit Logging Backend v1.
 
@@ -108,6 +107,7 @@ Expected scope:
 - persist companion serving-unit provenance metadata;
 - preserve existing raw/canonical grams logging behavior;
 - keep Target-vs-Actual behavior stable;
+- add focused service/API/actuals regression tests;
 - no Streamlit changes until backend is accepted;
 - no AI/provider involvement.
 

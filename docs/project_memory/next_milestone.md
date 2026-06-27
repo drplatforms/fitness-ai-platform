@@ -1,157 +1,105 @@
 # Next Milestone
 
-Current maintenance milestone in progress: Project Memory Warning Review v1.
+Current implementation milestone in progress: Nutrition Serving Unit Logging Backend v1.
 
-Recommended branch: `feature/project-memory-warning-review-v1`.
+Recommended branch: `feature/nutrition-serving-unit-logging-backend-v1`.
 
 Source branch: `main`.
 
-Required source main commit: `4abf453`.
+Required source main commit: `d74ddec`.
 
-Milestone type: project memory / continuity / docs-only cleanup.
+Milestone type: backend implementation / service / endpoint / tests / project memory.
 
-Commit-check mode: docs-only.
+Commit-check mode: code.
 
 ## Objective
 
-Review and clean current canonical project-memory state after Nutrition Serving Unit Logging Contract Design v1 merged to main.
+Implement backend-owned canonical-food serving-unit logging without changing Streamlit, AI/provider behavior, nutrition target formulas, or Target-vs-Actual behavior.
 
-The recurring project-memory warning summary is not failing:
+The endpoint should allow a future UI to submit:
 
 ```text
-PASS=605 WARN=43 FAIL=0
+canonical_food_id + serving_unit_id + quantity
 ```
 
-This milestone should resolve current/actionable stale references and document remaining warnings as accepted historical/archive noise where they are not actionable.
+Backend resolves that serving quantity to grams, writes the resolved grams through the existing `food_entries` path, and stores serving-unit provenance in a companion table.
 
 ## Current canonical state to preserve
 
 - Nutrition Serving Unit Data Model v1: accepted and merged.
 - Nutrition Serving Unit Logging Contract Design v1: accepted and merged.
-- Current main baseline: `4abf453`.
-- Latest contract-design feature commit: `68ca6c3`.
-- Latest contract-design snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`.
-- Serving-unit logging is not implemented yet.
-- `food_entries` remains the grams-based actuals bridge.
-- Future serving-unit logging direction remains backend-owned grams resolution with companion provenance.
+- Project Memory Warning Review v1: accepted and merged.
+- Current main baseline: `d74ddec`.
+- Latest accepted feature commit: `b395e0a`.
+- Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip`.
+- Project-memory baseline: `PASS=620 WARN=28 FAIL=0`.
+- Remaining warnings are accepted historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
-## Expected next implementation milestone
+## Implementation scope
 
-Nutrition Serving Unit Logging Backend v1.
+Nutrition Serving Unit Logging Backend v1 should add:
 
-Expected owner: Backend Development / Data Layer.
+- companion provenance table: `nutrition_serving_unit_log_metadata`;
+- backend service behavior for serving-unit logging;
+- endpoint: `POST /nutrition/{user_id}/log-serving`;
+- positive quantity validation;
+- canonical food validation;
+- serving-unit validation;
+- active state checks;
+- serving-unit ownership checks;
+- resolved grams persistence through `food_entries`;
+- serving-unit provenance persistence;
+- public-safe response fields;
+- focused service/API/Target-vs-Actual regression tests;
+- project-memory updates.
 
-Expected milestone type: backend implementation / service / endpoint / tests / project memory.
+## Behavior to preserve
 
-Expected future scope:
+The following must continue to work unchanged:
 
-- add backend service/endpoint for `canonical_food_id` + `serving_unit_id` + quantity;
-- resolve serving-unit quantity to grams using backend-owned serving-unit metadata;
-- persist `food_entries` grams row for actuals compatibility;
-- persist companion serving-unit provenance metadata;
-- preserve existing raw/canonical grams logging behavior;
-- keep Target-vs-Actual behavior stable;
-- no Streamlit changes until backend is accepted;
-- no AI/provider involvement.
+- existing raw/source `/nutrition/log` behavior;
+- existing canonical grams `/nutrition/{user_id}/log-canonical` behavior;
+- existing canonical food search behavior;
+- existing canonical food seed behavior;
+- existing serving-unit seed behavior;
+- existing Target-vs-Actual actuals calculation from grams;
+- existing DailyCoachSynthesis/recommendation/report behavior;
+- existing provider/Ollama/CrewAI boundaries.
 
-## Accepted serving-unit contract baseline
+## Non-goals
 
-Architecture accepted these directions for the next implementation milestone:
+Do not add:
 
-1. Keep `food_entries` as the grams-based actuals bridge.
-2. Prefer a companion serving-unit provenance table for future implementation.
-3. Prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`.
-4. Persist resolved grams used at log time.
-5. Preserve serving-unit provenance:
-   - `canonical_food_id`;
-   - `serving_unit_id`;
-   - serving quantity;
-   - resolved grams;
-   - `grams_min`;
-   - `grams_max`;
-   - confidence;
-   - amount source;
-   - original serving display.
-6. Do not change Target-vs-Actual immediately.
-7. Do not expose serving-unit internals to AI/provider yet.
-8. Do not allow Streamlit to invent mappings.
-9. Do not allow AI/provider to invent serving units, grams, conversions, macros, or actuals.
-10. Treat serving-unit logging as a backend-owned convenience layer that resolves to grams.
+- Streamlit serving-unit UI;
+- food picker changes;
+- AI/provider serving-unit behavior;
+- CrewAI/Ollama changes;
+- Target-vs-Actual redesign;
+- serving-estimate confidence display;
+- nutrition target formula changes;
+- food suggestion changes;
+- meal planning;
+- barcode scanning;
+- USDA/Open Food Facts import;
+- workout/recovery/report changes.
 
-## Strict non-goals for Project Memory Warning Review v1
+## Expected next milestone after Backend v1 acceptance
 
-Do not implement serving-unit logging.
+Nutrition Serving Unit Logging Backend QA / Architecture Review v1.
 
-Do not modify `/nutrition/log`.
+Likely follow-up after acceptance:
 
-Do not modify `/nutrition/{user_id}/log-canonical`.
+Nutrition Actuals Confidence Model v1.
 
-Do not add a new API endpoint.
+Purpose:
 
-Do not modify schema/code migrations.
+- distinguish weighed grams, entered grams, package-label amounts, and serving-unit estimates;
+- define display-safe language for estimated actuals;
+- prepare Target-vs-Actual confidence display before Streamlit serving-unit UI.
 
-Do not modify Target-vs-Actual behavior.
+## Historical continuity anchors
 
-Do not modify Streamlit.
-
-Do not modify nutrition actuals math.
-
-Do not modify AI/provider behavior.
-
-Do not modify CrewAI/Ollama behavior.
-
-Do not add meal planning.
-
-Do not add food suggestion changes.
-
-Do not add nutrition explanation changes.
-
-Do not change canonical food search.
-
-Do not expand serving-unit seed coverage.
-
-Do not import USDA/source data.
-
-Do not add barcode scanning.
-
-Do not change workout generation.
-
-Do not change recovery logic.
-
-Do not add dependencies.
-
-Do not commit snapshots, qa_artifacts, runtime JSON, patch scripts, or temp files.
-
-Do not use `git add .`.
-
-Do not run broad formatters for docs-only work.
-
-## Validation
-
-```powershell
-git diff --check
-
-python tools/project_memory_check.py
-python tools/dev_assistant.py memory-check
-python tools/dev_assistant.py stale-doc-check
-python tools/dev_assistant.py continuity-brief
-pytest tests/test_project_memory_check.py -q
-
-scripts/dev_commit_check.ps1 -Mode docs-only
-
-. .\scripts\fitness_commands.ps1
-fsweep
-
-git status --short
-```
-
-Expected changed files are docs/project-memory files only.
-
-If Python/runtime/API/Streamlit/test files appear in `git status`, stop and correct scope before commit.
-
-## Historical authorization anchors
-
-The following historical phrases remain required project-memory continuity anchors, not active scope for this milestone:
+These phrases are retained for project-memory checker continuity and future-agent context:
 
 - Daily Coach Async Provider Runtime Design v1
 - DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED
@@ -162,3 +110,5 @@ The following historical phrases remain required project-memory continuity ancho
 - `feature/daily-coach-async-persistence-contracts-schema-v1`
 - schema/contracts
 - NOT_AUTHORIZED_YET
+
+These are historical anchors only. They do not authorize provider/runtime work in the current serving-unit logging backend milestone.

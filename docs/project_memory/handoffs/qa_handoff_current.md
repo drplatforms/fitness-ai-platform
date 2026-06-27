@@ -1,79 +1,99 @@
 # QA Handoff Current
 
-Milestone: Project Memory Warning Review v1
+Milestone: Nutrition Serving Unit Logging Backend v1
 
-QA status: docs-only project-memory validation required.
+QA status: backend implementation validation required.
 
-Branch: `feature/project-memory-warning-review-v1`.
+Branch: `feature/nutrition-serving-unit-logging-backend-v1`.
 
-Source baseline: `main` at `4abf453`.
+Source baseline: `main` at `d74ddec`.
 
-Commit-check mode: docs-only.
+Commit-check mode: code.
 
 ## QA focus
 
-This milestone has no runtime behavior.
+Validate the new backend serving-unit logging path and confirm no unrelated behavior changed.
 
-QA should validate that only docs/project-memory files changed and that current canonical memory reflects the accepted/merged serving-unit contract.
+Primary route:
 
-Primary checks:
+- `POST /nutrition/{user_id}/log-serving`
 
-- no Python files changed;
-- no API routes changed;
-- no database/schema code changed;
-- no tests changed unless explicitly required by project-memory tooling;
-- no Streamlit files changed;
-- no provider/Ollama/CrewAI files changed;
-- no food suggestion, workout, recovery, or report behavior changed;
-- project memory is internally aligned with main baseline `4abf453`;
-- Nutrition Serving Unit Logging Contract Design v1 is shown as accepted/merged;
-- next milestone remains Nutrition Serving Unit Logging Backend v1;
-- remaining project-memory warnings are documented as historical/archive noise when non-actionable.
+Expected request shape:
 
-## Expected validation
-
-```powershell
-git diff --check
-
-python tools/project_memory_check.py
-python tools/dev_assistant.py memory-check
-python tools/dev_assistant.py stale-doc-check
-python tools/dev_assistant.py continuity-brief
-pytest tests/test_project_memory_check.py -q
-
-scripts/dev_commit_check.ps1 -Mode docs-only
-
-. .\scripts\fitness_commands.ps1
-fsweep
-
-git status --short
+```json
+{
+  "canonical_food_id": 123,
+  "serving_unit_id": 456,
+  "quantity": 1.5,
+  "logged_date": "2026-06-26"
+}
 ```
 
-The warning count may not reach zero. That is acceptable if `FAIL=0`, current canonical memory is accurate, and non-actionable warnings are documented.
+Expected behavior:
 
-## Runtime smoke
+- canonical food must exist and be active;
+- serving unit must exist and be active;
+- serving unit must belong to the canonical food;
+- quantity must be positive;
+- backend resolves grams;
+- resolved grams are persisted to `food_entries`;
+- serving-unit provenance is persisted to `nutrition_serving_unit_log_metadata`;
+- Target-vs-Actual sees the logged food through existing grams actuals;
+- response is public-safe.
 
-Not required.
+## Regression checks
 
-No browser smoke is required because there are no Streamlit or backend runtime changes.
+Confirm these still work:
 
-## Future QA expectations
+- existing `/nutrition/log` raw/source grams logging;
+- existing `/nutrition/{user_id}/log-canonical` canonical grams logging;
+- canonical food search;
+- serving-unit seed idempotence;
+- canonical food seed idempotence;
+- Target-vs-Actual actuals;
+- DailyCoachSynthesis/recommendation tests if run in full suite.
 
-For the later Nutrition Serving Unit Logging Backend v1, QA should expect tests for:
+## Non-goals to verify
 
-- active canonical food can be logged by serving unit;
-- inactive canonical food is rejected;
-- inactive serving unit is rejected;
-- serving unit must belong to canonical food;
-- serving quantity must be positive;
-- resolved grams are persisted;
-- provenance metadata is persisted;
-- existing grams logging remains stable;
-- existing canonical grams logging remains stable;
-- Target-vs-Actual sees serving-unit logs through resolved grams;
-- missing nutrients remain unknown, not zero;
-- no raw source payloads are exposed;
-- no provider/Ollama/CrewAI call occurs.
+No changes should appear in:
+
+- Streamlit UI;
+- AI/provider/Ollama/CrewAI paths;
+- nutrition target formula behavior;
+- food suggestion behavior;
+- meal planning;
+- workout/recovery/report behavior.
+
+## Suggested focused validation
+
+```powershell
+ruff check . --fix
+black .
+
+pytest tests/test_nutrition_serving_unit_data_model_v1.py -q
+pytest tests/test_nutrition_serving_unit_logging_service.py -q
+pytest tests/test_nutrition_serving_unit_logging_api.py -q
+pytest tests/test_canonical_food_logging_api.py -q
+pytest tests/test_nutrition_target_vs_actual_service.py -q
+pytest tests/test_api_smoke.py -q
+pytest
+
+python -m py_compile ui/streamlit_app.py
+```
+
+## Manual API smoke idea
+
+After seeding canonical foods and serving units, use a known canonical food/serving unit pair from the test database or local DB, then POST to:
+
+```text
+/nutrition/1/log-serving
+```
+
+Confirm:
+
+- response includes `resolved_grams`, gram range, confidence, and serving display;
+- `/nutrition/1/target-vs-actual?date=<date>` reflects the logged actuals;
+- no runtime metadata or raw source payload appears.
 
 ## Runtime command continuity anchor
 

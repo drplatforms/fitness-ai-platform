@@ -70,3 +70,42 @@ class ServingUnitSeedResult:
     missing_canonical_foods: list[str] = field(default_factory=list)
     active_serving_unit_count: int = 0
     seeded_serving_units: list[NutritionServingUnit] = field(default_factory=list)
+
+
+@dataclass
+class NutritionServingUnitLogMetadata:
+    id: int
+    food_entry_id: int
+    user_id: int
+    canonical_food_id: int
+    serving_unit_id: int
+    serving_quantity: float
+    resolved_grams: float
+    grams_min: float | None
+    grams_max: float | None
+    serving_unit_confidence: str
+    amount_source: str
+    original_serving_display: str
+    source: str | None = None
+    source_notes: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+@dataclass
+class NutritionServingUnitLogResponse:
+    food_entry_id: int
+    logged_food_entry_id: int
+    canonical_food_id: int
+    serving_unit_id: int
+    display_name: str
+    serving_quantity: float
+    serving_display: str
+    resolved_grams: float
+    grams_min: float | None
+    grams_max: float | None
+    confidence: str
+    amount_source: str
+    logged_date: str
+    metadata_id: int
+    nutrient_summary: dict[str, float] | None = None

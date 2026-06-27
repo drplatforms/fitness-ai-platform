@@ -1,85 +1,73 @@
 # Architecture Handoff Current
 
-Milestone: Project Memory Warning Review v1
+Milestone: Nutrition Serving Unit Logging Backend v1
 
-Status: docs-only cleanup drafted / ready for Architecture review after validation.
+Status: backend implementation drafted / ready for Architecture and QA review after validation.
 
-Source baseline: `main` at `4abf453`.
+Source baseline: `main` at `d74ddec`.
 
-Branch: `feature/project-memory-warning-review-v1`.
+Branch: `feature/nutrition-serving-unit-logging-backend-v1`.
 
-Milestone type: project memory / continuity / docs-only cleanup.
+Milestone type: backend implementation / service / endpoint / tests / project memory.
 
 ## Review focus
 
-Architecture should review whether current canonical project-memory state is aligned after Nutrition Serving Unit Logging Contract Design v1 merged to main.
+Architecture should verify that the implementation stays inside the accepted serving-unit logging contract.
 
 Primary review decisions:
 
-1. Confirm Nutrition Serving Unit Logging Contract Design v1 is represented as accepted and merged.
-2. Confirm current main baseline is `4abf453`.
-3. Confirm current warning review does not imply runtime scope.
-4. Confirm next implementation milestone is Nutrition Serving Unit Logging Backend v1.
-5. Confirm remaining project-memory warnings are documented as historical/archive noise where they are not actionable.
+1. Confirm `food_entries` remains the grams-based actuals bridge.
+2. Confirm the companion provenance table preserves serving-unit metadata at log time.
+3. Confirm the endpoint is dedicated to serving-unit logging: `POST /nutrition/{user_id}/log-serving`.
+4. Confirm Target-vs-Actual behavior is unchanged and reads resolved grams through the existing path.
+5. Confirm Streamlit and AI/provider behavior are untouched.
+6. Confirm existing raw/source and canonical grams logging still work.
+7. Confirm response fields are public-safe and do not expose raw source/provider internals.
 
-## Current serving-unit contract baseline
+## Implemented architecture shape
 
-Accepted design baseline:
-
-```text
-canonical_food_id + serving_unit_id + serving_quantity
--> backend validates canonical food and serving unit
--> backend resolves grams
--> backend writes resolved grams to food_entries
--> backend writes serving-unit provenance to companion table
--> Target-vs-Actual reads grams exactly as it does today
-```
-
-Preferred future endpoint:
-
-- `POST /nutrition/{user_id}/log-serving`
-
-Preferred future persistence:
-
-- `food_entries` grams bridge plus companion serving-unit provenance table
-
-## Warning baseline
-
-Observed before cleanup:
+Expected backend path:
 
 ```text
-PASS=605 WARN=43 FAIL=0
+POST /nutrition/{user_id}/log-serving
+-> validate canonical_food_id
+-> validate serving_unit_id
+-> validate serving unit belongs to canonical food
+-> validate quantity > 0
+-> resolve quantity to grams/range/confidence
+-> call existing canonical grams write-through
+-> insert nutrition_serving_unit_log_metadata row
+-> return public-safe response
 ```
-
-This is not a failing check. Remaining warnings in historical milestone/review/design files are acceptable if current canonical docs are accurate and the warnings are documented.
 
 ## Scope preserved
 
-The docs-only cleanup does not:
+This milestone should not:
 
-- implement serving-unit logging;
-- add API endpoints;
-- change schema/code;
-- modify `/nutrition/log`;
-- modify `/nutrition/{user_id}/log-canonical`;
-- modify Target-vs-Actual;
-- modify Streamlit;
-- modify provider/Ollama/CrewAI behavior;
-- change food suggestions, meal planning, workouts, recovery, or reports.
+- add Streamlit UI;
+- change provider/Ollama/CrewAI behavior;
+- redesign Target-vs-Actual;
+- change nutrition targets;
+- add meal planning;
+- change food suggestions;
+- change workouts/recovery/reports.
 
-## Recommended final Architecture decision
+## Recommended final Architecture decision after QA pass
 
-Accept Project Memory Warning Review v1.
+Accept Nutrition Serving Unit Logging Backend v1.
 
 Recommended final status:
 
-`PROJECT_MEMORY_WARNING_REVIEW_V1_ACCEPTED`
+`NUTRITION_SERVING_UNIT_LOGGING_BACKEND_V1_ACCEPTED`
 
 ## Recommended next milestone
 
-Nutrition Serving Unit Logging Backend v1.
+Nutrition Actuals Confidence Model v1.
 
-Recommended owner: Backend Development / Data Layer.
+Purpose:
+
+- define confidence semantics for weighed grams, grams-entered, package labels, copied entries, and serving-unit estimates;
+- prepare safe display language before Streamlit Serving Unit Logging UI v1.
 
 ## Runtime command continuity anchor
 

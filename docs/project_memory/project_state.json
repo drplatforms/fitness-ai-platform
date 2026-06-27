@@ -6,29 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Serving Unit Logging Contract Design v1",
-    "latest_final_status": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
-    "latest_accepted_commit": "68ca6c3",
-    "latest_main_merge_commit": "4abf453",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
-    "previous_accepted_milestone": "Nutrition Serving Unit Data Model v1",
-    "previous_feature_commit": "e2c467d",
-    "previous_main_merge_commit": "9cb1d41",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip",
+    "latest_accepted_milestone": "Project Memory Warning Review v1",
+    "latest_final_status": "PROJECT_MEMORY_WARNING_REVIEW_V1_ACCEPTED",
+    "latest_accepted_commit": "b395e0a",
+    "latest_main_merge_commit": "d74ddec",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip",
+    "previous_accepted_milestone": "Nutrition Serving Unit Logging Contract Design v1",
+    "previous_feature_commit": "68ca6c3",
+    "previous_main_merge_commit": "4abf453",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
     "previous_previous_accepted_milestone": "Nutrition Catalog Diagnostic v1",
     "previous_previous_feature_commit": "6765abb / 9f1285f closeout",
     "previous_previous_main_merge_commit": "8b2c4c3",
     "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Project Memory Warning Review v1",
-    "current_authorized_status": "AUTHORIZED / DOCS-ONLY PROJECT MEMORY CLEANUP",
-    "current_authorized_branch": "feature/project-memory-warning-review-v1",
-    "source_main_commit": "4abf453",
-    "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Logging Backend v1",
-    "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
-    "process_doctrine": "Review recurring project-memory warnings, resolve current/actionable stale state, and document remaining historical/archive warnings before serving-unit logging implementation.",
-    "delivery_flow": "warning capture -> docs-only cleanup -> project-memory validation -> commit/push -> Linux docs validation -> snapshot -> Architecture handoff",
+    "current_authorized_milestone": "Nutrition Serving Unit Logging Backend v1",
+    "current_authorized_status": "AUTHORIZED FOR BACKEND IMPLEMENTATION",
+    "current_authorized_branch": "feature/nutrition-serving-unit-logging-backend-v1",
+    "source_main_commit": "d74ddec",
+    "recommended_next_milestone_after_acceptance": "Nutrition Actuals Confidence Model v1",
+    "alternative_next_milestone": "Streamlit Serving Unit Logging UI v1 after backend and actuals confidence are accepted",
+    "process_doctrine": "Backend owns serving-unit validation, grams resolution, provenance persistence, and public-safe responses. Streamlit and provider paths remain out of scope.",
+    "delivery_flow": "preflight/branch -> implement -> validate -> review diff -> stage -> commit -> push -> snapshot -> Linux validation -> Architecture/QA handoff",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -127,7 +127,14 @@
     "serving_unit_provenance_companion_table_preferred": true,
     "dedicated_log_serving_endpoint_preferred": true,
     "streamlit_must_not_invent_serving_mappings": true,
-    "provider_must_not_invent_serving_units_or_grams": true
+    "provider_must_not_invent_serving_units_or_grams": true,
+    "nutrition_serving_unit_logging_backend_v1": true,
+    "serving_unit_log_serving_endpoint": true,
+    "serving_unit_log_provenance_table": true,
+    "backend_owned_serving_unit_grams_resolution": true,
+    "no_streamlit_changes_for_current_serving_unit_backend_milestone": true,
+    "no_provider_changes_for_current_serving_unit_backend_milestone": true,
+    "no_target_vs_actual_redesign_for_current_serving_unit_backend_milestone": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -203,14 +210,15 @@
     ]
   },
   "workflow_rules": {
-    "phase_separated_delivery": "Use separate phases: preflight/branch, apply, validate, stage, commit, push, snapshot, Linux pull/smoke.",
+    "phase_separated_delivery": "Use separate phases: preflight/branch, implement/apply, validate, review diff, stage only, commit only, push only, snapshot, Linux pull/smoke.",
     "no_git_add_dot": "Do not use git add .; stage explicit files only.",
     "temporary_apply_artifacts_outside_repo": "Temporary patches and apply scripts stay outside the repo.",
     "temporary_apply_artifact_root": "C:\\projects",
     "run_apply_scripts_from_repo_as": "Run temporary apply scripts from the repo root using python ..\\<script>.py.",
     "apply_raw_patches_from_repo_as": "Apply raw patches from the repo root using git apply --check ..\\<patch>.patch then git apply ..\\<patch>.patch.",
     "no_broad_formatters_for_docs_only": "For docs-only milestones, do not run broad formatters that can rewrite unrelated application files.",
-    "long_handoffs_in_code_blocks": "Long handoffs must be delivered as one copy/paste-ready code block."
+    "long_handoffs_in_code_blocks": "Long handoffs must be delivered as one copy/paste-ready code block.",
+    "push_separate_phase": "Push must be its own separate phase; do not combine commit and push."
   },
   "first_files": {
     "all_roles": [

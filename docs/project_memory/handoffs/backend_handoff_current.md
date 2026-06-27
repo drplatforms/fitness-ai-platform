@@ -1,77 +1,109 @@
 # Backend Handoff Current
 
-Milestone: Project Memory Warning Review v1
+Milestone: Nutrition Serving Unit Logging Backend v1
 
-Status: authorized / docs-only cleanup in progress.
+Status: authorized for backend implementation / patch drafted.
 
-Source baseline: `main` at `4abf453`.
+Source baseline: `main` at `d74ddec`.
 
-Branch: `feature/project-memory-warning-review-v1`.
+Branch: `feature/nutrition-serving-unit-logging-backend-v1`.
 
-Milestone type: project memory / continuity / docs-only cleanup.
+Milestone type: backend implementation / service / endpoint / tests / project memory.
 
-Commit-check mode: docs-only.
+Commit-check mode: code.
 
 ## Why this exists
 
-Nutrition Serving Unit Logging Contract Design v1 has been accepted and merged to main.
+Nutrition Serving Unit Data Model v1 and Nutrition Serving Unit Logging Contract Design v1 are accepted and merged.
 
-Before starting Nutrition Serving Unit Logging Backend v1, Backend should review the recurring project-memory warning summary:
+Project Memory Warning Review v1 is accepted and merged with current memory baseline:
 
 ```text
-PASS=605 WARN=43 FAIL=0
+PASS=620 WARN=28 FAIL=0
 ```
 
-This is not a failing check. The purpose is to clean current canonical project-memory files and document remaining historical/archive warnings as accepted noise.
+Remaining warnings are accepted historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
-## Current canonical state
-
-- Nutrition Serving Unit Data Model v1: accepted and merged.
-- Nutrition Serving Unit Logging Contract Design v1: accepted and merged.
-- Current main baseline: `4abf453`.
-- Latest feature commit: `68ca6c3`.
-- Latest snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`.
-- Current cleanup branch: `feature/project-memory-warning-review-v1`.
-- Next implementation milestone: Nutrition Serving Unit Logging Backend v1.
+Backend is now authorized to implement the serving-unit logging vertical slice.
 
 ## Current task
 
-Review and update current project-memory files only.
+Implement backend-owned canonical food serving-unit logging:
 
-Allowed files are current docs/project-memory state, handoffs, continuity bootstrap, project state, and optional review/milestone notes.
+```text
+canonical_food_id + serving_unit_id + quantity
+-> backend validates canonical food and serving unit
+-> backend resolves grams
+-> backend writes resolved grams to food_entries
+-> backend writes serving-unit provenance metadata
+-> Target-vs-Actual reads grams exactly as it does today
+```
 
-Do not implement serving-unit logging.
+## Expected implementation
 
-## Strict scope
+- Add companion provenance table: `nutrition_serving_unit_log_metadata`.
+- Add backend service behavior for serving-unit logging.
+- Add dedicated endpoint: `POST /nutrition/{user_id}/log-serving`.
+- Validate canonical food exists and is active.
+- Validate serving unit exists and is active.
+- Validate serving unit belongs to the requested canonical food.
+- Validate quantity is positive.
+- Resolve grams using backend-owned serving-unit metadata.
+- Persist resolved grams through the existing canonical grams logging path.
+- Persist serving-unit provenance metadata.
+- Return public-safe fields only.
 
-No Python/runtime/API/Streamlit/schema/test/provider changes.
+## Scope preserved
 
-No `/nutrition/log` changes.
+Do not change:
 
-No `/nutrition/{user_id}/log-canonical` changes.
+- Streamlit;
+- AI/provider/Ollama/CrewAI behavior;
+- Target-vs-Actual behavior/design;
+- nutrition target formulas;
+- food suggestions;
+- meal planning;
+- workout/recovery/report behavior;
+- raw/source food import behavior;
+- canonical search behavior.
 
-No Target-vs-Actual changes.
+## Required tests
 
-No food suggestion, meal planning, workout, recovery, or report changes.
+Focused tests should cover:
 
-No snapshots, qa_artifacts, runtime JSON, logs, patch files, or temp scripts committed.
+- service grams resolution and gram range resolution;
+- positive decimal quantities;
+- zero/negative quantity rejection;
+- missing/inactive/wrong-food serving units;
+- resolved grams persisted into `food_entries`;
+- serving-unit metadata persisted;
+- missing optional ranges remain missing, not zero;
+- serving-unit logs appear in daily nutrition/Target-vs-Actual actuals;
+- existing raw/source grams logging remains stable;
+- existing canonical grams logging remains stable;
+- public-safe API response.
+
+## Process notes
+
+Use explicit staging only.
 
 Do not use `git add .`.
 
-## Next implementation milestone after this cleanup
+Push must be its own separate phase.
 
-Nutrition Serving Unit Logging Backend v1.
+## Runtime command continuity anchor
 
-Expected future scope:
+Linux pull/validation should use explicit commands only:
 
-- add backend service/endpoint for `canonical_food_id` + `serving_unit_id` + quantity;
-- resolve serving-unit quantity to grams using backend-owned serving-unit metadata;
-- persist `food_entries` grams row for actuals compatibility;
-- persist companion serving-unit provenance metadata;
-- preserve existing raw/canonical grams logging behavior;
-- keep Target-vs-Actual behavior stable;
-- no Streamlit changes until backend is accepted;
-- no AI/provider involvement.
+```bash
+cd ~/projects/fitness-ai-platform
+git fetch origin --prune
+git switch feature/nutrition-serving-unit-logging-backend-v1
+git pull --ff-only origin feature/nutrition-serving-unit-logging-backend-v1
+source .venv/bin/activate
+```
+
+Do not use `lpush`.
 
 ## Runtime command continuity anchor
 

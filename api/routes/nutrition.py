@@ -16,6 +16,13 @@ from services.nutrition_service import (
     get_daily_nutrition,
     search_foods,
 )
+from services.nutrition_serving_unit_logging_service import (
+    ServingUnitFoodMismatchError,
+    ServingUnitInactiveError,
+    ServingUnitLoggingError,
+    ServingUnitNotFoundError,
+    log_canonical_food_serving,
+)
 
 # =====================================
 # Router Initialization
@@ -39,6 +46,14 @@ class CanonicalNutritionLogRequest(BaseModel):
     canonical_food_id: int
     grams: float
     entry_date: str | None = None
+
+
+class ServingUnitNutritionLogRequest(BaseModel):
+    canonical_food_id: int
+    serving_unit_id: int
+    quantity: float
+    meal: str | None = None
+    logged_date: str | None = None
 
 
 # =====================================
@@ -118,6 +133,48 @@ def log_canonical_food_entry(
     except CanonicalFoodLoggingError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        **logged_entry,
+    }
+
+
+@router.post("/nutrition/{user_id}/log-serving")
+def log_serving_unit_food_entry(
+    user_id: int,
+    entry: ServingUnitNutritionLogRequest,
+):
+    if entry.logged_date is not None:
+        try:
+            date_cls.fromisoformat(entry.logged_date)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="logged_date must use YYYY-MM-DD format.",
+            ) from exc
+
+    try:
+        logged_entry = log_canonical_food_serving(
+            user_id=user_id,
+            canonical_food_id=entry.canonical_food_id,
+            serving_unit_id=entry.serving_unit_id,
+            quantity=entry.quantity,
+            entry_date=entry.logged_date,
+        )
+    except CanonicalFoodNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ServingUnitNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except CanonicalFoodInactiveError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ServingUnitInactiveError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ServingUnitFoodMismatchError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (CanonicalFoodLoggingError, ServingUnitLoggingError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return {

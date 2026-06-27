@@ -1,3 +1,39 @@
+# Project Continuity Bootstrap Update — Actuals Confidence Implementation Ready
+
+Use this update as the active continuity layer for future chats.
+
+Current feature milestone: Nutrition Actuals Provenance & Confidence Model v1.
+
+Status: backend implementation complete / ready for Architecture and focused QA review.
+
+Feature branch: `feature/nutrition-actuals-provenance-confidence-model-v1`.
+
+Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
+
+Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
+
+Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
+
+## What changed in this feature branch
+
+Backend added a deterministic actuals confidence/provenance interpretation layer:
+
+- `models/nutrition_actuals_confidence_models.py`
+- `services/nutrition_actuals_confidence_service.py`
+- `tests/test_nutrition_actuals_confidence_service.py`
+
+The service classifies logged actuals as raw grams, canonical grams, canonical serving-unit, or unknown; exposes exact/estimated/ranged/low-confidence/unknown precision; preserves missing nutrient values as missing/unknown; and emits public-safe reason codes, limitations, and display flags.
+
+No Streamlit behavior changed. No logging behavior changed. No Target-vs-Actual totals changed. No AI/provider behavior changed.
+
+## Immediate next step
+
+Return to Architecture for acceptance review and focused QA routing.
+
+---
+
 # Project Continuity Bootstrap Update — Serving-Unit UI Accepted
 
 Use this update as the active continuity layer for future chats.

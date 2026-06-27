@@ -2,77 +2,95 @@
 
 Milestone: Nutrition Actuals Provenance & Confidence Model v1
 
-Status: recommended next milestone / pending Architecture authorization.
+Branch: `feature/nutrition-actuals-provenance-confidence-model-v1`
 
-Recommended owner: Backend Development / Data Layer.
+Status: backend implementation complete / ready for Architecture and focused QA review.
 
-Source baseline for future authorization: `main` at `0ebb1b4`.
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
 
-Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
 
-Do not implement until Architecture issues an explicit implementation handoff.
+Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
 
-## Context
+Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
 
-Nutrition Serving Unit Logging Streamlit UI v1 is accepted, merged, smoke-tested, and closed.
+## Implementation summary
 
-The serving-unit user flow now works end-to-end:
+Backend added a narrow deterministic actuals confidence/provenance interpretation layer.
 
-```text
-GET /foods/canonical/search
--> GET /foods/canonical/{canonical_food_id}/serving-units
--> POST /nutrition/{user_id}/log-serving
--> resolved grams through food_entries
--> serving-unit provenance metadata
--> Target-vs-Actual existing actuals flow
-```
+New files:
 
-The next backend problem is not more serving-unit UI. It is actuals semantics:
+- `models/nutrition_actuals_confidence_models.py`
+- `services/nutrition_actuals_confidence_service.py`
+- `tests/test_nutrition_actuals_confidence_service.py`
 
-> What confidence/provenance should the system attach to logged actuals, and how should downstream nutrition logic understand them?
+Primary service functions:
 
-## Expected future backend direction
+- `build_nutrition_actual_interpretation(food_entry_id)`
+- `build_nutrition_actual_interpretations_for_date(user_id, target_date)`
+- `build_public_nutrition_actual_interpretation(food_entry_id)`
 
-If Architecture authorizes this milestone, Backend should design and implement a narrow backend-owned interpretation layer for nutrition actuals confidence/provenance.
+The service classifies logged nutrition actuals by source type, precision, confidence level, nutrient completeness, serving-unit metadata presence, grams range, public-safe reason codes, limitations, and display flags.
 
-Candidate classification inputs:
+## Classification implemented
 
-- raw grams user entry;
-- canonical grams user entry;
-- canonical serving-unit entry;
-- serving-unit entry with estimated grams;
-- serving-unit entry with ranged grams;
-- low-confidence serving estimate;
-- missing nutrient values;
-- unknown/low-confidence nutrient values;
-- source-derived values vs user-entered values.
+Source types:
 
-Expected output:
+- `raw_grams`
+- `canonical_grams`
+- `canonical_serving_unit`
+- `unknown`
 
-- narrow service/model contract;
-- tests proving actuals confidence classification;
-- no UI changes unless only project memory;
-- no AI/provider changes;
-- no Target-vs-Actual redesign yet.
+Precision values:
 
-## Strict non-goals unless explicitly authorized
+- `exact`
+- `estimated`
+- `ranged`
+- `low_confidence`
+- `unknown`
 
-Do not implement:
+Confidence values:
 
-- new Streamlit serving-unit UI;
-- meal planning;
-- barcode scanning;
-- USDA/Open Food Facts import;
-- AI food matching;
-- AI serving-size inference;
-- nutrition explanation provider;
-- food recommendation engine;
-- macro target formula changes;
-- Target-vs-Actual redesign;
-- DailyCoachSynthesis redesign;
-- workout/recovery/report changes;
-- custom user serving units;
-- broad nutrition logging rewrite.
+- `high`
+- `moderate`
+- `low`
+- `unknown`
+
+Nutrient completeness values:
+
+- `complete`
+- `partial`
+- `missing_nutrients`
+- `unknown`
+
+## Boundaries preserved
+
+- No Streamlit changes.
+- No logging endpoint behavior changes.
+- No Target-vs-Actual totals changes.
+- No macro target formula changes.
+- No AI/provider/CrewAI/direct_ollama changes.
+- No food suggestion or meal planning changes.
+- No schema migration added.
+- No snapshots committed.
+
+## Validation notes
+
+Focused sandbox validation:
+
+- `pytest tests/test_nutrition_actuals_confidence_service.py -q`: 11 passed
+- adjacent focused nutrition/API/project-memory tests: 117 passed
+- `python -m py_compile` for new model/service/test: PASS
+
+Sandbox note: Ruff/Black executables were not available in the sandbox. Local and Linux validation should run targeted Ruff/Black on touched Python files only.
+
+## QA recommendation
+
+QA class:
+
+CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
+
+Focus QA on classification correctness, missing nutrient handling, public-safe output, no regression to logging, no regression to Target-vs-Actual totals, no Streamlit changes, and no AI/provider changes.
 
 ## Historical continuity anchors
 

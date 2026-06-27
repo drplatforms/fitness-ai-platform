@@ -15,7 +15,11 @@
     "previous_feature_commit": "e6d8578",
     "previous_main_merge_commit": "fd87538",
     "previous_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
-    "streamlit_feature_commit": "15aa150"
+    "streamlit_feature_commit": "15aa150",
+    "current_source_of_truth": "feature/nutrition-actuals-provenance-confidence-model-v1 pending Architecture acceptance; accepted product baseline remains main at 0ebb1b4",
+    "latest_accepted_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "active_feature_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
+    "active_feature_status": "backend implementation complete / ready for Architecture and focused QA review"
   },
   "active_roadmap": {
     "current_recommended_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
@@ -599,8 +603,11 @@
       "qa_status": "PASS via manual Streamlit workflow smoke"
     },
     "nutrition_actuals_provenance_confidence_model_v1": {
-      "status": "RECOMMENDED_PENDING_ARCHITECTURE_AUTHORIZATION",
-      "recommended_owner": "Backend Development / Data Layer"
+      "status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_AND_QA_REVIEW",
+      "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
+      "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
+      "owner": "Backend Development / Data Layer",
+      "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS"
     }
   },
   "nutrition_serving_unit_logging_streamlit_ui_v1": {
@@ -638,35 +645,64 @@
     "recommended_next_milestone": "Nutrition Actuals Provenance & Confidence Model v1"
   },
   "nutrition_actuals_provenance_confidence_model_v1": {
-    "status": "recommended next milestone / pending Architecture authorization",
-    "recommended_owner": "Backend Development / Data Layer",
-    "suggested_source_main_commit": "0ebb1b4",
-    "suggested_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "status": "backend implementation complete / ready for Architecture and focused QA review",
+    "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
+    "known_accepted_runtime_product_baseline": "0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1",
+    "known_project_memory_closeout_feature_commit": "d9a3906 Close Streamlit serving unit UI project memory",
+    "canonical_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
+    "owner": "Backend Development / Data Layer",
     "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
-    "purpose": "Create a backend-owned interpretation layer for nutrition actuals confidence and provenance.",
-    "primary_question": "How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?",
-    "expected_output": [
-      "narrow service/model contract",
-      "tests proving actuals confidence classification",
-      "no UI changes unless only project memory",
-      "no AI/provider changes",
-      "no Target-vs-Actual redesign yet"
+    "implemented_files": [
+      "models/nutrition_actuals_confidence_models.py",
+      "services/nutrition_actuals_confidence_service.py",
+      "tests/test_nutrition_actuals_confidence_service.py"
     ],
-    "strict_non_goals": [
-      "new Streamlit serving-unit UI",
-      "meal planning",
-      "barcode scanning",
-      "USDA/Open Food Facts import",
-      "AI food matching",
-      "AI serving-size inference",
-      "nutrition explanation provider",
-      "food recommendation engine",
-      "macro target formula changes",
-      "Target-vs-Actual redesign",
-      "DailyCoachSynthesis redesign",
-      "workout/recovery/report changes",
-      "custom user serving units",
-      "broad nutrition logging rewrite"
-    ]
+    "service_functions": [
+      "build_nutrition_actual_interpretation(food_entry_id)",
+      "build_nutrition_actual_interpretations_for_date(user_id, target_date)",
+      "build_public_nutrition_actual_interpretation(food_entry_id)"
+    ],
+    "source_types": [
+      "raw_grams",
+      "canonical_grams",
+      "canonical_serving_unit",
+      "unknown"
+    ],
+    "precision_values": [
+      "exact",
+      "estimated",
+      "ranged",
+      "low_confidence",
+      "unknown"
+    ],
+    "confidence_values": [
+      "high",
+      "moderate",
+      "low",
+      "unknown"
+    ],
+    "nutrient_completeness_values": [
+      "complete",
+      "partial",
+      "missing_nutrients",
+      "unknown"
+    ],
+    "accepted_boundaries": [
+      "no Streamlit changes",
+      "no logging endpoint behavior changes",
+      "no Target-vs-Actual totals changes",
+      "no macro target formula changes",
+      "no AI/provider/CrewAI/direct_ollama changes",
+      "no food suggestion or meal planning changes",
+      "no schema migration",
+      "no snapshots committed"
+    ],
+    "sandbox_validation": {
+      "new_focused_tests": "11 passed",
+      "adjacent_focused_tests": "117 passed",
+      "py_compile": "PASS",
+      "ruff_black_note": "not available in sandbox; run targeted local/Linux checks only"
+    }
   }
 }

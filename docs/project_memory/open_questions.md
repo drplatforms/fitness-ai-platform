@@ -1,34 +1,39 @@
 # Open Questions
 
-## Current recommended milestone questions
+## Current milestone review questions
 
 ### Nutrition Actuals Provenance & Confidence Model v1
 
-Status: recommended next milestone / pending Architecture authorization.
+Status: backend implementation complete / ready for Architecture and focused QA review.
 
-Primary question:
+Primary review question:
 
-How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?
+Is the v1 backend interpretation contract sufficient as the first safe layer for nutrition actuals provenance/confidence?
 
-Questions for Architecture before implementation:
+Questions for Architecture / QA review:
 
-1. What is the v1 confidence vocabulary for nutrition actuals?
-   - Candidate categories: exact grams, user-entered grams, canonical grams, serving-unit estimate, ranged serving estimate, low-confidence estimate, unknown.
+1. Are the v1 source types sufficient?
+   - `raw_grams`
+   - `canonical_grams`
+   - `canonical_serving_unit`
+   - `unknown`
 
-2. Should confidence be represented as display-facing labels, backend enum values, or both?
+2. Are the v1 precision labels sufficient?
+   - `exact`
+   - `estimated`
+   - `ranged`
+   - `low_confidence`
+   - `unknown`
 
-3. Should the first v1 output be internal service classification only, or should a public-safe API/summary expose the classification?
+3. Should raw/canonical grams remain moderate-confidence user-entered exact values until stronger source metadata exists?
 
-4. Should Target-vs-Actual consume this interpretation immediately, or should v1 only prepare the interpretation layer without redesigning Target-vs-Actual?
-   - Current recommendation: prepare the interpretation layer first; defer Target-vs-Actual redesign.
+4. Is the wide serving-unit range threshold acceptable for v1, or should Architecture tune it in a follow-up?
 
-5. How should missing nutrient values be classified so downstream summaries do not treat missing as zero?
+5. Should Target-vs-Actual consume these interpretation objects in a future milestone, or should v1 remain service/model-focused only?
 
-6. How should serving-unit range fields (`grams_min`, `grams_max`) influence confidence labels?
+6. Which public-safe interpretation fields should eventually be allowed in AI/provider context?
 
-7. How should provenance distinguish raw/source grams entries from canonical grams entries and serving-unit entries?
-
-8. Which fields are safe for future AI/provider context, and which must remain backend-only?
+7. Should a future API endpoint expose these interpretations, or should they stay internal service output until there is a concrete UI/product need?
 
 ## Closed serving-unit questions
 
@@ -52,7 +57,7 @@ The following are no longer open for the accepted serving-unit user flow:
 
 ### Target-vs-Actual confidence display
 
-Deferred until after the backend actuals provenance/confidence interpretation layer exists:
+Deferred until after Nutrition Actuals Provenance & Confidence Model v1 is accepted:
 
 - Should Target-vs-Actual show estimated-vs-weighed context in the macro table or a separate note?
 - Should ranged serving estimates appear as bands or labels?

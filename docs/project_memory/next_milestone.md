@@ -1,89 +1,84 @@
 # Next Milestone
 
-Current milestone in progress: Nutrition Serving Unit Logging Contract Design v1.
+Current maintenance milestone in progress: Project Memory Warning Review v1.
 
-Recommended branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
+Recommended branch: `feature/project-memory-warning-review-v1`.
 
 Source branch: `main`.
 
-Required source main commit: `9cb1d41`.
+Required source main commit: `4abf453`.
 
-Milestone type: backend design / contract / project memory only.
+Milestone type: project memory / continuity / docs-only cleanup.
 
 Commit-check mode: docs-only.
 
 ## Objective
 
-Design how backend-owned serving-unit metadata should enter future nutrition logging while preserving the existing grams-based actuals bridge.
+Review and clean current canonical project-memory state after Nutrition Serving Unit Logging Contract Design v1 merged to main.
 
-The design should define the contract before implementation touches:
+The recurring project-memory warning summary is not failing:
 
-- `/nutrition/log`;
-- `/nutrition/{user_id}/log-canonical`;
-- Streamlit nutrition logging;
-- Target-vs-Actual;
-- provider/Ollama/CrewAI paths.
+```text
+PASS=605 WARN=43 FAIL=0
+```
 
-## Approved deliverable
+This milestone should resolve current/actionable stale references and document remaining warnings as accepted historical/archive noise where they are not actionable.
 
-- `docs/nutrition_serving_unit_logging_contract_design.md`
+## Current canonical state to preserve
 
-## Approved project-memory updates
+- Nutrition Serving Unit Data Model v1: accepted and merged.
+- Nutrition Serving Unit Logging Contract Design v1: accepted and merged.
+- Current main baseline: `4abf453`.
+- Latest contract-design feature commit: `68ca6c3`.
+- Latest contract-design snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`.
+- Serving-unit logging is not implemented yet.
+- `food_entries` remains the grams-based actuals bridge.
+- Future serving-unit logging direction remains backend-owned grams resolution with companion provenance.
 
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/open_questions.md`
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/milestones/nutrition_serving_unit_logging_contract_design_v1.md`
-- `docs/project_memory/handoffs/backend_handoff_current.md`
-- `docs/project_memory/handoffs/architecture_handoff_current.md`
-- `docs/project_memory/handoffs/qa_handoff_current.md`
+## Expected next implementation milestone
 
-## Design baseline approved by Architecture
+Nutrition Serving Unit Logging Backend v1.
 
-Architecture approved these preliminary directions for the design contract:
+Expected owner: Backend Development / Data Layer.
+
+Expected milestone type: backend implementation / service / endpoint / tests / project memory.
+
+Expected future scope:
+
+- add backend service/endpoint for `canonical_food_id` + `serving_unit_id` + quantity;
+- resolve serving-unit quantity to grams using backend-owned serving-unit metadata;
+- persist `food_entries` grams row for actuals compatibility;
+- persist companion serving-unit provenance metadata;
+- preserve existing raw/canonical grams logging behavior;
+- keep Target-vs-Actual behavior stable;
+- no Streamlit changes until backend is accepted;
+- no AI/provider involvement.
+
+## Accepted serving-unit contract baseline
+
+Architecture accepted these directions for the next implementation milestone:
 
 1. Keep `food_entries` as the grams-based actuals bridge.
 2. Prefer a companion serving-unit provenance table for future implementation.
 3. Prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`.
 4. Persist resolved grams used at log time.
 5. Preserve serving-unit provenance:
-   - `canonical_food_id`
-   - `serving_unit_id`
-   - serving quantity
-   - resolved grams
-   - `grams_min`
-   - `grams_max`
-   - confidence
-   - amount source
-   - original serving display
+   - `canonical_food_id`;
+   - `serving_unit_id`;
+   - serving quantity;
+   - resolved grams;
+   - `grams_min`;
+   - `grams_max`;
+   - confidence;
+   - amount source;
+   - original serving display.
 6. Do not change Target-vs-Actual immediately.
 7. Do not expose serving-unit internals to AI/provider yet.
 8. Do not allow Streamlit to invent mappings.
 9. Do not allow AI/provider to invent serving units, grams, conversions, macros, or actuals.
 10. Treat serving-unit logging as a backend-owned convenience layer that resolves to grams.
 
-## Questions the contract must answer
-
-- Should serving-unit logs extend `food_entries`?
-- Should serving-unit logs use a companion provenance table?
-- Should a new canonical nutrition log table be created?
-- Should resolved grams be persisted?
-- Should min/max grams and confidence be copied onto the log?
-- Should logs store canonical food id, legacy food id, or both?
-- How should `amount_source` be represented?
-- Which confidence vocabulary should be canonical?
-- Should Target-vs-Actual change immediately?
-- Should serving-unit logging affect actuals confidence?
-- Should user overrides be supported in v1?
-- Should future implementation use an existing endpoint or a new endpoint?
-- Should the serving-unit endpoint allow grams override?
-- What validation is required?
-- How should missing nutrients behave?
-- How should serving-unit logs display in history?
-- Should serving-unit logs enter AI/provider context immediately?
-
-## Strict non-goals
+## Strict non-goals for Project Memory Warning Review v1
 
 Do not implement serving-unit logging.
 
@@ -94,8 +89,6 @@ Do not modify `/nutrition/{user_id}/log-canonical`.
 Do not add a new API endpoint.
 
 Do not modify schema/code migrations.
-
-Do not modify food_entries schema in code.
 
 Do not modify Target-vs-Actual behavior.
 
@@ -155,27 +148,6 @@ git status --short
 Expected changed files are docs/project-memory files only.
 
 If Python/runtime/API/Streamlit/test files appear in `git status`, stop and correct scope before commit.
-
-## Recommended next milestone after acceptance
-
-Recommended: Nutrition Serving Unit Logging Backend v1.
-
-Purpose:
-
-- add backend-owned serving-unit logging endpoint/service;
-- resolve serving-unit quantity to grams;
-- write resolved grams through existing actuals bridge;
-- persist serving-unit provenance;
-- preserve Target-vs-Actual behavior;
-- preserve existing grams and canonical logging behavior.
-
-Suggested next implementation sequence after this design is accepted:
-
-1. Nutrition Serving Unit Logging Backend v1.
-2. Nutrition Actuals Confidence Model v1.
-3. Streamlit Serving Unit Logging UI v1.
-4. Target-vs-Actual Confidence Display v1.
-5. Nutrition Food Suggestions Serving-Aware v1.
 
 ## Historical authorization anchors
 

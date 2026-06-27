@@ -1,33 +1,30 @@
 # Architecture Handoff Current
 
-Milestone: Nutrition Serving Unit Logging Contract Design v1
+Milestone: Project Memory Warning Review v1
 
-Status: docs-only contract drafted / ready for Architecture review.
+Status: docs-only cleanup drafted / ready for Architecture review after validation.
 
-Source baseline: `main` at `9cb1d41`.
+Source baseline: `main` at `4abf453`.
 
-Branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
+Branch: `feature/project-memory-warning-review-v1`.
 
-Milestone type: backend design / contract / project memory only.
+Milestone type: project memory / continuity / docs-only cleanup.
 
 ## Review focus
 
-Architecture should review whether the proposed serving-unit logging contract is sufficient before backend implementation begins.
+Architecture should review whether current canonical project-memory state is aligned after Nutrition Serving Unit Logging Contract Design v1 merged to main.
 
 Primary review decisions:
 
-1. Accept or revise the companion provenance table direction.
-2. Confirm whether the future endpoint should be `POST /nutrition/{user_id}/log-serving`.
-3. Confirm that `food_entries` remains the grams-based actuals bridge for v1.
-4. Confirm that resolved grams, gram range, confidence, amount source, and original serving display should be persisted at log time.
-5. Confirm that Target-vs-Actual should remain unchanged in the first implementation.
-6. Confirm that actuals-confidence behavior should be a later milestone.
-7. Confirm that Streamlit must not invent serving mappings.
-8. Confirm that AI/provider should not receive serving-unit internals yet.
+1. Confirm Nutrition Serving Unit Logging Contract Design v1 is represented as accepted and merged.
+2. Confirm current main baseline is `4abf453`.
+3. Confirm current warning review does not imply runtime scope.
+4. Confirm next implementation milestone is Nutrition Serving Unit Logging Backend v1.
+5. Confirm remaining project-memory warnings are documented as historical/archive noise where they are not actionable.
 
-## Design recommendation
+## Current serving-unit contract baseline
 
-Architecture should accept the following design baseline:
+Accepted design baseline:
 
 ```text
 canonical_food_id + serving_unit_id + serving_quantity
@@ -38,21 +35,27 @@ canonical_food_id + serving_unit_id + serving_quantity
 -> Target-vs-Actual reads grams exactly as it does today
 ```
 
-Preferred future table:
-
-- `nutrition_serving_unit_log_metadata`
-
-Acceptable alternate:
-
-- `food_entry_serving_unit_metadata`
-
 Preferred future endpoint:
 
 - `POST /nutrition/{user_id}/log-serving`
 
+Preferred future persistence:
+
+- `food_entries` grams bridge plus companion serving-unit provenance table
+
+## Warning baseline
+
+Observed before cleanup:
+
+```text
+PASS=605 WARN=43 FAIL=0
+```
+
+This is not a failing check. Remaining warnings in historical milestone/review/design files are acceptable if current canonical docs are accurate and the warnings are documented.
+
 ## Scope preserved
 
-The docs-only milestone does not:
+The docs-only cleanup does not:
 
 - implement serving-unit logging;
 - add API endpoints;
@@ -66,23 +69,17 @@ The docs-only milestone does not:
 
 ## Recommended final Architecture decision
 
-Accept Nutrition Serving Unit Logging Contract Design v1.
+Accept Project Memory Warning Review v1.
 
 Recommended final status:
 
-`NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED`
+`PROJECT_MEMORY_WARNING_REVIEW_V1_ACCEPTED`
 
 ## Recommended next milestone
 
 Nutrition Serving Unit Logging Backend v1.
 
-Recommended sequence after acceptance:
-
-1. backend endpoint/service/provenance implementation;
-2. actuals-confidence model design/implementation;
-3. Streamlit serving-unit logging UI;
-4. Target-vs-Actual confidence display;
-5. serving-aware food suggestions.
+Recommended owner: Backend Development / Data Layer.
 
 ## Runtime command continuity anchor
 

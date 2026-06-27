@@ -1,76 +1,70 @@
 # Open Questions
 
+## Project Memory Warning Review v1
+
+Current maintenance question:
+
+- Which recurring project-memory warnings are current/actionable, and which are accepted historical/archive noise?
+
+Current answer:
+
+- Current canonical files should point to `main` at `4abf453`, Nutrition Serving Unit Logging Contract Design v1 accepted/merged, and Nutrition Serving Unit Logging Backend v1 as the next implementation milestone.
+- Warnings in archived milestone/review/design files are accepted historical/archive noise unless they contradict current canonical files.
+- The warning summary is not a failing check as long as `FAIL=0` and remaining warnings are documented.
+
 ## Nutrition Serving Unit Logging Contract Design v1
 
-Current active Architecture questions:
+Status: accepted and merged.
 
-1. What should the future companion provenance table be named?
+Resolved Architecture decisions:
 
-Recommended answer: prefer `nutrition_serving_unit_log_metadata` for clarity, but `food_entry_serving_unit_metadata` is acceptable if Architecture wants the table name to emphasize the `food_entries` bridge.
+1. Companion provenance table direction is accepted for future implementation.
 
-2. Should serving-unit logs extend `food_entries` directly?
+Recommended future name: prefer `nutrition_serving_unit_log_metadata` for clarity, with `food_entry_serving_unit_metadata` still acceptable if Architecture wants the table name to emphasize the `food_entries` bridge.
 
-Recommended answer: no for v1. Keep `food_entries` as the grams-based actuals bridge and preserve serving-unit provenance in a companion table.
+2. Serving-unit logs should not extend `food_entries` directly in v1.
 
-3. Should a completely new canonical nutrition log table be created now?
+`food_entries` remains the grams-based actuals bridge. Serving-unit provenance should be preserved in a companion table.
 
-Recommended answer: no for v1. A new canonical-first log model may be cleaner long term, but it is too disruptive before serving-unit logging and actuals confidence are proven.
+3. A completely new canonical nutrition log table should not be created for v1.
 
-4. Should resolved grams be persisted?
+A canonical-first log model may be cleaner long term, but it is too disruptive before serving-unit logging and actuals confidence are proven.
 
-Recommended answer: yes. Historical actuals should use the grams approved at log time even if serving-unit metadata changes later.
+4. Resolved grams should be persisted.
 
-5. Should min/max grams and confidence be copied onto the log?
+Historical actuals should use the grams approved at log time even if serving-unit metadata changes later.
 
-Recommended answer: yes. Store `grams_min`, `grams_max`, and serving-unit confidence in the provenance row for auditability and future actuals-confidence display.
+5. Min/max grams and confidence should be copied onto the log provenance.
 
-6. Should logs preserve both canonical and legacy identities?
+Store `grams_min`, `grams_max`, and serving-unit confidence in the provenance row for auditability and future actuals-confidence display.
 
-Recommended answer: yes. `food_entries.food_id` remains the current grams/actuals bridge. Companion metadata should store `canonical_food_id` and `serving_unit_id`.
+6. Logs should preserve both canonical and legacy identities.
 
-7. Should the future endpoint allow a grams override?
+`food_entries.food_id` remains the current grams/actuals bridge. Companion metadata should store `canonical_food_id` and `serving_unit_id`.
 
-Recommended answer: no for v1. Serving-unit logging should accept serving quantity only and resolve grams through backend-owned metadata.
+7. The future serving-unit endpoint should not allow grams override in v1.
 
-8. Should user-defined serving overrides exist in v1?
+Serving-unit logging should accept serving quantity only and resolve grams through backend-owned metadata.
 
-Recommended answer: no. Leave room for `user_saved_serving` later, but v1 should only log backend-approved serving units.
+8. User-defined serving overrides should not exist in v1.
 
-9. Should serving-unit logs affect Target-vs-Actual immediately?
+Leave room for `user_saved_serving` later, but v1 should only log backend-approved serving units.
 
-Recommended answer: only through resolved grams. Target-vs-Actual math should not change in the first implementation.
+9. Serving-unit logs should affect Target-vs-Actual only through resolved grams in v1.
 
-10. Should serving-unit logs affect actuals confidence?
+Target-vs-Actual math should not change in the first implementation.
 
-Recommended answer: eventually yes, but through a separate Nutrition Actuals Confidence Model v1 milestone.
+10. Serving-unit logs should eventually affect actuals confidence.
 
-11. Should AI/provider receive serving-unit internals immediately?
+That should happen through a separate Nutrition Actuals Confidence Model v1 milestone.
 
-Recommended answer: no. Provider may later receive approved summaries only after logging and actuals confidence are stable.
+11. AI/provider should not receive serving-unit internals immediately.
 
-12. Should Streamlit be allowed to map servings to grams?
+Provider may later receive approved summaries only after logging and actuals confidence are stable.
 
-Recommended answer: no. Streamlit should select/display backend-approved serving-unit fields and submit ids/quantity to backend only.
+12. Streamlit must not map servings to grams.
 
-## Nutrition Serving Unit Data Model v1 results
-
-Resolved findings:
-
-- Serving-unit model/service/schema support exists.
-- Serving units are linked to canonical foods.
-- `grams_default` is required and positive.
-- `grams_min` / `grams_max` ranges are supported.
-- Service/model validation enforces `grams_min <= grams_default <= grams_max` when ranges are present.
-- Confidence vocabulary for serving-unit rows is Low / Moderate / High.
-- `Medium` normalizes to `Moderate`.
-- Starter seed is idempotent.
-- Active serving-unit count is 18.
-- Foods with active serving units: 12.
-- Missing canonical foods: none.
-- Normal nutrition logging remains unchanged.
-- Target-vs-Actual remains unchanged.
-- Streamlit remains unchanged.
-- Provider/Ollama/CrewAI behavior remains unchanged.
+Streamlit should select/display backend-approved serving-unit fields and submit ids/quantity to backend only.
 
 ## Remaining nutrition catalog and serving follow-up questions
 

@@ -1,22 +1,24 @@
 # Current State
 
-Latest accepted milestone: Nutrition Serving Unit Data Model v1.
+Latest accepted milestone: Nutrition Serving Unit Logging Contract Design v1.
 
-Latest accepted feature commit: `e2c467d`.
+Latest accepted feature commit: `68ca6c3`.
 
-Latest main merge commit: `9cb1d41`.
+Latest main merge commit: `4abf453`.
 
-Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip`.
+Latest accepted snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`.
 
-Current implementation milestone: Nutrition Serving Unit Logging Contract Design v1.
+Current maintenance milestone: Project Memory Warning Review v1.
 
-Current branch: `feature/nutrition-serving-unit-logging-contract-design-v1`.
+Current branch: `feature/project-memory-warning-review-v1`.
 
-Source baseline: `main` at `9cb1d41`.
+Source baseline: `main` at `4abf453`.
 
-Milestone type: backend design / contract / project memory only.
+Milestone type: project memory / continuity / docs-only cleanup.
 
 Commit-check mode: docs-only.
+
+Next implementation milestone: Nutrition Serving Unit Logging Backend v1.
 
 ## Current process doctrine
 
@@ -51,45 +53,46 @@ Accepted foundation:
 - Seed coverage: 18 active serving units across 12 canonical foods.
 - Missing canonical foods from the starter seed: none.
 
-Scope preserved by the accepted data-model milestone:
+Nutrition Serving Unit Logging Contract Design v1 is also accepted and merged.
 
-- no food logging behavior change;
-- no serving-unit logging endpoint;
-- no Streamlit UI change;
-- no Target-vs-Actual behavior change;
-- no nutrition target/formula change;
-- no Daily Coach synthesis change;
-- no provider/Ollama/CrewAI change;
-- no AI serving inference;
-- no meal planning;
-- no workout or recovery change.
+Accepted contract baseline:
 
-## Current milestone
+- keep `food_entries` as the grams-based actuals bridge;
+- prefer a companion serving-unit provenance table for future implementation;
+- prefer a dedicated future endpoint: `POST /nutrition/{user_id}/log-serving`;
+- persist resolved grams used at log time;
+- preserve serving-unit provenance: canonical food id, serving unit id, serving quantity, resolved grams, gram range, confidence, amount source, and original serving display;
+- keep Target-vs-Actual unchanged in the first serving-unit logging implementation;
+- keep Streamlit as a renderer/selector of backend-approved fields only;
+- keep AI/provider away from serving-unit conversion and raw serving-unit internals.
 
-Nutrition Serving Unit Logging Contract Design v1 is authorized.
+Scope still not implemented:
+
+- no serving-unit logging endpoint exists yet;
+- no companion provenance table exists yet;
+- no Streamlit serving-unit logging UI exists yet;
+- no Target-vs-Actual confidence display for serving estimates exists yet;
+- no provider/Ollama/CrewAI serving-unit path exists.
+
+## Current maintenance milestone
+
+Project Memory Warning Review v1 is authorized from `main` at `4abf453`.
 
 Purpose:
 
-Design how backend-owned serving-unit metadata should enter future food logging without corrupting existing grams-based actuals.
+Review the recurring project-memory warning summary and clean current canonical project-memory files after Nutrition Serving Unit Logging Contract Design v1 merged to main.
 
-Approved deliverable:
+The warning baseline is not a failing check. Current observed summary before this cleanup remains:
 
-- `docs/nutrition_serving_unit_logging_contract_design.md`
+```text
+PASS=605 WARN=43 FAIL=0
+```
 
-Approved project-memory updates:
+The goal is to resolve current/actionable stale state and document remaining warnings as accepted historical/archive noise where appropriate.
 
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/next_milestone.md`
-- `docs/project_memory/open_questions.md`
-- `docs/project_memory/project_state.json`
-- `docs/project_memory/milestones/nutrition_serving_unit_logging_contract_design_v1.md`
-- `docs/project_memory/handoffs/backend_handoff_current.md`
-- `docs/project_memory/handoffs/architecture_handoff_current.md`
-- `docs/project_memory/handoffs/qa_handoff_current.md`
+## Current serving-unit design decision baseline
 
-## Current design decision baseline
-
-Architecture authorized Backend to proceed with this docs-only contract using these preliminary decisions:
+Architecture accepted these directions for the next implementation milestone:
 
 1. Keep `food_entries` as the grams-based actuals bridge.
 2. Prefer a companion serving-unit provenance table for future implementation.
@@ -112,10 +115,11 @@ Architecture authorized Backend to proceed with this docs-only contract using th
 
 ## Strict current non-goals
 
-The active contract milestone must not implement runtime behavior.
+The warning-review milestone must not implement runtime behavior.
 
 Do not change:
 
+- Python/runtime files;
 - API routes;
 - schema/migrations/code;
 - `/nutrition/log`;
@@ -161,9 +165,17 @@ Accepted and merged.
 
 Accepted scope: backend serving-unit model/service/schema, idempotent seed script, deterministic lookup/conversion helpers, focused tests, and project-memory closeout.
 
-## Recommended next milestone after this contract
+### Nutrition Serving Unit Logging Contract Design v1
 
-If Architecture accepts Nutrition Serving Unit Logging Contract Design v1, the recommended next milestone is:
+Accepted and merged.
+
+- Feature commit: `68ca6c3`
+- Main merge commit: `4abf453`
+- Snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`
+
+Accepted scope: docs-only backend contract for future serving-unit logging. No runtime behavior changed.
+
+## Recommended next milestone after this warning review
 
 Nutrition Serving Unit Logging Backend v1
 
@@ -175,7 +187,8 @@ Expected scope:
 - persist serving-unit provenance in a companion table;
 - preserve existing Target-vs-Actual behavior;
 - preserve existing grams/canonical logging;
-- no Streamlit change until backend path is stable.
+- no Streamlit change until backend path is stable;
+- no AI/provider involvement.
 
 Likely follow-up:
 
@@ -212,6 +225,6 @@ These phrases are retained to keep the project-memory checker and future-agent c
 
 ## Current final status target
 
-Expected final proposed status after Architecture accepts this docs-only contract:
+Expected final proposed status after Architecture accepts this docs-only warning review:
 
-`NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED`
+`PROJECT_MEMORY_WARNING_REVIEW_V1_ACCEPTED`

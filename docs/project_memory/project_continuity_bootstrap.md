@@ -2,36 +2,114 @@
 
 Current focus: AI Health Coach / fitness_ai.
 
-Current source baseline: `main` at `b343a47` after Exercise Catalog Utilization / Specialized Movement Coverage v1 was accepted and merged.
+Current source baseline: `main` at `4abf453` after Nutrition Serving Unit Logging Contract Design v1 was accepted and merged.
 
-Current authorized milestone: Test-First Quality Gate Development Plan v1.
+Current authorized milestone: Project Memory Warning Review v1.
 
-Milestone type: docs / project memory / process canonization only.
+Milestone type: project memory / continuity / docs-only cleanup.
 
-No application behavior, service code, Streamlit UI, database schema, provider runtime, nutrition behavior, workout generation behavior, or exercise catalog logic may change in this milestone.
+No application behavior, service code, Streamlit UI, database schema, provider runtime, nutrition actuals behavior, workout generation behavior, recovery behavior, or AI/provider behavior may change in this milestone.
 
-## Current accepted chain
+## What Future Chats Must Do First
 
-### Workout Preview Full-Slot Rotation v1
+1. Read this bootstrap.
+2. Read `docs/project_memory/current_state.md`.
+3. Read `docs/project_memory/project_state.json`.
+4. Read `docs/project_memory/next_milestone.md`.
+5. Read the current Backend, Architecture, and QA handoffs.
+6. Confirm the active branch and source baseline before proposing implementation.
+7. Do not infer project rules from memory alone.
+
+## Current Accepted Milestone Stack
+
+### Daily Coach Async Service Shell / No Worker v1
+
+Accepted historical milestone.
+
+Scope reminder: service shell only; no provider execution added.
+
+### Daily Coach Async Developer-Only Prototype v1
+
+Accepted historical milestone.
+
+Scope reminder: Developer Mode-only manual lifecycle prototype. Normal Today behavior remained unchanged.
+
+### Daily Coach Async Provider Runtime Design v1
+
+Accepted historical design milestone.
+
+Scope reminder: qwen3 is not bridge-enabled. There is no provider runtime yet in this historical service shell lane. qwen3:32b is research / future premium async candidate only. Same-process hard-timeout provider execution is treated as risky.
+
+### Nutrition Catalog + Serving Foundation Planning v1
 
 Accepted and merged.
 
-- Feature commit: `3b32f97`
-- Main merge commit: `f39b403`
-- Snapshot: `fitness_ai_snapshot_2026-06-25_3b32f97_fix-first-refresh-workout-slot-rotation.zip`
-- Accepted scope: immediate previous-preview anti-repeat.
-- Deferred: rolling multi-refresh novelty.
+- Feature commit: `8c72f23`
+- Main merge commit: `94dc8fd`
 
-### Exercise Catalog Utilization / Specialized Movement Coverage v1
+### Nutrition Catalog Diagnostic v1
+
+Accepted and merged through diagnostic project-memory/code closeout.
+
+- Feature implementation commit: `6765abb`
+- Main merge commit: `8b2c4c3`
+
+### Nutrition Serving Unit Data Model v1
 
 Accepted and merged.
 
-- Feature commit: `1d44b3d`
-- Main merge commit: `b343a47`
-- Snapshot: `fitness_ai_snapshot_2026-06-26_1d44b3d_preserve-primary-workout-rotation-after-catalog-expansion.zip`
-- Accepted scope: improved deterministic catalog breadth and specialized movement reachability past quality gates.
-- Preserved: sizing, immediate refresh anti-repeat, selected/Active persistence, Today de-dup, and no provider/AI workout path.
-- Deferred: full eligibility matrix, complete catalog reachability, rolling exposure, deeper movement-family de-duplication.
+- Feature commits: `3f0d9b6`, `e2c467d`
+- Main merge commit: `9cb1d41`
+- Snapshot: `fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip`
+
+Accepted scope: serving-unit schema/model/service, seed script, conversion helpers, and tests. No logging endpoint or Streamlit UI was added.
+
+### Nutrition Serving Unit Logging Contract Design v1
+
+Accepted and merged.
+
+- Feature commit: `68ca6c3`
+- Main merge commit: `4abf453`
+- Snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`
+
+Accepted contract baseline:
+
+- keep `food_entries` as the grams-based actuals bridge;
+- use a future companion serving-unit provenance table;
+- prefer `POST /nutrition/{user_id}/log-serving`;
+- backend owns grams resolution;
+- Target-vs-Actual remains unchanged initially;
+- Streamlit must not invent mappings;
+- AI/provider must not invent serving units, grams, conversions, macros, or actuals.
+
+## Current maintenance milestone
+
+Project Memory Warning Review v1.
+
+Observed warning baseline:
+
+```text
+PASS=605 WARN=43 FAIL=0
+```
+
+The warning count is not a failing check. This cleanup pass resolves current/actionable stale references and documents remaining historical/archive warnings as accepted noise.
+
+## Next implementation milestone
+
+Nutrition Serving Unit Logging Backend v1.
+
+Expected owner: Backend Development / Data Layer.
+
+Expected scope:
+
+- add backend service/endpoint for `canonical_food_id` + `serving_unit_id` + quantity;
+- resolve serving-unit quantity to grams using backend-owned serving-unit metadata;
+- persist `food_entries` grams row for actuals compatibility;
+- persist companion serving-unit provenance metadata;
+- preserve existing raw/canonical grams logging behavior;
+- keep Target-vs-Actual behavior stable;
+- no Streamlit changes until backend is accepted;
+- no AI/provider involvement.
 
 ## Core doctrine
 
@@ -45,6 +123,8 @@ User sees only approved output.
 
 Deterministic fallback always works.
 
+Sound right and be right.
+
 ## Bite by bite, just bigger bites
 
 The permanent development doctrine is:
@@ -52,20 +132,6 @@ The permanent development doctrine is:
 > Bigger milestone is okay. Bigger single patch is not okay.
 
 Large objectives may be authorized only when internally phased. Single patches remain narrow and tied to a specific diagnostic, test, implementation, or documented process change.
-
-Example:
-
-```text
-Large milestone
-→ diagnostic / current data shape
-→ failing or coverage test
-→ narrow implementation
-→ focused validation
-→ prior-regression validation
-→ original smoke reproduction
-→ project memory update
-→ Architecture acceptance
-```
 
 ## Complex Backend Quality Gate
 
@@ -82,60 +148,31 @@ For complex features involving state, scoring, selection, persistence, provider 
 9. Update project memory.
 10. Only then request Architecture acceptance.
 
-Do not treat generic green tests as sufficient if the product-critical path is not covered.
-
-## Risk-based process model
-
-Low-risk changes use normal patch/focused validation.
-
-Medium-risk changes require light diagnostic, focused test, narrow patch, regression validation, and smoke if user-visible.
-
-High-risk changes require diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke reproduction, Linux/browser smoke when runtime-relevant, project memory update, and Architecture acceptance.
-
-High-risk examples include workout generation, exercise catalog selection/scoring, persistence/state behavior, nutrition targets/suggestions, AI/provider output, recommendation logic, and cross-domain coaching synthesis.
-
 ## Patch stacking stop conditions
 
 Patch stacking is not the goal.
 
-If a complex milestone requires repeated patches, each patch must be tied to a newly understood failure, diagnostic, failing test, lint/pre-commit failure, or smoke regression.
-
-Backend must stop and return to Architecture if any of these occur:
-
-1. The same bug survives two implementation patches.
-2. Tests pass but browser smoke fails.
-3. Linux smoke fails after Windows green.
-4. Candidate pools or data shape are unclear.
-5. The implementation requires broader scope than approved.
-6. More than the expected file-change budget is needed.
-7. Persistence/state behavior becomes unstable.
-8. A patch fails to apply because of drift and the next step is not obvious.
-9. The branch starts accumulating unrelated fixes.
-10. The implementation begins crossing into a deferred v2 milestone.
-
-When a stop condition triggers: do not reset blindly, do not continue blind patching, produce a short diagnostic handoff, and request an Architecture decision.
-
-## Bug-to-regression-test rule
-
-Every real smoke failure must become one of:
-
-1. automated regression test,
-2. diagnostic/coverage test,
-3. documented limitation with an explicit reason it cannot be automated yet,
-4. backlog item if intentionally deferred.
-
-No major smoke failure should disappear as tribal knowledge.
-
-Recent examples:
-
-- Workout Preview Full-Slot Rotation v1: `variation 0 -> variation 1` repeated Dumbbell Single-Leg RDL; the quality gate reproduced and fixed this path.
-- Exercise Catalog Utilization v1: catalog breadth was too low, preview rotation regressed after expansion, and home-gym hinge/vertical_pull regression was caught by Linux validation.
+Backend must stop and return to Architecture if the same bug survives two implementation patches, browser smoke fails after tests pass, Linux smoke fails after Windows green, candidate pools or data shape are unclear, scope expands beyond approval, or the branch begins accumulating unrelated fixes.
 
 ## Provider / AI-specific rule
 
 No provider output is accepted unless it is schema-valid, validator-approved, fact-grounded, fallback-safe, and free of invented numbers, invented foods, invented exercises, unsupported health claims, and hidden raw provider output in normal UI.
 
 Provider may propose. Backend validates. User sees only approved output.
+
+No provider may run on normal Today page load.
+
+## Runtime command continuity anchor
+
+Local Command Menu App Runtime Correction v1 remains in effect.
+
+The `app` command launches Linux runtime and is now the canonical Linux runtime launcher.
+
+`app` restarts Linux FastAPI + Streamlit through SSH.
+
+`wapp` remains Windows-local only.
+
+Linux is the canonical FastAPI + Streamlit app runtime.
 
 ## Delivery style
 
@@ -149,7 +186,13 @@ Do not use `git add .`.
 
 Do not commit snapshots, `qa_artifacts`, runtime artifacts, patch files, or temp scripts.
 
+Temporary apply scripts and patch files live outside the repo.
+
 Temporary patch/apply artifacts live outside the repo, normally in `C:\projects`.
+
+Use `python ..\<script>.py` for outside-repo scripts when applicable.
+
+Use `git apply --check ..\<patch>.patch` before applying outside-repo patches.
 
 Windows repo: `C:\projects\fitness_ai`.
 

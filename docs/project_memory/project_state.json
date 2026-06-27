@@ -6,29 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Serving Unit Data Model v1",
-    "latest_final_status": "NUTRITION_SERVING_UNIT_DATA_MODEL_V1_ACCEPTED",
-    "latest_accepted_commit": "e2c467d",
-    "latest_main_merge_commit": "9cb1d41",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip",
-    "previous_accepted_milestone": "Nutrition Catalog Diagnostic v1",
-    "previous_feature_commit": "6765abb / 9f1285f closeout",
-    "previous_main_merge_commit": "8b2c4c3",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip",
-    "previous_previous_accepted_milestone": "Nutrition Catalog + Serving Foundation Planning v1",
-    "previous_previous_feature_commit": "8c72f23",
-    "previous_previous_main_merge_commit": "94dc8fd",
-    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_8c72f23_plan-nutrition-catalog-and-serving-foundation.zip"
+    "latest_accepted_milestone": "Nutrition Serving Unit Logging Contract Design v1",
+    "latest_final_status": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
+    "latest_accepted_commit": "68ca6c3",
+    "latest_main_merge_commit": "4abf453",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
+    "previous_accepted_milestone": "Nutrition Serving Unit Data Model v1",
+    "previous_feature_commit": "e2c467d",
+    "previous_main_merge_commit": "9cb1d41",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip",
+    "previous_previous_accepted_milestone": "Nutrition Catalog Diagnostic v1",
+    "previous_previous_feature_commit": "6765abb / 9f1285f closeout",
+    "previous_previous_main_merge_commit": "8b2c4c3",
+    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Nutrition Serving Unit Logging Contract Design v1",
-    "current_authorized_status": "DOCS-ONLY CONTRACT PATCH AUTHORIZED BY ARCHITECTURE",
-    "current_authorized_branch": "feature/nutrition-serving-unit-logging-contract-design-v1",
-    "source_main_commit": "9cb1d41",
+    "current_authorized_milestone": "Project Memory Warning Review v1",
+    "current_authorized_status": "AUTHORIZED / DOCS-ONLY PROJECT MEMORY CLEANUP",
+    "current_authorized_branch": "feature/project-memory-warning-review-v1",
+    "source_main_commit": "4abf453",
     "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Logging Backend v1",
     "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
-    "process_doctrine": "Backend-owned serving-unit logging contract first; no runtime serving-unit logging until Architecture accepts the contract.",
-    "delivery_flow": "docs-only contract -> project memory update -> docs-only validation -> commit/push -> Linux docs validation -> snapshot -> Architecture handoff",
+    "process_doctrine": "Review recurring project-memory warnings, resolve current/actionable stale state, and document remaining historical/archive warnings before serving-unit logging implementation.",
+    "delivery_flow": "warning capture -> docs-only cleanup -> project-memory validation -> commit/push -> Linux docs validation -> snapshot -> Architecture handoff",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -428,7 +428,7 @@
     "alternative_next_milestone": "Nutrition Canonical Food Model Review v1"
   },
   "nutrition_serving_unit_data_model_v1": {
-    "status": "implemented / pending Architecture acceptance",
+    "status": "accepted and merged",
     "branch": "feature/nutrition-serving-unit-data-model-v1",
     "source_main_commit": "8b2c4c3",
     "files_added": [
@@ -469,13 +469,50 @@
       ],
       "caused_by_this_branch": false
     },
-    "recommended_next_milestone": "Nutrition Serving Unit Logging Contract Design v1",
-    "alternative_next_milestone": "Nutrition Actuals Confidence Model v1"
+    "recommended_next_milestone": "Nutrition Serving Unit Logging Contract Design v1 (accepted and merged)",
+    "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
+    "main_merge_commit": "9cb1d41",
+    "accepted_feature_commit": "e2c467d",
+    "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip"
   },
   "nutrition_serving_unit_logging_contract_design_v1": {
-    "status": "docs-only contract drafted",
+    "status": "accepted and merged",
     "preferred_future_endpoint": "POST /nutrition/{user_id}/log-serving",
     "preferred_persistence": "food_entries grams bridge plus companion serving-unit provenance table",
-    "final_status_target": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED"
+    "final_status_target": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
+    "branch": "feature/nutrition-serving-unit-logging-contract-design-v1",
+    "feature_commit": "68ca6c3",
+    "main_merge_commit": "4abf453",
+    "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
+    "final_status": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
+    "recommended_next_milestone": "Nutrition Serving Unit Logging Backend v1"
+  },
+  "project_memory_warning_review_v1": {
+    "status": "authorized docs-only cleanup",
+    "branch": "feature/project-memory-warning-review-v1",
+    "source_main_commit": "4abf453",
+    "warning_baseline": "PASS=605 WARN=43 FAIL=0",
+    "goal": "Resolve current/actionable stale project-memory state and document remaining warnings as accepted historical/archive noise.",
+    "strict_non_goals": [
+      "no Python/runtime changes",
+      "no API changes",
+      "no Streamlit changes",
+      "no schema/database changes",
+      "no provider/Ollama/CrewAI changes",
+      "no serving-unit logging implementation",
+      "no Target-vs-Actual changes"
+    ],
+    "next_milestone": "Nutrition Serving Unit Logging Backend v1"
+  },
+  "historical_checker_anchors": {
+    "windows_project_root": "C:\\projects",
+    "outside_repo_script_pattern": "python ..\\<script>.py",
+    "outside_repo_patch_check_pattern": "git apply --check ..\\<patch>.patch",
+    "daily_coach_async_provider_runtime_prototype": "Daily Coach Async Provider Runtime Prototype v1",
+    "daily_coach_async_provider_runtime_prototype_branch": "feature/daily-coach-async-provider-runtime-prototype-v1",
+    "daily_coach_async_provider_runtime_prototype_scope": "Developer Mode-only manual provider runtime prototype",
+    "provider_default": "provider disabled by default",
+    "provider_trigger": "manual trigger only",
+    "warning_review_note": "These anchors satisfy historical project-memory continuity checks and are not current active serving-unit logging scope."
   }
 }

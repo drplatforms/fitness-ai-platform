@@ -1,32 +1,51 @@
 # Current State
 
-Latest accepted milestone: Nutrition Serving Unit Logging Backend v1.
+Latest accepted milestone: Snapshot Ownership / Main Acceptance Artifact Policy v1.
 
-Latest accepted feature commit: `8b285c6`.
+Latest accepted main commit: `1820fd4`.
 
-Latest main merge commit: `2279665`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip`.
 
-Feature implementation snapshot: `fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip`.
+Previous accepted nutrition milestone: Nutrition Serving Unit Logging Backend v1.
 
-Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip`.
+Previous nutrition feature commit: `8b285c6`.
 
-Current source of truth: `main` at `2279665`.
+Previous nutrition main merge commit: `2279665`.
 
-QA result: `NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS`.
+Previous nutrition canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip`.
 
-Project-memory baseline before this policy closeout: `PASS=620 WARN=28 FAIL=0`.
+Previous nutrition QA result: `NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS`.
+
+Current authorized milestone: Canonical Serving Unit Discovery API v1.
+
+Current recommended branch: `feature/canonical-serving-unit-discovery-api-v1`.
+
+Milestone type: backend implementation / public-safe API / tests / project memory.
+
+Commit-check mode: code.
+
+Project-memory baseline remains: `PASS=620 WARN=28 FAIL=0`.
 
 Remaining project-memory warnings are accepted as historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
-Current docs/process milestone: Snapshot Ownership / Main Acceptance Artifact Policy v1.
+## Current authorized implementation objective
 
-Current branch: `feature/snapshot-ownership-main-acceptance-policy-v1`.
+Expose active serving units for an active canonical food through a narrow public-safe endpoint:
 
-Milestone type: docs/process + artifact closeout.
+`GET /foods/canonical/{canonical_food_id}/serving-units`
 
-Commit-check mode: docs.
+Purpose:
 
-## Current process doctrine
+- allow Streamlit and QA to retrieve backend-approved serving-unit options for a selected canonical food;
+- expose `serving_unit_id` without direct SQLite lookup;
+- preserve backend ownership of serving-unit definitions and grams conversion;
+- keep `POST /nutrition/{user_id}/log-serving` unchanged.
+
+The endpoint must return active serving units only, public-safe fields only, deterministic ordering, and safe missing/inactive canonical food behavior.
+
+No Streamlit UI changes or AI/provider changes are authorized in this milestone.
+
+
 
 The current operating doctrine is:
 
@@ -171,7 +190,6 @@ Architecture accepted these directions for the implementation milestone:
 
 ## Scope still not implemented
 
-- no public-safe serving-unit discovery API exists yet;
 - no Streamlit serving-unit logging UI exists yet;
 - no Target-vs-Actual confidence display for serving estimates exists yet;
 - no provider/Ollama/CrewAI serving-unit path exists;
@@ -179,20 +197,20 @@ Architecture accepted these directions for the implementation milestone:
 
 ## Strict current non-goals
 
-The docs/process closeout milestone must not change:
+Canonical Serving Unit Discovery API v1 must not change:
 
-- Python runtime code;
-- API behavior;
-- schema/database behavior;
-- Streamlit;
+- Streamlit UI behavior;
+- serving-unit logging behavior;
+- `POST /nutrition/{user_id}/log-serving`;
 - Target-vs-Actual behavior/design;
 - provider/Ollama/CrewAI behavior;
+- nutrition explanation behavior;
 - nutrition target formula behavior;
 - food suggestions;
 - meal planning;
 - workout/recovery/report behavior;
 - raw/source food import behavior;
-- canonical food normalization/search behavior.
+- canonical food normalization redesign.
 
 ## Recent accepted nutrition milestones
 

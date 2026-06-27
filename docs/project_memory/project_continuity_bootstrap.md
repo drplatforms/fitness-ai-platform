@@ -2,15 +2,23 @@
 
 Current focus: AI Health Coach / fitness_ai.
 
-Current source of truth: `main` at `2279665` after Nutrition Serving Unit Logging Backend v1 was accepted and merged.
+Current source of truth: `main` at `1820fd4` after Snapshot Ownership / Main Acceptance Artifact Policy v1 was accepted.
 
-Current docs/process milestone: Snapshot Ownership / Main Acceptance Artifact Policy v1.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip`.
 
-Milestone type: docs/process + artifact closeout.
+Current authorized milestone: Canonical Serving Unit Discovery API v1.
 
-This milestone closes the serving-unit backend milestone by recording the canonical accepted main snapshot and establishing the project-wide snapshot ownership rule.
+Recommended branch: `feature/canonical-serving-unit-discovery-api-v1`.
 
-No runtime/API/schema/Streamlit/provider behavior changes are authorized in this docs/process milestone.
+Milestone type: backend implementation / public-safe API / tests / project memory.
+
+Commit-check mode: code.
+
+This milestone exposes active serving units for active canonical foods through a public-safe API endpoint so Streamlit can later build a serving-unit picker without direct database lookup or invented mappings.
+
+No Streamlit UI, logging behavior, Target-vs-Actual, or provider/AI behavior changes are authorized in this milestone.
+
+
 
 ## What Future Chats Must Do First
 
@@ -138,21 +146,7 @@ canonical_food_id + serving_unit_id + quantity
 -> existing Target-vs-Actual reads resolved grams through existing actuals flow
 ```
 
-## Current docs/process milestone
-
-Snapshot Ownership / Main Acceptance Artifact Policy v1.
-
-Expected owner: Backend Development / Project Memory.
-
-Expected scope:
-
-- create/record canonical accepted snapshot from `main` at `2279665`;
-- document snapshot ownership policy;
-- update current state, next milestone, open questions, project state, continuity bootstrap, and handoffs;
-- preserve feature snapshot as implementation artifact only;
-- route next implementation milestone to Canonical Serving Unit Discovery API v1.
-
-## Expected next implementation milestone
+## Current implementation milestone
 
 Canonical Serving Unit Discovery API v1.
 
@@ -178,7 +172,7 @@ Rules:
 
 ## Current guardrails
 
-Do not implement runtime behavior in Snapshot Ownership / Main Acceptance Artifact Policy v1.
+Do not implement Streamlit UI, provider behavior, Target-vs-Actual changes, or serving-unit logging changes in Canonical Serving Unit Discovery API v1.
 
 Do not change:
 

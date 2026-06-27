@@ -4,10 +4,15 @@ from fastapi import APIRouter, HTTPException, Query
 
 from services.food_normalization_service import (
     ensure_starter_canonical_foods_seeded,
+    get_canonical_food,
     get_nutrients_for_canonical_food,
     get_raw_food_source_record,
     get_source_links_for_canonical_food,
     search_canonical_foods,
+)
+from services.nutrition_serving_unit_service import (
+    get_active_serving_units_for_canonical_food,
+    seed_canonical_food_serving_units,
 )
 
 router = APIRouter()
@@ -72,6 +77,30 @@ def _build_source_links(canonical_food_id: int) -> list[dict[str, str | int | No
     return public_links
 
 
+def _serving_unit_to_public_dict(serving_unit) -> dict:
+    return {
+        "serving_unit_id": serving_unit.id,
+        "display_name": serving_unit.display_name,
+        "unit_name": serving_unit.unit_name,
+        "unit_quantity": serving_unit.unit_quantity,
+        "grams_default": serving_unit.grams_default,
+        "grams_min": serving_unit.grams_min,
+        "grams_max": serving_unit.grams_max,
+        "confidence": serving_unit.confidence,
+        "amount_source": "serving_unit_estimate",
+        "source": serving_unit.source,
+        "source_notes": serving_unit.source_note,
+        "sort_order": serving_unit.sort_order,
+    }
+
+
+def _get_public_active_canonical_food(canonical_food_id: int):
+    canonical_food = get_canonical_food(canonical_food_id)
+    if canonical_food is None or not canonical_food.active:
+        raise HTTPException(status_code=404, detail="Canonical food not found.")
+    return canonical_food
+
+
 def _canonical_search_result_to_public_dict(
     result,
     *,
@@ -131,5 +160,25 @@ def canonical_food_search_endpoint(
                 include_source_links=include_source_links,
             )
             for result in results
+        ],
+    }
+
+
+@router.get("/foods/canonical/{canonical_food_id}/serving-units")
+def canonical_food_serving_units_endpoint(canonical_food_id: int):
+    """Return public-safe active serving units for a canonical food."""
+
+    ensure_starter_canonical_foods_seeded()
+    seed_canonical_food_serving_units()
+
+    canonical_food = _get_public_active_canonical_food(canonical_food_id)
+    serving_units = get_active_serving_units_for_canonical_food(canonical_food.id)
+
+    return {
+        "success": True,
+        "canonical_food_id": canonical_food.id,
+        "display_name": canonical_food.display_name,
+        "serving_units": [
+            _serving_unit_to_public_dict(serving_unit) for serving_unit in serving_units
         ],
     }

@@ -6,30 +6,27 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Nutrition Serving Unit Logging Backend v1",
-    "latest_final_status": "NUTRITION_SERVING_UNIT_LOGGING_BACKEND_V1_ACCEPTED",
-    "latest_accepted_commit": "8b285c6",
-    "latest_main_merge_commit": "2279665",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
-    "previous_accepted_milestone": "Project Memory Warning Review v1",
-    "previous_feature_commit": "b395e0a",
-    "previous_main_merge_commit": "d74ddec",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip",
-    "previous_previous_accepted_milestone": "Nutrition Catalog Diagnostic v1",
-    "previous_previous_feature_commit": "6765abb / 9f1285f closeout",
-    "previous_previous_main_merge_commit": "8b2c4c3",
-    "previous_previous_snapshot": "fitness_ai_snapshot_2026-06-26_8b2c4c3_merge-nutrition-catalog-diagnostic-code-closeout.zip",
-    "latest_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip"
+    "latest_accepted_milestone": "Snapshot Ownership / Main Acceptance Artifact Policy v1",
+    "latest_final_status": "SNAPSHOT_OWNERSHIP_MAIN_ACCEPTANCE_ARTIFACT_POLICY_V1_ACCEPTED",
+    "latest_accepted_commit": "1820fd4",
+    "latest_main_merge_commit": "1820fd4",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip",
+    "previous_accepted_milestone": "Nutrition Serving Unit Logging Backend v1",
+    "previous_feature_commit": "8b285c6",
+    "previous_main_merge_commit": "2279665",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
+    "previous_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Snapshot Ownership / Main Acceptance Artifact Policy v1",
-    "current_authorized_status": "AUTHORIZED",
-    "current_authorized_branch": "feature/snapshot-ownership-main-acceptance-policy-v1",
-    "source_main_commit": "2279665",
-    "recommended_next_milestone_after_acceptance": "Canonical Serving Unit Discovery API v1",
+    "current_authorized_milestone": "Canonical Serving Unit Discovery API v1",
+    "current_authorized_status": "AUTHORIZED_FOR_BACKEND_IMPLEMENTATION",
+    "current_authorized_branch": "feature/canonical-serving-unit-discovery-api-v1",
+    "source_main_commit": "1820fd4",
+    "commit_check_mode": "code",
+    "recommended_next_milestone_after_acceptance": "Nutrition Serving Unit Logging Streamlit UI v1",
     "alternative_next_milestone": "Nutrition Actuals Confidence Model v1 after serving-unit discovery and UI readiness are sequenced",
-    "process_doctrine": "Canonical accepted snapshots are created from accepted main commits after Architecture acceptance/merge. Feature snapshots may exist but are implementation artifacts unless explicitly designated canonical.",
-    "delivery_flow": "preflight/branch -> docs update -> validate -> review diff -> stage -> commit -> push -> create canonical main snapshot -> Linux docs validation -> Architecture handoff",
+    "process_doctrine": "Expose backend-approved serving units before Streamlit serving-unit logging UI. Streamlit must not query raw tables or invent conversions.",
+    "delivery_flow": "preflight/branch -> implement -> validate -> review diff -> stage -> commit -> push -> Linux validation -> Architecture handoff; Backend does not create final canonical accepted snapshot.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -135,7 +132,13 @@
     "backend_owned_serving_unit_grams_resolution": true,
     "no_streamlit_changes_for_current_serving_unit_backend_milestone": true,
     "no_provider_changes_for_current_serving_unit_backend_milestone": true,
-    "no_target_vs_actual_redesign_for_current_serving_unit_backend_milestone": true
+    "no_target_vs_actual_redesign_for_current_serving_unit_backend_milestone": true,
+    "canonical_serving_unit_discovery_api_v1": true,
+    "no_streamlit_changes_for_current_milestone": true,
+    "no_provider_changes_for_current_milestone": true,
+    "no_target_vs_actual_changes_for_current_milestone": true,
+    "serving_unit_discovery_before_streamlit_ui": true,
+    "backend_owns_serving_unit_options": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -219,7 +222,8 @@
     "apply_raw_patches_from_repo_as": "Apply raw patches from the repo root using git apply --check ..\\<patch>.patch then git apply ..\\<patch>.patch.",
     "no_broad_formatters_for_docs_only": "For docs-only milestones, do not run broad formatters that can rewrite unrelated application files.",
     "long_handoffs_in_code_blocks": "Long handoffs must be delivered as one copy/paste-ready code block.",
-    "push_separate_phase": "Push must be its own separate phase; do not combine commit and push."
+    "push_separate_phase": "Push must be its own separate phase; do not combine commit and push.",
+    "no_repo_wide_mutating_formatters_for_feature_work": "Use targeted Ruff/Black on touched files only. Use whole-repo checks in non-mutating mode when appropriate."
   },
   "first_files": {
     "all_roles": [
@@ -526,13 +530,53 @@
   },
   "process_policies": {
     "snapshot_ownership_main_acceptance_artifact_policy_v1": {
-      "status": "AUTHORIZED_FOR_DOCS_PROCESS_CLOSEOUT",
+      "status": "accepted",
       "feature_snapshots": "Optional implementation artifacts; not canonical unless explicitly designated.",
       "canonical_accepted_snapshots": "Created from main after Architecture acceptance/merge and named with the accepted main commit hash.",
       "serving_unit_backend_feature_commit": "8b285c6",
       "serving_unit_backend_main_merge_commit": "2279665",
       "serving_unit_backend_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
-      "serving_unit_backend_canonical_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip"
+      "serving_unit_backend_canonical_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
+      "main_merge_commit": "1820fd4",
+      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip"
     }
+  },
+  "nutrition_serving_unit_logging_backend_v1": {
+    "status": "accepted and merged",
+    "feature_branch": "feature/nutrition-serving-unit-logging-backend-v1",
+    "feature_commit": "8b285c6",
+    "main_merge_commit": "2279665",
+    "feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
+    "qa_result": "NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS",
+    "endpoint": "POST /nutrition/{user_id}/log-serving",
+    "provenance_table": "nutrition_serving_unit_log_metadata",
+    "accepted_behavior": [
+      "backend validates canonical food",
+      "backend validates serving unit",
+      "backend verifies serving unit belongs to canonical food",
+      "backend resolves serving quantity to grams",
+      "backend writes resolved grams through food_entries",
+      "backend persists serving-unit provenance metadata",
+      "Target-vs-Actual reads resolved grams through existing actuals flow"
+    ],
+    "next_milestone": "Canonical Serving Unit Discovery API v1"
+  },
+  "canonical_serving_unit_discovery_api_v1": {
+    "status": "authorized for backend implementation",
+    "branch": "feature/canonical-serving-unit-discovery-api-v1",
+    "source_main_commit": "1820fd4",
+    "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip",
+    "endpoint": "GET /foods/canonical/{canonical_food_id}/serving-units",
+    "goal": "Expose active serving units for active canonical foods through a public-safe endpoint before Streamlit serving-unit picker work.",
+    "strict_non_goals": [
+      "no Streamlit serving-unit picker UI",
+      "no nutrition logging behavior changes",
+      "no changes to POST /nutrition/{user_id}/log-serving",
+      "no Target-vs-Actual changes",
+      "no AI/provider/Ollama/CrewAI changes",
+      "no food suggestions or meal planning"
+    ],
+    "expected_next_milestone": "Nutrition Serving Unit Logging Streamlit UI v1"
   }
 }

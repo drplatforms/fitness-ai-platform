@@ -1,3 +1,21 @@
+# Project Continuity Bootstrap — Nutrition Actuals Provenance Debug / Integration Design v1
+
+Current source of truth: `main` at `9b7430c`.
+
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
+
+Current milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
+
+Branch: `feature/nutrition-actuals-provenance-debug-integration-design-v1`.
+
+Status: backend implementation complete / ready for Architecture review.
+
+Implemented debug/integration endpoint: `GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`.
+
+This endpoint exposes public-safe NutritionActualInterpretation records and summary counts for QA/Architecture/debug inspection without changing Target-vs-Actual totals, logging behavior, Streamlit, or AI/provider behavior.
+
+---
+
 # Project Continuity Bootstrap — Future Feature & Technology Inventory v1
 
 Current source of truth: `main`.

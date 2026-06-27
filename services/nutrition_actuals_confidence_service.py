@@ -417,3 +417,59 @@ def build_public_nutrition_actual_interpretation(
     """Build a bounded public-safe dictionary for one logged actual."""
 
     return build_nutrition_actual_interpretation(food_entry_id).to_public_dict()
+
+
+def _summarize_actual_interpretations(
+    interpretations: list[NutritionActualInterpretation],
+) -> dict[str, int]:
+    """Build public-safe aggregate counts for actuals confidence debug output."""
+
+    return {
+        "total_entries": len(interpretations),
+        "entries_with_serving_unit_metadata": sum(
+            1 for item in interpretations if item.has_serving_unit_metadata
+        ),
+        "entries_with_grams_range": sum(
+            1 for item in interpretations if item.has_grams_range
+        ),
+        "entries_with_low_or_unknown_confidence": sum(
+            1
+            for item in interpretations
+            if item.confidence_level
+            in {
+                NUTRITION_ACTUAL_CONFIDENCE_LOW,
+                NUTRITION_ACTUAL_CONFIDENCE_UNKNOWN,
+            }
+        ),
+        "entries_with_missing_nutrients": sum(
+            1
+            for item in interpretations
+            if item.nutrient_completeness
+            in {
+                NUTRITION_ACTUAL_COMPLETENESS_MISSING_NUTRIENTS,
+                NUTRITION_ACTUAL_COMPLETENESS_PARTIAL,
+                NUTRITION_ACTUAL_COMPLETENESS_UNKNOWN,
+            }
+        ),
+    }
+
+
+def build_public_nutrition_actuals_confidence_for_date(
+    *,
+    user_id: int,
+    target_date: str,
+) -> dict[str, object]:
+    """Build public-safe actuals confidence/provenance debug output for a date."""
+
+    interpretations = build_nutrition_actual_interpretations_for_date(
+        user_id=int(user_id),
+        target_date=str(target_date),
+    )
+
+    return {
+        "success": True,
+        "user_id": int(user_id),
+        "date": str(target_date),
+        "actuals": [item.to_public_dict() for item in interpretations],
+        "summary": _summarize_actual_interpretations(interpretations),
+    }

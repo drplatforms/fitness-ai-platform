@@ -1,33 +1,49 @@
-# QA Handoff Current — Future Feature & Technology Inventory v1
+# QA Handoff Current — Nutrition Actuals Provenance Debug / Integration Design v1
 
-Milestone: Future Feature & Technology Inventory v1.
+Milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-QA class: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
+QA class: CLASS 2 / CLASS 3 HYBRID.
 
-Status: docs/project-memory update complete / ready for Architecture review.
+Status: backend implementation complete / ready for Architecture review.
 
 ## QA expectation
 
-No behavioral QA is required for this milestone unless Architecture explicitly requests docs review.
+Focused backend/API/debug contract and semantics smoke is recommended.
 
-Recommended validation is docs/project-memory only:
+QA should validate:
 
-- `git diff --check`
-- `python tools/project_memory_check.py`
-- `pytest tests/test_project_memory_check.py -q`
-- optional dev assistant memory/stale/continuity checks
+- endpoint exists;
+- valid user/date returns public-safe interpretations;
+- serving-unit actuals show provenance/confidence;
+- ranged estimates surface range metadata;
+- missing nutrients stay missing/unknown, not zero;
+- empty day returns safe response;
+- invalid date returns safe error;
+- no raw/debug/source/provider leakage;
+- existing logging paths stable;
+- Target-vs-Actual totals unchanged;
+- no Streamlit behavior change;
+- no AI/provider behavior change.
+
+## Not required
+
+- full Streamlit workflow QA;
+- full AI/provider QA;
+- full workout/recovery/report QA.
+
+## Suggested smoke route
+
+`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
 
 ## Scope confirmation
 
-No runtime/API/schema/Streamlit/provider behavior changed.
+No normal user UI behavior changed.
 
-No nutrition/training behavior changed.
+No nutrition logging behavior changed.
+
+No Target-vs-Actual totals changed.
 
 No snapshots committed.
-
-## QA note
-
-This milestone records ideas only. It does not authorize implementation or change accepted behavior.
 
 ## Historical command/runtime anchors — reference-only
 

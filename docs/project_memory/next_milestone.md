@@ -1,62 +1,66 @@
-# Next Milestone — Future Feature & Technology Inventory v1 Review
+# Next Milestone — Nutrition Actuals Provenance Debug / Integration Design v1 Review
 
-Current project-memory milestone: Future Feature & Technology Inventory v1.
+Current backend milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-Owner: Project Memory / TPM.
+Owner: Backend Development / Data Layer.
 
-Status: docs/project-memory update complete / ready for Architecture review.
+Status: backend implementation complete / ready for Architecture review.
 
-Requested final status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
 
 ## Current accepted baseline
 
 Current source of truth: `main`.
 
-Current accepted main commit: `9d66514`.
+Required source main commit: `9b7430c`.
 
-Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
 
-Previous accepted milestone: Nutrition Actuals Provenance & Confidence Model v1.
+Previous technical milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Previous QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
+Previous technical QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
+
+Previous docs milestone: Future Feature & Technology Inventory v1.
+
+Previous docs status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED_AND_MERGED`.
 
 ## Review focus
 
-Architecture should review that the new inventory:
+Architecture should review whether the new debug/integration endpoint:
 
-- preserves the long-term personal AI health operating system north star;
-- records future product, AI, UX, platform, and technology ideas;
-- explicitly keeps the inventory non-authorizing;
-- preserves backend-truth / validation-first doctrine;
-- records AI/provider/RAG/orchestration boundaries;
-- does not change runtime/API/schema/Streamlit/provider behavior.
+- reuses the accepted NutritionActualInterpretation service;
+- returns public-safe user/date actuals confidence/provenance records;
+- includes useful summary counts;
+- handles empty days safely;
+- validates date input safely;
+- excludes raw/debug/source/provider internals;
+- preserves logging behavior;
+- preserves Target-vs-Actual totals;
+- avoids Streamlit changes;
+- avoids AI/provider behavior changes.
 
-## Current docs-only deliverable
+## Implemented endpoint
 
-Primary document:
+`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
 
-- `docs/project_memory/future_feature_technology_inventory_v1.md`
+## QA expectation
 
-Milestone record:
+QA class: CLASS 2 / CLASS 3 HYBRID.
 
-- `docs/project_memory/milestones/future_feature_technology_inventory_v1.md`
+Recommended QA: focused backend/API/debug contract and semantics smoke.
+
+Not required:
+
+- full Streamlit workflow QA;
+- full AI/provider QA;
+- full workout/recovery/report QA.
 
 ## Post-acceptance routing
 
-After acceptance, Architecture can choose the next scoped implementation milestone.
+After Architecture acceptance, route focused QA for backend/API/debug contract validation.
 
-The inventory itself does not authorize:
+Future milestones may decide whether these interpretations surface in Developer Mode, Target-vs-Actual confidence notes, Nutrition Today Summary annotations, DailyCoachSynthesis context, or AI nutrition explanation provider context.
 
-- AI meal generation;
-- meal planning / meal prep;
-- scanning/import features;
-- RAG;
-- provider changes;
-- orchestration changes;
-- mobile/PWA work;
-- integrations;
-- Target-vs-Actual redesign;
-- recommendation engine changes.
 
 ## Historical continuity anchors — reference-only
 

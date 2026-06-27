@@ -1,147 +1,154 @@
-# Current State Update — Future Feature & Technology Inventory v1
+# Current State Update — Nutrition Actuals Provenance Debug / Integration Design v1
 
 Current source of truth: `main`.
 
-Current accepted main commit: `9d66514`.
+Required source main commit: `9b7430c`.
 
-Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
 
-Previous accepted milestone: Nutrition Actuals Provenance & Confidence Model v1.
+Previous accepted technical milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Previous QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
+Previous technical QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
 
-Current project-memory milestone: Future Feature & Technology Inventory v1.
+Previous docs milestone: Future Feature & Technology Inventory v1.
 
-Milestone type: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
+Previous docs status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED_AND_MERGED`.
 
-Branch: `feature/future-feature-technology-inventory-v1`.
+Current backend milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-Status: docs/project-memory update complete / ready for Architecture review.
+Branch: `feature/nutrition-actuals-provenance-debug-integration-design-v1`.
 
-Requested final status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+Commit-check mode: code.
 
-## Current accepted nutrition capability
+QA class: CLASS 2 / CLASS 3 HYBRID — backend/API/debug contract over persisted actuals semantics.
 
-The accepted nutrition chain is now:
+Status: backend implementation complete / ready for Architecture review.
 
-```text
-canonical food search
--> backend-approved serving-unit discovery
--> Streamlit serving-unit selection
--> quantity entry
--> backend log-serving
--> resolved grams
--> food_entries actuals bridge
--> serving-unit provenance metadata
--> actuals provenance/confidence interpretation
--> Target-vs-Actual compatibility
-```
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
 
-Recently closed chain:
+## Implemented integration path
 
-1. Nutrition Serving Unit Logging Backend v1
-2. Canonical Serving Unit Discovery API v1
-3. Nutrition Serving Unit Logging Streamlit UI v1
-4. Nutrition Actuals Provenance & Confidence Model v1
+Added public-safe backend debug/integration endpoint:
 
-## Why this milestone exists
+`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
 
-The project is now moving fast enough that high-value product, technology, AI, workflow, UX, learning, and architecture ideas can get lost in development-controlled chaos.
+The endpoint returns NutritionActualInterpretation records for a user/date by reusing the accepted actuals provenance/confidence service.
 
-Future Feature & Technology Inventory v1 creates a durable project-memory inventory so future Architecture, Backend, Streamlit, QA, TPM, and AI-provider work has a shared north star.
+## Response purpose
 
-This milestone does not authorize implementation.
+The debug path answers:
 
-## North star recorded
+For this user/date, what logged nutrition actuals exist, and how does the backend interpret their provenance/confidence?
 
-Fitness AI Platform is a personal AI health operating system.
+It is intended for QA, Architecture, Developer Mode planning, and future UI integration design.
 
-It is not just a workout tracker, macro tracker, chatbot, meal generator, or report generator.
+It is not a normal user UI surface yet.
 
-The platform is intended to become a private, data-grounded coaching platform that understands training, nutrition, recovery, readiness, equipment, preferences, schedule constraints, adherence, friction, history, goals, uncertainty, provenance, and confidence.
+## Public-safe output
 
-## Doctrine recorded
+The endpoint returns:
 
-Backend owns facts.
+- success;
+- user_id;
+- date;
+- actuals list;
+- public-safe actual interpretation fields;
+- aggregate summary counts.
 
-Backend owns validation.
+Each actual may include:
 
-Backend owns persistence.
+- food_entry_id;
+- logged_date;
+- source_type;
+- precision;
+- confidence_level;
+- nutrient_completeness;
+- has_serving_unit_metadata;
+- has_grams_range;
+- resolved_grams;
+- grams_min / grams_max;
+- grams_range_width / grams_range_percent;
+- amount_source;
+- serving_unit_confidence;
+- missing_nutrients;
+- limitations;
+- reason_codes;
+- display_flags.
 
-Backend owns provenance/confidence.
+Forbidden internals remain excluded:
 
-Backend owns safety boundaries.
+- raw SQL rows;
+- raw source payloads;
+- raw DB object dumps;
+- tracebacks;
+- provider/runtime metadata;
+- raw AI output;
+- private debug internals;
+- validator internals;
+- hidden source blobs.
 
-Streamlit renders approved fields and collects user input.
+## Summary counts
 
-AI may explain, summarize, propose, or generate candidates only inside strict backend-approved contracts.
+The debug response includes aggregate counts:
 
-AI must not become the source of truth.
+- total_entries;
+- entries_with_serving_unit_metadata;
+- entries_with_grams_range;
+- entries_with_low_or_unknown_confidence;
+- entries_with_missing_nutrients.
 
-## Inventory document
+## Boundary confirmation
 
-Primary new inventory doc:
+No Target-vs-Actual totals changed.
 
-- `docs/project_memory/future_feature_technology_inventory_v1.md`
+No Target-vs-Actual normal response semantics changed.
 
-Milestone record:
+No macro target formulas changed.
 
-- `docs/project_memory/milestones/future_feature_technology_inventory_v1.md`
+No nutrition logging behavior changed.
 
-## Ideas preserved
+No serving-unit logging behavior changed.
 
-The inventory records future ideas including:
+No canonical grams logging behavior changed.
 
-- AI meal generation;
-- meal planning / meal prep;
-- AI workout explanations / interpretations;
-- nutrition label scanning;
-- barcode scanning;
-- photo-assisted food logging;
-- restaurant/menu parsing;
-- grocery list generation;
-- receipt/grocery import eventually;
-- What-If simulator;
-- weekly/monthly coach review;
-- RAG-powered education layer;
-- coach memory / personalization;
-- wearable integrations;
-- mobile-first / PWA future;
-- premium Daily Command Center.
+No raw/source logging behavior changed.
 
-## Boundary
+No Streamlit UI changed.
 
-This docs patch records ideas only.
+No AI/provider/CrewAI/direct_ollama behavior changed.
 
-It does not authorize implementation.
-
-Every future idea still requires scoped milestone authorization, tests, validation, project-memory update, QA classification, Architecture acceptance, and canonical main snapshot after merge.
-
-## Scope confirmation
-
-No runtime code changed.
-
-No API code changed.
-
-No schema changed.
-
-No Streamlit changed.
-
-No provider/Ollama/CrewAI changed.
-
-No nutrition behavior changed.
-
-No training/workout behavior changed.
+No food suggestions, meal planning, barcode scanning, external food imports, workout, training, recovery, or report behavior changed.
 
 No snapshots committed.
 
-## Next review step
+## Files updated
 
-Return to Architecture for docs/project-memory acceptance review.
+Runtime/API/service/test files:
+
+- `api/routes/nutrition.py`
+- `services/nutrition_actuals_confidence_service.py`
+- `tests/test_nutrition_actuals_confidence_debug_api.py`
+
+Project-memory files:
+
+- `docs/project_memory/current_state.md`
+- `docs/project_memory/next_milestone.md`
+- `docs/project_memory/open_questions.md`
+- `docs/project_memory/project_continuity_bootstrap.md`
+- `docs/project_memory/project_state.json`
+- `docs/project_memory/handoffs/backend_handoff_current.md`
+- `docs/project_memory/handoffs/architecture_handoff_current.md`
+- `docs/project_memory/handoffs/qa_handoff_current.md`
+- `docs/project_memory/milestones/nutrition_actuals_provenance_debug_integration_design_v1.md`
+
+## Architecture review step
+
+Return to Architecture for review and acceptance decision.
 
 Requested final status:
 
-`FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+`NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
+
 
 ## Historical continuity anchors — reference-only
 

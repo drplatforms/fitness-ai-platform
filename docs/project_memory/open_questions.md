@@ -1,35 +1,39 @@
-# Open Questions — Future Feature & Technology Inventory v1
+# Open Questions — Nutrition Actuals Provenance Debug / Integration Design v1
 
-Current milestone: Future Feature & Technology Inventory v1.
+Current milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-Status: docs/project-memory update complete / ready for Architecture review.
+Status: backend implementation complete / ready for Architecture review.
 
-## Current open question
+## Current Architecture question
 
-Should Architecture accept `docs/project_memory/future_feature_technology_inventory_v1.md` as the durable future-facing product/technology/AI/platform inventory?
+Should Architecture accept `GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD` as the first downstream integration surface for NutritionActualInterpretation?
 
 Requested final status:
 
-`FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+`NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
 
-## Product / architecture questions preserved for future milestones
+## Resolved implementation choice
 
-These are not implementation authorizations. They are future scoping questions:
+Architecture preferred surfacing actuals provenance/confidence first through a narrow backend debug/integration path rather than normal user UI.
 
-1. Which future surface should become the first Daily Command Center milestone?
-2. Should meal planning start as deterministic saved meals/templates before AI meal generation?
-3. What food scanning path is safest first: barcode, nutrition label OCR, or photo-assisted logging?
-4. Which actuals confidence/provenance fields should eventually appear in Target-vs-Actual or Nutrition Today Summary?
-5. What is the first safe AI workout explanation surface?
-6. What memory fields should be user-inspectable/editable first?
-7. Which provider adapter should be evaluated first after local Ollama learning: OpenAI, Anthropic, Gemini, or more local models?
-8. What is the minimum useful RAG education prototype that does not create truth?
-9. When should PostgreSQL/Alembic become worth the migration cost?
-10. What is the smallest mobile/PWA step that improves logging friction without a frontend rewrite?
+Backend implemented the user/date route because it lets QA compare actuals interpretation against Target-vs-Actual and recent logged foods.
+
+## Future product questions preserved
+
+These remain future scoping questions and are not authorized by this milestone:
+
+1. Should actuals confidence next surface in Streamlit Developer Mode?
+2. Should Target-vs-Actual eventually include confidence/provenance companion notes?
+3. Should Nutrition Today Summary annotate incomplete/estimated/ranged actuals?
+4. Should DailyCoachSynthesis receive confidence/provenance context?
+5. Should AI nutrition explanations receive public-safe confidence context after a provider-specific design?
+6. Which limitations should be user-visible versus Developer Mode only?
 
 ## Current answer boundary
 
-No future inventory item should be implemented until it receives a scoped Architecture handoff, owner, tests, QA classification, and acceptance path.
+This milestone exposes interpretation for backend/debug integration only.
+
+It does not redesign nutrition analysis or authorize normal UI display.
 
 ## Historical continuity anchors — reference-only
 

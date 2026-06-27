@@ -1,61 +1,69 @@
-# Architecture Handoff Current — Future Feature & Technology Inventory v1
+# Architecture Handoff Current — Nutrition Actuals Provenance Debug / Integration Design v1
 
 Recipient: Architecture.
 
-CC: Project Memory / TPM, Backend Development / Data Layer, Streamlit UI, QA / Regression Testing.
+CC: Backend Development / Data Layer, Streamlit UI, QA / Regression Testing, TPM / Project Control.
 
-Current source of truth: `main` at `9d66514`.
+Current source of truth: `main` at `9b7430c`.
 
-Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
 
-Milestone: Future Feature & Technology Inventory v1.
+Milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-Milestone type: CLASS 0 — DOCS / PROJECT MEMORY ONLY.
+Branch: `feature/nutrition-actuals-provenance-debug-integration-design-v1`.
 
-Branch: `feature/future-feature-technology-inventory-v1`.
+Status: backend implementation complete / ready for Architecture review.
 
-Status: docs/project-memory update complete / ready for Architecture review.
-
-Requested final status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
 
 ## Summary
 
-This docs-only milestone creates durable project memory for future product, technology, architecture, AI, workflow, UX, learning, and platform ideas.
+Backend added a narrow public-safe debug/integration endpoint over the accepted Nutrition Actuals Provenance & Confidence Model service.
 
-Primary document:
+Implemented route:
 
-- `docs/project_memory/future_feature_technology_inventory_v1.md`
-
-Milestone document:
-
-- `docs/project_memory/milestones/future_feature_technology_inventory_v1.md`
+`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
 
 ## Architecture review request
 
-Please review whether the inventory accurately captures:
+Please review whether this is the correct first downstream integration surface for NutritionActualInterpretation.
 
-- personal AI health operating system north star;
-- backend-truth doctrine;
-- AI/provider/RAG/orchestration boundaries;
-- high-end future product features;
-- current/near/medium/advanced technology inventory;
-- explicit non-authorization boundary.
+The route is intended for QA, Architecture, Developer Mode planning, and future UI/API integration design.
 
-## Requested decision
+It is not a normal user UI surface yet.
 
-Accept Future Feature & Technology Inventory v1 as project-memory continuity baseline.
+## Public-safe response
 
-Requested final status:
+The route returns:
 
-`FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED`.
+- actual interpretation records;
+- reason_codes;
+- limitations;
+- display_flags;
+- grams range metadata when available;
+- summary counts.
+
+It excludes raw SQL, raw source payloads, raw DB objects, tracebacks, provider/runtime metadata, private debug internals, validator internals, and raw AI output.
 
 ## Scope confirmation
 
-No runtime/API/schema/Streamlit/provider changes.
+No Target-vs-Actual totals changed.
+
+No logging behavior changed.
+
+No Streamlit changed.
+
+No AI/provider changed.
 
 No snapshots committed.
 
-No implementation authorization created.
+## Requested decision
+
+Accept this backend/API/debug integration path as Nutrition Actuals Provenance Debug / Integration Design v1.
+
+Requested status:
+
+`NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
 
 ## Historical command/runtime anchors — reference-only
 

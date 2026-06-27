@@ -7,6 +7,9 @@ from datetime import date as date_cls
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from services.nutrition_actuals_confidence_service import (
+    build_public_nutrition_actuals_confidence_for_date,
+)
 from services.nutrition_service import (
     CanonicalFoodInactiveError,
     CanonicalFoodLoggingError,
@@ -84,6 +87,27 @@ def daily_nutrition(user_id: int, entry_date: str):
         "success": True,
         "nutrition": nutrition,
     }
+
+
+# =====================================
+# Nutrition Actuals Confidence Debug Endpoint
+# =====================================
+
+
+@router.get("/nutrition/{user_id}/actuals-confidence/debug")
+def nutrition_actuals_confidence_debug(user_id: int, date: str):
+    try:
+        date_cls.fromisoformat(date)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="date must use YYYY-MM-DD format.",
+        ) from exc
+
+    return build_public_nutrition_actuals_confidence_for_date(
+        user_id=user_id,
+        target_date=date,
+    )
 
 
 # =====================================

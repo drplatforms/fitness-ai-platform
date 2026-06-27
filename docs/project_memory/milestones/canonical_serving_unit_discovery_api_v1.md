@@ -1,8 +1,12 @@
 # Canonical Serving Unit Discovery API v1
 
-Status: authorized for backend implementation.
+Status: accepted and merged.
 
 Branch: `feature/canonical-serving-unit-discovery-api-v1`.
+
+Feature commit: `e6d8578 Add canonical serving unit discovery API`.
+
+Main merge commit: `fd87538`.
 
 Source baseline: `main` at `1820fd4`.
 
@@ -107,4 +111,4 @@ Backend milestone is acceptable when:
 
 Nutrition Serving Unit Logging Streamlit UI v1.
 
-Only after Backend Discovery API v1 is accepted.
+Completed by Nutrition Serving Unit Logging Streamlit UI v1.

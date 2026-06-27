@@ -1,156 +1,139 @@
-# Next Milestone Update — Nutrition Serving Unit Logging Streamlit UI v1
+# Next Milestone — Nutrition Actuals Provenance & Confidence Model v1
 
-Current authorized milestone: Nutrition Serving Unit Logging Streamlit UI v1.
+Recommended next milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Recommended branch: `feature/nutrition-serving-unit-logging-streamlit-ui-v1`.
+Recommended owner: Backend Development / Data Layer.
 
-Source branch: `main`.
+CC: Architecture, Streamlit UI, QA / Regression Testing, TPM / Project Control, Project Memory / All Future Agents.
 
-Required source main commit: `fd87538`.
+Milestone type: backend/data model + service interpretation.
 
-Commit-check mode: code.
+QA class: CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
 
-Objective:
+Status: recommended next milestone / pending Architecture authorization.
 
-Add Streamlit UI support for backend-approved serving-unit nutrition logging.
+Do not implement until Architecture issues an explicit implementation handoff.
 
-Implementation scope:
+## Current accepted baseline
 
-- reuse existing Nutrition page canonical food search;
-- call `GET /foods/canonical/{canonical_food_id}/serving-units` after canonical food selection;
-- render backend-returned serving-unit options;
-- submit only `canonical_food_id`, `serving_unit_id`, `quantity`, and supported date field to `/nutrition/{user_id}/log-serving`;
-- display backend-returned resolved grams and public-safe serving context;
-- preserve existing grams logging and raw/source fallback paths;
-- update project memory.
+Current source of truth: `main` at `0ebb1b4`.
 
-Validation scope:
+Current canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
 
-- targeted Ruff check for touched Streamlit/UI files;
-- targeted Black check for touched Streamlit/UI files;
-- `python -m py_compile ui/streamlit_app.py`;
-- focused serving-unit discovery/logging/canonical search/canonical logging/Target-vs-Actual/API smoke tests;
-- `python tools/project_memory_check.py`;
-- manual Streamlit smoke.
+Closed milestone: Nutrition Serving Unit Logging Streamlit UI v1.
 
----
+Final accepted status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`.
 
-# Next Milestone
+QA status: PASS via completed manual Streamlit workflow smoke.
 
-Current authorized milestone: Canonical Serving Unit Discovery API v1.
+The accepted serving-unit chain is now complete:
 
-Recommended branch: `feature/canonical-serving-unit-discovery-api-v1`.
+```text
+GET /foods/canonical/search
+-> GET /foods/canonical/{canonical_food_id}/serving-units
+-> POST /nutrition/{user_id}/log-serving
+-> resolved grams through food_entries
+-> serving-unit provenance metadata
+-> Target-vs-Actual existing actuals flow
+```
 
-Source branch: `main`.
+## Why the next milestone is not more serving-unit UI
 
-Required source main commit: `1820fd4`.
+The serving-unit user flow now works end-to-end.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip`.
+The next nutrition problem is no longer:
 
-Milestone type: backend implementation / public-safe API / tests / project memory.
+> Can the user log by serving size?
 
-Commit-check mode: code.
+That is now accepted.
 
-## Objective
+The next problem is:
 
-Expose active serving units for an active canonical food through a public-safe backend endpoint:
+> What confidence/provenance should the system attach to logged actuals, and how should downstream nutrition logic understand them?
 
-`GET /foods/canonical/{canonical_food_id}/serving-units`
+Current state:
 
-This fills the QA-discovered gap after Nutrition Serving Unit Logging Backend v1: serving-unit IDs are currently usable by backend logging, but they are not discoverable through a public-safe API response for Streamlit.
+- serving-unit logs resolve to grams;
+- provenance metadata exists;
+- `grams_min` / `grams_max` / `confidence` / `amount_source` may exist;
+- Target-vs-Actual reads resolved grams through the existing actuals bridge.
 
-## Current canonical state to preserve
+Remaining product gap:
 
-- Snapshot Ownership / Main Acceptance Artifact Policy v1: accepted.
-- Nutrition Serving Unit Logging Backend v1: accepted and merged.
-- Current source of truth: `main` at `1820fd4`.
-- Previous nutrition main merge commit: `2279665`.
-- Previous nutrition feature commit: `8b285c6`.
-- Previous nutrition canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip`.
-- Current canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip`.
-- QA result: `NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS`.
-- Project-memory baseline: `PASS=620 WARN=28 FAIL=0`.
+Target-vs-Actual and future food suggestions do not yet meaningfully distinguish:
 
-## Required behavior
+- exact grams entered by user;
+- backend-approved serving estimate;
+- ranged serving estimate;
+- low-confidence serving estimate;
+- missing/unknown nutrient values;
+- source-derived values vs user-entered values.
 
-The endpoint should return:
+## Expected goal
 
-- `success`;
-- `canonical_food_id`;
-- canonical food display name;
-- active serving-unit options for that canonical food.
+Define and expose a backend-owned confidence/provenance interpretation for logged nutrition actuals.
 
-Each serving unit should include public-safe metadata such as:
+The system should be able to distinguish actual entries by source/confidence, for example:
 
-- `serving_unit_id`;
-- `display_name`;
-- `unit_name`;
-- `unit_quantity`;
-- `grams_default`;
-- `grams_min`;
-- `grams_max`;
-- `confidence`;
-- `amount_source`;
-- `source`;
-- `source_notes`;
-- `sort_order`.
+- raw grams user entry;
+- canonical grams user entry;
+- canonical serving-unit entry;
+- serving-unit entry with estimated grams;
+- serving-unit entry with ranged grams;
+- missing nutrient values;
+- unknown/low-confidence nutrient values.
 
-The endpoint must not expose raw source payloads, raw SQL/debug output, provider/runtime metadata, validation internals, tracebacks, inactive serving units, or inactive canonical foods.
+This should prepare the system for better:
 
-## Validation expectations
+- Target-vs-Actual interpretation;
+- nutrition actuals transparency;
+- future food suggestions;
+- future AI nutrition explanations;
+- future recommendation quality.
 
-Focused tests should prove:
+## Suggested implementation shape for Architecture to authorize
 
-- valid canonical food returns active serving units;
-- response includes `serving_unit_id`;
-- inactive serving units are excluded;
-- inactive/missing canonical foods are handled safely;
-- foods with no active serving units return a safe empty list;
-- ordering is deterministic;
-- public-safe response does not expose raw source payloads or debug internals;
-- existing canonical search remains stable;
-- existing serving-unit logging remains stable;
-- Target-vs-Actual remains stable.
+Suggested output for the next Backend handoff:
 
-## Strict non-goals
+- narrow service/model contract;
+- tests proving actuals confidence classification;
+- no UI changes unless only project memory;
+- no AI/provider changes;
+- no Target-vs-Actual redesign yet.
+
+Possible implementation areas to inspect after authorization:
+
+- existing `food_entries` logging path;
+- `nutrition_serving_unit_log_metadata` provenance table;
+- canonical grams logging behavior;
+- raw/source grams logging behavior;
+- Target-vs-Actual actuals service read path;
+- nutrition service daily actuals assembly.
+
+## Strict non-goals for next milestone
 
 Do not implement:
 
-- Streamlit serving-unit picker UI;
-- Streamlit nutrition logging changes;
-- new logging behavior;
-- changes to `POST /nutrition/{user_id}/log-serving`;
-- Target-vs-Actual changes;
-- DailyCoachSynthesis changes;
-- AI/provider changes;
-- CrewAI changes;
-- direct_ollama changes;
-- nutrition explanation changes;
+- new Streamlit serving-unit UI;
 - meal planning;
-- food suggestions;
-- canonical food catalog expansion;
-- USDA/Open Food Facts import;
 - barcode scanning;
-- user-defined serving units;
-- serving-unit overrides;
-- actuals confidence model;
-- broad food normalization redesign;
+- USDA/Open Food Facts import;
+- AI food matching;
+- AI serving-size inference;
+- nutrition explanation provider;
+- food recommendation engine;
+- macro target formula changes;
+- Target-vs-Actual redesign;
+- DailyCoachSynthesis redesign;
+- workout/recovery/report changes;
+- custom user serving units;
 - broad nutrition logging rewrite.
 
-## Expected next milestone after acceptance
-
-Nutrition Serving Unit Logging Streamlit UI v1.
-
-Expected purpose:
-
-- let Streamlit render backend-approved serving-unit options;
-- submit `canonical_food_id + serving_unit_id + quantity`;
-- render backend-returned grams/confidence/provenance;
-- keep Streamlit out of conversion/mapping logic.
+This should be a narrow backend-owned actuals/provenance interpretation milestone.
 
 ## Historical continuity anchors
 
-The following phrases are preserved for project-memory continuity checks. They are reference-only and are not current Canonical Serving Unit Discovery API v1 scope.
+The following phrases are preserved for project-memory continuity checks. They are reference-only and are not current Nutrition Actuals Provenance & Confidence Model v1 scope.
 
 - Daily Coach Async Provider Runtime Design v1
 - DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED

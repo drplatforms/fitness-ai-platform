@@ -6,27 +6,28 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Canonical Serving Unit Discovery API v1",
-    "latest_final_status": "CANONICAL_SERVING_UNIT_DISCOVERY_API_V1_ACCEPTED",
-    "latest_accepted_commit": "fd87538",
-    "latest_main_merge_commit": "fd87538",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
-    "previous_accepted_milestone": "Nutrition Serving Unit Logging Backend v1",
-    "previous_feature_commit": "8b285c6",
-    "previous_main_merge_commit": "2279665",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
-    "previous_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip"
+    "latest_accepted_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
+    "latest_final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED",
+    "latest_accepted_commit": "0ebb1b4",
+    "latest_main_merge_commit": "0ebb1b4",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "previous_accepted_milestone": "Canonical Serving Unit Discovery API v1",
+    "previous_feature_commit": "e6d8578",
+    "previous_main_merge_commit": "fd87538",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
+    "streamlit_feature_commit": "15aa150"
   },
   "active_roadmap": {
-    "current_authorized_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
-    "current_authorized_status": "AUTHORIZED_FOR_STREAMLIT_UI_IMPLEMENTATION",
-    "current_authorized_branch": "feature/nutrition-serving-unit-logging-streamlit-ui-v1",
-    "source_main_commit": "fd87538",
-    "commit_check_mode": "code",
-    "recommended_next_milestone_after_acceptance": "Focused UI workflow QA for Nutrition Serving Unit Logging Streamlit UI v1",
-    "alternative_next_milestone": "Nutrition Actuals Confidence Model v1 after serving-unit discovery and UI readiness are sequenced",
-    "process_doctrine": "Streamlit consumes backend-approved serving units only; Streamlit must not query raw serving-unit tables or calculate grams.",
-    "delivery_flow": "preflight/branch -> inspect UI/API helpers -> implement UI-only serving-unit logging -> targeted validation -> manual Streamlit smoke -> explicit stage -> commit -> push -> Linux validation -> Architecture handoff",
+    "current_recommended_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
+    "current_recommended_status": "RECOMMENDED_PENDING_ARCHITECTURE_AUTHORIZATION",
+    "recommended_owner": "Backend Development / Data Layer",
+    "source_main_commit": "0ebb1b4",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "commit_check_mode": "code_after_authorization",
+    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
+    "primary_question": "How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?",
+    "implementation_status": "Do not implement until Architecture issues an explicit implementation handoff.",
+    "process_doctrine": "Backend owns actuals confidence/provenance interpretation. No Target-vs-Actual redesign, UI changes, or AI/provider changes without separate authorization.",
     "codex": "DO NOT USE BY DEFAULT"
   },
   "boundaries": {
@@ -569,7 +570,7 @@
     "next_milestone": "Canonical Serving Unit Discovery API v1"
   },
   "canonical_serving_unit_discovery_api_v1": {
-    "status": "authorized for backend implementation",
+    "status": "accepted and merged",
     "branch": "feature/canonical-serving-unit-discovery-api-v1",
     "source_main_commit": "1820fd4",
     "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip",
@@ -583,15 +584,89 @@
       "no AI/provider/Ollama/CrewAI changes",
       "no food suggestions or meal planning"
     ],
-    "expected_next_milestone": "Nutrition Serving Unit Logging Streamlit UI v1"
+    "expected_next_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
+    "feature_commit": "e6d8578",
+    "main_merge_commit": "fd87538",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
+    "qa_result": "CANONICAL_SERVING_UNIT_DISCOVERY_API_QA_V1_PASS",
+    "next_milestone_completed": "Nutrition Serving Unit Logging Streamlit UI v1"
   },
   "recent_updates": {
     "nutrition_serving_unit_logging_streamlit_ui_v1": {
-      "status": "IMPLEMENTED_ON_FEATURE_BRANCH_PENDING_VALIDATION",
-      "branch": "feature/nutrition-serving-unit-logging-streamlit-ui-v1",
-      "source_main_commit": "fd87538",
-      "backend_baseline": "CANONICAL_SERVING_UNIT_DISCOVERY_API_V1_ACCEPTED",
-      "expected_final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED"
+      "status": "ACCEPTED_AND_MERGED",
+      "main_merge_commit": "0ebb1b4",
+      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+      "qa_status": "PASS via manual Streamlit workflow smoke"
+    },
+    "nutrition_actuals_provenance_confidence_model_v1": {
+      "status": "RECOMMENDED_PENDING_ARCHITECTURE_AUTHORIZATION",
+      "recommended_owner": "Backend Development / Data Layer"
     }
+  },
+  "nutrition_serving_unit_logging_streamlit_ui_v1": {
+    "status": "accepted and merged",
+    "feature_branch": "feature/nutrition-serving-unit-logging-streamlit-ui-v1",
+    "source_main_commit": "fd87538",
+    "feature_commit": "15aa150",
+    "main_merge_commit": "0ebb1b4",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED",
+    "qa_status": "PASS via completed manual Streamlit workflow smoke",
+    "separate_qa_handoff_required": false,
+    "accepted_chain": [
+      "GET /foods/canonical/search",
+      "GET /foods/canonical/{canonical_food_id}/serving-units",
+      "POST /nutrition/{user_id}/log-serving",
+      "backend validates food/unit/ownership",
+      "backend resolves grams",
+      "backend writes food_entries",
+      "backend writes serving-unit provenance metadata",
+      "Target-vs-Actual reads resolved grams through existing actuals flow"
+    ],
+    "accepted_boundaries": [
+      "UI does not infer serving_unit_id",
+      "UI does not calculate grams",
+      "UI does not submit grams overrides",
+      "UI does not query raw database tables",
+      "UI does not involve AI/provider logic",
+      "no backend behavior changes",
+      "no API shape changes",
+      "no persistence/schema changes",
+      "no Target-vs-Actual redesign",
+      "no snapshots committed"
+    ],
+    "recommended_next_milestone": "Nutrition Actuals Provenance & Confidence Model v1"
+  },
+  "nutrition_actuals_provenance_confidence_model_v1": {
+    "status": "recommended next milestone / pending Architecture authorization",
+    "recommended_owner": "Backend Development / Data Layer",
+    "suggested_source_main_commit": "0ebb1b4",
+    "suggested_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
+    "purpose": "Create a backend-owned interpretation layer for nutrition actuals confidence and provenance.",
+    "primary_question": "How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?",
+    "expected_output": [
+      "narrow service/model contract",
+      "tests proving actuals confidence classification",
+      "no UI changes unless only project memory",
+      "no AI/provider changes",
+      "no Target-vs-Actual redesign yet"
+    ],
+    "strict_non_goals": [
+      "new Streamlit serving-unit UI",
+      "meal planning",
+      "barcode scanning",
+      "USDA/Open Food Facts import",
+      "AI food matching",
+      "AI serving-size inference",
+      "nutrition explanation provider",
+      "food recommendation engine",
+      "macro target formula changes",
+      "Target-vs-Actual redesign",
+      "DailyCoachSynthesis redesign",
+      "workout/recovery/report changes",
+      "custom user serving units",
+      "broad nutrition logging rewrite"
+    ]
   }
 }

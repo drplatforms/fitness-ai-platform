@@ -1,44 +1,20 @@
-# Project Continuity Bootstrap Update — Nutrition Serving Unit Logging Streamlit UI v1
+# Project Continuity Bootstrap Update — Serving-Unit UI Accepted
 
-Use this update as the active continuity layer for the current Streamlit UI milestone.
+Use this update as the active continuity layer for future chats.
 
-Source main commit: `fd87538`.
+Current source of truth: `main` at `0ebb1b4`.
 
-Baseline snapshot: `fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip`.
+Current canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
 
-Current branch: `feature/nutrition-serving-unit-logging-streamlit-ui-v1`.
+Closed milestone: Nutrition Serving Unit Logging Streamlit UI v1.
 
-Active task:
+Final accepted status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`.
 
-Streamlit adds a user-facing serving-unit logging path by consuming the public-safe serving-unit discovery endpoint and posting backend-approved identifiers to `/nutrition/{user_id}/log-serving`.
+QA status: PASS via completed manual Streamlit workflow smoke.
 
-Non-negotiable boundary:
+Recommended next milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Streamlit renders and submits backend-approved facts only. It does not calculate grams, infer serving-unit IDs, query raw serving-unit tables, involve provider/AI behavior, or change Target-vs-Actual semantics.
-
----
-
-# Project Continuity Bootstrap
-
-Current focus: AI Health Coach / fitness_ai.
-
-Current source of truth: `main` at `1820fd4` after Snapshot Ownership / Main Acceptance Artifact Policy v1 was accepted.
-
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip`.
-
-Current authorized milestone: Canonical Serving Unit Discovery API v1.
-
-Recommended branch: `feature/canonical-serving-unit-discovery-api-v1`.
-
-Milestone type: backend implementation / public-safe API / tests / project memory.
-
-Commit-check mode: code.
-
-This milestone exposes active serving units for active canonical foods through a public-safe API endpoint so Streamlit can later build a serving-unit picker without direct database lookup or invented mappings.
-
-No Streamlit UI, logging behavior, Target-vs-Actual, or provider/AI behavior changes are authorized in this milestone.
-
-
+Status of next milestone: recommended / pending Architecture authorization.
 
 ## What Future Chats Must Do First
 
@@ -51,25 +27,23 @@ No Streamlit UI, logging behavior, Target-vs-Actual, or provider/AI behavior cha
 7. Do not infer project rules from memory alone.
 8. Distinguish feature commits/snapshots from canonical accepted main commits/snapshots.
 
-## Snapshot Ownership / Main Acceptance Artifact Policy v1
+## Current accepted serving-unit chain
 
-Canonical accepted snapshots should be created from accepted `main` commits after Architecture acceptance / merge.
+The serving-unit user flow is now accepted end-to-end:
 
-Feature snapshots may still exist as implementation artifacts, but they are not final accepted continuity snapshots unless explicitly designated.
-
-Future handoffs must distinguish:
-
-- feature commit;
-- main merge commit;
-- feature snapshot, if any;
-- canonical accepted snapshot.
-
-For Nutrition Serving Unit Logging Backend v1:
-
-- Feature commit: `8b285c6 Add nutrition serving unit logging backend`
-- Main merge commit: `2279665 Merge nutrition serving unit logging backend v1`
-- Feature snapshot: `fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip`
-- Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip`
+```text
+GET /foods/canonical/search
+-> user selects canonical food
+-> GET /foods/canonical/{canonical_food_id}/serving-units
+-> user selects backend-approved serving unit
+-> user enters quantity
+-> POST /nutrition/{user_id}/log-serving
+-> backend validates food/unit/ownership
+-> backend resolves grams
+-> backend writes food_entries
+-> backend writes serving-unit provenance metadata
+-> existing Target-vs-Actual reads resolved grams
+```
 
 ## Current Accepted Milestone Stack
 
@@ -95,33 +69,19 @@ Scope reminder: qwen3 is not bridge-enabled. There is no provider runtime yet in
 
 Accepted and merged.
 
-- Feature commit: `8c72f23`
-- Main merge commit: `94dc8fd`
-
 ### Nutrition Catalog Diagnostic v1
 
-Accepted and merged through diagnostic project-memory/code closeout.
-
-- Feature implementation commit: `6765abb`
-- Main merge commit: `8b2c4c3`
+Accepted and merged.
 
 ### Nutrition Serving Unit Data Model v1
 
 Accepted and merged.
 
-- Feature commits: `3f0d9b6`, `e2c467d`
-- Main merge commit: `9cb1d41`
-- Snapshot: `fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip`
-
-Accepted scope: serving-unit schema/model/service, seed script, conversion helpers, and tests. No logging endpoint or Streamlit UI was added.
+Accepted scope: serving-unit schema/model/service, seed script, conversion helpers, and tests.
 
 ### Nutrition Serving Unit Logging Contract Design v1
 
 Accepted and merged.
-
-- Feature commit: `68ca6c3`
-- Main merge commit: `4abf453`
-- Feature snapshot: `fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip`
 
 Accepted contract baseline:
 
@@ -137,11 +97,22 @@ Accepted contract baseline:
 
 Accepted and merged.
 
-- Feature commit: `b395e0a`
-- Main merge commit: `d74ddec`
-- Feature snapshot: `fitness_ai_snapshot_2026-06-26_b395e0a_review-project-memory-warning-baseline.zip`
+Accepted scope: docs-only current project-memory cleanup. Remaining warnings are accepted as historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
-Accepted scope: docs-only current project-memory cleanup. Current warning baseline after review: `PASS=620 WARN=28 FAIL=0`. Remaining warnings are accepted as historical/archive/non-actionable continuity noise unless future checks prove otherwise.
+### Snapshot Ownership / Main Acceptance Artifact Policy v1
+
+Accepted and merged.
+
+Canonical accepted snapshots should be created from accepted `main` commits after Architecture acceptance / merge.
+
+Feature snapshots may still exist as implementation artifacts, but they are not final accepted continuity snapshots unless explicitly designated.
+
+Future handoffs must distinguish:
+
+- feature commit;
+- main merge commit;
+- feature snapshot, if any;
+- canonical accepted snapshot.
 
 ### Nutrition Serving Unit Logging Backend v1
 
@@ -166,73 +137,82 @@ canonical_food_id + serving_unit_id + quantity
 -> existing Target-vs-Actual reads resolved grams through existing actuals flow
 ```
 
-## Current implementation milestone
+### Canonical Serving Unit Discovery API v1
 
-Canonical Serving Unit Discovery API v1.
+Accepted and merged.
 
-Expected owner: Backend Development / Data Layer.
+- Main merge commit: `fd87538`
+- Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip`
+- QA result: `CANONICAL_SERVING_UNIT_DISCOVERY_API_QA_V1_PASS`
 
-Goal:
-
-Expose active serving units for an active canonical food through a public-safe endpoint so Streamlit can later build a serving-unit picker without direct database lookup or invented mappings.
-
-Potential endpoint:
+Accepted endpoint:
 
 `GET /foods/canonical/{canonical_food_id}/serving-units`
 
-Rules:
+### Nutrition Serving Unit Logging Streamlit UI v1
 
-- only active canonical foods;
-- only active serving units;
-- no raw source payloads;
-- no raw SQL/debug output;
-- no AI/provider involvement;
-- no Streamlit mapping/inference;
-- backend remains source of truth.
+Accepted and merged.
+
+- Feature commit: `15aa150`
+- Main merge commit: `0ebb1b4`
+- Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`
+- Final status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`
+- QA status: PASS via completed manual Streamlit workflow smoke
+
+Accepted UI behavior:
+
+- canonical food search;
+- backend serving-unit discovery;
+- backend-approved serving-unit selection;
+- positive quantity entry;
+- serving-unit log submission;
+- backend-returned resolved grams display;
+- existing grams logging and raw/source fallback preservation;
+- existing Target-vs-Actual / Nutrition Today Summary behavior preservation.
+
+## Current recommended next milestone
+
+Nutrition Actuals Provenance & Confidence Model v1.
+
+Recommended owner: Backend Development / Data Layer.
+
+Primary question:
+
+How should the backend represent and expose confidence/provenance for nutrition actuals now that serving-unit logging is user-facing?
+
+Expected shape:
+
+- narrow service/model contract;
+- tests proving actuals confidence classification;
+- no UI changes unless only project memory;
+- no AI/provider changes;
+- no Target-vs-Actual redesign yet.
 
 ## Current guardrails
 
-Do not implement Streamlit UI, provider behavior, Target-vs-Actual changes, or serving-unit logging changes in Canonical Serving Unit Discovery API v1.
+Do not implement without separate Architecture authorization:
 
-Do not change:
-
-- Python runtime code;
-- API routes;
-- schemas;
-- Streamlit;
-- tests unless project-memory tooling requires it;
-- provider/Ollama/CrewAI behavior;
-- nutrition actuals;
-- food suggestions;
+- new Streamlit serving-unit UI;
 - meal planning;
-- workout/recovery/report behavior.
+- barcode scanning;
+- USDA/Open Food Facts import;
+- AI food matching;
+- AI serving-size inference;
+- nutrition explanation provider;
+- food recommendation engine;
+- macro target formula changes;
+- Target-vs-Actual redesign;
+- DailyCoachSynthesis redesign;
+- workout/recovery/report changes;
+- custom user serving units;
+- broad nutrition logging rewrite.
 
 ## Known baseline notes
 
-Project-memory check baseline before this policy closeout:
-
-```text
-PASS=620 WARN=28 FAIL=0
-```
-
-Remaining warnings are accepted historical/archive/non-actionable continuity noise unless future checks prove otherwise.
+Project-memory warnings are accepted historical/archive/non-actionable continuity noise unless future checks prove otherwise.
 
 Repo-wide mutating formatter commands should not be used during feature work. Use targeted formatting on touched files and non-mutating full-repo checks when needed.
 
-## Runtime command continuity anchor
+Sound right and be right.
 
-Linux pull/validation should use explicit commands only:
-
-```bash
-cd ~/projects/fitness-ai-platform
-git fetch origin --prune
-git switch <branch>
-git pull --ff-only origin <branch>
-source .venv/bin/activate
-```
-
-Do not use `lpush`.
-
-`app` is the canonical Linux runtime launcher for FastAPI + Streamlit.
-
-`wapp` remains Windows-local only.
+The `app` command launches Linux runtime; `wapp` is Windows-local only.

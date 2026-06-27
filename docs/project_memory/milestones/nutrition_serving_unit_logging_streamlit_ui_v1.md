@@ -1,20 +1,30 @@
 # Nutrition Serving Unit Logging Streamlit UI v1
 
-Status: implemented on feature branch / pending validation and Architecture review.
+Status: accepted and merged.
+
+Final status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`.
 
 Owner: Streamlit UI.
 
 Source baseline: `main` at `fd87538`.
 
-Branch: `feature/nutrition-serving-unit-logging-streamlit-ui-v1`.
+Feature branch: `feature/nutrition-serving-unit-logging-streamlit-ui-v1`.
 
-Commit-check mode: code.
+Feature commit: `15aa150 Add Streamlit serving unit nutrition logging`.
+
+Canonical main merge commit: `0ebb1b4`.
+
+Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+
+QA status: PASS via completed manual Streamlit workflow smoke.
+
+Separate QA handoff: not required unless Architecture explicitly requests independent QA review.
 
 ## Purpose
 
 Add the first Streamlit UI path for logging a canonical food by backend-approved serving unit.
 
-The UI path is:
+The accepted UI path is:
 
 ```text
 canonical food search
@@ -40,9 +50,9 @@ Serving-unit logging:
 
 `POST /nutrition/{user_id}/log-serving`
 
-## Implementation boundaries
+## Accepted boundaries
 
-Streamlit must not:
+Streamlit does not:
 
 - query raw database tables;
 - inspect `canonical_food_serving_units` directly;
@@ -57,43 +67,28 @@ Streamlit must not:
 
 Backend remains responsible for canonical food validation, serving-unit validation, ownership checks, quantity validation, grams resolution, food entry writes, provenance persistence, and Target-vs-Actual compatibility.
 
-## UI behavior added
+## Accepted UI behavior
 
 - Reuses existing Nutrition page canonical food search.
-- Shows `Log Food by Serving Unit` after canonical food selection.
+- Shows serving-unit logging after canonical food selection.
 - Calls the serving-unit discovery endpoint for the selected canonical food.
-- Renders serving-unit labels from backend-returned `display_name` and `grams_default`.
+- Renders serving-unit labels from backend-returned values.
 - Submits only backend-approved identifiers plus user quantity/date.
 - Displays backend-returned resolved grams, date, confidence, source, and grams range when returned.
 - Preserves canonical grams logging as a fallback.
 - Preserves raw/source food database logging as an advanced fallback.
 - Keeps Developer Mode details behind the existing Developer Mode gate.
 
-## Acceptance criteria
+## QA closeout
 
-This milestone is acceptable when:
+Manual Streamlit smoke: PASS.
 
-1. User can search canonical foods in Streamlit.
-2. User can select a canonical food.
-3. Streamlit calls the backend serving-unit discovery endpoint.
-4. User can select a returned backend-approved serving unit.
-5. User can enter positive quantity.
-6. Streamlit submits `canonical_food_id + serving_unit_id + quantity` to log-serving.
-7. Streamlit does not submit grams override.
-8. Streamlit does not calculate grams.
-9. Streamlit displays backend-returned resolved grams.
-10. Successful serving-unit logs update existing nutrition actuals path.
-11. Target-vs-Actual remains stable.
-12. Existing nutrition logging paths remain stable.
-13. No raw DB/source/debug internals appear in normal UI.
-14. No AI/provider behavior changes.
-15. Streamlit compiles.
-16. Focused tests pass.
-17. Manual UI smoke passes.
-18. Project memory is updated.
-19. No snapshots are committed.
-20. Feature branch is pushed.
+Manual smoke confirmed the full user-facing path, existing fallback preservation, no traceback, no AI/provider path, no raw internals in normal UI, and no stale `serving_unit_id` submission after changing selected canonical food.
 
-## Expected final status
+## Next recommended milestone
 
-`NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED`
+Nutrition Actuals Provenance & Confidence Model v1.
+
+Purpose:
+
+Create a backend-owned interpretation layer for nutrition actuals confidence and provenance now that serving-unit logging is user-facing.

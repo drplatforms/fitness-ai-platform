@@ -1,35 +1,22 @@
 # QA Handoff Current
 
-Milestone: Nutrition Serving Unit Logging Streamlit UI v1
+Milestone closed: Nutrition Serving Unit Logging Streamlit UI v1
 
-QA class: CLASS 4 — STREAMLIT / USER-FACING WORKFLOW.
+Final status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`.
 
-Branch: `feature/nutrition-serving-unit-logging-streamlit-ui-v1`.
+QA status: PASS via completed manual Streamlit workflow smoke.
 
-Source baseline: `main` at `fd87538`.
+Current source of truth: `main` at `0ebb1b4`.
 
-Commit-check mode: code.
+Canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
 
-## QA focus
+Separate QA handoff: not required unless Architecture explicitly requests independent QA review.
 
-Validate the actual Streamlit serving-unit logging path, not just backend API contracts.
+## QA closeout
 
-Expected UI path:
+QA classification: CLASS 4 — STREAMLIT / USER-FACING WORKFLOW.
 
-```text
-Nutrition page
--> search canonical food
--> select canonical food
--> serving units load from backend
--> select serving unit
--> enter positive quantity
--> log serving
--> success shows backend-returned resolved grams
-```
-
-## Manual Streamlit smoke
-
-Confirm:
+Manual Streamlit smoke confirmed:
 
 1. Streamlit starts.
 2. Nutrition page loads.
@@ -40,36 +27,37 @@ Confirm:
 7. Serving units load from backend.
 8. Serving-unit selector shows backend-approved options.
 9. `serving_unit_id` is not manually typed by user.
-10. Quantity input accepts positive values.
+10. Quantity accepts valid positive values.
 11. Submit logs serving successfully.
 12. Success message displays backend-returned resolved grams.
-13. UI does not calculate grams.
-14. Existing canonical grams fallback still works.
-15. Existing raw/source fallback still works.
-16. Target-vs-Actual updates according to existing UI pattern.
+13. No UI-side grams conversion is performed.
+14. Existing grams logging path still works.
+15. Existing raw/source fallback remains available.
+16. Target-vs-Actual / Nutrition Today Summary updates according to existing UI behavior.
 17. No traceback appears.
 18. No AI/provider path is involved.
 19. No raw DB/source/debug internals appear in normal UI.
-20. Changing selected canonical food does not submit a stale `serving_unit_id`.
+20. Changing selected canonical food does not submit stale `serving_unit_id`.
 
-## Focused validation
+## Next recommended QA class
 
-```powershell
-git diff --check
-ruff check ui/streamlit_app.py
-black --check ui/streamlit_app.py
-python -m py_compile ui/streamlit_app.py
-pytest tests/test_canonical_serving_unit_discovery_api.py -q
-pytest tests/test_nutrition_serving_unit_logging_api.py -q
-pytest tests/test_canonical_food_logging_api.py -q
-pytest tests/test_food_canonical_search_api.py -q
-pytest tests/test_nutrition_target_vs_actual_service.py -q
-pytest tests/test_api_smoke.py -q
-python tools/project_memory_check.py
-```
+If Architecture authorizes Nutrition Actuals Provenance & Confidence Model v1, suggested QA class:
 
-Expected QA decision options:
+CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
 
-- `PASS_STREAMLIT_SERVING_UNIT_LOGGING_READY_FOR_ARCHITECTURE`
-- `PASS_WITH_MINOR_UI_NOTES`
-- `FAIL_UI_LEAKAGE_OR_SCOPE_DRIFT`
+Expected QA focus:
+
+- classification correctness for raw grams, canonical grams, serving-unit estimates, ranged serving estimates, missing nutrient values, and low/unknown confidence;
+- persistence compatibility with `food_entries` and `nutrition_serving_unit_log_metadata`;
+- no Target-vs-Actual redesign unless explicitly authorized;
+- no Streamlit changes unless explicitly authorized;
+- no AI/provider changes.
+
+## Historical continuity anchors
+
+These phrases are reference-only for project-memory continuity:
+
+- Local Command Menu App Runtime Correction v1
+- app` means Linux canonical app runtime
+- wapp
+- fports

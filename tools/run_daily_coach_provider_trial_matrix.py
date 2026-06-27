@@ -210,7 +210,7 @@ def run_trial_matrix(
 ) -> list[TrialMatrixRow]:
     """Run the configured trial matrix and write sanitized artifacts."""
 
-    env = dict(environ or os.environ)
+    env = dict(os.environ if environ is None else environ)
     timestamp = datetime.now(UTC).replace(microsecond=0).isoformat()
     run_id = f"{_slug(label)}_{timestamp.replace(':', '').replace('+', 'z')}"
     rows: list[TrialMatrixRow] = []

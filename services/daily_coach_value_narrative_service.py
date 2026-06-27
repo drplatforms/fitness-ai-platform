@@ -107,7 +107,7 @@ def build_configured_daily_coach_value_narrative(
 ) -> DailyCoachValueNarrativeResult:
     """Build Daily Coach narrative using configured provider with fallback."""
 
-    env = environ or os.environ
+    env = os.environ if environ is None else environ
     synthesis = build_daily_coach_synthesis(user_id)
     health_state = build_user_health_state(user_id)
     value_context = build_daily_coach_value_aware_provider_context(
@@ -133,7 +133,7 @@ def build_daily_coach_value_narrative_from_synthesis(
     direct_ollama_generate: DailyCoachNarrativeProviderCallable | None = None,
     openai_generate: DailyCoachNarrativeProviderCallable | None = None,
 ) -> DailyCoachValueNarrativeResult:
-    env = environ or os.environ
+    env = os.environ if environ is None else environ
     configured_provider = _normalize_provider(
         env.get(DAILY_COACH_VALUE_NARRATIVE_PROVIDER_ENV)
     )
@@ -475,11 +475,14 @@ def _resolve_provider_generate(
             return openai_generate
 
         def generate(model: str, prompt: str, timeout: float) -> str:
+            api_key = env.get(OPENAI_API_KEY_ENV)
+            if not api_key:
+                raise DailyCoachValueNarrativeError("openai_missing_api_key")
             return call_openai_daily_coach_narrative(
                 model,
                 prompt,
                 timeout,
-                api_key=env.get(OPENAI_API_KEY_ENV),
+                api_key=api_key,
                 base_url=env.get(OPENAI_BASE_URL_ENV),
             )
 

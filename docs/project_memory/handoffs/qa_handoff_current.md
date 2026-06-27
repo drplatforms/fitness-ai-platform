@@ -1,43 +1,55 @@
-# QA Handoff Current — Nutrition Actuals Provenance Debug / Integration Design v1
+# QA Handoff Current — Daily Coach Narrative Value-Aware Provider Comparison v1
 
-Milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
+Milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
 
-QA class: CLASS 2 / CLASS 3 HYBRID.
+QA class: CLASS 2 / CLASS 5 HYBRID.
 
 Status: backend implementation complete / ready for Architecture review.
 
 ## QA expectation
 
-Focused backend/API/debug contract and semantics smoke is recommended.
+Focused backend/API/provider-contract smoke is recommended.
 
 QA should validate:
 
-- endpoint exists;
-- valid user/date returns public-safe interpretations;
-- serving-unit actuals show provenance/confidence;
-- ranged estimates surface range metadata;
-- missing nutrients stay missing/unknown, not zero;
-- empty day returns safe response;
-- invalid date returns safe error;
-- no raw/debug/source/provider leakage;
-- existing logging paths stable;
-- Target-vs-Actual totals unchanged;
-- no Streamlit behavior change;
-- no AI/provider behavior change.
+- normal endpoint exists and hides runtime metadata;
+- debug endpoint exists and exposes public-safe runtime metadata;
+- deterministic provider remains default;
+- direct_ollama is opt-in;
+- openai is opt-in;
+- exact-schema mocked provider output approves;
+- extra-key provider output falls back;
+- markdown-wrapped provider output falls back;
+- missing OpenAI key falls back;
+- provider exceptions/timeouts fall back;
+- user 102 recovery parity case is protected;
+- provider cannot claim `no recovery notes` when recovery signal/context exists;
+- provider cannot say `without needing to address training or recovery`;
+- provider cannot quote unapproved calorie targets or exact servings;
+- no raw provider output, prompts, tracebacks, SQL, or debug internals leak into normal response;
+- existing DailyCoachSynthesis behavior remains stable;
+- existing nutrition actuals provenance debug endpoint remains stable.
+
+## Suggested smoke routes
+
+Normal endpoint:
+
+`GET /daily-coach/102/narrative?date=2026-06-27`
+
+Debug endpoint:
+
+`GET /daily-coach/102/narrative/debug?date=2026-06-27`
 
 ## Not required
 
 - full Streamlit workflow QA;
-- full AI/provider QA;
-- full workout/recovery/report QA.
-
-## Suggested smoke route
-
-`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
+- full nutrition actuals QA;
+- full workout/recovery/report QA;
+- live provider calls in pytest.
 
 ## Scope confirmation
 
-No normal user UI behavior changed.
+No normal Streamlit UI behavior changed.
 
 No nutrition logging behavior changed.
 

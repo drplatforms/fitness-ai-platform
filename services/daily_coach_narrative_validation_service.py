@@ -17,6 +17,11 @@ from models.daily_coach_narrative_models import (
     DailyCoachNarrativeScores,
     DailyCoachNarrativeValidationResult,
 )
+from models.daily_coach_value_narrative_models import (
+    DAILY_COACH_VALUE_NARRATIVE_CANDIDATE_KEYS,
+    DAILY_COACH_VALUE_NARRATIVE_CONFIDENCE_VALUES,
+    CandidateDailyCoachValueNarrative,
+)
 from models.daily_next_action_models import DAILY_NEXT_ACTION_WORKFLOW_TARGETS
 from services.daily_narrative_copy_service import (
     DAILY_NARRATIVE_AWKWARD_COPY_FRAGMENTS,
@@ -600,3 +605,244 @@ def _dedupe_preserve_order(items: list[str]) -> list[str]:
             seen.add(item)
             deduped.append(item)
     return deduped
+
+
+# ---------------------------------------------------------------------------
+# Daily Coach Value-Aware Provider Comparison validation
+# ---------------------------------------------------------------------------
+
+_VALUE_NARRATIVE_REQUIRED_STRING_FIELDS = [
+    "headline",
+    "summary",
+    "nutrition_note",
+    "training_note",
+    "recovery_note",
+    "priority_action",
+]
+
+_VALUE_NARRATIVE_FORBIDDEN_FRAGMENTS = [
+    "no recovery notes",
+    "no recovery data",
+    "no recovery available",
+    "recovery is unavailable",
+    "without needing to address recovery",
+    "without needing to address training or recovery",
+    "no need to consider recovery",
+    "no need to address recovery",
+    "no need to address training",
+    "ignore recovery",
+    "you are under-eating",
+    "you are undereating",
+    "you failed",
+    "you must",
+    "diagnosis",
+    "disease",
+    "injury has healed",
+    "overtraining",
+    "stalled fat loss",
+    "stalled weight loss",
+    "raw sql",
+    "traceback",
+    "debug payload",
+    "provider metadata",
+    "internal validator",
+]
+
+_VALUE_NARRATIVE_MARKDOWN_FRAGMENTS = ["```", "###", "**", "- headline"]
+
+
+def parse_daily_coach_value_narrative_candidate(
+    raw_output: str,
+) -> tuple[CandidateDailyCoachValueNarrative | None, str | None]:
+    """Parse exact-schema value-aware Daily Coach narrative provider JSON."""
+
+    if not isinstance(raw_output, str) or not raw_output.strip():
+        return None, "empty_provider_output"
+    stripped = raw_output.strip()
+    if stripped.startswith("```") or stripped.endswith("```"):
+        return None, "markdown_wrapped_output"
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None, "malformed_json"
+    if not isinstance(parsed, dict):
+        return None, "candidate_must_be_object"
+    actual_keys = set(parsed)
+    if actual_keys != DAILY_COACH_VALUE_NARRATIVE_CANDIDATE_KEYS:
+        extra = sorted(actual_keys - DAILY_COACH_VALUE_NARRATIVE_CANDIDATE_KEYS)
+        missing = sorted(DAILY_COACH_VALUE_NARRATIVE_CANDIDATE_KEYS - actual_keys)
+        if extra:
+            return None, f"extra_keys: {', '.join(extra)}"
+        return None, f"missing_keys: {', '.join(missing)}"
+    for field_name in _VALUE_NARRATIVE_REQUIRED_STRING_FIELDS + ["confidence"]:
+        if not isinstance(parsed[field_name], str) or not parsed[field_name].strip():
+            return None, f"{field_name}_must_be_non_empty_string"
+    reason_codes = parsed["reason_codes"]
+    if not isinstance(reason_codes, list) or not all(
+        isinstance(item, str) and item.strip() for item in reason_codes
+    ):
+        return None, "reason_codes_must_be_non_empty_string_array"
+    if parsed["confidence"] not in DAILY_COACH_VALUE_NARRATIVE_CONFIDENCE_VALUES:
+        return None, "invalid_confidence"
+    return (
+        CandidateDailyCoachValueNarrative(
+            headline=parsed["headline"].strip(),
+            summary=parsed["summary"].strip(),
+            nutrition_note=parsed["nutrition_note"].strip(),
+            training_note=parsed["training_note"].strip(),
+            recovery_note=parsed["recovery_note"].strip(),
+            priority_action=parsed["priority_action"].strip(),
+            confidence=parsed["confidence"].strip(),
+            reason_codes=[item.strip() for item in reason_codes],
+        ),
+        None,
+    )
+
+
+def validate_daily_coach_value_narrative_candidate(
+    candidate: CandidateDailyCoachValueNarrative,
+    *,
+    synthesis,
+    value_context: dict,
+) -> list[str]:
+    """Validate provider candidate against approved DailyCoachSynthesis values."""
+
+    errors: list[str] = []
+    public_text = _daily_coach_value_candidate_text(candidate)
+    text_lower = public_text.lower()
+
+    for field_name in _VALUE_NARRATIVE_REQUIRED_STRING_FIELDS:
+        value = getattr(candidate, field_name)
+        if len(value) > 320:
+            errors.append(f"{field_name} should stay concise.")
+
+    if candidate.confidence != getattr(synthesis, "confidence", None):
+        errors.append("candidate confidence must match DailyCoachSynthesis confidence.")
+
+    for fragment in _VALUE_NARRATIVE_MARKDOWN_FRAGMENTS:
+        if fragment in public_text:
+            errors.append("candidate must not include markdown or code-fence syntax.")
+            break
+
+    for fragment in _VALUE_NARRATIVE_FORBIDDEN_FRAGMENTS:
+        if fragment in text_lower:
+            errors.append(f"candidate contains forbidden phrase: {fragment}")
+
+    recovery_signal = str(getattr(synthesis, "recovery_signal", "")).strip()
+    if recovery_signal and _value_context_has_recovery(value_context):
+        for fragment in [
+            "no recovery",
+            "recovery is unavailable",
+            "recovery unavailable",
+            "without needing to address recovery",
+        ]:
+            if fragment in text_lower:
+                errors.append(
+                    "candidate must not claim recovery is missing when recovery context exists."
+                )
+                break
+
+    if (
+        "no workout has been started today" in text_lower
+        and not _training_supports_no_workout_started(synthesis)
+    ):
+        errors.append(
+            "candidate may mention no workout started today only when approved training context supports it."
+        )
+
+    if _candidate_has_unapproved_calorie_target_claim(text_lower, value_context):
+        errors.append(
+            "candidate must not mention calorie targets unless calorie comparison is display-approved."
+        )
+
+    if _candidate_has_unapproved_exact_serving_claim(text_lower, value_context):
+        errors.append(
+            "candidate must not recommend exact food amounts unless approved suggestions include them."
+        )
+
+    if _contains_internal_metadata_value_narrative(text_lower):
+        errors.append("candidate must not expose raw/debug/provider/internal metadata.")
+
+    return _dedupe_preserve_order(errors)
+
+
+def _daily_coach_value_candidate_text(
+    candidate: CandidateDailyCoachValueNarrative,
+) -> str:
+    return " ".join(
+        [
+            candidate.headline,
+            candidate.summary,
+            candidate.nutrition_note,
+            candidate.training_note,
+            candidate.recovery_note,
+            candidate.priority_action,
+        ]
+    )
+
+
+def _value_context_has_recovery(value_context: dict) -> bool:
+    recovery = value_context.get("approved_recovery")
+    if not isinstance(recovery, dict):
+        return False
+    return any(
+        recovery.get(key) not in {None, "", "Unknown", "unknown"}
+        for key in [
+            "readiness_level",
+            "fatigue_risk",
+            "recovery_score",
+            "recovery_signal",
+        ]
+    )
+
+
+def _training_supports_no_workout_started(synthesis) -> bool:
+    text = " ".join(
+        str(getattr(synthesis, field_name, ""))
+        for field_name in ["training_signal", "execution_context", "workout_guidance"]
+    ).lower()
+    return "no workout has been started today" in text or "no workout started" in text
+
+
+def _candidate_has_unapproved_calorie_target_claim(
+    text_lower: str, value_context: dict
+) -> bool:
+    calories = (
+        value_context.get("approved_nutrition", {})
+        .get("macro_status", {})
+        .get("calories", {})
+    )
+    calorie_allowed = bool(calories.get("display_allowed"))
+    target_terms = [
+        "calorie target",
+        "calorie targets",
+        "kcal target",
+        "you need ",
+        "need to eat",
+    ]
+    return not calorie_allowed and any(term in text_lower for term in target_terms)
+
+
+def _candidate_has_unapproved_exact_serving_claim(
+    text_lower: str, value_context: dict
+) -> bool:
+    suggestions = value_context.get("approved_food_suggestions")
+    has_suggestions = isinstance(suggestions, list) and bool(suggestions)
+    exact_amount_terms = ["exact amount", "eat 150g", "eat 200g", "eat this amount"]
+    return not has_suggestions and any(
+        term in text_lower for term in exact_amount_terms
+    )
+
+
+def _contains_internal_metadata_value_narrative(text_lower: str) -> bool:
+    internal_terms = [
+        "raw_output",
+        "runtime_metadata",
+        "provider_attempted",
+        "fallback_reason",
+        "validation_status",
+        "sql",
+        "traceback",
+        "json schema",
+    ]
+    return any(term in text_lower for term in internal_terms)

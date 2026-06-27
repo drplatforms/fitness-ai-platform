@@ -1,51 +1,62 @@
-# Architecture Handoff Current — Nutrition Actuals Provenance Debug / Integration Design v1
+# Architecture Handoff Current — Daily Coach Narrative Value-Aware Provider Comparison v1
 
 Recipient: Architecture.
 
-CC: Backend Development / Data Layer, Streamlit UI, QA / Regression Testing, TPM / Project Control.
+CC: Backend Development / Data Layer, Agent Engineering, Streamlit UI, QA / Regression Testing, TPM / Project Control.
 
-Current source of truth: `main` at `9b7430c`.
+Current source of truth: `main` at `e1f7bd3`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
 
-Milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
+Milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
 
-Branch: `feature/nutrition-actuals-provenance-debug-integration-design-v1`.
+Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
 
 Status: backend implementation complete / ready for Architecture review.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
+Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
 
 ## Summary
 
-Backend added a narrow public-safe debug/integration endpoint over the accepted Nutrition Actuals Provenance & Confidence Model service.
+Backend added a strict provider-candidate comparison path for value-aware Daily Coach narrative synthesis.
 
-Implemented route:
+Pattern implemented:
 
-`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
+`DailyCoachSynthesis -> approved value context -> provider candidate JSON -> parser -> validator -> ApprovedDailyCoachValueNarrative -> deterministic renderer -> deterministic fallback`
+
+## Endpoints
+
+Normal endpoint:
+
+`GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
+
+Debug endpoint:
+
+`GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
+
+Normal endpoint hides runtime metadata.
+
+Debug endpoint exposes public-safe runtime metadata and provider-context summary.
+
+## Provider support
+
+- deterministic default;
+- `direct_ollama` opt-in;
+- `openai` opt-in.
 
 ## Architecture review request
 
-Please review whether this is the correct first downstream integration surface for NutritionActualInterpretation.
+Please review whether this is the correct first value-aware provider comparison path for Daily Coach user-facing narrative content.
 
-The route is intended for QA, Architecture, Developer Mode planning, and future UI/API integration design.
+## Public-safe value context
 
-It is not a normal user UI surface yet.
+Provider context may include approved recovery, nutrition, food-suggestion, workout, training/execution, limitation, and confidence values.
 
-## Public-safe response
-
-The route returns:
-
-- actual interpretation records;
-- reason_codes;
-- limitations;
-- display_flags;
-- grams range metadata when available;
-- summary counts.
-
-It excludes raw SQL, raw source payloads, raw DB objects, tracebacks, provider/runtime metadata, private debug internals, validator internals, and raw AI output.
+Provider candidates may quote only those approved values.
 
 ## Scope confirmation
+
+No nutrition/debug endpoint behavior changed.
 
 No Target-vs-Actual totals changed.
 
@@ -53,17 +64,19 @@ No logging behavior changed.
 
 No Streamlit changed.
 
-No AI/provider changed.
+No report changed.
+
+No provider enabled by default.
 
 No snapshots committed.
 
 ## Requested decision
 
-Accept this backend/API/debug integration path as Nutrition Actuals Provenance Debug / Integration Design v1.
+Accept this backend/API/provider comparison path as Daily Coach Narrative Value-Aware Provider Comparison v1.
 
 Requested status:
 
-`NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
+`DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
 
 ## Historical command/runtime anchors — reference-only
 

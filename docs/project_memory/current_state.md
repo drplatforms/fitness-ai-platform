@@ -1,133 +1,138 @@
-# Current State Update — Nutrition Actuals Provenance Debug / Integration Design v1
+# Current State Update — Daily Coach Narrative Value-Aware Provider Comparison v1
 
 Current source of truth: `main`.
 
-Required source main commit: `9b7430c`.
+Required source main commit: `e1f7bd3`.
 
-Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip`.
+Canonical accepted baseline snapshot: `fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip`.
 
-Previous accepted technical milestone: Nutrition Actuals Provenance & Confidence Model v1.
+Previous accepted nutrition/debug milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
 
-Previous technical QA result: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS`.
+Current backend milestone: Daily Coach Narrative Value-Aware Provider Comparison v1.
 
-Previous docs milestone: Future Feature & Technology Inventory v1.
-
-Previous docs status: `FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED_AND_MERGED`.
-
-Current backend milestone: Nutrition Actuals Provenance Debug / Integration Design v1.
-
-Branch: `feature/nutrition-actuals-provenance-debug-integration-design-v1`.
+Branch: `feature/daily-coach-narrative-provider-comparison-v1`.
 
 Commit-check mode: code.
 
-QA class: CLASS 2 / CLASS 3 HYBRID — backend/API/debug contract over persisted actuals semantics.
+QA class: CLASS 2 / CLASS 5 HYBRID — opt-in provider-backed user-facing narrative candidate path with parser/validator/fallback boundaries.
 
 Status: backend implementation complete / ready for Architecture review.
 
-Requested final status: `NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
+Requested final status: `DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
 
-## Implemented integration path
+## Implemented provider-comparison path
 
-Added public-safe backend debug/integration endpoint:
+Added the first value-aware Daily Coach narrative provider-comparison path over `DailyCoachSynthesis`:
 
-`GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD`
+- normal endpoint: `GET /daily-coach/{user_id}/narrative?date=YYYY-MM-DD`
+- debug endpoint: `GET /daily-coach/{user_id}/narrative/debug?date=YYYY-MM-DD`
 
-The endpoint returns NutritionActualInterpretation records for a user/date by reusing the accepted actuals provenance/confidence service.
+The normal endpoint returns approved narrative content only.
 
-## Response purpose
+The debug endpoint returns the same approved content plus public-safe runtime metadata and provider-context summary for QA/developer inspection.
 
-The debug path answers:
+## Provider options
 
-For this user/date, what logged nutrition actuals exist, and how does the backend interpret their provenance/confidence?
+Supported configured providers:
 
-It is intended for QA, Architecture, Developer Mode planning, and future UI integration design.
+- `deterministic` — default;
+- `direct_ollama` — opt-in local/offline developer comparison provider;
+- `openai` — opt-in hosted comparison provider.
 
-It is not a normal user UI surface yet.
+Environment variables:
 
-## Public-safe output
+- `DAILY_COACH_NARRATIVE_PROVIDER`
+- `DAILY_COACH_NARRATIVE_MODEL`
+- `DAILY_COACH_NARRATIVE_DIRECT_OLLAMA_TIMEOUT_SECONDS`
+- `DAILY_COACH_NARRATIVE_OPENAI_TIMEOUT_SECONDS`
+- `OLLAMA_BASE_URL`
+- `OPENAI_API_KEY`
+- `OPENAI_BASE_URL` optional.
 
-The endpoint returns:
+## Value-aware provider context
 
-- success;
-- user_id;
-- date;
-- actuals list;
-- public-safe actual interpretation fields;
-- aggregate summary counts.
+Provider candidates receive a compact backend-approved value context.
 
-Each actual may include:
+Allowed context may include:
 
-- food_entry_id;
-- logged_date;
-- source_type;
-- precision;
-- confidence_level;
-- nutrient_completeness;
-- has_serving_unit_metadata;
-- has_grams_range;
-- resolved_grams;
-- grams_min / grams_max;
-- grams_range_width / grams_range_percent;
-- amount_source;
-- serving_unit_confidence;
-- missing_nutrients;
-- limitations;
-- reason_codes;
-- display_flags.
+- approved recovery readiness;
+- approved fatigue risk;
+- approved sleep/energy/soreness summary;
+- approved nutrition actuals;
+- approved macro target/gap status;
+- approved food suggestion context;
+- approved workout guidance;
+- approved training/execution context;
+- approved limitations/confidence.
 
-Forbidden internals remain excluded:
+Providers may quote values only when the values are present in the approved context.
 
-- raw SQL rows;
-- raw source payloads;
-- raw DB object dumps;
-- tracebacks;
-- provider/runtime metadata;
-- raw AI output;
-- private debug internals;
-- validator internals;
-- hidden source blobs.
+## Backend approval boundary
 
-## Summary counts
+The implemented pattern is:
 
-The debug response includes aggregate counts:
+`DailyCoachSynthesis -> value-aware provider context -> CandidateDailyCoachValueNarrative -> strict parser -> backend validator -> ApprovedDailyCoachValueNarrative -> deterministic renderer -> deterministic fallback if provider fails`
 
-- total_entries;
-- entries_with_serving_unit_metadata;
-- entries_with_grams_range;
-- entries_with_low_or_unknown_confidence;
-- entries_with_missing_nutrients.
+Provider output is never user-facing unless parser and validator approve it.
 
-## Boundary confirmation
+## Guardrails added
+
+Provider candidates are rejected when they:
+
+- use extra/missing schema keys;
+- return markdown/code fences/prose wrappers;
+- use invalid confidence;
+- contradict `DailyCoachSynthesis.confidence`;
+- say recovery is missing when recovery signal/context exists;
+- say `without needing to address training or recovery`;
+- say `no recovery notes` when recovery context exists;
+- claim the user is under-eating without backend approval;
+- quote calorie targets when calorie targets are not display-approved;
+- prescribe exact food amounts without approved food suggestion context;
+- expose raw/debug/provider/internal metadata;
+- include forbidden causal/medical/training claims.
+
+## Regression case protected
+
+User/date parity case protected:
+
+- user 102 / 2026-06-27;
+- recovery state exists;
+- recovery score 90;
+- fatigue risk Low;
+- readiness High;
+- `DailyCoachSynthesis.recovery_signal` exists.
+
+Provider narrative must not claim recovery is missing for this case.
+
+## Scope boundaries
+
+No nutrition actuals provenance debug endpoint behavior changed.
 
 No Target-vs-Actual totals changed.
 
-No Target-vs-Actual normal response semantics changed.
-
-No macro target formulas changed.
-
 No nutrition logging behavior changed.
 
-No serving-unit logging behavior changed.
+No workout/recommendation behavior changed.
 
-No canonical grams logging behavior changed.
-
-No raw/source logging behavior changed.
+No report behavior changed.
 
 No Streamlit UI changed.
 
-No AI/provider/CrewAI/direct_ollama behavior changed.
-
-No food suggestions, meal planning, barcode scanning, external food imports, workout, training, recovery, or report behavior changed.
+No provider is enabled by default.
 
 No snapshots committed.
 
 ## Files updated
 
-Runtime/API/service/test files:
+Runtime/model/service/test files:
 
-- `api/routes/nutrition.py`
-- `services/nutrition_actuals_confidence_service.py`
-- `tests/test_nutrition_actuals_confidence_debug_api.py`
+- `models/daily_coach_value_narrative_models.py`
+- `services/daily_coach_value_narrative_service.py`
+- `services/daily_coach_narrative_validation_service.py`
+- `api/routes/daily_coach.py`
+- `tests/test_daily_coach_value_narrative_service.py`
+- `tests/test_daily_coach_value_narrative_api.py`
 
 Project-memory files:
 
@@ -139,7 +144,7 @@ Project-memory files:
 - `docs/project_memory/handoffs/backend_handoff_current.md`
 - `docs/project_memory/handoffs/architecture_handoff_current.md`
 - `docs/project_memory/handoffs/qa_handoff_current.md`
-- `docs/project_memory/milestones/nutrition_actuals_provenance_debug_integration_design_v1.md`
+- `docs/project_memory/milestones/daily_coach_narrative_value_aware_provider_comparison_v1.md`
 
 ## Architecture review step
 
@@ -147,7 +152,7 @@ Return to Architecture for review and acceptance decision.
 
 Requested final status:
 
-`NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED`.
+`DAILY_COACH_NARRATIVE_VALUE_AWARE_PROVIDER_COMPARISON_V1_ACCEPTED`.
 
 
 ## Historical continuity anchors — reference-only
@@ -155,10 +160,21 @@ Requested final status:
 These phrases are preserved for project-memory continuity checks and are reference-only, not current scope:
 
 - Project Memory Alignment + North Star Architecture v1
-- feature/daily-coach-narrative-same-session-approved-preview-bridge-v1
-- reference-only
-- No provider may run on normal Today page load
 - Provider Narrative QA Matrix v2
+- Daily Coach Async Service Shell / No Worker v1
+- Daily Coach Async Provider Runtime Design v1
+- qwen3:32b research / future premium async candidate only
+- deterministic fallback remains mandatory
+- Backend owns facts, validation, persistence, provenance/confidence, and safety boundaries
+- AI explains backend-approved truth
+- no provider on normal Today page load unless explicitly configured
+
+## Historical continuity anchors — additional reference-only preservation
+
+These phrases are preserved to avoid losing accepted historical continuity context:
+
+- feature/daily-coach-narrative-same-session-approved-preview-bridge-v1
+- No provider may run on normal Today page load
 - Daily Coach Same-Session Approved Preview Bridge v1 Retry
 - Same-Session Bridge Runtime QA v1
 - Daily Coach Narrative Product Voice Polish v1
@@ -170,6 +186,5 @@ These phrases are preserved for project-memory continuity checks and are referen
 - Local Command Menu App Runtime Correction v1
 - Linux is the canonical
 - wapp
-- Daily Coach Async Service Shell / No Worker v1
 - service shell only
 - no provider execution added

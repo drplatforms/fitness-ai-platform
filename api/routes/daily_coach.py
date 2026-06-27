@@ -26,6 +26,10 @@ from services.daily_coach_today_card_service import (
     DailyCoachTodayCardValidationError,
     build_daily_coach_today_card,
 )
+from services.daily_coach_value_narrative_service import (
+    DailyCoachValueNarrativeError,
+    build_configured_daily_coach_value_narrative,
+)
 from services.daily_next_action_service import (
     DailyNextActionValidationError,
     build_daily_next_action,
@@ -181,6 +185,48 @@ def daily_coach_synthesis(user_id: int):
         "confidence": synthesis.confidence,
         "daily_coach_synthesis": synthesis.to_dict(),
     }
+
+
+@router.get("/daily-coach/{user_id}/narrative")
+def daily_coach_value_narrative(user_id: int, date: str | None = None):
+    """Return approved Daily Coach narrative without provider runtime metadata."""
+
+    try:
+        result = build_configured_daily_coach_value_narrative(
+            user_id,
+            target_date=date,
+        )
+    except DailyCoachValueNarrativeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except DailyCoachSynthesisValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return result.to_public_dict()
+
+
+@router.get("/daily-coach/{user_id}/narrative/debug")
+def daily_coach_value_narrative_debug(user_id: int, date: str | None = None):
+    """Return approved Daily Coach narrative plus public-safe runtime metadata.
+
+    This path is for QA/developer provider comparison. It does not return raw
+    provider output, prompts, stack traces, or unvalidated provider text.
+    """
+
+    try:
+        result = build_configured_daily_coach_value_narrative(
+            user_id,
+            target_date=date,
+        )
+    except DailyCoachValueNarrativeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except DailyCoachSynthesisValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return result.to_debug_dict()
 
 
 @router.get("/daily-coach/{user_id}/next-action")
@@ -415,15 +461,17 @@ def daily_coach_narrative_preview_debug(
     """
 
     try:
-        preview = build_daily_coach_narrative_preview(
-            user_id,
-            target_date=date,
-            provider=provider,
-            model_name=model,
-            timeout_seconds=timeout_seconds,
-            qa_preview=qa_preview,
-            lookback_days=lookback_days,
-        )
+        preview_kwargs = {
+            "target_date": date,
+            "provider": provider,
+            "model_name": model,
+            "timeout_seconds": timeout_seconds,
+        }
+        if qa_preview:
+            preview_kwargs["qa_preview"] = qa_preview
+        if lookback_days != 1:
+            preview_kwargs["lookback_days"] = lookback_days
+        preview = build_daily_coach_narrative_preview(user_id, **preview_kwargs)
     except DailyCoachNarrativePreviewError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:

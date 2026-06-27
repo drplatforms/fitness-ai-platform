@@ -6,29 +6,30 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Future Feature & Technology Inventory v1",
-    "latest_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED_AND_MERGED",
-    "latest_accepted_commit": "9b7430c",
-    "latest_main_merge_commit": "9b7430c",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
-    "previous_accepted_milestone": "Nutrition Actuals Provenance & Confidence Model v1",
-    "previous_main_merge_commit": "0ebb1b4",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-    "current_source_of_truth": "main at 9b7430c",
+    "latest_accepted_milestone": "Nutrition Actuals Provenance Debug / Integration Design v1",
+    "latest_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
+    "latest_accepted_commit": "e1f7bd3",
+    "latest_main_merge_commit": "e1f7bd3",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip",
+    "previous_accepted_milestone": "Future Feature & Technology Inventory v1",
+    "previous_main_merge_commit": "9b7430c",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
+    "current_source_of_truth": "main at e1f7bd3",
     "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
     "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-    "active_backend_milestone": "Nutrition Actuals Provenance Debug / Integration Design v1",
+    "active_backend_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
     "active_backend_status": "backend implementation complete / ready for Architecture review"
   },
   "active_roadmap": {
-    "current_recommended_milestone": "Nutrition Actuals Provenance Debug / Integration Design v1",
+    "current_recommended_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
     "current_recommended_status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW",
     "recommended_owner": "Backend Development / Data Layer",
-    "source_main_commit": "9b7430c",
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
+    "source_main_commit": "e1f7bd3",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-26_e1f7bd3_nutrition-actuals-provenance-debug-integration-design-v1.zip",
     "commit_check_mode": "code",
-    "qa_class": "CLASS 2 / CLASS 3 HYBRID",
-    "primary_question": "Where should NutritionActualInterpretation surface first without changing normal UI or Target-vs-Actual totals?"
+    "qa_class": "CLASS 2 / CLASS 5 HYBRID",
+    "primary_question": "Can DailyCoachSynthesis support value-aware provider candidate narrative copy while preserving parser, validator, and fallback boundaries?",
+    "secondary_owner": "Agent Engineering"
   },
   "boundaries": {
     "normal_today_unchanged": true,
@@ -145,7 +146,17 @@
     "streamlit_must_not_calculate_serving_unit_grams": true,
     "serving_unit_id_from_backend_discovery_only": true,
     "log_serving_payload_excludes_grams_override": true,
-    "no_ai_provider_serving_unit_path": true
+    "no_ai_provider_serving_unit_path": true,
+    "daily_coach_value_aware_provider_comparison_v1": true,
+    "daily_coach_narrative_deterministic_default": true,
+    "daily_coach_narrative_direct_ollama_opt_in": true,
+    "daily_coach_narrative_openai_opt_in": true,
+    "daily_coach_narrative_strict_parser_validator_fallback": true,
+    "daily_coach_narrative_normal_endpoint_hides_metadata": true,
+    "daily_coach_narrative_debug_endpoint_metadata_only": true,
+    "no_nutrition_debug_endpoint_changes_for_current_milestone": true,
+    "no_logging_changes_for_current_milestone": true,
+    "no_report_changes_for_current_milestone": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [
@@ -769,5 +780,10 @@
       "no AI/provider/CrewAI/direct_ollama changes",
       "no snapshots committed"
     ]
+  },
+  "workflow_reminders": {
+    "windows_project_root": "C:\\projects\\fitness_ai",
+    "external_script_command": "python ..\\<script>.py",
+    "patch_check_command": "git apply --check ..\\<patch>.patch"
   }
 }

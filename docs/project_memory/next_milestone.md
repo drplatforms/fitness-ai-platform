@@ -1,139 +1,98 @@
-# Next Milestone — Nutrition Actuals Provenance & Confidence Model v1
+# Next Milestone — Nutrition Actuals Provenance & Confidence Model v1 Review
 
-Recommended next milestone: Nutrition Actuals Provenance & Confidence Model v1.
+Current implementation milestone: Nutrition Actuals Provenance & Confidence Model v1.
 
-Recommended owner: Backend Development / Data Layer.
+Owner: Backend Development / Data Layer.
 
-CC: Architecture, Streamlit UI, QA / Regression Testing, TPM / Project Control, Project Memory / All Future Agents.
+Status: backend implementation complete / ready for Architecture and focused QA review.
 
-Milestone type: backend/data model + service interpretation.
+Requested final status: `NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED`.
 
-QA class: CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
+## Current baseline
 
-Status: recommended next milestone / pending Architecture authorization.
+Known accepted runtime/product baseline: `0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1`.
 
-Do not implement until Architecture issues an explicit implementation handoff.
+Known project-memory closeout feature commit: `d9a3906 Close Streamlit serving unit UI project memory`.
 
-## Current accepted baseline
+Canonical accepted product snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
 
-Current source of truth: `main` at `0ebb1b4`.
+Feature branch: `feature/nutrition-actuals-provenance-confidence-model-v1`.
 
-Current canonical accepted snapshot: `fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip`.
+## Review focus
 
-Closed milestone: Nutrition Serving Unit Logging Streamlit UI v1.
+Architecture should review the new backend-owned actuals interpretation contract:
 
-Final accepted status: `NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED`.
+- source type classification;
+- precision classification;
+- confidence level classification;
+- serving-unit metadata handling;
+- grams range width/percent handling;
+- nutrient completeness handling;
+- public-safe reason codes / limitations / display flags;
+- no changes to logging behavior;
+- no changes to Target-vs-Actual totals;
+- no Streamlit changes;
+- no AI/provider changes.
 
-QA status: PASS via completed manual Streamlit workflow smoke.
+## QA focus
 
-The accepted serving-unit chain is now complete:
+QA class:
 
-```text
-GET /foods/canonical/search
--> GET /foods/canonical/{canonical_food_id}/serving-units
--> POST /nutrition/{user_id}/log-serving
--> resolved grams through food_entries
--> serving-unit provenance metadata
--> Target-vs-Actual existing actuals flow
-```
+CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS.
 
-## Why the next milestone is not more serving-unit UI
+Focused QA should validate:
 
-The serving-unit user flow now works end-to-end.
+1. Raw/source grams entry classifies as `raw_grams`.
+2. Canonical grams entry classifies as `canonical_grams`.
+3. Serving-unit entry with metadata classifies as `canonical_serving_unit`.
+4. Serving-unit interpretation exposes resolved grams from persisted backend value.
+5. Serving-unit entry with `grams_min` / `grams_max` is marked `ranged`.
+6. Wide gram range adds public-safe limitation/reason code.
+7. Low serving-unit confidence adds public-safe limitation/reason code.
+8. Missing serving-unit metadata does not crash classification.
+9. Missing nutrient values are classified as missing/unknown, not zero.
+10. Unknown source classifies safely as `unknown`.
+11. Public-safe output excludes raw source payloads and SQL/debug internals.
+12. Existing serving-unit logging remains stable.
+13. Existing canonical grams logging remains stable.
+14. Existing raw/source nutrition logging remains stable.
+15. Existing Target-vs-Actual totals remain stable.
 
-The next nutrition problem is no longer:
+## Strict non-goals preserved
 
-> Can the user log by serving size?
+Do not add in this milestone:
 
-That is now accepted.
-
-The next problem is:
-
-> What confidence/provenance should the system attach to logged actuals, and how should downstream nutrition logic understand them?
-
-Current state:
-
-- serving-unit logs resolve to grams;
-- provenance metadata exists;
-- `grams_min` / `grams_max` / `confidence` / `amount_source` may exist;
-- Target-vs-Actual reads resolved grams through the existing actuals bridge.
-
-Remaining product gap:
-
-Target-vs-Actual and future food suggestions do not yet meaningfully distinguish:
-
-- exact grams entered by user;
-- backend-approved serving estimate;
-- ranged serving estimate;
-- low-confidence serving estimate;
-- missing/unknown nutrient values;
-- source-derived values vs user-entered values.
-
-## Expected goal
-
-Define and expose a backend-owned confidence/provenance interpretation for logged nutrition actuals.
-
-The system should be able to distinguish actual entries by source/confidence, for example:
-
-- raw grams user entry;
-- canonical grams user entry;
-- canonical serving-unit entry;
-- serving-unit entry with estimated grams;
-- serving-unit entry with ranged grams;
-- missing nutrient values;
-- unknown/low-confidence nutrient values.
-
-This should prepare the system for better:
-
-- Target-vs-Actual interpretation;
-- nutrition actuals transparency;
-- future food suggestions;
-- future AI nutrition explanations;
-- future recommendation quality.
-
-## Suggested implementation shape for Architecture to authorize
-
-Suggested output for the next Backend handoff:
-
-- narrow service/model contract;
-- tests proving actuals confidence classification;
-- no UI changes unless only project memory;
-- no AI/provider changes;
-- no Target-vs-Actual redesign yet.
-
-Possible implementation areas to inspect after authorization:
-
-- existing `food_entries` logging path;
-- `nutrition_serving_unit_log_metadata` provenance table;
-- canonical grams logging behavior;
-- raw/source grams logging behavior;
-- Target-vs-Actual actuals service read path;
-- nutrition service daily actuals assembly.
-
-## Strict non-goals for next milestone
-
-Do not implement:
-
-- new Streamlit serving-unit UI;
+- Streamlit changes;
+- Target-vs-Actual UI changes;
+- Target-vs-Actual redesign;
+- macro target formula changes;
+- food suggestion engine;
 - meal planning;
 - barcode scanning;
+- external food database import;
 - USDA/Open Food Facts import;
 - AI food matching;
 - AI serving-size inference;
-- nutrition explanation provider;
-- food recommendation engine;
-- macro target formula changes;
-- Target-vs-Actual redesign;
-- DailyCoachSynthesis redesign;
-- workout/recovery/report changes;
-- custom user serving units;
+- nutrition explanation provider changes;
+- CrewAI changes;
+- direct_ollama changes;
+- RAG;
+- embeddings;
+- PostgreSQL migration;
+- custom serving units;
+- user-defined serving overrides;
+- workout/training/recovery/report changes;
 - broad nutrition logging rewrite.
 
-This should be a narrow backend-owned actuals/provenance interpretation milestone.
+## Potential next milestone after acceptance
 
-## Historical continuity anchors
+After Architecture acceptance and QA pass, a future milestone can decide whether to expose the interpretation in Target-vs-Actual summaries or keep it internal for provider/suggestion readiness.
 
-The following phrases are preserved for project-memory continuity checks. They are reference-only and are not current Nutrition Actuals Provenance & Confidence Model v1 scope.
+Do not start that integration until Architecture explicitly authorizes it.
+
+## Historical continuity anchors — reference-only
+
+These phrases are preserved for project-memory continuity checks and are not current implementation scope:
 
 - Daily Coach Async Provider Runtime Design v1
 - DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED

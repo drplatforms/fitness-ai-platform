@@ -303,6 +303,7 @@ def build_daily_coach_value_aware_provider_context(
         "approved_reason_codes": _bounded_list(synthesis.reason_codes, limit=12),
     }
     context["approved_value_claims"] = _build_approved_value_claims(context)
+    _enrich_provider_context_packaging(context)
     return context
 
 
@@ -320,6 +321,7 @@ def build_minimal_value_context_from_synthesis(
         "approved_reason_codes": _bounded_list(synthesis.reason_codes, limit=12),
     }
     context["approved_value_claims"] = _build_approved_value_claims(context)
+    _enrich_provider_context_packaging(context)
     return context
 
 
@@ -329,12 +331,12 @@ def build_daily_coach_value_narrative_prompt(
     value_context: dict[str, Any],
 ) -> str:
     example = {
-        "headline": "Daily Coach",
-        "summary": "Recovery looks strong today, so the goal is steady execution rather than overcorrecting.",
-        "nutrition_note": "Protein is below the approved target based on logged meals, so use the approved Nutrition options if they fit.",
-        "training_note": "No workout has been started today, so training guidance should stay tied to the approved plan context.",
-        "recovery_note": "Recovery readiness is High and fatigue risk is Low.",
-        "priority_action": "Keep today's plan controlled and well logged.",
+        "headline": "Steady Strength Day",
+        "summary": "Recovery is supportive today, so keep the plan controlled and specific.",
+        "nutrition_note": "Protein is below target based on logged meals; use an approved protein option if it fits your day.",
+        "training_note": "Use the approved strength plan and keep RIR 2-4 as the effort anchor.",
+        "recovery_note": "Readiness is High and fatigue risk is Low, which supports confident but not reckless training.",
+        "priority_action": "Complete the planned session and choose one approved protein-support option.",
         "confidence": synthesis.confidence,
         "reason_codes": ["provider_candidate_value_aware"],
         "quoted_values_used": [
@@ -344,9 +346,17 @@ def build_daily_coach_value_narrative_prompt(
             "training.rir_range",
         ],
     }
+    field_roles = value_context.get("field_role_guidance") or _field_role_guidance()
+    claim_rules = value_context.get("claim_usage_rules") or _claim_usage_rules()
     return (
-        "Write a concise Daily Coach narrative for AI Health Coach.\n"
-        "Use only approved backend context. You may quote values only when they appear in approved_value_claims.\n"
+        "Write a short Daily Coach card from backend-approved facts.\n"
+        "Sound like a practical coach: specific, calm, concise, and useful.\n"
+        "Use 2-4 high-value approved claims total. Prefer high_value_claims and preferred_claims_by_field.\n"
+        "Do not dump all claims. Prefer status over numbers when exact numbers are not necessary.\n"
+        "Use limitations as uncertainty/context, not as user blame.\n"
+        "Do not mention backend, approved context, validator, schema, provider, JSON, or internal process in user-facing fields.\n"
+        "Every concrete value/status/food/amount used in prose must be declared in quoted_values_used.\n"
+        "quoted_values_used may contain only exact keys from approved_value_claims. Never use food names, amounts, or phrases as quote keys.\n"
         "Return one raw JSON object only. No markdown, no code fences, no prose wrapper, no extra keys.\n"
         "Do not calculate targets, gaps, readiness, fatigue, servings, or nutrition values.\n"
         "Do not say recovery is missing when recovery_signal or approved recovery values exist.\n"
@@ -354,6 +364,10 @@ def build_daily_coach_value_narrative_prompt(
         "Do not say the user is under-eating unless that exact claim is approved.\n"
         "Do not say the user needs calories unless calorie targets are display-approved.\n"
         "Do not prescribe exact food amounts unless approved food suggestions include those amounts.\n\n"
+        "FIELD_ROLE_GUIDANCE:\n"
+        f"{json.dumps(field_roles, indent=2, default=str)}\n\n"
+        "CLAIM_USAGE_RULES:\n"
+        f"{json.dumps(claim_rules, indent=2, default=str)}\n\n"
         "REQUIRED_JSON_SCHEMA:\n"
         f"{json.dumps(_CANDIDATE_SCHEMA, indent=2)}\n\n"
         "VALID_EXAMPLE_SHAPE_ONLY:\n"
@@ -782,6 +796,7 @@ def _approved_nutrition_context(user_id: int, narrative_date: str) -> dict[str, 
 
 def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]]:
     claims: list[ApprovedNarrativeValueClaim] = []
+    confidence = context.get("daily_coach_synthesis", {}).get("confidence")
     recovery = context.get("approved_recovery") or {}
     if isinstance(recovery, dict):
         _add_claim(
@@ -792,7 +807,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
             claim_type="recovery",
             aliases=[f"readiness is {recovery.get('readiness_level')}"],
             source="approved_recovery",
-            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            confidence=confidence,
+            priority=1,
+            section_hint="recovery_note",
+            coaching_use="support_recovery_action",
+            display_hint="Use as a status, not as a medical conclusion.",
+            value_style="status_only",
         )
         _add_claim(
             claims,
@@ -802,7 +822,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
             claim_type="recovery",
             aliases=[f"fatigue risk is {recovery.get('fatigue_risk')}"],
             source="approved_recovery",
-            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            confidence=confidence,
+            priority=1,
+            section_hint="recovery_note",
+            coaching_use="support_recovery_action",
+            display_hint="Use to explain training confidence without overclaiming.",
+            value_style="status_only",
         )
         _add_claim(
             claims,
@@ -815,7 +840,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                 str(recovery.get("recovery_score")),
             ],
             source="approved_recovery",
-            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            confidence=confidence,
+            priority=2,
+            section_hint="recovery_note",
+            coaching_use="support_recovery_action",
+            display_hint="Use only if a score helps; status language is preferred.",
+            value_style="exact_value_allowed",
         )
         for key, label in [
             ("avg_sleep", "average sleep"),
@@ -831,7 +861,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                 claim_type="recovery",
                 aliases=[str(value), f"{label} {value}"],
                 source="approved_recovery",
-                confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+                confidence=confidence,
+                priority=3,
+                section_hint="recovery_note",
+                coaching_use="support_recovery_action",
+                display_hint="Supporting recovery detail; avoid fact dumping.",
+                value_style="exact_value_allowed",
             )
 
     nutrition = context.get("approved_nutrition") or {}
@@ -845,6 +880,7 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                 ("logged_fat_g", "logged fat", "g"),
             ]:
                 value = actuals.get(key)
+                priority = 2 if key == "logged_protein_g" else 3
                 _add_claim(
                     claims,
                     key=f"nutrition.actuals.{key}",
@@ -858,6 +894,11 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     ],
                     source="target_vs_actual_summary",
                     confidence=nutrition.get("confidence"),
+                    priority=priority,
+                    section_hint="nutrition_note",
+                    coaching_use="support_nutrition_action",
+                    display_hint="Use exact logged amount only when it improves specificity.",
+                    value_style="exact_value_allowed",
                 )
         macro_status = nutrition.get("macro_status") or {}
         if isinstance(macro_status, dict):
@@ -866,6 +907,7 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     continue
                 display_allowed = bool(macro.get("display_allowed"))
                 target_status = macro.get("target_status")
+                priority = 1 if macro_name == "protein" else 2
                 _add_claim(
                     claims,
                     key=f"nutrition.{macro_name}.status",
@@ -879,6 +921,13 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     display_allowed=display_allowed,
                     source="target_vs_actual_summary",
                     confidence=macro.get("confidence") or nutrition.get("confidence"),
+                    priority=priority,
+                    section_hint=(
+                        "nutrition_note" if macro_name != "calories" else "summary"
+                    ),
+                    coaching_use="support_nutrition_action",
+                    display_hint="Use as a qualitative status; avoid turning it into a new target.",
+                    value_style="status_only",
                 )
                 for key in ["target_min", "target_max", "delta_min", "delta_max"]:
                     _add_claim(
@@ -900,6 +949,11 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                         source="target_vs_actual_summary",
                         confidence=macro.get("confidence")
                         or nutrition.get("confidence"),
+                        priority=3,
+                        section_hint="nutrition_note",
+                        coaching_use="support_nutrition_action",
+                        display_hint="Low-priority exact value; use only if clearly helpful.",
+                        value_style="exact_value_allowed",
                     )
         suggestions = nutrition.get("approved_food_suggestions") or []
         if isinstance(suggestions, list):
@@ -918,6 +972,11 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     source="approved_food_suggestions",
                     confidence=suggestion.get("confidence")
                     or nutrition.get("food_suggestion_confidence"),
+                    priority=2,
+                    section_hint="priority_action",
+                    coaching_use="prioritize_action",
+                    display_hint="Use as an option, not a command.",
+                    value_style="food_option",
                 )
                 _add_claim(
                     claims,
@@ -932,6 +991,11 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     source="approved_food_suggestions",
                     confidence=suggestion.get("confidence")
                     or nutrition.get("food_suggestion_confidence"),
+                    priority=3,
+                    section_hint="priority_action",
+                    coaching_use="prioritize_action",
+                    display_hint="Use only when the approved serving amount matters.",
+                    value_style="exact_value_allowed",
                 )
 
     training = context.get("approved_training") or {}
@@ -955,7 +1019,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     f"RIR {rir_match.group(1)}-{rir_match.group(2)}",
                 ],
                 source="daily_coach_synthesis",
-                confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+                confidence=confidence,
+                priority=1,
+                section_hint="training_note",
+                coaching_use="support_training_action",
+                display_hint="Use as the approved execution anchor.",
+                value_style="range_allowed",
             )
 
     for index, limitation in enumerate(
@@ -969,7 +1038,12 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
             claim_type="limitation",
             aliases=[str(limitation)],
             source="daily_coach_synthesis",
-            confidence=context.get("daily_coach_synthesis", {}).get("confidence"),
+            confidence=confidence,
+            priority=2,
+            section_hint="summary",
+            coaching_use="contextualize_limit",
+            display_hint="Use as uncertainty/context, not as user blame.",
+            value_style="limitation_only",
         )
     return [claim.to_dict() for claim in claims]
 
@@ -986,6 +1060,11 @@ def _add_claim(
     display_allowed: bool = True,
     source: str,
     confidence: str | None = None,
+    priority: int = 3,
+    section_hint: str | None = None,
+    coaching_use: str | None = None,
+    display_hint: str | None = None,
+    value_style: str | None = None,
 ) -> None:
     if value is None:
         return
@@ -1004,8 +1083,110 @@ def _add_claim(
             display_allowed=display_allowed,
             source=source,
             confidence=confidence,
+            priority=max(1, min(3, int(priority))),
+            section_hint=section_hint,  # type: ignore[arg-type]
+            coaching_use=coaching_use,  # type: ignore[arg-type]
+            display_hint=display_hint,
+            value_style=value_style,  # type: ignore[arg-type]
         )
     )
+
+
+def _enrich_provider_context_packaging(context: dict[str, Any]) -> None:
+    claims = _display_allowed_claims(context.get("approved_value_claims") or [])
+    context["provider_task_context"] = _provider_task_context(context, claims)
+    context["high_value_claims"] = _high_value_claim_keys(claims)
+    context["preferred_claims_by_field"] = _preferred_claims_by_field(claims)
+    context["claim_usage_rules"] = _claim_usage_rules()
+    context["field_role_guidance"] = _field_role_guidance()
+
+
+def _display_allowed_claims(claims: Any) -> list[dict[str, Any]]:
+    if not isinstance(claims, list):
+        return []
+    allowed: list[dict[str, Any]] = []
+    for claim in claims:
+        if not isinstance(claim, dict) or not bool(claim.get("display_allowed", True)):
+            continue
+        key = claim.get("key")
+        if isinstance(key, str) and key.strip():
+            allowed.append(claim)
+    return allowed
+
+
+def _provider_task_context(
+    context: dict[str, Any], claims: list[dict[str, Any]]
+) -> dict[str, Any]:
+    synthesis = context.get("daily_coach_synthesis") or {}
+    return {
+        "task": "Write one compact Daily Coach card from approved claims.",
+        "tone": "practical coach, specific, concise, not a report dump",
+        "target_total_claims": "2-4",
+        "confidence": synthesis.get("confidence")
+        if isinstance(synthesis, dict)
+        else None,
+        "claim_count_available": len(claims),
+        "highest_priority_claim_count": sum(
+            1 for claim in claims if int(claim.get("priority") or 3) == 1
+        ),
+    }
+
+
+def _high_value_claim_keys(claims: list[dict[str, Any]]) -> list[str]:
+    sorted_claims = sorted(claims, key=_claim_priority_sort_key)
+    return [str(claim["key"]) for claim in sorted_claims[:4]]
+
+
+def _preferred_claims_by_field(claims: list[dict[str, Any]]) -> dict[str, list[str]]:
+    fields = [
+        "summary",
+        "nutrition_note",
+        "training_note",
+        "recovery_note",
+        "priority_action",
+    ]
+    preferred: dict[str, list[str]] = {field: [] for field in fields}
+    for claim in sorted(claims, key=_claim_priority_sort_key):
+        field = claim.get("section_hint")
+        if field in preferred and len(preferred[str(field)]) < 3:
+            preferred[str(field)].append(str(claim["key"]))
+    return preferred
+
+
+def _claim_priority_sort_key(claim: dict[str, Any]) -> tuple[int, int, str]:
+    priority = int(claim.get("priority") or 3)
+    claim_type = str(claim.get("claim_type") or "")
+    type_rank = {
+        "recovery": 0,
+        "training": 1,
+        "nutrition_gap": 2,
+        "recommendation": 3,
+        "nutrition_actual": 4,
+        "limitation": 5,
+    }.get(claim_type, 9)
+    return (priority, type_rank, str(claim.get("key") or ""))
+
+
+def _claim_usage_rules() -> dict[str, Any]:
+    return {
+        "target_total_claims": "2-4",
+        "exact_values_require_quoted_values_used": True,
+        "do_not_dump_all_claims": True,
+        "prefer_status_over_numbers_when_numbers_are_not_needed": True,
+        "use_limitations_as_uncertainty_not_user_blame": True,
+        "quoted_values_used_must_be_exact_claim_keys": True,
+    }
+
+
+def _field_role_guidance() -> dict[str, str]:
+    return {
+        "headline": "Short title, not always Daily Coach.",
+        "summary": "One sentence saying what matters most today.",
+        "nutrition_note": "Concrete nutrition state plus one approved implication.",
+        "training_note": "Approved training direction plus effort/execution anchor.",
+        "recovery_note": "Recovery signal plus what it means for today's training confidence.",
+        "priority_action": "One concrete action the user can do today.",
+    }
 
 
 def _format_value_alias(value: Any, unit: str | None) -> str:
@@ -1022,6 +1203,8 @@ def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
     nutrition = value_context.get("approved_nutrition") or {}
     recovery = value_context.get("approved_recovery") or {}
     suggestions = nutrition.get("approved_food_suggestions") or []
+    high_value_claims = value_context.get("high_value_claims") or []
+    preferred_claims = value_context.get("preferred_claims_by_field") or {}
     return {
         "has_recovery_values": bool(recovery),
         "nutrition_context_available": bool(nutrition.get("available")),
@@ -1035,6 +1218,9 @@ def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
         "approved_value_claim_count": len(
             value_context.get("approved_value_claims") or []
         ),
+        "high_value_claims_available": list(high_value_claims),
+        "preferred_claims_by_field": dict(preferred_claims),
+        "claim_usage_rules": dict(value_context.get("claim_usage_rules") or {}),
     }
 
 

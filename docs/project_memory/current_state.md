@@ -1,3 +1,28 @@
+# Current State — Daily Coach Provider Copy Grounding & Approved Context Enrichment v1
+
+Current source of truth: `main` / accepted runtime-fix baseline at `60fe77b`.
+
+Active backend milestone: `Daily Coach Provider Copy Grounding & Approved Context Enrichment v1`.
+
+Architecture status: approved for Backend implementation.
+
+Status: backend implementation complete pending validation/handoff.
+
+This milestone enriches provider-approved context packaging and prompt guidance so OpenAI can write more specific Daily Coach copy without weakening the existing parser, quote/value validator, fallback path, or deterministic default.
+
+Implemented direction:
+
+- approved value claim metadata: `priority`, `section_hint`, `coaching_use`, `display_hint`, `value_style`;
+- provider context packaging: `provider_task_context`, `high_value_claims`, `preferred_claims_by_field`, `claim_usage_rules`, `field_role_guidance`;
+- prompt/field-role guidance for practical coach copy using 2-4 high-value claims;
+- trial-matrix copy-quality diagnostics and manual review placeholders.
+
+Boundaries remain unchanged: deterministic is default; OpenAI/direct_ollama are opt-in; provider output is parsed, quote/value validated, approved, or deterministically fallen back; no raw provider output is public; no provider output persistence, Streamlit provider controls, nutrition/workout/recovery/report changes, RAG, Prompt Lab, or multi-agent orchestration are included.
+
+Requested final status: `DAILY_COACH_PROVIDER_COPY_GROUNDING_APPROVED_CONTEXT_ENRICHMENT_V1_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Provider Trial Diagnostics v1
 
 Current source of truth: `main` at `a6cd8d0` plus accepted Daily Coach Narrative Provider Trial Matrix tooling at `4641c91`.

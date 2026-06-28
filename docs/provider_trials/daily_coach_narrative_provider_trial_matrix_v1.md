@@ -96,3 +96,18 @@ This is evaluation tooling only.
 No provider becomes default through this milestone.
 
 Deterministic remains the product default.
+
+## Copy Grounding & Context Enrichment v1 additions
+
+Provider trial rows now include diagnostic review fields for context-specific copy quality:
+
+- `high_value_claims_available`
+- `high_value_claims_used`
+- `preferred_claims_by_field_used`
+- `declared_claim_count`
+- `generic_copy_flags`
+- `unsupported_claim_flags`
+- `section_role_flags`
+- manual copy quality, specificity, coaching usefulness, and fact-dump score placeholders
+
+These fields are review aids for Architecture/Product/Agent Engineering. They do not weaken parser, quote/value validation, deterministic fallback, or artifact safety. Raw provider output remains local-only and explicit diagnostic mode only.

@@ -64,6 +64,40 @@ class ApprovedNarrativeValueClaim:
     display_allowed: bool = True
     source: str = "backend"
     confidence: str | None = None
+    priority: int = 3
+    section_hint: (
+        Literal[
+            "summary",
+            "nutrition_note",
+            "training_note",
+            "recovery_note",
+            "priority_action",
+        ]
+        | None
+    ) = None
+    coaching_use: (
+        Literal[
+            "explain_today",
+            "prioritize_action",
+            "contextualize_limit",
+            "support_nutrition_action",
+            "support_training_action",
+            "support_recovery_action",
+            "avoid_overclaiming",
+        ]
+        | None
+    ) = None
+    display_hint: str | None = None
+    value_style: (
+        Literal[
+            "status_only",
+            "exact_value_allowed",
+            "range_allowed",
+            "food_option",
+            "limitation_only",
+        ]
+        | None
+    ) = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

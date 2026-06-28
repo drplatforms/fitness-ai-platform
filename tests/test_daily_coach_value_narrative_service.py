@@ -666,3 +666,44 @@ def test_invalid_provider_config_falls_back_to_deterministic() -> None:
     assert result.runtime_metadata.selected_provider == "deterministic"
     assert result.runtime_metadata.fallback_reason == "invalid_provider"
     assert result.approved_daily_coach_narrative.source == "deterministic_fallback"
+
+
+def test_approved_claim_metadata_is_backward_compatible_and_enriched() -> None:
+    context = build_minimal_value_context_from_synthesis(_synthesis())
+    claims = {claim["key"]: claim for claim in context["approved_value_claims"]}
+
+    rir_claim = claims["training.rir_range"]
+    assert rir_claim["display_allowed"] is True
+    assert rir_claim["priority"] == 1
+    assert rir_claim["section_hint"] == "training_note"
+    assert rir_claim["coaching_use"] == "support_training_action"
+    assert rir_claim["value_style"] == "range_allowed"
+
+    limitation_claim = claims["limitation.1"]
+    assert limitation_claim["priority"] == 2
+    assert limitation_claim["value_style"] == "limitation_only"
+
+
+def test_provider_context_packaging_adds_high_value_and_preferred_claims() -> None:
+    context = build_minimal_value_context_from_synthesis(_synthesis())
+
+    assert context["provider_task_context"]["target_total_claims"] == "2-4"
+    assert "training.rir_range" in context["high_value_claims"]
+    assert "training.rir_range" in context["preferred_claims_by_field"]["training_note"]
+    assert context["claim_usage_rules"]["do_not_dump_all_claims"] is True
+    assert "priority_action" in context["field_role_guidance"]
+
+
+def test_prompt_includes_copy_grounding_field_roles_and_claim_rules() -> None:
+    prompt = build_daily_coach_value_narrative_prompt(
+        _synthesis(),
+        value_context=build_minimal_value_context_from_synthesis(_synthesis()),
+    )
+
+    assert "Use 2-4 high-value approved claims" in prompt
+    assert "Do not dump all claims" in prompt
+    assert "FIELD_ROLE_GUIDANCE" in prompt
+    assert "CLAIM_USAGE_RULES" in prompt
+    assert "quoted_values_used may contain only exact keys" in prompt
+    assert "Do not mention backend" in prompt
+    assert "Return one raw JSON object only" in prompt

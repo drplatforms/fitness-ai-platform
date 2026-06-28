@@ -157,3 +157,28 @@ Preferred:
 - Reduce colon-heavy labels and comma-heavy run-ons.
 - Keep the factual boundary, but make the sentence sound like a coach, not a debug trace.
 - Runtime feedback captured through the Voice Lab should preserve scenario, candidate, reason-code, and preferred-rewrite context without storing raw logs or private data.
+
+---
+
+## daily_coach_provider_copy_grounding_v1
+
+Allowed facts:
+- Recovery readiness and fatigue risk may be quoted only when display-approved and declared.
+- RIR may be quoted only through the approved `training.rir_range` claim key.
+- Nutrition status/food options may be quoted only through approved claim keys.
+
+Preferred:
+> Recovery is supportive today, so keep the plan controlled and specific. Use the approved strength plan and keep RIR 2-4 as the effort anchor.
+
+Why it works:
+- It uses a specific approved recovery/training signal.
+- It avoids dumping every available value.
+- It sounds like a coach rather than a report.
+
+Avoid:
+> Based on the approved context and schema, your recovery.readiness_level is High, fatigue_risk is Low, and training.rir_range is 2-4.
+
+Why it fails:
+- It exposes process/schema language.
+- It reads like a debug artifact.
+- It fact-dumps claim keys instead of writing user-facing coaching copy.

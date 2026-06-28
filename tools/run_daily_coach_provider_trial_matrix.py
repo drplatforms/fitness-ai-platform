@@ -104,6 +104,17 @@ class TrialMatrixRow:
     diagnostic_mode_enabled: bool = False
     live_provider_allowed: bool = False
     ollama_cleanup_status: dict[str, Any] = field(default_factory=dict)
+    high_value_claims_available: list[str] = field(default_factory=list)
+    high_value_claims_used: list[str] = field(default_factory=list)
+    preferred_claims_by_field_used: dict[str, list[str]] = field(default_factory=dict)
+    declared_claim_count: int = 0
+    generic_copy_flags: list[str] = field(default_factory=list)
+    unsupported_claim_flags: list[str] = field(default_factory=list)
+    section_role_flags: list[str] = field(default_factory=list)
+    manual_copy_quality_score: str = ""
+    manual_specificity_score: str = ""
+    manual_coaching_usefulness_score: str = ""
+    fact_dump_score: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -358,10 +369,11 @@ def _run_case(
     debug_payload = result.to_debug_dict()
     public_payload = result.to_public_dict()
     runtime_metadata = dict(debug_payload.get("runtime_metadata") or {})
+    internal_provider_context_summary = dict(
+        debug_payload.get("provider_context_summary") or {}
+    )
     provider_context_summary = (
-        dict(debug_payload.get("provider_context_summary") or {})
-        if include_debug
-        else {}
+        internal_provider_context_summary if include_debug else {}
     )
     approved = public_payload.get("approved_daily_coach_narrative")
     rendered = public_payload.get("rendered_narrative")
@@ -407,6 +419,23 @@ def _run_case(
         diagnostic_mode_enabled=diagnostic_raw_output,
         live_provider_allowed=allow_live_providers,
         ollama_cleanup_status={},
+        high_value_claims_available=_safe_string_list(
+            internal_provider_context_summary.get("high_value_claims_available")
+        ),
+        high_value_claims_used=_high_value_claims_used(
+            approved, internal_provider_context_summary
+        ),
+        preferred_claims_by_field_used=_preferred_claims_by_field_used(
+            approved, internal_provider_context_summary
+        ),
+        declared_claim_count=_declared_claim_count(approved),
+        generic_copy_flags=_generic_copy_flags(approved),
+        unsupported_claim_flags=_unsupported_claim_flags(runtime_metadata),
+        section_role_flags=_section_role_flags(approved),
+        manual_copy_quality_score="",
+        manual_specificity_score="",
+        manual_coaching_usefulness_score="",
+        fact_dump_score="",
     )
     if _should_cleanup_ollama(case, ollama_unload_after_run, skip_ollama_cleanup):
         cleanup_status = ollama_cleanup(
@@ -576,8 +605,8 @@ def render_summary_markdown(
         "",
         "## Comparison table",
         "",
-        "| user_id | date | case_label | provider | model | final_source | fallback_used | fallback_reason | provider_error_type | parse_status | validation_status | quote_validation_status | latency_ms | quoted_values_used | recovery_parity | training_parity | nutrition_parity | value_quote_accuracy | copy_quality_notes | usefulness_notes |",
-        "|---:|---|---|---|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|---|---|",
+        "| user_id | date | case_label | provider | model | final_source | fallback_used | fallback_reason | provider_error_type | parse_status | validation_status | quote_validation_status | latency_ms | quoted_values_used | high_value_claims_used | declared_claim_count | generic_copy_flags | unsupported_claim_flags | section_role_flags | recovery_parity | training_parity | nutrition_parity | value_quote_accuracy | copy_quality_notes | specificity_score | coaching_usefulness_score | fact_dump_score |",
+        "|---:|---|---|---|---|---|---|---|---|---|---|---|---:|---|---|---:|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
         metadata = row.runtime_metadata
@@ -607,12 +636,19 @@ def render_summary_markdown(
                     _md(_quote_validation_status(row)),
                     str(row.latency_ms if row.latency_ms is not None else ""),
                     _md(", ".join(str(item) for item in quoted)),
+                    _md(", ".join(row.high_value_claims_used)),
+                    str(row.declared_claim_count),
+                    _md(", ".join(row.generic_copy_flags)),
+                    _md(", ".join(row.unsupported_claim_flags)),
+                    _md(", ".join(row.section_role_flags)),
                     _md(_default_parity_note(row, "recovery")),
                     _md(_default_parity_note(row, "training")),
                     _md(_default_parity_note(row, "nutrition")),
                     _md(_quote_accuracy_note(row)),
-                    "",
-                    "",
+                    row.manual_copy_quality_score,
+                    row.manual_specificity_score,
+                    row.manual_coaching_usefulness_score,
+                    row.fact_dump_score,
                 ]
             )
             + " |"
@@ -626,6 +662,7 @@ def render_summary_markdown(
             "- Diagnostic raw provider output is local-only and requires explicit opt-in.",
             "- API keys and authorization headers must never appear in artifacts.",
             "- Ollama cleanup status is metadata only and does not affect provider quality scoring.",
+            "- Quality flags are diagnostic review aids unless they correspond to existing hard validation failures.",
             "",
             "## Rubric",
             "",
@@ -749,6 +786,117 @@ def _quote_accuracy_note(row: TrialMatrixRow) -> str:
     if quoted:
         return "declared_quotes_present"
     return "no_values_quoted"
+
+
+def _safe_string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, str) and item.strip()]
+
+
+def _quoted_values(approved: Any) -> list[str]:
+    if not isinstance(approved, dict):
+        return []
+    return _safe_string_list(approved.get("quoted_values_used"))
+
+
+def _declared_claim_count(approved: Any) -> int:
+    return len(_quoted_values(approved))
+
+
+def _high_value_claims_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> list[str]:
+    high_value = set(
+        _safe_string_list(provider_context_summary.get("high_value_claims_available"))
+    )
+    return [claim for claim in _quoted_values(approved) if claim in high_value]
+
+
+def _preferred_claims_by_field_used(
+    provider_context_summary: dict[str, object] | None,
+    quoted_values_used: list[str],
+) -> dict[str, list[str]]:
+    if not provider_context_summary:
+        return {}
+    preferred = provider_context_summary.get("preferred_claims_by_field")
+    if not isinstance(preferred, dict):
+        return {}
+    quoted = set(_safe_string_list(quoted_values_used))
+    if not quoted:
+        return {}
+    used: dict[str, list[str]] = {}
+    for field_key, claims in preferred.items():
+        field_used = [claim for claim in _safe_string_list(claims) if claim in quoted]
+        if field_used:
+            used[str(field_key)] = field_used
+    return used
+
+
+def _generic_copy_flags(approved: Any) -> list[str]:
+    if not isinstance(approved, dict):
+        return []
+    flags: list[str] = []
+    text = " ".join(
+        str(approved.get(field) or "")
+        for field in [
+            "headline",
+            "summary",
+            "nutrition_note",
+            "training_note",
+            "recovery_note",
+            "priority_action",
+        ]
+    ).lower()
+    generic_fragments = [
+        "maintain the current direction",
+        "progress gradually",
+        "stay consistent",
+        "focus on your goals",
+        "make healthy choices",
+        "overall wellness",
+    ]
+    for fragment in generic_fragments:
+        if fragment in text:
+            flags.append(f"too_generic:{fragment}")
+    quoted_count = _declared_claim_count(approved)
+    if quoted_count == 0:
+        flags.append("too_few_claims")
+    if quoted_count > 4:
+        flags.append("too_many_claims")
+    if quoted_count == 0 and "fallback" not in str(approved.get("source") or ""):
+        flags.append("no_specific_approved_fact_used")
+    return flags
+
+
+def _unsupported_claim_flags(runtime_metadata: Mapping[str, Any]) -> list[str]:
+    errors = [str(item) for item in runtime_metadata.get("validation_errors") or []]
+    flags: list[str] = []
+    for error in errors:
+        lowered = error.lower()
+        if "undeclared" in lowered or "unapproved" in lowered:
+            flags.append("unsupported_claim_flags:" + error)
+        elif "forbidden phrase" in lowered or "invented value" in lowered:
+            flags.append("unsupported_claim_flags:" + error)
+    return flags
+
+
+def _section_role_flags(approved: Any) -> list[str]:
+    if not isinstance(approved, dict):
+        return []
+    flags: list[str] = []
+    if str(approved.get("headline") or "").strip().lower() == "daily coach":
+        flags.append("headline_generic")
+    priority_action = str(approved.get("priority_action") or "").lower()
+    if not any(
+        verb in priority_action
+        for verb in ["use", "choose", "complete", "log", "start", "keep", "do"]
+    ):
+        flags.append("weak_priority_action")
+    summary = str(approved.get("summary") or "")
+    if len(summary) > 220:
+        flags.append("summary_too_long")
+    return flags
 
 
 def _provider_config_status(

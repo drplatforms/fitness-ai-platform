@@ -6,29 +6,29 @@
     "canonical_branch": "main"
   },
   "current_baseline": {
-    "latest_accepted_milestone": "Daily Coach Narrative Approved Value Quote Validation v1",
-    "latest_final_status": "DAILY_COACH_NARRATIVE_APPROVED_VALUE_QUOTE_VALIDATION_V1_ACCEPTED_AND_MERGED",
-    "latest_accepted_commit": "a6cd8d0",
-    "latest_main_merge_commit": "a6cd8d0",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-27_a6cd8d0_daily-coach-narrative-approved-value-quote-validation-v1.zip",
-    "previous_accepted_milestone": "Daily Coach Narrative Value-Aware Provider Comparison v1",
-    "previous_main_merge_commit": "f13a898",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-27_f13a898_daily-coach-narrative-value-aware-provider-comparison-v1.zip",
-    "current_source_of_truth": "main at a6cd8d0",
+    "latest_accepted_milestone": "Daily Coach OpenAI Provider Responses Runtime Fix v1",
+    "latest_final_status": "DAILY_COACH_OPENAI_PROVIDER_RESPONSES_RUNTIME_FIX_V1_ACCEPTED_PENDING_ARCHITECTURE_CLOSEOUT",
+    "latest_accepted_commit": "60fe77b",
+    "latest_main_merge_commit": "60fe77b",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
+    "previous_accepted_milestone": "Daily Coach Provider Trial Diagnostics v1",
+    "previous_main_merge_commit": "f47d7dc",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-27_4641c91_provider-trial-matrix-local.zip",
+    "current_source_of_truth": "runtime-fix baseline at 60fe77b",
     "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
     "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-    "active_backend_milestone": "Daily Coach Narrative Provider Trial Matrix v1",
-    "active_backend_status": "authorized for backend implementation"
+    "active_backend_milestone": "Daily Coach Provider Copy Grounding & Approved Context Enrichment v1",
+    "active_backend_status": "approved for backend implementation / implementation in progress"
   },
   "active_roadmap": {
-    "current_recommended_milestone": "Daily Coach Narrative Provider Trial Matrix v1",
-    "current_recommended_status": "AUTHORIZED_FOR_BACKEND_IMPLEMENTATION",
-    "recommended_owner": "Backend Development / Data Layer",
-    "source_main_commit": "a6cd8d0",
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-27_a6cd8d0_daily-coach-narrative-approved-value-quote-validation-v1.zip",
+    "current_recommended_milestone": "Daily Coach Provider Copy Grounding & Approved Context Enrichment v1",
+    "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
+    "recommended_owner": "Backend Development / Provider Runtime",
+    "source_main_commit": "60fe77b",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
     "commit_check_mode": "code",
     "qa_class": "CLASS 2 / CLASS 5 HYBRID",
-    "primary_question": "Which Daily Coach narrative provider best follows schema, quote/value validation, parity, and useful coaching copy without changing deterministic default?",
+    "primary_question": "Can gpt-5.5 produce more specific, coach-like Daily Coach copy using 2-4 high-value backend-approved facts without weakening quote/value validation?",
     "secondary_owner": "Agent Engineering"
   },
   "boundaries": {
@@ -176,7 +176,15 @@
     "daily_coach_provider_trial_diagnostics_local_raw_output_opt_in": true,
     "daily_coach_provider_trial_diagnostics_no_raw_output_committed": true,
     "daily_coach_provider_trial_diagnostics_no_secret_output": true,
-    "daily_coach_provider_trial_diagnostics_ollama_cleanup_optional": true
+    "daily_coach_provider_trial_diagnostics_ollama_cleanup_optional": true,
+    "daily_coach_provider_copy_grounding_context_enrichment_v1": true,
+    "approved_claim_metadata_enrichment": true,
+    "provider_high_value_claim_packaging": true,
+    "daily_narrative_field_role_guidance": true,
+    "trial_matrix_copy_quality_diagnostics": true,
+    "no_provider_default_change_for_copy_grounding": true,
+    "quote_value_validation_mandatory_for_copy_grounding": true,
+    "no_raw_provider_output_public_for_copy_grounding": true
   },
   "process_doctrine": {
     "complex_backend_quality_gate": [

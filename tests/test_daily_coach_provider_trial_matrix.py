@@ -611,3 +611,59 @@ def test_ollama_cleanup_failure_records_safe_metadata(tmp_path: Path) -> None:
     assert rows[0].success is True
     assert rows[0].ollama_cleanup_status["ollama_cleanup_success"] is False
     assert rows[0].ollama_cleanup_status["ollama_cleanup_error"] == "connection_error"
+
+
+class FakeEnrichedResult(FakeResult):
+    def to_debug_dict(self) -> dict[str, Any]:
+        payload = super().to_debug_dict()
+        payload["provider_context_summary"] = {
+            "approved_value_claim_count": 4,
+            "high_value_claims_available": [
+                "recovery.readiness_level",
+                "recovery.fatigue_risk",
+                "training.rir_range",
+            ],
+            "preferred_claims_by_field": {
+                "recovery_note": [
+                    "recovery.readiness_level",
+                    "recovery.fatigue_risk",
+                ],
+                "training_note": ["training.rir_range"],
+            },
+        }
+        return payload
+
+
+def test_trial_matrix_includes_copy_grounding_review_fields(tmp_path: Path) -> None:
+    rows = run_trial_matrix(
+        users=[102],
+        trial_date="2026-06-27",
+        providers=[PROVIDER_DETERMINISTIC],
+        output_dir=tmp_path,
+        narrative_builder=lambda user_id, target_date=None: FakeEnrichedResult(
+            user_id=user_id
+        ),
+    )
+
+    row = rows[0]
+    assert row.high_value_claims_available == [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+        "training.rir_range",
+    ]
+    assert row.high_value_claims_used == [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
+    assert row.preferred_claims_by_field_used == {
+        "recovery_note": [
+            "recovery.readiness_level",
+            "recovery.fatigue_risk",
+        ]
+    }
+    assert row.declared_claim_count == 2
+    payload = json.loads((tmp_path / "trial_matrix.jsonl").read_text().splitlines()[0])
+    assert payload["declared_claim_count"] == 2
+    summary = (tmp_path / "trial_matrix_summary.md").read_text(encoding="utf-8")
+    assert "high_value_claims_used" in summary
+    assert "specificity_score" in summary

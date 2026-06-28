@@ -842,3 +842,148 @@ def test_v3_raw_claim_key_candidate_falls_back() -> None:
     assert any(
         "raw claim keys" in error for error in result.runtime_metadata.validation_errors
     )
+
+
+def _tuna_value_context() -> dict:
+    context = _value_context()
+    context["approved_nutrition"] = {
+        **context["approved_nutrition"],
+        "macro_status": {
+            "protein": {"display_allowed": True, "target_status": "below_target"},
+            "calories": {"display_allowed": True, "target_status": "below_target"},
+        },
+        "approved_food_suggestions": [
+            {
+                "display_name": "Tuna, Canned in Water",
+                "suggested_grams": 100,
+                "macro_gap_addressed": "protein_g",
+                "confidence": "Moderate",
+            }
+        ],
+    }
+    context.pop("approved_value_claims", None)
+    return context
+
+
+def test_v4_context_adds_friendly_food_label_and_action_context() -> None:
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+        environ={},
+    )
+
+    summary = result.provider_context_summary
+    food_copy = summary["food_suggestion_copy_context"]
+    suggestion = food_copy["suggestions"][0]
+    assert suggestion["canonical_name"] == "Tuna, Canned in Water"
+    assert suggestion["friendly_name"] == "canned tuna"
+    assert suggestion["claim_keys"]["friendly_name"] == (
+        "nutrition.food_suggestion.1.friendly_name"
+    )
+    nutrition_action = summary["nutrition_action_context"]
+    assert nutrition_action["primary_gap"] == "protein"
+    assert nutrition_action["action_type"] == "simple_add_on"
+    assert nutrition_action["approved_food_option_count"] == 1
+
+
+def test_v4_prompt_includes_food_copy_context_and_bans_rejected_phrases() -> None:
+    prompt = build_daily_coach_value_narrative_prompt(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+    )
+
+    assert "FOOD_SUGGESTION_COPY_CONTEXT" in prompt
+    assert "NUTRITION_ACTION_CONTEXT" in prompt
+    assert "canned tuna" in prompt
+    assert "Make nutrition support the work" in prompt
+    assert "Fuel the session instead" in prompt
+    assert "fatigue does not require backing off" in prompt
+
+
+def test_v4_friendly_food_label_passes_when_quote_backed() -> None:
+    good = json.loads(_valid_candidate())
+    good["nutrition_note"] = "Protein is below target; an easy option is canned tuna."
+    good["priority_action"] = "Add 100g canned tuna and keep the workout clean."
+    good["quoted_values_used"] = [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+        "nutrition.protein.status",
+        "nutrition.food_suggestion.1.friendly_name",
+        "nutrition.food_suggestion.1.suggested_grams",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(good),
+    )
+
+    assert result.runtime_metadata.fallback_used is False
+    assert "nutrition.food_suggestion.1.friendly_name" in (
+        result.approved_daily_coach_narrative.quoted_values_used
+    )
+
+
+def test_v4_canonical_food_label_falls_back_when_friendly_label_exists() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["nutrition_note"] = "Protein is below target; use Tuna, Canned in Water."
+    bad["quoted_values_used"] = [
+        "nutrition.protein.status",
+        "nutrition.food_suggestion.1.display_name",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "friendly food label" in error
+        for error in result.runtime_metadata.validation_errors
+    )
+
+
+def test_v4_rejected_phrase_candidate_falls_back() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["priority_action"] = (
+        "The useful move is simple: make nutrition support the work."
+    )
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "forbidden phrase" in error
+        for error in result.runtime_metadata.validation_errors
+    )
+
+
+def test_v4_unapproved_serving_display_falls_back() -> None:
+    bad = json.loads(_valid_candidate())
+    bad["nutrition_note"] = "Protein is below target; add one can of canned tuna."
+    bad["quoted_values_used"] = [
+        "nutrition.protein.status",
+        "nutrition.food_suggestion.1.friendly_name",
+    ]
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_tuna_value_context(),
+        environ={"DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA},
+        direct_ollama_generate=lambda model, prompt, timeout: json.dumps(bad),
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "serving display" in error
+        for error in result.runtime_metadata.validation_errors
+    )

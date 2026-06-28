@@ -14,21 +14,21 @@
         "previous_accepted_milestone": "Daily Coach OpenAI Provider Responses Runtime Fix v1",
         "previous_main_merge_commit": "60fe77b",
         "previous_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
-        "current_source_of_truth": "v2 technical branch at 2cd7708",
+        "current_source_of_truth": "v3 technical branch at e23a435",
         "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
         "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-        "active_backend_milestone": "Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3",
-        "active_backend_status": "backend implementation patch ready for validation"
+        "active_backend_milestone": "Daily Coach Provider Human Voice & Food Action Specificity v4",
+        "active_backend_status": "backend implementation patch candidate ready for validation"
     },
     "active_roadmap": {
-        "current_recommended_milestone": "Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3 QA",
+        "current_recommended_milestone": "Daily Coach Provider Human Voice & Food Action Specificity v4 QA",
         "current_recommended_status": "IMPLEMENTATION_COMPLETE_PENDING_QA",
         "recommended_owner": "QA / Regression Testing",
-        "source_main_commit": "2cd7708",
-        "baseline_snapshot": "fitness_ai_snapshot_2026-06-27_2cd7708_feature-daily-coach-context-selection-coaching-synthesis-v2_add-daily-coach-context-selection-coaching-synthesis-v2.zip",
+        "source_main_commit": "e23a435",
+        "baseline_snapshot": "fitness_ai_snapshot_2026-06-27_e23a435_daily-coach-provider-voice-context-freedom-rich-synthesis-v3.zip",
         "commit_check_mode": "code",
         "qa_class": "CLASS 2 / CLASS 5 HYBRID",
-        "primary_question": "Can gpt-5.5 use approved_context_brief, claim_backing_map, cleaned today_story, and adaptive verbosity to sound materially more natural while preserving quote/value validation?",
+        "primary_question": "Can gpt-5.5 use friendly food labels, nutrition_action_context, cleaned today_story, and banned phrase guidance to sound human and specific while preserving quote/value validation?",
         "secondary_owner": "Agent Engineering"
     },
     "boundaries": {
@@ -194,7 +194,12 @@
         "no_quote_value_validation_relaxation_for_context_selection_v2": true,
         "no_provider_default_change_for_context_selection_v2": true,
         "no_streamlit_controls_for_context_selection_v2": true,
-        "no_provider_output_persistence_for_context_selection_v2": true
+        "no_provider_output_persistence_for_context_selection_v2": true,
+        "daily_coach_provider_human_voice_food_action_specificity_v4": true,
+        "friendly_food_labels_quote_backed": true,
+        "serving_display_backend_approved_only": true,
+        "nutrition_action_context_backend_derived": true,
+        "no_provider_serving_unit_invention": true
     },
     "process_doctrine": {
         "complex_backend_quality_gate": [

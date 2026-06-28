@@ -651,6 +651,16 @@ _VALUE_NARRATIVE_FORBIDDEN_FRAGMENTS = [
     "effort anchor",
     "planned effort range",
     "bigger nutrition overhaul",
+    "rebuilding the whole plan",
+    "fatigue does not require backing off",
+    "support the work",
+    "support the day",
+    "nutrition support",
+    "protein-support option",
+    "calorie-support option",
+    "macro-support option",
+    "if it fits your meals",
+    "useful move",
     "backend-approved",
     "approved context",
     "claim keys",
@@ -779,6 +789,9 @@ def validate_daily_coach_value_narrative_candidate(
             "candidate must not recommend exact food amounts unless approved suggestions include them."
         )
 
+    errors.extend(_validate_v4_food_copy(candidate, value_context))
+    errors.extend(_validate_unapproved_serving_words(text_lower, value_context))
+
     if _contains_internal_metadata_value_narrative(text_lower):
         errors.append("candidate must not expose raw/debug/provider/internal metadata.")
 
@@ -864,6 +877,78 @@ def _validate_value_quote_claims(
         ):
             errors.append(f"narrative contains invented value claim: {fragment}")
     return errors
+
+
+def _validate_v4_food_copy(
+    candidate: CandidateDailyCoachValueNarrative, value_context: dict
+) -> list[str]:
+    errors: list[str] = []
+    text_lower = _daily_coach_value_candidate_text(candidate).lower()
+    declared = set(candidate.quoted_values_used)
+    copy_context = value_context.get("food_suggestion_copy_context") or {}
+    suggestions = copy_context.get("suggestions") or []
+    if not isinstance(suggestions, list):
+        return errors
+    for suggestion in suggestions:
+        if not isinstance(suggestion, dict):
+            continue
+        canonical = str(suggestion.get("canonical_name") or "").strip()
+        friendly = str(suggestion.get("friendly_name") or "").strip()
+        claim_keys = suggestion.get("claim_keys") or {}
+        friendly_key = claim_keys.get("friendly_name")
+        canonical_key = claim_keys.get("canonical_name")
+        if canonical and friendly and friendly.lower() != canonical.lower():
+            if canonical.lower() in text_lower:
+                errors.append(
+                    "candidate must use friendly food label when one is available."
+                )
+        if friendly and friendly.lower() in text_lower and friendly_key not in declared:
+            errors.append(
+                f"friendly food label requires quoted_values_used claim: {friendly_key}"
+            )
+        if (
+            canonical
+            and canonical.lower() in text_lower
+            and canonical_key not in declared
+        ):
+            errors.append(
+                f"canonical food label requires quoted_values_used claim: {canonical_key}"
+            )
+    return errors
+
+
+def _validate_unapproved_serving_words(
+    text_lower: str, value_context: dict
+) -> list[str]:
+    serving_words = [
+        "one can",
+        "1 can",
+        "one packet",
+        "1 packet",
+        "half cup",
+        "1/2 cup",
+        "one scoop",
+        "1 scoop",
+        "one bowl",
+        "1 bowl",
+        "one serving",
+        "1 serving",
+        "handful",
+        "plate",
+        "snack size",
+    ]
+    if not any(word in text_lower for word in serving_words):
+        return []
+    approved_claims = _approved_value_claim_map(value_context)
+    has_serving_display = any(
+        key.endswith(".serving_display") and bool(claim.get("display_allowed", True))
+        for key, claim in approved_claims.items()
+    )
+    if has_serving_display:
+        return []
+    return [
+        "candidate must not invent serving display such as cans, packets, scoops, cups, bowls, plates, or handfuls."
+    ]
 
 
 def _approved_value_claim_map(value_context: dict) -> dict[str, dict[str, Any]]:

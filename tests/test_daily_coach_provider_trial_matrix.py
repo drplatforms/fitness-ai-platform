@@ -678,6 +678,33 @@ class FakeEnrichedResult(FakeResult):
                 "target_words_max": 180,
                 "guidance": "Use enough detail to connect context naturally.",
             },
+            "food_suggestion_copy_context": {
+                "suggestions": [
+                    {
+                        "canonical_name": "Tuna, Canned in Water",
+                        "friendly_name": "canned tuna",
+                        "serving_display": None,
+                        "macro_reason": "protein",
+                        "user_facing_allowed": True,
+                        "claim_keys": {
+                            "canonical_name": "nutrition.food_suggestion.1.display_name",
+                            "friendly_name": "nutrition.food_suggestion.1.friendly_name",
+                            "serving_display": None,
+                            "macro_reason": "nutrition.food_suggestion.1.macro_reason",
+                        },
+                    }
+                ]
+            },
+            "nutrition_action_context": {
+                "primary_gap": "protein",
+                "secondary_gap": "calories",
+                "action_type": "simple_add_on",
+                "user_goal": "cover the obvious nutrition gap without overhauling the day",
+                "food_action_allowed": True,
+                "approved_food_option_count": 1,
+                "avoid_actions": ["do not imply the user failed"],
+                "timing_hint": None,
+            },
         }
         return payload
 
@@ -749,6 +776,17 @@ def test_trial_matrix_includes_copy_grounding_review_fields(tmp_path: Path) -> N
         "recovery.readiness_level",
         "recovery.fatigue_risk",
     ]
+    assert row.friendly_food_labels_available is True
+    assert row.friendly_food_labels_used is False
+    assert row.canonical_food_label_used_in_visible_copy is False
+    assert row.nutrition_action_context_present is True
+    assert row.primary_gap == "protein"
+    assert row.secondary_gap == "calories"
+    assert row.food_action_type == "simple_add_on"
+    assert row.approved_food_option_count == 1
+    assert row.food_options_used_count == 0
+    assert row.internal_meaning_copied_flag is False
+    assert row.banned_phrase_flags == []
     payload = json.loads((tmp_path / "trial_matrix.jsonl").read_text().splitlines()[0])
     assert payload["declared_claim_count"] == 2
     assert payload["today_story_day_type"] == "training_execution_focus"
@@ -756,6 +794,9 @@ def test_trial_matrix_includes_copy_grounding_review_fields(tmp_path: Path) -> N
     assert payload["approved_context_brief_present"] is True
     assert payload["verbosity_budget_mode"] == "rich"
     assert payload["output_word_count"] > 0
+    assert payload["friendly_food_labels_available"] is True
+    assert payload["nutrition_action_context_present"] is True
+    assert payload["primary_gap"] == "protein"
     summary = (tmp_path / "trial_matrix_summary.md").read_text(encoding="utf-8")
     assert "today_story_day_type" in summary
     assert "high_value_claims_used" in summary

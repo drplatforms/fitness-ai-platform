@@ -153,6 +153,28 @@ class TrialMatrixRow:
     manual_usefulness_score: str = ""
     manual_naturalness_score: str = ""
     manual_not_deterministic_score: str = ""
+    friendly_food_labels_available: bool = False
+    friendly_food_labels_used: bool = False
+    canonical_food_label_used_in_visible_copy: bool = False
+    serving_display_available: bool = False
+    serving_display_used: bool = False
+    nutrition_action_context_present: bool = False
+    primary_gap: str = ""
+    secondary_gap: str = ""
+    food_action_type: str = ""
+    approved_food_option_count: int = 0
+    food_options_used_count: int = 0
+    internal_meaning_copied_flag: bool = False
+    user_facing_phrase_example_used: bool = False
+    banned_phrase_flags: list[str] = field(default_factory=list)
+    awkward_phrase_flags: list[str] = field(default_factory=list)
+    recovery_phrase_quality_flag: str = ""
+    food_action_specificity_score: str = ""
+    manual_human_voice_score: str = ""
+    manual_food_action_score: str = ""
+    manual_recovery_language_score: str = ""
+    manual_priority_action_score: str = ""
+    manual_product_readiness_score: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -558,6 +580,54 @@ def _run_case(
         manual_usefulness_score="",
         manual_naturalness_score="",
         manual_not_deterministic_score="",
+        friendly_food_labels_available=_friendly_food_labels_available(
+            internal_provider_context_summary
+        ),
+        friendly_food_labels_used=_friendly_food_labels_used(
+            approved, internal_provider_context_summary
+        ),
+        canonical_food_label_used_in_visible_copy=_canonical_food_label_used(
+            approved, internal_provider_context_summary
+        ),
+        serving_display_available=_serving_display_available(
+            internal_provider_context_summary
+        ),
+        serving_display_used=_serving_display_used(
+            approved, internal_provider_context_summary
+        ),
+        nutrition_action_context_present=_nutrition_action_context_present(
+            internal_provider_context_summary
+        ),
+        primary_gap=_nutrition_action_context_value(
+            internal_provider_context_summary, "primary_gap"
+        ),
+        secondary_gap=_nutrition_action_context_value(
+            internal_provider_context_summary, "secondary_gap"
+        ),
+        food_action_type=_nutrition_action_context_value(
+            internal_provider_context_summary, "action_type"
+        ),
+        approved_food_option_count=_approved_food_option_count(
+            internal_provider_context_summary
+        ),
+        food_options_used_count=_food_options_used_count(
+            approved, internal_provider_context_summary
+        ),
+        internal_meaning_copied_flag=_internal_meaning_copied_flag(
+            approved, internal_provider_context_summary
+        ),
+        user_facing_phrase_example_used=_user_facing_phrase_example_used(
+            approved, internal_provider_context_summary
+        ),
+        banned_phrase_flags=_banned_phrase_flags(approved),
+        awkward_phrase_flags=_awkward_phrase_flags(approved),
+        recovery_phrase_quality_flag=_recovery_phrase_quality_flag(approved),
+        food_action_specificity_score="",
+        manual_human_voice_score="",
+        manual_food_action_score="",
+        manual_recovery_language_score="",
+        manual_priority_action_score="",
+        manual_product_readiness_score="",
     )
     if _should_cleanup_ollama(case, ollama_unload_after_run, skip_ollama_cleanup):
         cleanup_status = ollama_cleanup(
@@ -1182,6 +1252,10 @@ def _robotic_phrase_flags(approved: Any) -> list[str]:
         "maintain current direction",
         "progress gradually",
         "markers remain stable",
+        "support the work",
+        "support the day",
+        "useful move",
+        "if it fits your meals",
     ]
     return [fragment for fragment in fragments if fragment in text]
 
@@ -1193,6 +1267,8 @@ def _framework_phrase_flags(approved: Any) -> list[str]:
         "effort anchor",
         "planned effort range",
         "bigger nutrition overhaul",
+        "rebuilding the whole plan",
+        "fatigue does not require backing off",
         "backend-approved",
         "approved context",
         "claim keys",
@@ -1201,6 +1277,189 @@ def _framework_phrase_flags(approved: Any) -> list[str]:
         "json",
     ]
     return [fragment for fragment in fragments if fragment in text]
+
+
+def _food_copy_context(provider_context_summary: Mapping[str, Any]) -> dict[str, Any]:
+    value = provider_context_summary.get("food_suggestion_copy_context") or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _food_copy_suggestions(
+    provider_context_summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    suggestions = _food_copy_context(provider_context_summary).get("suggestions") or []
+    return [item for item in suggestions if isinstance(item, dict)]
+
+
+def _friendly_food_labels_available(
+    provider_context_summary: Mapping[str, Any],
+) -> bool:
+    return any(
+        str(item.get("friendly_name") or "").strip()
+        for item in _food_copy_suggestions(provider_context_summary)
+    )
+
+
+def _friendly_food_labels_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    text = _approved_public_text(approved).lower()
+    return any(
+        str(item.get("friendly_name") or "").strip().lower() in text
+        for item in _food_copy_suggestions(provider_context_summary)
+        if str(item.get("friendly_name") or "").strip()
+    )
+
+
+def _canonical_food_label_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    text = _approved_public_text(approved).lower()
+    return any(
+        str(item.get("canonical_name") or "").strip().lower() in text
+        for item in _food_copy_suggestions(provider_context_summary)
+        if str(item.get("canonical_name") or "").strip()
+    )
+
+
+def _serving_display_available(provider_context_summary: Mapping[str, Any]) -> bool:
+    return any(
+        str(item.get("serving_display") or "").strip()
+        for item in _food_copy_suggestions(provider_context_summary)
+    )
+
+
+def _serving_display_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    text = _approved_public_text(approved).lower()
+    return any(
+        str(item.get("serving_display") or "").strip().lower() in text
+        for item in _food_copy_suggestions(provider_context_summary)
+        if str(item.get("serving_display") or "").strip()
+    )
+
+
+def _nutrition_action_context(
+    provider_context_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    value = provider_context_summary.get("nutrition_action_context") or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _nutrition_action_context_present(
+    provider_context_summary: Mapping[str, Any],
+) -> bool:
+    return bool(_nutrition_action_context(provider_context_summary))
+
+
+def _nutrition_action_context_value(
+    provider_context_summary: Mapping[str, Any], key: str
+) -> str:
+    value = _nutrition_action_context(provider_context_summary).get(key)
+    return str(value) if value not in {None, ""} else ""
+
+
+def _approved_food_option_count(provider_context_summary: Mapping[str, Any]) -> int:
+    value = _nutrition_action_context(provider_context_summary).get(
+        "approved_food_option_count"
+    )
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _food_options_used_count(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> int:
+    text = _approved_public_text(approved).lower()
+    count = 0
+    for item in _food_copy_suggestions(provider_context_summary):
+        friendly = str(item.get("friendly_name") or "").strip().lower()
+        canonical = str(item.get("canonical_name") or "").strip().lower()
+        if (friendly and friendly in text) or (canonical and canonical in text):
+            count += 1
+    return count
+
+
+def _internal_meaning_copied_flag(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    text = _approved_public_text(approved).lower()
+    for guide in _claim_backing_map(provider_context_summary).values():
+        if not isinstance(guide, dict):
+            continue
+        meaning = str(guide.get("internal_meaning") or "").strip().lower()
+        if meaning and meaning in text:
+            return True
+    return False
+
+
+def _user_facing_phrase_example_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    text = _approved_public_text(approved).lower()
+    for guide in _claim_backing_map(provider_context_summary).values():
+        if not isinstance(guide, dict):
+            continue
+        examples = (
+            guide.get("user_facing_phrase_examples")
+            or guide.get("allowed_phrasings")
+            or []
+        )
+        for example in examples:
+            if isinstance(example, str) and example.strip().lower() in text:
+                return True
+    return False
+
+
+def _banned_phrase_flags(approved: Any) -> list[str]:
+    text = _approved_public_text(approved).lower()
+    fragments = [
+        "main lever",
+        "effort anchor",
+        "planned effort range",
+        "bigger nutrition overhaul",
+        "rebuilding the whole plan",
+        "fatigue does not require backing off",
+        "backend-approved",
+        "approved context",
+        "claim keys",
+        "validator",
+        "schema",
+        "json",
+        "as an ai coach",
+        "based on the provided data",
+    ]
+    return [fragment for fragment in fragments if fragment in text]
+
+
+def _awkward_phrase_flags(approved: Any) -> list[str]:
+    text = _approved_public_text(approved).lower()
+    fragments = [
+        "useful move",
+        "support the work",
+        "support the day",
+        "nutrition support",
+        "if it fits your meals",
+        "markers remain stable",
+        "maintain the current direction",
+        "progress gradually",
+        "protein-support option",
+        "calorie-support option",
+        "macro-support option",
+    ]
+    return [fragment for fragment in fragments if fragment in text]
+
+
+def _recovery_phrase_quality_flag(approved: Any) -> str:
+    text = _approved_public_text(approved).lower()
+    if "fatigue does not require backing off" in text:
+        return "bad_fatigue_phrase"
+    if "you can train as planned" in text or "no need to back off" in text:
+        return "natural"
+    return ""
 
 
 def _repeated_support_count(approved: Any) -> int:

@@ -144,6 +144,8 @@ class DailyCoachApprovedContextBriefSentence:
 
     text: str
     claim_keys: list[str] = field(default_factory=list)
+    meaning: str | None = None
+    user_safe_context: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -156,6 +158,41 @@ class DailyCoachClaimBackingGuide:
     claim_key: str
     allowed_phrasings: list[str] = field(default_factory=list)
     disallowed_phrasings: list[str] = field(default_factory=list)
+    internal_meaning: str | None = None
+    user_facing_phrase_examples: list[str] = field(default_factory=list)
+    disallowed_user_phrases: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachFoodSuggestionCopyItem:
+    """Provider-facing food copy contract for one approved suggestion."""
+
+    canonical_name: str
+    friendly_name: str
+    serving_display: str | None
+    macro_reason: str
+    user_facing_allowed: bool
+    claim_keys: dict[str, str | None] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DailyCoachNutritionActionContext:
+    """Backend-derived food-action meaning for provider synthesis."""
+
+    primary_gap: str | None
+    secondary_gap: str | None
+    action_type: str
+    user_goal: str
+    food_action_allowed: bool
+    approved_food_option_count: int
+    avoid_actions: list[str] = field(default_factory=list)
+    timing_hint: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

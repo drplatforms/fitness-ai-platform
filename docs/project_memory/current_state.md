@@ -187,3 +187,33 @@ These phrases are preserved to avoid losing accepted historical continuity conte
 - wapp
 - service shell only
 - no provider execution added
+
+
+---
+
+# Current Implementation Update — Daily Coach Provider Human Voice & Food Action Specificity v4
+
+Status: Backend v4 patch candidate built from v3 baseline `e23a435`.
+
+This milestone addresses the v3 product-copy failure after technical validation passed. It improves provider-facing human voice and food action specificity while preserving strict backend truth boundaries.
+
+Implemented direction:
+
+- friendly food labels are generated for provider/user-facing copy;
+- canonical food labels remain traceability/debug context;
+- serving display remains conservative and backend-approved only;
+- nutrition_action_context explains the approved food action without letting the model invent meal plans;
+- claim_backing_map separates internal meaning from user-facing phrase examples;
+- approved_context_brief and today_story avoid known awkward framework phrases;
+- prompt examples now directly ban the phrases rejected in QA/user critique;
+- validation catches canonical food label leakage, unquoted friendly foods, invented serving wording, and repeatedly rejected phrases;
+- trial matrix diagnostics include v4 food/voice fields.
+
+Boundaries preserved:
+
+- deterministic default unchanged;
+- OpenAI/direct_ollama opt-in only;
+- parser and quote/value validation remain strict;
+- no provider persistence;
+- no Streamlit changes;
+- no nutrition target, workout, recovery, or report architecture changes.

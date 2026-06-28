@@ -61,3 +61,23 @@
 - Does adaptive verbosity improve priority_action usefulness without metric repetition?
 - Does food suggestion usage improve actionability when approved and quote-valid?
 - Do field-specific claim budgets correctly flag too-few/too-many claim usage without weakening hard safety validation?
+
+
+---
+
+# Open Questions — Daily Coach Provider Human Voice & Food Action Specificity v4
+
+## Active
+
+1. Does gpt-5.5 use friendly food labels such as `canned tuna` instead of raw canonical names such as `Tuna, Canned in Water`?
+2. Does the provider avoid invented serving units such as cans, scoops, cups, bowls, or handfuls unless Backend approves them?
+3. Does `nutrition_action_context` make the priority action more concrete without turning the card into meal planning?
+4. Do the new phrase failures eliminate `make nutrition support the work`, `useful move`, `support the day`, and `fatigue does not require backing off today`?
+5. Does the output sound like a human coach talking to Dustin while keeping grounding at 5?
+
+## Closed/unchanged boundaries
+
+- Provider factual authority is not expanded.
+- Parser, quote/value validation, and deterministic fallback remain mandatory.
+- Deterministic remains default; OpenAI/direct_ollama remain opt-in/evaluation-only.
+- Raw provider output remains local-only diagnostic material.

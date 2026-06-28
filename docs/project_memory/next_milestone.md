@@ -128,3 +128,34 @@ Improve Daily Coach provider trial diagnostics without changing product runtime 
 - No nutrition/workout/recovery/report changes.
 - No live provider calls in tests.
 - No raw provider diagnostics or secrets committed.
+
+
+---
+
+# Next Milestone — Daily Coach Provider Human Voice & Food Action Specificity v4 QA
+
+Owner: QA / Agent Engineering / Architecture.
+
+Baseline implementation branch:
+`feature/daily-coach-provider-human-voice-food-action-specificity-v4`
+
+Primary QA objective:
+Verify that v4 materially improves human voice, food action specificity, recovery phrasing, and priority action clarity without weakening backend truth validation.
+
+Primary QA target:
+
+- user_id: 102
+- provider: openai
+- model: gpt-5.5
+- fallback_used should be false for valid provider output
+- final_narrative_source should be openai_approved
+
+Pass focus:
+
+- uses friendly food labels instead of awkward canonical labels;
+- avoids invented serving units;
+- avoids repeatedly rejected phrases;
+- food action is concrete but not meal planning;
+- recovery phrasing is natural and safe;
+- every concrete value/status/food/amount remains quote-backed;
+- invalid candidates still fallback deterministically.

@@ -25,6 +25,8 @@ from models.daily_coach_value_narrative_models import (
     CandidateDailyCoachValueNarrative,
     DailyCoachApprovedContextBriefSentence,
     DailyCoachClaimBackingGuide,
+    DailyCoachFoodSuggestionCopyItem,
+    DailyCoachNutritionActionContext,
     DailyCoachTodayStory,
     DailyCoachValueNarrativeResult,
     DailyCoachValueNarrativeRuntimeMetadata,
@@ -97,11 +99,13 @@ _CANDIDATE_SCHEMA: dict[str, Any] = {
 }
 
 
-_V3_HARD_FAIL_STYLE_PHRASES = {
+_V4_HARD_FAIL_STYLE_PHRASES = {
     "main lever",
     "effort anchor",
     "planned effort range",
     "bigger nutrition overhaul",
+    "rebuilding the whole plan",
+    "fatigue does not require backing off",
     "backend-approved",
     "approved context",
     "claim keys",
@@ -112,14 +116,26 @@ _V3_HARD_FAIL_STYLE_PHRASES = {
     "as an ai coach",
 }
 
-_V3_ROBOTIC_PHRASES = {
-    "make nutrition support",
-    "keep training controlled",
+_V4_AWKWARD_STYLE_PHRASES = {
+    "useful move",
+    "support the work",
+    "support the day",
+    "nutrition support",
+    "if it fits your meals",
     "markers remain stable",
+    "maintain the current direction",
     "maintain current direction",
     "progress gradually",
+    "protein-support option",
+    "calorie-support option",
+    "macro-support option",
+    "make nutrition support",
+    "keep training controlled",
     "supports confident training while staying inside",
 }
+
+_V3_HARD_FAIL_STYLE_PHRASES = _V4_HARD_FAIL_STYLE_PHRASES
+_V3_ROBOTIC_PHRASES = _V4_AWKWARD_STYLE_PHRASES
 
 
 class DailyCoachValueNarrativeError(ValueError):
@@ -381,6 +397,8 @@ def build_daily_coach_value_narrative_prompt(
     approved_context_brief = value_context.get("approved_context_brief") or {}
     claim_backing_map = value_context.get("claim_backing_map") or {}
     verbosity_budget = value_context.get("verbosity_budget") or {}
+    food_copy_context = value_context.get("food_suggestion_copy_context") or {}
+    nutrition_action_context = value_context.get("nutrition_action_context") or {}
     voice_examples = value_context.get("voice_examples") or _voice_examples()
     claim_rules = value_context.get("claim_usage_rules") or _claim_usage_rules(
         value_context.get("claim_budgets")
@@ -429,6 +447,10 @@ def build_daily_coach_value_narrative_prompt(
         f"{json.dumps(voice_examples, indent=2, default=str)}\n\n"
         "VERBOSITY_BUDGET:\n"
         f"{json.dumps(verbosity_budget, indent=2, default=str)}\n\n"
+        "FOOD_SUGGESTION_COPY_CONTEXT:\n"
+        f"{json.dumps(food_copy_context, indent=2, default=str)}\n\n"
+        "NUTRITION_ACTION_CONTEXT:\n"
+        f"{json.dumps(nutrition_action_context, indent=2, default=str)}\n\n"
         "FIELD_ROLE_GUIDANCE:\n"
         f"{json.dumps(field_roles, indent=2, default=str)}\n\n"
         "CLAIM_USAGE_RULES:\n"
@@ -1029,22 +1051,76 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                     continue
                 prefix = f"nutrition.food_suggestion.{index}"
                 display_name = suggestion.get("display_name")
+                friendly_name = _friendly_food_name(display_name)
+                macro_reason = _friendly_macro_reason(
+                    suggestion.get("macro_gap_addressed")
+                )
                 _add_claim(
                     claims,
                     key=f"{prefix}.display_name",
-                    label="food suggestion",
+                    label="canonical food suggestion",
                     value=display_name,
                     claim_type="recommendation",
                     aliases=[str(display_name)],
                     source="approved_food_suggestions",
                     confidence=suggestion.get("confidence")
                     or nutrition.get("food_suggestion_confidence"),
-                    priority=2,
+                    priority=3,
                     section_hint="priority_action",
                     coaching_use="prioritize_action",
-                    display_hint="Use as an option, not a command.",
+                    display_hint="Traceability label. Prefer friendly_name in visible copy when available.",
                     value_style="food_option",
                 )
+                _add_claim(
+                    claims,
+                    key=f"{prefix}.friendly_name",
+                    label="friendly food suggestion",
+                    value=friendly_name,
+                    claim_type="recommendation",
+                    aliases=[str(friendly_name)],
+                    source="approved_food_suggestions",
+                    confidence=suggestion.get("confidence")
+                    or nutrition.get("food_suggestion_confidence"),
+                    priority=1,
+                    section_hint="priority_action",
+                    coaching_use="prioritize_action",
+                    display_hint="Preferred user-facing food label.",
+                    value_style="food_option",
+                )
+                _add_claim(
+                    claims,
+                    key=f"{prefix}.macro_reason",
+                    label="food macro reason",
+                    value=macro_reason,
+                    claim_type="recommendation",
+                    aliases=[str(macro_reason)],
+                    source="approved_food_suggestions",
+                    confidence=suggestion.get("confidence")
+                    or nutrition.get("food_suggestion_confidence"),
+                    priority=2,
+                    section_hint="nutrition_note",
+                    coaching_use="support_nutrition_action",
+                    display_hint="Use only as simple gap context, not a prescription.",
+                    value_style="status_only",
+                )
+                serving_display = _approved_serving_display(suggestion)
+                if serving_display:
+                    _add_claim(
+                        claims,
+                        key=f"{prefix}.serving_display",
+                        label="serving display",
+                        value=serving_display,
+                        claim_type="recommendation",
+                        aliases=[str(serving_display)],
+                        source="approved_food_suggestions",
+                        confidence=suggestion.get("confidence")
+                        or nutrition.get("food_suggestion_confidence"),
+                        priority=2,
+                        section_hint="priority_action",
+                        coaching_use="prioritize_action",
+                        display_hint="Backend-approved serving display.",
+                        value_style="exact_value_allowed",
+                    )
                 _add_claim(
                     claims,
                     key=f"{prefix}.suggested_grams",
@@ -1169,6 +1245,8 @@ def _enrich_provider_context_packaging(context: dict[str, Any]) -> None:
     context["today_story"] = today_story.to_dict()
     context["claim_budgets"] = claim_budgets
     context["verbosity_budget"] = verbosity_budget.to_dict()
+    context["food_suggestion_copy_context"] = _food_suggestion_copy_context(context)
+    context["nutrition_action_context"] = _nutrition_action_context(context)
     context["approved_context_brief"] = _approved_context_brief(
         context, claims, today_story
     )
@@ -1224,34 +1302,36 @@ def _build_today_story(
         day_type = "data_quality_check"
         human_label = "Logging Check Day"
         main_tension = (
-            "Useful context exists, but logging quality limits stronger conclusions."
+            "There is usable context, but logging quality limits stronger conclusions."
         )
-        desired_move = "Keep the advice simple and improve the next useful log entry."
+        desired_move = (
+            "Keep the advice simple and make the next log entry easier to trust."
+        )
     elif has_nutrition and has_training and has_recovery:
         day_type = "nutrition_supported_strength_day"
-        human_label = "Nutrition-Supported Strength Day"
-        main_tension = "Training is appropriate today, but nutrition intake may need simple support."
-        desired_move = (
-            "Connect clean training execution with one simple nutrition support action."
-        )
+        human_label = "Clean Strength + Easy Fuel"
+        main_tension = "Training is appropriate, but nutrition is lagging."
+        desired_move = "Train clean, log honestly, then make one easy food move."
     elif has_nutrition:
         day_type = "nutrition_support"
-        human_label = "Nutrition Support Day"
-        main_tension = "The clearest improvement today is a simple nutrition action."
-        desired_move = "Use one approved food or logging action if it fits the day."
+        human_label = "Easy Food Move Day"
+        main_tension = "The clearest improvement today is one simple food action."
+        desired_move = (
+            "Add one easy approved food option or tighten the next log entry."
+        )
     elif has_training:
         day_type = "training_execution_focus"
-        human_label = "Training Execution Day"
+        human_label = "Clean Training Day"
         main_tension = (
-            "The win today is doing the planned work without chasing extra intensity."
+            "The win today is doing the planned work without chasing max effort."
         )
-        desired_move = "Complete the planned work cleanly and stay within the approved effort range."
+        desired_move = (
+            "Complete the planned work cleanly and keep a couple reps in reserve."
+        )
     elif limitation_keys or limitations:
         day_type = "maintain_and_log"
         human_label = "Maintain and Log Day"
-        main_tension = (
-            "The available context is useful but not complete enough for a bigger call."
-        )
+        main_tension = "The available context helps, but it is not complete enough for a bigger call."
         desired_move = "Keep the next action small, specific, and easy to verify."
     else:
         day_type = "controlled_progress"
@@ -1270,19 +1350,19 @@ def _build_today_story(
     for key in sorted(food_keys):
         if len(primary_claim_keys) >= 6:
             break
-        if key.endswith(".display_name"):
+        if key.endswith(".friendly_name"):
             primary_claim_keys.append(key)
     optional_action_claim_keys = [
         key for key in sorted(food_keys) if key not in primary_claim_keys
     ]
 
     training_implication = (
-        "Do the planned session without turning it into a max-effort day."
+        "Do the planned strength work without chasing max effort."
         if has_training
         else "Do not invent training details beyond the approved plan context."
     )
     nutrition_implication = (
-        "Use one simple approved food option if it fits the day."
+        "Use one simple approved food option to help close the gap."
         if food_keys
         else (
             "Use nutrition status only when it makes the action clearer."
@@ -1291,7 +1371,7 @@ def _build_today_story(
         )
     )
     recovery_implication = (
-        "Recovery does not require backing off today."
+        "Recovery looks good enough to train as planned."
         if has_recovery
         else "Avoid claiming recovery details that are not approved."
     )
@@ -1414,6 +1494,138 @@ def _adaptive_verbosity_guidance(
     }
 
 
+def _food_suggestion_copy_context(context: dict[str, Any]) -> dict[str, Any]:
+    nutrition = context.get("approved_nutrition") or {}
+    suggestions = nutrition.get("approved_food_suggestions") or []
+    if not isinstance(suggestions, list):
+        suggestions = []
+    items: list[DailyCoachFoodSuggestionCopyItem] = []
+    for index, suggestion in enumerate(suggestions[:2], start=1):
+        if not isinstance(suggestion, dict):
+            continue
+        canonical_name = str(suggestion.get("display_name") or "").strip()
+        if not canonical_name:
+            continue
+        prefix = f"nutrition.food_suggestion.{index}"
+        serving_display = _approved_serving_display(suggestion)
+        item = DailyCoachFoodSuggestionCopyItem(
+            canonical_name=canonical_name,
+            friendly_name=_friendly_food_name(canonical_name),
+            serving_display=serving_display,
+            macro_reason=_friendly_macro_reason(suggestion.get("macro_gap_addressed")),
+            user_facing_allowed=True,
+            claim_keys={
+                "canonical_name": f"{prefix}.display_name",
+                "friendly_name": f"{prefix}.friendly_name",
+                "serving_display": (
+                    f"{prefix}.serving_display" if serving_display else None
+                ),
+                "macro_reason": f"{prefix}.macro_reason",
+                "suggested_grams": (
+                    f"{prefix}.suggested_grams"
+                    if suggestion.get("suggested_grams") is not None
+                    else None
+                ),
+            },
+        )
+        items.append(item)
+    return {"suggestions": [item.to_dict() for item in items]}
+
+
+def _nutrition_action_context(context: dict[str, Any]) -> dict[str, Any]:
+    nutrition = context.get("approved_nutrition") or {}
+    macro_status = nutrition.get("macro_status") or {}
+    suggestions = nutrition.get("approved_food_suggestions") or []
+    gaps: list[str] = []
+    if isinstance(macro_status, dict):
+        for macro in ["protein", "calories", "carbohydrates", "carbs", "fat"]:
+            payload = macro_status.get(macro)
+            if isinstance(payload, dict) and str(payload.get("target_status")) in {
+                "below_target",
+                "low",
+                "under",
+            }:
+                gaps.append(_friendly_macro_reason(macro))
+    if not gaps and isinstance(suggestions, list):
+        for suggestion in suggestions:
+            if isinstance(suggestion, dict):
+                reason = _friendly_macro_reason(suggestion.get("macro_gap_addressed"))
+                if reason and reason not in gaps:
+                    gaps.append(reason)
+    primary_gap = gaps[0] if gaps else None
+    secondary_gap = gaps[1] if len(gaps) > 1 else None
+    timing_hint = None
+    action_type = "simple_add_on" if suggestions else "logging_or_simple_food_move"
+    context_obj = DailyCoachNutritionActionContext(
+        primary_gap=primary_gap,
+        secondary_gap=secondary_gap,
+        action_type=action_type,
+        user_goal="cover the obvious nutrition gap without overhauling the day",
+        food_action_allowed=bool(suggestions),
+        approved_food_option_count=(
+            len(suggestions) if isinstance(suggestions, list) else 0
+        ),
+        timing_hint=timing_hint,
+        avoid_actions=[
+            "do not force extra workout intensity to compensate",
+            "do not frame this as a full meal-plan reset",
+            "do not imply the user failed",
+        ],
+    )
+    return context_obj.to_dict()
+
+
+def _friendly_food_name(name: Any) -> str:
+    canonical = str(name or "").strip()
+    mapping = {
+        "Tuna, Canned in Water": "canned tuna",
+        "Greek Yogurt, Plain": "plain Greek yogurt",
+        "Chicken Breast, Cooked, Skinless": "cooked chicken breast",
+        "Chicken Breast, Raw, Skinless": "raw chicken breast",
+        "White Rice, Cooked": "cooked white rice",
+        "Brown Rice, Cooked": "cooked brown rice",
+        "Oats, Dry": "dry oats",
+        "Egg, Large": "a large egg",
+        "Ground Beef, 90/10": "90/10 ground beef",
+        "Ground Beef, 80/20": "80/20 ground beef",
+    }
+    if canonical in mapping:
+        return mapping[canonical]
+    pieces = [piece.strip() for piece in canonical.split(",") if piece.strip()]
+    if not pieces:
+        return canonical
+    base = pieces[0].lower()
+    qualifiers = [piece.lower() for piece in pieces[1:]]
+    useful = [
+        item
+        for item in qualifiers
+        if item and item not in {"generic", "plain"} and not item.startswith("upc")
+    ]
+    if useful:
+        return " ".join(useful + [base]).strip()
+    return base
+
+
+def _friendly_macro_reason(reason: Any) -> str:
+    text = str(reason or "").strip().lower()
+    if "protein" in text:
+        return "protein"
+    if "calorie" in text or "energy" in text or text == "kcal":
+        return "calories"
+    if "carb" in text:
+        return "carbs"
+    if "fat" in text:
+        return "fat"
+    return text or "nutrition"
+
+
+def _approved_serving_display(suggestion: dict[str, Any]) -> str | None:
+    serving = suggestion.get("serving_display")
+    if isinstance(serving, str) and serving.strip():
+        return serving.strip()
+    return None
+
+
 def _approved_context_brief(
     context: dict[str, Any],
     claims: list[dict[str, Any]],
@@ -1422,56 +1634,86 @@ def _approved_context_brief(
     available = {str(claim.get("key")) for claim in claims}
     sentences: list[DailyCoachApprovedContextBriefSentence] = []
 
-    def add_sentence(text: str, claim_keys: list[str]) -> None:
+    def add_sentence(
+        *, meaning: str, user_safe_context: str, claim_keys: list[str]
+    ) -> None:
         backed_keys = [key for key in claim_keys if key in available]
-        if backed_keys and not _contains_framework_phrase(text):
+        if backed_keys and not _contains_framework_phrase(user_safe_context):
             sentences.append(
                 DailyCoachApprovedContextBriefSentence(
-                    text=text,
+                    text=user_safe_context,
+                    meaning=meaning,
+                    user_safe_context=user_safe_context,
                     claim_keys=backed_keys,
                 )
             )
 
-    if "training.rir_range" in available:
-        add_sentence(
-            "Today's training should stay clean and controlled instead of becoming a max-effort session.",
-            ["training.rir_range"],
-        )
     if {
+        "training.rir_range",
         "recovery.readiness_level",
         "recovery.fatigue_risk",
     }.issubset(available):
         add_sentence(
-            "Recovery looks favorable: readiness is High and fatigue risk is Low.",
-            ["recovery.readiness_level", "recovery.fatigue_risk"],
+            meaning="Training is appropriate today.",
+            user_safe_context="The planned strength session is okay to do today.",
+            claim_keys=[
+                "training.rir_range",
+                "recovery.readiness_level",
+                "recovery.fatigue_risk",
+            ],
         )
+    elif "training.rir_range" in available:
+        add_sentence(
+            meaning="Training should not become max-effort.",
+            user_safe_context="The session should stay clean, with a couple reps in reserve.",
+            claim_keys=["training.rir_range"],
+        )
+
+    if "training.rir_range" in available:
+        add_sentence(
+            meaning="Training should not become max-effort.",
+            user_safe_context="The session should stay clean, with a couple reps in reserve.",
+            claim_keys=["training.rir_range"],
+        )
+
     if {
         "nutrition.calories.status",
         "nutrition.protein.status",
     }.issubset(available):
         add_sentence(
-            "Nutrition is the main support area today because calories and protein are below target.",
-            ["nutrition.calories.status", "nutrition.protein.status"],
+            meaning="Nutrition is the bigger gap.",
+            user_safe_context="Calories and protein are below target.",
+            claim_keys=["nutrition.calories.status", "nutrition.protein.status"],
         )
     elif "nutrition.protein.status" in available:
         add_sentence(
-            "Protein is the easiest nutrition lever to clean up today.",
-            ["nutrition.protein.status"],
+            meaning="Protein is the clearest food gap.",
+            user_safe_context="Protein is the easiest fix today.",
+            claim_keys=["nutrition.protein.status"],
         )
-    food_key = _first_claim_key_with_suffix(
-        available, "nutrition.food_suggestion", ".display_name"
+
+    friendly_food_key = _first_claim_key_with_suffix(
+        available, "nutrition.food_suggestion", ".friendly_name"
     )
-    if food_key:
-        display_name = _claim_value_by_key(claims, food_key)
-        if display_name:
+    if friendly_food_key:
+        friendly_name = _claim_value_by_key(claims, friendly_food_key)
+        if friendly_name:
+            food_claims = [friendly_food_key]
+            if "nutrition.protein.status" in available:
+                food_claims.append("nutrition.protein.status")
             add_sentence(
-                f"One approved option is {display_name}.",
-                [food_key],
+                meaning="A simple food move is enough.",
+                user_safe_context=(
+                    f"An approved option like {friendly_name} can help cover protein."
+                ),
+                claim_keys=food_claims,
             )
+
     if today_story.desired_coaching_move and today_story.primary_claim_keys:
         add_sentence(
-            str(today_story.desired_coaching_move),
-            list(today_story.primary_claim_keys)[:3],
+            meaning="Priority action.",
+            user_safe_context=str(today_story.desired_coaching_move),
+            claim_keys=list(today_story.primary_claim_keys)[:3],
         )
 
     return {"sentences": [sentence.to_dict() for sentence in sentences[:5]]}
@@ -1485,97 +1727,119 @@ def _claim_backing_map(claims: list[dict[str, Any]]) -> dict[str, dict[str, Any]
         label: str,
         claim_key: str,
         *,
-        allowed: list[str],
+        internal_meaning: str,
+        examples: list[str],
         disallowed: list[str],
     ) -> None:
         if claim_key in claim_keys:
             backing[label] = DailyCoachClaimBackingGuide(
                 claim_key=claim_key,
-                allowed_phrasings=allowed,
+                allowed_phrasings=examples,
                 disallowed_phrasings=disallowed,
+                internal_meaning=internal_meaning,
+                user_facing_phrase_examples=examples,
+                disallowed_user_phrases=disallowed,
             )
 
     add(
-        "calories are below target",
+        "recovery_favorable",
+        "recovery.readiness_level",
+        internal_meaning="Recovery context supports doing the planned session today.",
+        examples=[
+            "You can train as planned today.",
+            "Recovery looks good enough to train.",
+            "No need to back off today.",
+        ],
+        disallowed=[
+            "fatigue does not require backing off today",
+            "fatigue is not a concern",
+            "recovery guarantees performance",
+            "you are fully recovered",
+        ],
+    )
+    add(
+        "fatigue_risk_low",
+        "recovery.fatigue_risk",
+        internal_meaning="Fatigue risk is approved as Low, but this is not a guarantee.",
+        examples=[
+            "Fatigue risk is Low.",
+            "You can train as planned; just do not turn it into a max-effort test.",
+        ],
+        disallowed=[
+            "fatigue does not require backing off today",
+            "there is no fatigue",
+            "fatigue is not a concern at all",
+        ],
+    )
+    add(
+        "controlled_training",
+        "training.rir_range",
+        internal_meaning="Training should stay within the approved effort range.",
+        examples=[
+            "Keep a couple reps in reserve.",
+            "Make clean reps the win.",
+            "Stop before the set turns into a grind.",
+            "Do not turn this into a max-effort day.",
+        ],
+        disallowed=[
+            "effort anchor",
+            "planned effort range",
+            "stay inside the plan",
+            "controlled execution framework",
+        ],
+    )
+    add(
+        "protein_gap",
+        "nutrition.protein.status",
+        internal_meaning="Protein is below the approved target/status.",
+        examples=[
+            "Protein is the easiest fix today.",
+            "Add an easy protein option.",
+            "One simple protein bump is enough.",
+        ],
+        disallowed=[
+            "protein-support option",
+            "nutrition support",
+            "support the day",
+            "rebuilding the whole plan",
+        ],
+    )
+    add(
+        "calorie_gap",
         "nutrition.calories.status",
-        allowed=[
-            "calories are below target",
-            "calories are lagging",
-            "calorie intake is behind the target",
+        internal_meaning="Calories are below the approved target/status.",
+        examples=[
+            "Calories are below target.",
+            "Calories are lagging today.",
+            "Fuel the session instead of trying to force more out of the workout.",
         ],
         disallowed=[
             "you are underfed",
             "you are in a severe deficit",
             "you are compromising recovery",
-        ],
-    )
-    add(
-        "protein is below target",
-        "nutrition.protein.status",
-        allowed=[
-            "protein is below target",
-            "protein is the easiest fix today",
-            "a simple protein option would help support the day",
-        ],
-        disallowed=[
-            "you failed protein",
-            "you are losing muscle",
-            "you need protein immediately",
+            "make nutrition support the work",
         ],
     )
     food_key = _first_claim_key_with_suffix(
-        claim_keys, "nutrition.food_suggestion", ".display_name"
+        claim_keys, "nutrition.food_suggestion", ".friendly_name"
     )
     if food_key:
-        display_name = (
-            _claim_value_by_key(claims, food_key) or "the approved food option"
-        )
+        friendly_name = _claim_value_by_key(claims, food_key) or "the food option"
         add(
-            f"{display_name} is approved",
+            "food_option",
             food_key,
-            allowed=[
-                f"an approved option like {display_name}",
-                f"one simple option is {display_name}",
+            internal_meaning="This food is an approved option from the backend.",
+            examples=[
+                friendly_name,
+                f"an easy option like {friendly_name}",
+                f"something simple like {friendly_name}",
             ],
             disallowed=[
-                f"you must eat {display_name}",
-                f"{display_name} is required",
-                f"{display_name} will fix the day",
+                "Tuna, Canned in Water",
+                f"must eat {friendly_name}",
+                f"{friendly_name} will fix the day",
             ],
         )
-    add(
-        "RIR range",
-        "training.rir_range",
-        allowed=[
-            "keep a couple reps in reserve",
-            "stay within RIR 2-4",
-            "do not turn it into a max-effort day",
-        ],
-        disallowed=["go to failure", "push past the plan", "increase intensity"],
-    )
-    add(
-        "readiness is High",
-        "recovery.readiness_level",
-        allowed=[
-            "readiness is High",
-            "recovery is on your side",
-            "you are clear to train today",
-        ],
-        disallowed=[
-            "you are fully recovered",
-            "you cannot overdo it",
-            "recovery guarantees performance",
-        ],
-    )
-    add(
-        "fatigue risk is Low",
-        "recovery.fatigue_risk",
-        allowed=[
-            "fatigue risk is Low",
-            "fatigue does not require backing off today",
-        ],
-        disallowed=["there is no fatigue", "fatigue is not a concern at all"],
-    )
     return {label: guide.to_dict() for label, guide in backing.items()}
 
 
@@ -1583,22 +1847,52 @@ def _voice_examples() -> dict[str, list[dict[str, str]]]:
     return {
         "examples": [
             {
-                "bad": "Calories are below target today, so make nutrition support the main lever while keeping training controlled.",
-                "better": "You're clear to train today, but don't make the workout do all the work. Get the planned strength session done cleanly, then use one simple approved food option if it fits your meals.",
+                "bad": "Make nutrition support the work.",
+                "better": "Fuel the session instead of trying to force more out of the workout.",
+            },
+            {
+                "bad": "The useful move is simple.",
+                "better": "Keep it simple.",
+            },
+            {
+                "bad": "Choose one protein-focused option that fits your day.",
+                "better": "Add an easy protein option.",
+            },
+            {
+                "bad": "Fatigue does not require backing off today.",
+                "better": "You can train as planned; just do not turn it into a max-effort test.",
+            },
+            {
+                "bad": "Tuna, Canned in Water.",
+                "better": "canned tuna",
             },
             {
                 "bad": "Use RIR 2-4 as your effort anchor.",
-                "better": "Keep a couple reps in reserve and make clean execution the win.",
+                "better": "Keep a couple reps in reserve.",
             },
             {
-                "bad": "Protein is also below target; adding a simple protein option can support the day without turning this into a bigger nutrition overhaul.",
-                "better": "Protein is the easiest fix today. A simple approved option is enough; this does not need to become a full meal-plan reset.",
+                "bad": "Do not rebuild the whole plan.",
+                "better": "You do not need to overhaul the whole day.",
+            },
+        ],
+        "style_rules": [
+            {
+                "rule": "talk_to_user",
+                "guidance": "Write like a coach talking to Dustin, not a system report.",
             },
             {
-                "bad": "Recovery supports confident training while staying inside the planned effort range.",
-                "better": "Recovery is on your side today, so you do not need to back off Ã¢â‚¬â€ just do not turn it into a max-effort session.",
+                "rule": "avoid_backend_abstractions",
+                "guidance": "Do not copy internal_meaning or backend/framework words.",
             },
-        ]
+            {
+                "rule": "friendly_food_labels",
+                "guidance": "Use friendly_name for visible food copy when it exists.",
+            },
+            {
+                "rule": "servings",
+                "guidance": "Use grams only when suggested_grams is approved; do not invent cans, scoops, cups, bowls, or handfuls.",
+            },
+        ],
     }
 
 
@@ -1794,9 +2088,9 @@ def _field_role_guidance() -> dict[str, str]:
     return {
         "headline": "Short title, not always Daily Coach.",
         "summary": "One sentence saying what matters most today.",
-        "nutrition_note": "Concrete nutrition state plus one approved implication.",
-        "training_note": "Approved training direction plus effort/execution anchor.",
-        "recovery_note": "Recovery signal plus what it means for today's training confidence.",
+        "nutrition_note": "Concrete nutrition state plus one simple food/logging implication.",
+        "training_note": "Approved training direction in normal effort language.",
+        "recovery_note": "Recovery signal plus what it means for today's training choice.",
         "priority_action": "One concrete action the user can do today.",
     }
 
@@ -1843,6 +2137,12 @@ def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
         ),
         "claim_backing_map": dict(value_context.get("claim_backing_map") or {}),
         "verbosity_budget": dict(value_context.get("verbosity_budget") or {}),
+        "food_suggestion_copy_context": dict(
+            value_context.get("food_suggestion_copy_context") or {}
+        ),
+        "nutrition_action_context": dict(
+            value_context.get("nutrition_action_context") or {}
+        ),
     }
 
 

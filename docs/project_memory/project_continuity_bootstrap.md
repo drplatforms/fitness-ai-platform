@@ -64,3 +64,12 @@ Do not make OpenAI or direct_ollama default. Do not change normal Daily Coach en
 ## Continuity update — Daily Coach Provider Context Selection & Coaching Synthesis v2
 
 V2 adds backend-derived today_story, expanded high-value claim selection, field-specific claim budgets, adaptive verbosity guidance, and trial-matrix v2 diagnostics. Deterministic remains default, OpenAI/direct_ollama remain opt-in, quote/value validation remains mandatory, and raw provider output remains local-only diagnostics.
+
+
+---
+
+# Continuity Note — Daily Coach Provider Human Voice & Food Action Specificity v4
+
+Use v3 commit `e23a435` as the v4 baseline. v4 is not a provider authority expansion. It is a provider-materials and validation hardening milestone focused on human voice, friendly food labels, serving-display safety, nutrition action context, and banned awkward phrases.
+
+Important patch lesson: do not use broad variable-removal scripts for reused local variables like `nutrition` or `recovery`; scope edits by function/block anchors.

@@ -14,23 +14,23 @@
     "previous_accepted_milestone": "Daily Coach OpenAI Provider Responses Runtime Fix v1",
     "previous_main_merge_commit": "60fe77b",
     "previous_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
-    "current_source_of_truth": "main at 4104796",
+    "current_source_of_truth": "feature/daily-coach-natural-draft-product-voice-audit-v2 at 9ba9579",
     "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
     "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-    "active_backend_milestone": "Daily Coach Natural Draft + Product Voice Audit v2",
-    "active_backend_status": "backend implementation patch candidate ready for validation",
-    "latest_technical_baseline_commit": "4104796",
-    "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-28_4104796_main_merge-daily-coach-natural-draft-claim-audit-v1.zip"
+    "active_backend_milestone": "Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1",
+    "active_backend_status": "focused QA-failure patch candidate ready for validation",
+    "latest_technical_baseline_commit": "9ba9579",
+    "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-28_9ba9579_feature-daily-coach-natural-draft-product-voice-audit-v2_add-daily-coach-natural-draft-product-voice-audit-v2.zip"
   },
   "active_roadmap": {
-    "current_recommended_milestone": "Daily Coach Natural Draft + Product Voice Audit v2",
+    "current_recommended_milestone": "Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
     "recommended_owner": "Backend Development",
-    "source_main_commit": "4104796",
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_4104796_main_merge-daily-coach-natural-draft-claim-audit-v1.zip",
+    "source_main_commit": "9ba9579",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_9ba9579_feature-daily-coach-natural-draft-product-voice-audit-v2_add-daily-coach-natural-draft-product-voice-audit-v2.zip",
     "commit_check_mode": "code",
     "qa_class": "CLASS 2 / CLASS 5 HYBRID",
-    "primary_question": "Does first-pass natural drafting plus factual and product voice audit produce better truthful coaching than deterministic fallback?",
+    "primary_question": "Does the focused patch block bad fallback, calibrate Product Voice Audit, and repair factually safe product wording before fallback?",
     "secondary_owner": "Agent Engineering"
   },
   "boundaries": {

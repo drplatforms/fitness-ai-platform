@@ -15,12 +15,16 @@ ReviewerConclusion = Literal[
     "repair_failure",
     "fallback_failure",
     "product_voice_failure",
+    "minor_voice_warning",
+    "repaired_success",
+    "fallback_success",
     "success",
 ]
 FinalCopySource = Literal[
     "draft_approved",
     "repair_approved",
     "deterministic_fallback",
+    "no_approved_copy",
     "skipped",
 ]
 

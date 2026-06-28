@@ -12,6 +12,7 @@ from typing import Any
 from models.daily_coach_natural_draft_audit_models import (
     AddressingPolicy,
     ApprovedCoachBrief,
+    ClaimAuditFinding,
     ClaimAuditResult,
     NaturalCoachDraft,
     NaturalDraftAuditRunResult,
@@ -176,11 +177,29 @@ def run_daily_coach_natural_draft_audit_scenario(
     )
     repaired_product_audit: ProductVoiceAuditResult | None = None
     final_copy: NaturalCoachDraft | None = None
-    final_source = "deterministic_fallback"
+    final_source = "no_approved_copy"
 
     if audit.passed and product_approval.passed:
         final_copy = resolved_draft
         final_source = "draft_approved"
+    elif audit.passed and product_approval.decision == "repair_required":
+        product_repair_audit = _claim_audit_for_product_voice_repair(product_approval)
+        repair_result = repair_natural_coach_draft_once(
+            draft=resolved_draft,
+            brief=resolved_brief,
+            audit_result=product_repair_audit,
+            provider=resolved_provider,
+            model=model,
+            allow_live_provider=allow_live_provider,
+            environ=env,
+        )
+        if repair_result.passed and repair_result.final_copy:
+            repaired_product_audit = audit_daily_coach_product_voice(
+                repair_result.final_copy, resolved_brief, mode="approval"
+            )
+            if repaired_product_audit.passed:
+                final_copy = repair_result.final_copy
+                final_source = "repair_approved"
     elif not audit.passed and audit.repairable:
         repair_result = repair_natural_coach_draft_once(
             draft=resolved_draft,
@@ -199,7 +218,7 @@ def run_daily_coach_natural_draft_audit_scenario(
                 final_copy = repair_result.final_copy
                 final_source = "repair_approved"
 
-    if final_copy is None:
+    if final_copy is None and _fallback_is_final_approvable(fallback_product_audit):
         final_copy = deterministic_fallback
         final_source = "deterministic_fallback"
 
@@ -238,6 +257,8 @@ def run_daily_coach_natural_draft_audit_scenario(
             "product_voice_audit_passed_initially": product_approval.passed,
             "first_pass_product_voice_exploration": product_exploration.to_dict(),
             "repair_attempted": repair_result.attempted,
+            "fallback_product_voice_passed": fallback_product_audit.passed,
+            "final_approval_passed": final_copy is not None,
             "deterministic_fallback_is_floor_not_goal": True,
         },
     )
@@ -418,8 +439,10 @@ def _copy_with_fallback(
         extracted_claims=result.extracted_claims,
         audit_result=result.audit_result,
         repair_result=result.repair_result,
-        final_copy=fallback,
-        final_source="deterministic_fallback",
+        final_copy=fallback if fallback_audit.passed else None,
+        final_source="deterministic_fallback"
+        if fallback_audit.passed
+        else "no_approved_copy",
         deterministic_fallback=fallback,
         fallback_product_voice_audit_result=fallback_audit,
         reviewer_conclusion="model_failure",
@@ -453,6 +476,8 @@ def _render_brief_summary(results: Sequence[NaturalDraftAuditRunResult]) -> str:
                 f"Provider: {result.provider}",
                 f"Final source: {result.final_source}",
                 f"Reviewer conclusion: {result.reviewer_conclusion}",
+                f"Final approval passed: {result.final_copy is not None}",
+                f"Final approval status: {_final_approval_status(result)}",
                 "",
             ]
         )
@@ -620,15 +645,19 @@ def _render_side_by_side_comparison(
         lines.extend(
             [
                 "### Deterministic fallback",
+                _candidate_status_block(result, "fallback"),
                 _draft_text(result.deterministic_fallback),
                 "",
                 "### GPT-5.5/provider first-pass natural draft before audit",
+                _candidate_status_block(result, "first_pass"),
                 _draft_text(result.draft),
                 "",
                 "### Audited/repaired draft",
+                _candidate_status_block(result, "repair"),
                 _draft_text(result.repair_result.final_copy),
                 "",
                 "### Final approved copy",
+                _candidate_status_block(result, "final"),
                 _draft_text(result.final_copy),
                 "",
                 f"Final source: {result.final_source}",
@@ -676,7 +705,9 @@ def _render_final_copy(results: Sequence[NaturalDraftAuditRunResult]) -> str:
                 [f"### {result.final_copy.headline}", "", result.final_copy.body]
             )
         else:
-            lines.append("(no final copy)")
+            lines.append(
+                "NO APPROVED COPY: final approval gates failed. Do not show a user-facing Daily Coach card from this run."
+            )
         lines.append("")
     return "\n".join(lines)
 
@@ -696,12 +727,12 @@ def _render_comparison_table(results: Sequence[NaturalDraftAuditRunResult]) -> s
     lines = [
         "# Natural Draft Product Voice Audit Comparison Table",
         "",
-        "| Scenario | Provider | Final source | Claim audit | Product voice | Fallback voice | Repair attempted | Reviewer conclusion |",
-        "|---|---|---|---:|---:|---:|---:|---|",
+        "| Scenario | Provider | Final source | Final approval | Claim audit | Product voice | Fallback voice | Repair attempted | Reviewer conclusion |",
+        "|---|---|---|---:|---:|---:|---:|---:|---|",
     ]
     for result in results:
         lines.append(
-            f"| {result.scenario_id} | {result.provider} | {result.final_source} | {result.audit_result.passed} | {_bool_or_na(result.product_voice_audit_result.passed if result.product_voice_audit_result else None)} | {_bool_or_na(result.fallback_product_voice_audit_result.passed if result.fallback_product_voice_audit_result else None)} | {result.repair_result.attempted} | {result.reviewer_conclusion} |"
+            f"| {result.scenario_id} | {result.provider} | {result.final_source} | {result.final_copy is not None} | {result.audit_result.passed} | {_bool_or_na(result.product_voice_audit_result.passed if result.product_voice_audit_result else None)} | {_bool_or_na(result.fallback_product_voice_audit_result.passed if result.fallback_product_voice_audit_result else None)} | {result.repair_result.attempted} | {result.reviewer_conclusion} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -723,6 +754,8 @@ def _render_validation_summary(results: Sequence[NaturalDraftAuditRunResult]) ->
                 f"Addressing violations: {result.audit_result.addressing_violation_count}",
                 f"Product voice findings: {len(voice.findings) if voice else 0}",
                 f"Reviewer conclusion: {result.reviewer_conclusion}",
+                f"Final approval passed: {result.final_copy is not None}",
+                f"Final approval status: {_final_approval_status(result)}",
                 "",
             ]
         )
@@ -755,6 +788,8 @@ def _comparison_row(result: NaturalDraftAuditRunResult) -> dict[str, Any]:
         "provider": result.provider,
         "model": result.model or "",
         "final_source": result.final_source,
+        "final_approval_passed": result.final_copy is not None,
+        "final_approval_status": _final_approval_status(result),
         "initial_claim_audit_passed": result.audit_result.passed,
         "initial_product_voice_passed": voice.passed if voice else "",
         "initial_product_readiness_score": voice.product_readiness_score
@@ -816,8 +851,13 @@ def _bool_or_na(value: bool | None) -> str:
 
 
 def _fallback_reason(result: NaturalDraftAuditRunResult) -> str:
-    if result.final_source != "deterministic_fallback":
+    if result.final_source not in {"deterministic_fallback", "no_approved_copy"}:
         return "not used"
+    if (
+        result.fallback_product_voice_audit_result
+        and not result.fallback_product_voice_audit_result.passed
+    ):
+        return "fallback blocked because Product Voice Audit failed"
     if not result.audit_result.passed:
         return "claim audit failed or repair failed"
     if (
@@ -826,6 +866,99 @@ def _fallback_reason(result: NaturalDraftAuditRunResult) -> str:
     ):
         return "product voice audit failed"
     return "fallback selected by final approval"
+
+
+def _fallback_is_final_approvable(
+    fallback_product_audit: ProductVoiceAuditResult,
+) -> bool:
+    return (
+        fallback_product_audit.passed
+        and fallback_product_audit.product_readiness_score >= 4
+    )
+
+
+def _claim_audit_for_product_voice_repair(
+    product_audit: ProductVoiceAuditResult,
+) -> ClaimAuditResult:
+    findings = tuple(
+        ClaimAuditFinding(
+            finding_type=finding.finding_type,
+            severity="warn",
+            text_span=finding.text_span,
+            extracted_claim=finding.text_span,
+            reason=finding.reason,
+            required_support="product voice repair",
+            available_support=("ApprovedCoachBrief",),
+            repair_instruction=finding.repair_instruction,
+            repairable=finding.repairable,
+        )
+        for finding in product_audit.findings
+        if finding.repairable
+    )
+    return ClaimAuditResult(
+        passed=False,
+        findings=findings,
+        repairable=bool(findings),
+        final_decision="repair_required" if findings else "fallback_required",
+    )
+
+
+def _final_approval_status(result: NaturalDraftAuditRunResult) -> str:
+    if result.final_copy is None:
+        if result.reviewer_conclusion == "fallback_failure":
+            return "no_approved_copy:fallback_blocked"
+        return f"no_approved_copy:{result.reviewer_conclusion}"
+    if result.final_source == "deterministic_fallback":
+        return "accepted:fallback_success"
+    return "accepted"
+
+
+def _candidate_status_block(
+    result: NaturalDraftAuditRunResult, candidate_type: str
+) -> str:
+    if candidate_type == "first_pass":
+        claim_status = (
+            "passed" if result.audit_result.passed else "failed_factual_audit"
+        )
+        voice = result.product_voice_audit_result
+        voice_status = (
+            "passed" if voice and voice.passed else "failed_product_voice_audit"
+        )
+        final_status = (
+            "accepted" if result.final_source == "draft_approved" else "not_final"
+        )
+    elif candidate_type == "repair":
+        claim_status = "passed" if result.repair_result.passed else "repair_failed"
+        voice = result.repaired_product_voice_audit_result
+        voice_status = (
+            "n/a"
+            if voice is None
+            else ("passed" if voice.passed else "failed_product_voice_audit")
+        )
+        final_status = (
+            "accepted" if result.final_source == "repair_approved" else "not_final"
+        )
+    elif candidate_type == "fallback":
+        claim_status = "passed"
+        voice = result.fallback_product_voice_audit_result
+        voice_status = (
+            "n/a"
+            if voice is None
+            else ("passed" if voice.passed else "failed_product_voice_audit")
+        )
+        final_status = (
+            "accepted"
+            if result.final_source == "deterministic_fallback"
+            else "fallback_blocked"
+        )
+    else:
+        claim_status = "passed" if result.final_copy else "no_approved_copy"
+        voice_status = _final_approval_status(result)
+        final_status = "accepted" if result.final_copy else "no_approved_copy"
+    return (
+        f"Status: claim_audit={claim_status}; "
+        f"product_voice={voice_status}; final_approval={final_status}"
+    )
 
 
 def _reviewer_conclusion(
@@ -837,8 +970,12 @@ def _reviewer_conclusion(
     fallback_product_audit: ProductVoiceAuditResult,
     final_source: str,
 ) -> str:
-    if final_source != "deterministic_fallback":
+    if final_source == "draft_approved":
         return "success"
+    if final_source == "repair_approved":
+        return "repaired_success"
+    if final_source == "deterministic_fallback":
+        return "fallback_success"
     if not fallback_product_audit.passed:
         return "fallback_failure"
     if not audit.passed and not audit.repairable:

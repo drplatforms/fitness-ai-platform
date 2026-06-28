@@ -1,22 +1,21 @@
-# Next Milestone — Daily Coach Natural Draft + Product Voice Audit v2
+# Next Milestone — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
 
-Owner: Backend Development with Agent Engineering advisory and QA validation.
+Owner: Backend Development with Architecture, QA, and Agent Engineering review.
 
-Baseline: `main` at `4104796 Merge daily coach natural draft claim audit v1`.
+Baseline: `feature/daily-coach-natural-draft-product-voice-audit-v2` at `9ba9579 Add daily coach natural draft product voice audit v2`.
 
-Goal: extend Natural Draft + Claim Audit with a separate Product Voice Audit and first-pass visibility so QA can see whether GPT-5.5 wrote useful coaching, whether audit/repair/fallback damaged it, and whether final approved copy is actually better than deterministic fallback.
+Goal: fix the focused v2 QA failures without changing product architecture. The writer must stay loose; Product Voice Audit is a reviewer, not another pre-draft muzzle.
 
-Required outputs:
+Required fixes:
 
-- preserve first-pass model draft before claim audit, product voice audit, repair, or fallback;
-- add `first_pass_model_draft_before_audit.md`;
-- add side-by-side comparison of deterministic fallback, first-pass draft, repaired draft, and final approved copy;
-- add Product Voice Audit service and summary artifact;
-- add Food Action Language Contract service for eating-language food actions;
-- humanize fallback and require fallback to pass Product Voice Audit;
-- record repair deltas;
-- record reviewer conclusions identifying model/brief/audit/repair/fallback/product voice bottlenecks;
-- keep normal Today behavior unchanged and provider use developer-only;
-- add focused tests and project memory docs.
+- block final approval when fallback fails Product Voice Audit;
+- represent no approved copy when final gates fail;
+- make `reviewer_conclusion=fallback_failure` block final approval;
+- calibrate Product Voice Audit so backend-shaped wording cannot receive product readiness 5;
+- flag backend/app language such as `approved option`, `available options`, and `nutrition gap is open`;
+- strengthen Food Action Language Contract for oatmeal/canned tuna user-facing actions;
+- repair product-voice wording before fallback when factual claims are supported;
+- preserve valid first-pass details during repair;
+- add side-by-side status markers for accepted/rejected/fallback-blocked/no-approved-copy states.
 
-Requested final status: `DAILY_COACH_NATURAL_DRAFT_PRODUCT_VOICE_AUDIT_V2_IMPLEMENTATION_COMPLETE`.
+Requested final status: `DAILY_COACH_PRODUCT_VOICE_AUDIT_CALIBRATION_FINAL_APPROVAL_GATE_FIX_V1_IMPLEMENTATION_COMPLETE`.

@@ -134,6 +134,18 @@ def _deterministic_repair(
             body = _remove_sentence_containing(body, finding.text_span)
         elif finding.finding_type == "unsupported_judgment_claim":
             body = _remove_sentence_containing(body, finding.text_span)
+        elif finding.finding_type in {
+            "mechanical_food_action",
+            "backend_food_phrase",
+            "food_action_language_contract_failed",
+            "stale_sentence_skeleton",
+        }:
+            headline = humanize_food_action_text(headline, brief)
+            body = humanize_food_action_text(body, brief)
+        elif finding.finding_type == "bad_nutrition_training_causal_logic":
+            body = _repair_bad_nutrition_training_linkage(body, finding.text_span)
+    headline = humanize_food_action_text(headline, brief)
+    body = humanize_food_action_text(body, brief)
     if not headline:
         headline = "Daily Coach"
     if not body:
@@ -184,6 +196,31 @@ def _provider_repair(
     else:
         raise ValueError(f"unsupported_provider:{provider}")
     return parse_natural_coach_draft(raw, provider=provider, model=selected_model)
+
+
+def _repair_bad_nutrition_training_linkage(text: str, span: str) -> str:
+    repaired = text
+    repaired = re.sub(
+        r"\bdo not overdo (the )?training intensity while (the )?nutrition gap is (still )?open\.?",
+        "Keep the workout controlled today, then clean up the food side afterward.",
+        repaired,
+        flags=re.I,
+    )
+    repaired = re.sub(
+        r"\bdo not make up for nutrition by pushing harder\.?",
+        "Keep the workout controlled today.",
+        repaired,
+        flags=re.I,
+    )
+    repaired = re.sub(
+        r"\bdo not solve calories/protein by pushing harder in the gym\.?",
+        "Keep the workout controlled today.",
+        repaired,
+        flags=re.I,
+    )
+    if repaired == text:
+        repaired = _remove_sentence_containing(text, span)
+    return repaired
 
 
 def _remove_sentence_containing(text: str, span: str) -> str:

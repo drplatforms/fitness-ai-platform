@@ -45,3 +45,25 @@ def test_humanize_food_action_text_uses_eating_language() -> None:
         )
         == "eat some canned tuna if protein is still short."
     )
+
+
+def test_food_action_language_rejects_have_dry_oats_and_allows_oatmeal() -> None:
+    brief = _brief()
+
+    assert not food_action_language_passes(
+        "Have dry oats if calories are still short.", brief
+    )
+    assert food_action_language_passes(
+        "Have oatmeal if calories are still short.", brief
+    )
+
+
+def test_humanize_food_action_text_repairs_backend_food_language() -> None:
+    repaired = humanize_food_action_text(
+        "Choose an approved option like canned tuna if the protein gap is still open.",
+        _brief(),
+    )
+
+    assert "approved option" not in repaired.lower()
+    assert "protein gap" not in repaired.lower()
+    assert "eat something simple like canned tuna" in repaired.lower()

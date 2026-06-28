@@ -8,31 +8,60 @@ from models.daily_coach_natural_draft_audit_models import ApprovedCoachBrief
 FOOD_DISPLAY_LANGUAGE_RULES = {
     "oats, dry": {
         "friendly": "oatmeal",
-        "bad_actions": ("add dry oats", "use dry oats", "dry oats if calories"),
-        "better_actions": ("have oatmeal", "eat oatmeal"),
+        "bad_actions": (
+            "add dry oats",
+            "use dry oats",
+            "have dry oats",
+            "dry oats if calories",
+            "dry oats if calories are still short",
+        ),
+        "better_actions": (
+            "have oatmeal if you still need more calories",
+            "eat oatmeal later if calories are still short",
+            "oatmeal can help if calories are still short",
+        ),
     },
     "tuna, canned in water": {
         "friendly": "canned tuna",
-        "bad_actions": ("add canned tuna", "use canned tuna"),
-        "better_actions": ("eat some canned tuna", "canned tuna can help"),
+        "bad_actions": (
+            "add canned tuna",
+            "use canned tuna",
+            "use canned tuna if the protein gap is open",
+        ),
+        "better_actions": (
+            "eat some canned tuna if you still need more protein",
+            "canned tuna can help if protein is still short",
+            "have some canned tuna if protein is still short",
+        ),
     },
 }
 
 MECHANICAL_FOOD_ACTIONS = (
     "add dry oats",
     "use dry oats",
+    "have dry oats",
     "dry oats if calories",
+    "dry oats if calories are still short",
     "add canned tuna",
     "use canned tuna",
     "use canned tuna if the protein gap is open",
 )
 
 BACKEND_FOOD_PHRASES = (
-    "protein gap is open",
-    "calories gap is open",
+    "approved option",
+    "choose an approved option",
+    "available options",
     "suggested because",
     "macro gap addressed",
     "full meal-plan reset",
+    "nutrition gap is open",
+    "nutrition gap is still open",
+    "protein gap is open",
+    "protein gap is still open",
+    "calories gap is open",
+    "calories gap is still open",
+    "calorie gap is open",
+    "calorie gap is still open",
 )
 
 
@@ -55,6 +84,56 @@ def humanize_food_action_text(text: str, brief: ApprovedCoachBrief) -> str:
     """Convert safe-but-mechanical food action wording into eating language."""
 
     revised = text
+    revised = re.sub(
+        r"\bchoose an approved option like\b",
+        "eat something simple like",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(r"\bapproved option\b", "simple option", revised, flags=re.I)
+    revised = re.sub(r"\bavailable options\b", "simple options", revised, flags=re.I)
+    revised = re.sub(
+        r"\bthe nutrition gap is still open\b",
+        "you still need more food",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\bnutrition gap is still open\b",
+        "you still need more food",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\bprotein gap is still open\b",
+        "you still need more protein",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\bcalories gap is still open\b",
+        "you still need more calories",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\bcalorie gap is still open\b",
+        "you still need more calories",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\blarger nutrition overhaul\b",
+        "bigger adjustment",
+        revised,
+        flags=re.I,
+    )
+    revised = re.sub(
+        r"\bfull meal-plan reset\b",
+        "bigger food change",
+        revised,
+        flags=re.I,
+    )
     for action in brief.approved_food_actions:
         friendly = action.friendly_name or (
             friendly_food_display_name(action.canonical_name)
@@ -79,6 +158,8 @@ def humanize_food_action_text(text: str, brief: ApprovedCoachBrief) -> str:
         elif _normalize(friendly) == "oatmeal":
             revised = re.sub(r"\badd dry oats\b", "have oatmeal", revised, flags=re.I)
             revised = re.sub(r"\buse dry oats\b", "have oatmeal", revised, flags=re.I)
+            revised = re.sub(r"\bhave dry oats\b", "have oatmeal", revised, flags=re.I)
+            revised = re.sub(r"\bdry oats\b", "oatmeal", revised, flags=re.I)
             revised = re.sub(r"\badd oatmeal\b", "have oatmeal", revised, flags=re.I)
             revised = re.sub(r"\buse oatmeal\b", "have oatmeal", revised, flags=re.I)
             revised = re.sub(

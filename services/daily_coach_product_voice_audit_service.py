@@ -23,9 +23,15 @@ STALE_SENTENCE_SKELETONS = (
 )
 
 BAD_CAUSAL_LOGIC = (
+    "do not overdo training intensity while nutrition gap",
+    "do not overdo the training intensity while nutrition gap",
+    "do not overdo training intensity while the nutrition gap is still open",
+    "do not overdo the training intensity while the nutrition gap is still open",
     "make up for nutrition by pushing harder",
+    "do not make up for nutrition by pushing harder",
     "solve calories by pushing harder",
     "solve protein by pushing harder",
+    "do not solve calories/protein by pushing harder in the gym",
     "fix protein by pushing harder",
     "fix calories by pushing harder",
 )
@@ -63,8 +69,8 @@ def audit_daily_coach_product_voice(
                 finding_type="backend_food_phrase",
                 severity="warn",
                 text_span=phrase,
-                reason="Food language exposes backend gap terminology instead of normal coaching language.",
-                repair_instruction="Use user-facing wording such as 'if you still need more protein'.",
+                reason="Food language exposes backend/app terminology instead of normal coaching language.",
+                repair_instruction="Use user-facing wording such as 'if you still need more protein' or 'eat something simple like canned tuna'.",
                 repairable=True,
             )
         )
@@ -110,7 +116,17 @@ def audit_daily_coach_product_voice(
         score.score for score in scores if score.dimension == "product_readiness"
     )
     hard_failure = any(finding.severity == "fail" for finding in findings)
-    passed = (not hard_failure) and readiness >= 4
+    blocking_voice_finding = any(
+        finding.finding_type
+        in {
+            "mechanical_food_action",
+            "backend_food_phrase",
+            "food_action_language_contract_failed",
+            "bad_nutrition_training_causal_logic",
+        }
+        for finding in findings
+    )
+    passed = (not hard_failure) and (not blocking_voice_finding) and readiness >= 4
     decision = "approve" if passed else "fallback_required"
     if not passed and all(finding.repairable for finding in findings):
         decision = "repair_required"
@@ -134,10 +150,10 @@ def _score_dimensions(
     text = f"{draft.headline}\n{draft.body}".strip()
     word_count = len(re.findall(r"\w+", text))
     finding_types = {finding.finding_type for finding in findings}
-    food_penalty = 2 if "mechanical_food_action" in finding_types else 0
-    backend_penalty = 1 if "backend_food_phrase" in finding_types else 0
+    food_penalty = 3 if "mechanical_food_action" in finding_types else 0
+    backend_penalty = 2 if "backend_food_phrase" in finding_types else 0
     stale_penalty = 1 if "stale_sentence_skeleton" in finding_types else 0
-    causal_penalty = 2 if "bad_nutrition_training_causal_logic" in finding_types else 0
+    causal_penalty = 3 if "bad_nutrition_training_causal_logic" in finding_types else 0
     too_thin_penalty = 1 if word_count < 20 else 0
     generic_penalty = 1 if _looks_generic(text) else 0
 
@@ -158,6 +174,16 @@ def _score_dimensions(
         recovery_clarity,
         logic_coherence,
     )
+    if any(
+        item in finding_types
+        for item in {
+            "mechanical_food_action",
+            "backend_food_phrase",
+            "food_action_language_contract_failed",
+            "bad_nutrition_training_causal_logic",
+        }
+    ):
+        product_readiness = min(product_readiness, 3)
     return (
         ProductVoiceAuditScore(
             "plainspoken_voice", plainspoken, "Normal, direct coaching language."
@@ -192,7 +218,7 @@ def _score_dimensions(
         ProductVoiceAuditScore(
             "product_readiness",
             product_readiness,
-            "Lowest relevant dimension drives final product readiness.",
+            "5 means shippable with no edit; backend-shaped or mechanical wording caps readiness below product-ready.",
         ),
     )
 

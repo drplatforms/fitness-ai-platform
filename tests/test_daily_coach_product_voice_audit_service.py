@@ -62,3 +62,35 @@ def test_product_voice_audit_flags_bad_nutrition_training_causal_logic() -> None
         finding.finding_type == "bad_nutrition_training_causal_logic"
         for finding in audit.findings
     )
+
+
+def test_product_voice_audit_flags_backend_shaped_approved_option_language() -> None:
+    audit = audit_daily_coach_product_voice(
+        NaturalCoachDraft(
+            headline="Daily Coach",
+            body="Protein is below target. Choose an approved option like canned tuna.",
+        ),
+        _brief(),
+        mode="approval",
+    )
+
+    assert audit.passed is False
+    assert audit.product_readiness_score <= 3
+    assert any(
+        finding.finding_type == "backend_food_phrase" for finding in audit.findings
+    )
+
+
+def test_product_voice_audit_flags_gap_open_language() -> None:
+    audit = audit_daily_coach_product_voice(
+        NaturalCoachDraft(
+            headline="Daily Coach",
+            body="Protein gap is open. Eat some canned tuna if protein is still short.",
+        ),
+        _brief(),
+        mode="approval",
+    )
+
+    assert audit.passed is False
+    assert audit.product_readiness_score <= 3
+    assert any("protein gap" in finding.text_span for finding in audit.findings)

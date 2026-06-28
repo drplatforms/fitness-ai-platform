@@ -1,18 +1,18 @@
-# Open Questions — Daily Coach Natural Draft + Product Voice Audit v2
+# Open Questions — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
 
 ## Active
 
-1. Is the first-pass GPT-5.5 natural draft better than deterministic fallback when given a richer approved brief?
-2. If first-pass draft is weak, is the cause model behavior, brief thinness, prompt framing, or missing approved context?
-3. If first-pass draft is decent but final copy is worse, is quality lost during claim audit, repair, fallback, or final approval?
-4. Does Product Voice Audit catch factually safe but poor coaching copy?
-5. Does Food Action Language Contract prevent mechanical food actions such as "add dry oats" or "use canned tuna"?
-6. Does humanized fallback stay factual while avoiding old deterministic sludge?
-7. Does reviewer_conclusion make the next bottleneck clear enough for Architecture/QA to route the next milestone?
+1. Does the focused patch block final approval when fallback fails Product Voice Audit?
+2. Does `reviewer_conclusion=fallback_failure` prevent final approved copy from being emitted?
+3. Does Product Voice Audit stop assigning product readiness 5 to backend-shaped but factually safe copy?
+4. Does repair handle product-voice-only problems before fallback?
+5. Does stable_comparison repair food/display wording while preserving valid first-pass specificity?
+6. Do side-by-side artifacts clearly show `fallback_blocked` and `no_approved_copy` states?
+7. Does the patch avoid turning Product Voice Audit into a pre-generation writer cage?
 
 ## Closed/unchanged boundaries
 
-- Natural Draft + Product Voice Audit is developer-only.
+- Natural Draft + Product Voice Audit remains developer-only.
 - Normal Today behavior is unchanged.
 - Existing provider endpoint behavior is unchanged unless explicitly scoped later.
 - Deterministic remains default.

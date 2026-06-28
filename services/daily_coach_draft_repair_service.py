@@ -15,6 +15,7 @@ from services.daily_coach_claim_audit_service import audit_extracted_draft_claim
 from services.daily_coach_claim_extraction_service import (
     extract_claims_from_natural_draft,
 )
+from services.daily_coach_food_action_language_service import humanize_food_action_text
 from services.daily_coach_natural_draft_service import parse_natural_coach_draft
 from services.daily_coach_value_narrative_service import (
     OLLAMA_BASE_URL_ENV,
@@ -137,6 +138,7 @@ def _deterministic_repair(
         headline = "Daily Coach"
     if not body:
         body = brief.today_intent or "Keep the next action small and easy to verify."
+    body = humanize_food_action_text(body, brief)
     return NaturalCoachDraft(
         headline=headline,
         body=body,

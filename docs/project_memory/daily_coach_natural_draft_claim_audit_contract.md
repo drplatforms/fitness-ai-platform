@@ -43,3 +43,14 @@ One repair attempt is allowed. Repair output must be re-extracted and re-audited
 ## Artifacts
 
 Default artifacts are sanitized and developer-only. They must not include raw provider output, secrets, env dumps, chain-of-thought, database rows, runtime feedback JSONL, qa_artifacts, snapshots, patch files, or apply scripts.
+
+
+---
+
+# V2 Addendum — Product Voice Audit
+
+V2 adds a product-quality reviewer beside the factual claim reviewer. Claim Audit answers whether the copy is true and supported. Product Voice Audit answers whether it is useful, human, scenario-specific, and product-ready.
+
+Required v2 artifacts include first-pass draft before audit, side-by-side comparison, product voice audit summary, repair delta summary, humanized fallback summary, and reviewer conclusion.
+
+Final approval requires factual Claim Audit pass, Product Voice Audit pass, Food Action Language Contract pass, addressing policy pass, artifact safety pass, and humanized fallback quality if fallback is used.

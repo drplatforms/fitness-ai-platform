@@ -47,7 +47,7 @@ def test_natural_draft_audit_approves_valid_deterministic_copy(tmp_path: Path) -
             body=(
                 "Recovery looks good enough to train as planned. "
                 "Keep a couple reps in reserve. Protein is below target. "
-                "Add canned tuna if protein is still short."
+                "Eat some canned tuna if protein is still short."
             ),
         ),
     )
@@ -55,12 +55,20 @@ def test_natural_draft_audit_approves_valid_deterministic_copy(tmp_path: Path) -
     assert result.audit_result.passed is True
     assert result.repair_result.attempted is False
     assert result.final_source == "draft_approved"
+    assert result.product_voice_audit_result is not None
+    assert result.product_voice_audit_result.passed is True
     assert (tmp_path / "run_config.json").exists()
     assert (tmp_path / "approved_coach_brief_summary.md").exists()
+    assert (tmp_path / "first_pass_model_draft_before_audit.md").exists()
     assert (tmp_path / "natural_draft_output.md").exists()
     assert (tmp_path / "claim_extraction_summary.json").exists()
     assert (tmp_path / "claim_audit_summary.md").exists()
+    assert (tmp_path / "product_voice_audit_summary.md").exists()
     assert (tmp_path / "repair_summary.md").exists()
+    assert (tmp_path / "repair_delta_summary.md").exists()
+    assert (tmp_path / "humanized_fallback_summary.md").exists()
+    assert (tmp_path / "side_by_side_output_comparison.md").exists()
+    assert (tmp_path / "reviewer_conclusion.md").exists()
     assert (tmp_path / "final_approved_copy.md").exists()
     assert (tmp_path / "comparison_table.csv").exists()
     assert (tmp_path / "comparison_table.md").exists()
@@ -93,7 +101,9 @@ def test_natural_draft_audit_repairs_once_then_approves(tmp_path: Path) -> None:
     assert result.final_copy is not None
     assert "Dustin" not in result.final_copy.body
     assert "Tuna, Canned in Water" not in result.final_copy.body
-    assert "canned tuna" in result.final_copy.body
+    assert "eat some canned tuna" in result.final_copy.body.lower()
+    assert result.repaired_product_voice_audit_result is not None
+    assert result.repaired_product_voice_audit_result.passed is True
 
 
 def test_natural_draft_audit_falls_back_after_nonrepairable_claim() -> None:
@@ -128,3 +138,44 @@ def test_natural_draft_matrix_writes_artifacts(tmp_path: Path, monkeypatch) -> N
 
     assert len(results) == 1
     assert (tmp_path / "comparison_table.md").exists()
+
+
+def test_product_bad_but_factually_safe_copy_uses_humanized_fallback() -> None:
+    result = run_daily_coach_natural_draft_audit_scenario(
+        scenario_id="rich_nutrition_training_recovery",
+        provider="deterministic",
+        brief=_brief(),
+        draft=NaturalCoachDraft(
+            headline="Daily Coach",
+            body="Protein is below target. Add canned tuna if protein is still short.",
+        ),
+    )
+
+    assert result.audit_result.passed is True
+    assert result.product_voice_audit_result is not None
+    assert result.product_voice_audit_result.passed is False
+    assert result.final_source == "deterministic_fallback"
+    assert result.final_copy is not None
+    assert "eat some canned tuna" in result.final_copy.body.lower()
+    assert result.reviewer_conclusion == "product_voice_failure"
+
+
+def test_first_pass_artifact_preserves_draft_before_fallback(tmp_path: Path) -> None:
+    result = run_daily_coach_natural_draft_audit_scenario(
+        scenario_id="rich_nutrition_training_recovery",
+        provider="deterministic",
+        output_dir=tmp_path,
+        brief=_brief(),
+        draft=NaturalCoachDraft(
+            headline="First Pass",
+            body="Protein is below target. Add canned tuna if protein is still short.",
+        ),
+    )
+
+    first_pass = (tmp_path / "first_pass_model_draft_before_audit.md").read_text()
+    side_by_side = (tmp_path / "side_by_side_output_comparison.md").read_text()
+    assert "Add canned tuna" in first_pass
+    assert "First Pass" in first_pass
+    assert "Deterministic fallback" in side_by_side
+    assert "GPT-5.5/provider first-pass natural draft before audit" in side_by_side
+    assert result.final_source == "deterministic_fallback"

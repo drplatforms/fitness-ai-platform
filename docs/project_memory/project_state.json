@@ -1,839 +1,843 @@
 {
-    "project": {
-        "name": "AI Health Coach",
-        "repo": "fitness_ai",
-        "platform_repo": "fitness-ai-platform",
-        "canonical_branch": "main"
+  "project": {
+    "name": "AI Health Coach",
+    "repo": "fitness_ai",
+    "platform_repo": "fitness-ai-platform",
+    "canonical_branch": "main"
+  },
+  "current_baseline": {
+    "latest_accepted_milestone": "Daily Coach Provider Copy Grounding & Approved Context Enrichment v1",
+    "latest_final_status": "DAILY_COACH_PROVIDER_COPY_GROUNDING_APPROVED_CONTEXT_ENRICHMENT_V1_ACCEPTED_AND_QA_PASSED",
+    "latest_accepted_commit": "2bbffdb",
+    "latest_main_merge_commit": "2bbffdb",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-27_2bbffdb_feature-daily-coach-provider-copy-grounding-context-enrichment-v1_add-daily-coach-provider-copy-grounding-context-enrichment.zip",
+    "previous_accepted_milestone": "Daily Coach OpenAI Provider Responses Runtime Fix v1",
+    "previous_main_merge_commit": "60fe77b",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
+    "current_source_of_truth": "main at 4104796",
+    "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
+    "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
+    "active_backend_milestone": "Daily Coach Natural Draft + Product Voice Audit v2",
+    "active_backend_status": "backend implementation patch candidate ready for validation",
+    "latest_technical_baseline_commit": "4104796",
+    "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-28_4104796_main_merge-daily-coach-natural-draft-claim-audit-v1.zip"
+  },
+  "active_roadmap": {
+    "current_recommended_milestone": "Daily Coach Natural Draft + Product Voice Audit v2",
+    "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
+    "recommended_owner": "Backend Development",
+    "source_main_commit": "4104796",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_4104796_main_merge-daily-coach-natural-draft-claim-audit-v1.zip",
+    "commit_check_mode": "code",
+    "qa_class": "CLASS 2 / CLASS 5 HYBRID",
+    "primary_question": "Does first-pass natural drafting plus factual and product voice audit produce better truthful coaching than deterministic fallback?",
+    "secondary_owner": "Agent Engineering"
+  },
+  "boundaries": {
+    "normal_today_unchanged": true,
+    "developer_mode_only": true,
+    "provider_manual_only": true,
+    "no_public_default_provider_display": true,
+    "no_worker_queue_scheduler_polling": true,
+    "no_crewai": true,
+    "workout_page_canonical": true,
+    "today_workout_dedup": true,
+    "no_provider_ai_workout_changes": true,
+    "no_exercise_variety_work": false,
+    "daily_narrative_voice_contract": true,
+    "no_model_promotion": true,
+    "workout_selection_regression_preserved": true,
+    "developer_mode_voice_lab": true,
+    "synthetic_voice_lab_scenarios": true,
+    "app_side_voice_examples": true,
+    "developer_mode_feedback_capture": true,
+    "daily_narrative_feedback_jsonl": true,
+    "no_provider_on_feedback_save": true,
+    "daily_narrative_feedback_driven_copy_hardening": true,
+    "patch_first_delivery": true,
+    "workout_exercise_variety_rotation": true,
+    "workout_preview_explicit_refresh_only": true,
+    "selected_workout_frozen_after_selection": true,
+    "active_workout_preserved": true,
+    "workout_generation_sizing_persistence_stabilization": true,
+    "paused_catalog_utilization_branch_checkpoint_only": true,
+    "workout_preview_full_slot_rotation": true,
+    "test_first_quality_gate_development_plan": true,
+    "complex_backend_quality_gate": true,
+    "bigger_milestone_narrow_patch_doctrine": true,
+    "patch_stacking_stop_conditions": true,
+    "bug_to_regression_test_rule": true,
+    "v1_v2_scope_rule": true,
+    "exercise_catalog_utilization_specialized_movement_coverage": true,
+    "no_runtime_changes_for_current_docs_milestone": true,
+    "no_workout_generation_changes_for_current_docs_milestone": true,
+    "no_exercise_catalog_logic_changes_for_current_docs_milestone": true,
+    "no_nutrition_changes_for_current_docs_milestone": true,
+    "no_provider_changes_for_current_docs_milestone": true,
+    "exercise_eligibility_matrix_v1": true,
+    "exercise_eligibility_matrix_quality_gate": true,
+    "exercise_eligibility_matrix_diagnostic": true,
+    "no_rolling_exposure_for_current_milestone": true,
+    "no_persistent_exercise_exposure_tracking_for_current_milestone": true,
+    "no_nutrition_changes_for_current_milestone": true,
+    "no_recovery_changes_for_current_milestone": true,
+    "no_provider_ai_workout_generation_for_current_milestone": true,
+    "no_streamlit_ui_rewrite_for_current_milestone": true,
+    "optional_diagnostic_service_refactor_deferred": true,
+    "exercise_eligibility_matrix_v1_accepted": true,
+    "workout_foundation_good_enough_for_now": true,
+    "nutrition_catalog_serving_foundation_planning_v1": true,
+    "current_milestone_docs_only": true,
+    "no_runtime_changes_for_current_planning_milestone": true,
+    "no_catalog_expansion_for_current_planning_milestone": true,
+    "no_serving_unit_implementation_for_current_planning_milestone": true,
+    "no_usda_source_import_for_current_planning_milestone": true,
+    "no_food_logging_changes_for_current_planning_milestone": true,
+    "no_nutrition_calculation_changes_for_current_planning_milestone": true,
+    "no_provider_changes_for_current_planning_milestone": true,
+    "no_streamlit_changes_for_current_planning_milestone": true,
+    "no_workout_changes_for_current_planning_milestone": true,
+    "no_recovery_changes_for_current_planning_milestone": true,
+    "two_layer_food_catalog_strategy": true,
+    "serving_unit_confidence_range_strategy": true,
+    "backend_owns_serving_conversions": true,
+    "nutrition_catalog_diagnostic_v1": true,
+    "nutrition_catalog_diagnostic_read_only": true,
+    "no_catalog_expansion_for_current_diagnostic_milestone": true,
+    "no_serving_unit_implementation_for_current_diagnostic_milestone": true,
+    "no_usda_source_import_for_current_diagnostic_milestone": true,
+    "no_raw_source_rows_for_current_diagnostic_milestone": true,
+    "no_food_logging_changes_for_current_diagnostic_milestone": true,
+    "no_nutrition_calculation_changes_for_current_diagnostic_milestone": true,
+    "no_provider_changes_for_current_diagnostic_milestone": true,
+    "no_streamlit_changes_for_current_diagnostic_milestone": true,
+    "no_workout_changes_for_current_diagnostic_milestone": true,
+    "no_recovery_changes_for_current_diagnostic_milestone": true,
+    "serving_unit_model_missing": true,
+    "nutrition_actuals_confidence_missing": true,
+    "nutrition_serving_unit_data_model_v1_accepted": true,
+    "nutrition_serving_unit_logging_contract_design_v1": true,
+    "no_runtime_changes_for_current_contract_milestone": true,
+    "no_api_changes_for_current_contract_milestone": true,
+    "no_schema_changes_for_current_contract_milestone": true,
+    "no_food_logging_changes_for_current_contract_milestone": true,
+    "no_target_vs_actual_changes_for_current_contract_milestone": true,
+    "no_streamlit_changes_for_current_contract_milestone": true,
+    "no_provider_changes_for_current_contract_milestone": true,
+    "backend_owns_serving_unit_logging_contract": true,
+    "food_entries_remain_grams_bridge_for_serving_unit_v1": true,
+    "serving_unit_provenance_companion_table_preferred": true,
+    "dedicated_log_serving_endpoint_preferred": true,
+    "streamlit_must_not_invent_serving_mappings": true,
+    "provider_must_not_invent_serving_units_or_grams": true,
+    "nutrition_serving_unit_logging_backend_v1": true,
+    "serving_unit_log_serving_endpoint": true,
+    "serving_unit_log_provenance_table": true,
+    "backend_owned_serving_unit_grams_resolution": true,
+    "no_streamlit_changes_for_current_serving_unit_backend_milestone": true,
+    "no_provider_changes_for_current_serving_unit_backend_milestone": true,
+    "no_target_vs_actual_redesign_for_current_serving_unit_backend_milestone": true,
+    "canonical_serving_unit_discovery_api_v1": true,
+    "no_streamlit_changes_for_current_milestone": true,
+    "no_provider_changes_for_current_milestone": true,
+    "no_target_vs_actual_changes_for_current_milestone": true,
+    "serving_unit_discovery_before_streamlit_ui": true,
+    "backend_owns_serving_unit_options": true,
+    "streamlit_serving_unit_logging_ui_v1": true,
+    "streamlit_must_not_query_raw_serving_unit_tables": true,
+    "streamlit_must_not_calculate_serving_unit_grams": true,
+    "serving_unit_id_from_backend_discovery_only": true,
+    "log_serving_payload_excludes_grams_override": true,
+    "no_ai_provider_serving_unit_path": true,
+    "daily_coach_value_aware_provider_comparison_v1": true,
+    "daily_coach_narrative_deterministic_default": true,
+    "daily_coach_narrative_direct_ollama_opt_in": true,
+    "daily_coach_narrative_openai_opt_in": true,
+    "daily_coach_narrative_strict_parser_validator_fallback": true,
+    "daily_coach_narrative_normal_endpoint_hides_metadata": true,
+    "daily_coach_narrative_debug_endpoint_metadata_only": true,
+    "no_nutrition_debug_endpoint_changes_for_current_milestone": true,
+    "no_logging_changes_for_current_milestone": true,
+    "no_report_changes_for_current_milestone": true,
+    "daily_coach_narrative_approved_value_quote_validation_v1": true,
+    "daily_coach_narrative_quoted_values_used_required": true,
+    "daily_coach_narrative_approved_value_claim_registry": true,
+    "daily_coach_narrative_invented_value_claims_rejected": true,
+    "daily_coach_narrative_display_blocked_values_rejected": true,
+    "no_provider_default_change_for_current_milestone": true,
+    "no_live_provider_calls_in_tests_for_current_milestone": true,
+    "daily_coach_provider_trial_matrix_v1": true,
+    "deterministic_remains_default_for_trial_matrix": true,
+    "direct_ollama_openai_remain_opt_in_for_trial_matrix": true,
+    "no_live_provider_calls_in_trial_matrix_tests": true,
+    "no_raw_provider_output_in_trial_artifacts": true,
+    "no_provider_default_change_for_trial_matrix": true,
+    "no_streamlit_changes_for_trial_matrix": true,
+    "no_persistence_changes_for_trial_matrix": true,
+    "daily_coach_provider_trial_diagnostics_v1": true,
+    "daily_coach_provider_trial_diagnostics_local_raw_output_opt_in": true,
+    "daily_coach_provider_trial_diagnostics_no_raw_output_committed": true,
+    "daily_coach_provider_trial_diagnostics_no_secret_output": true,
+    "daily_coach_provider_trial_diagnostics_ollama_cleanup_optional": true,
+    "daily_coach_provider_copy_grounding_context_enrichment_v1": true,
+    "approved_claim_metadata_enrichment": true,
+    "provider_high_value_claim_packaging": true,
+    "daily_narrative_field_role_guidance": true,
+    "trial_matrix_copy_quality_diagnostics": true,
+    "no_provider_default_change_for_copy_grounding": true,
+    "quote_value_validation_mandatory_for_copy_grounding": true,
+    "no_raw_provider_output_public_for_copy_grounding": true,
+    "daily_coach_context_selection_coaching_synthesis_v2": true,
+    "daily_coach_today_story_backend_derived": true,
+    "daily_coach_claim_budgets_v2": true,
+    "daily_coach_adaptive_verbosity_guidance_v2": true,
+    "daily_coach_trial_matrix_v2_quality_diagnostics": true,
+    "no_parser_relaxation_for_context_selection_v2": true,
+    "no_quote_value_validation_relaxation_for_context_selection_v2": true,
+    "no_provider_default_change_for_context_selection_v2": true,
+    "no_streamlit_controls_for_context_selection_v2": true,
+    "no_provider_output_persistence_for_context_selection_v2": true,
+    "daily_coach_provider_human_voice_food_action_specificity_v4": true,
+    "friendly_food_labels_quote_backed": true,
+    "serving_display_backend_approved_only": true,
+    "nutrition_action_context_backend_derived": true,
+    "no_provider_serving_unit_invention": true,
+    "daily_coach_plainspoken_voice_contract": true,
+    "daily_coach_rejected_phrase_registry": true,
+    "daily_coach_food_action_context": true,
+    "daily_coach_friendly_food_labels": true,
+    "daily_coach_no_invented_servings_timing_pairings": true,
+    "daily_coach_natural_draft_product_voice_audit_v2": true,
+    "first_pass_model_draft_visibility": true,
+    "product_voice_audit_separate_from_claim_audit": true,
+    "humanized_fallback_required": true
+  },
+  "process_doctrine": {
+    "complex_backend_quality_gate": [
+      "Diagnose current behavior before patching.",
+      "Identify the exact failing, missing, or underperforming user path.",
+      "Add a failing regression test, diagnostic test, or coverage test where practical.",
+      "Confirm the test fails or exposes the gap before implementation.",
+      "Apply the smallest safe implementation change.",
+      "Prove the new test passes.",
+      "Re-run prior milestone regression tests.",
+      "Re-run the original manual/browser smoke path.",
+      "Update project memory.",
+      "Only then request Architecture acceptance."
+    ],
+    "risk_model": {
+      "low": "docs/typo/isolated helper: normal patch and focused validation",
+      "medium": "deterministic service or bounded integration: light diagnostic, focused test, narrow patch, regression validation, smoke if user-visible",
+      "high": "workout generation, catalog selection/scoring, state/persistence, nutrition targets, provider output, recommendations: diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke, Linux/browser smoke, project memory, Architecture acceptance"
     },
-    "current_baseline": {
-        "latest_accepted_milestone": "Daily Coach Provider Copy Grounding & Approved Context Enrichment v1",
-        "latest_final_status": "DAILY_COACH_PROVIDER_COPY_GROUNDING_APPROVED_CONTEXT_ENRICHMENT_V1_ACCEPTED_AND_QA_PASSED",
-        "latest_accepted_commit": "2bbffdb",
-        "latest_main_merge_commit": "2bbffdb",
-        "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-27_2bbffdb_feature-daily-coach-provider-copy-grounding-context-enrichment-v1_add-daily-coach-provider-copy-grounding-context-enrichment.zip",
-        "previous_accepted_milestone": "Daily Coach OpenAI Provider Responses Runtime Fix v1",
-        "previous_main_merge_commit": "60fe77b",
-        "previous_snapshot": "fitness_ai_snapshot_2026-06-27_60fe77b_use-openai-responses-api-for-daily-coach-narrative-provider.zip",
-        "current_source_of_truth": "main at b9b46c9",
-        "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
-        "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-        "active_backend_milestone": "Daily Coach Natural Draft + Claim Audit v1",
-        "active_backend_status": "backend implementation patch candidate ready for validation",
-        "latest_technical_baseline_commit": "b9b46c9",
-        "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-28_b9b46c9_main_merge-daily-coach-prompt-lab-voice-lab-v1.zip"
+    "stop_conditions": [
+      "same bug survives two implementation patches",
+      "tests pass but browser smoke fails",
+      "Linux smoke fails after Windows green",
+      "candidate pools or data shape are unclear",
+      "implementation requires broader scope than approved",
+      "expected file-change budget is exceeded",
+      "persistence/state behavior becomes unstable",
+      "patch fails to apply because of drift and next step is not obvious",
+      "branch accumulates unrelated fixes",
+      "implementation crosses into deferred v2 scope"
+    ],
+    "bug_to_regression_rule": "Every real smoke failure becomes automated regression test, diagnostic/coverage test, documented limitation, or backlog item.",
+    "v1_v2_scope_rule": "Architecture defines v1 acceptance and deferred v2 scope before implementation when a feature could expand.",
+    "provider_ai_rule": "Provider may propose. Backend validates. User sees only approved output."
+  },
+  "historical_required_context": {
+    "daily_coach_async_provider_runtime_design": "Daily Coach Async Provider Runtime Design v1 / DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED",
+    "project_continuity_system": "Project Continuity System v2 / feature/project-continuity-system-v2",
+    "daily_coach_async_persistence_design": "Daily Coach Async Persistence Design v1 / DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED",
+    "daily_coach_async_persistence_contracts": "Daily Coach Async Persistence Contracts + Schema v1 / feature/daily-coach-async-persistence-contracts-schema-v1",
+    "disallowed_persistence": "provider runtime implementation, raw provider output persistence, rejected provider output persistence are not authorized unless explicitly scoped",
+    "patch_paths": "C:\\projects; python ..\\<script>.py; git apply --check ..\\<patch>.patch",
+    "daily_coach_async_persistence_service_shell": "Daily Coach Async Persistence Service Shell v1 / feature/daily-coach-async-persistence-service-shell-v1 / service/repository shell only",
+    "model_boundaries": "qwen3 is not bridge-enabled; qwen3:32b is research / future premium async candidate only",
+    "fallback": "Deterministic fallback remains mandatory.",
+    "not_authorized": "normal Today provider call; public async narrative display"
+  },
+  "runtime_split": {
+    "windows": [
+      "Primary development workstation at C:\\projects\\fitness_ai. Use Windows for patch application, validation, explicit staging, commit, push, and feature snapshots."
+    ],
+    "linux": [
+      "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
+    ]
+  },
+  "model_policy": {
+    "qwen2_5_3b": "Approved local bridge/default experimental model for direct_ollama nutrition explanation provider paths when explicitly enabled.",
+    "qwen3": "Not approved as a bridge/default model. Do not promote without an explicit model-evaluation milestone.",
+    "qwen3_32b": "Research/future premium async candidate only; not approved for normal runtime.",
+    "model_promotion": "No model may be promoted to default without explicit Architecture acceptance, runtime QA, fallback behavior, and project-memory update.",
+    "fallback": "Deterministic fallback remains mandatory for all provider-backed paths.",
+    "boundary": "Provider may propose only inside approved schemas/contracts. Backend validates. User sees only approved output."
+  },
+  "daily_coach_async_boundary": {
+    "current": "Daily Coach async/provider work remains gated by accepted designs and developer-only/manual preview boundaries unless a later milestone explicitly authorizes runtime behavior.",
+    "normal_today_behavior": "Normal Today behavior remains deterministic and must not block on provider generation.",
+    "not_authorized": [
+      "normal Today provider call by default",
+      "public async narrative display without approval",
+      "raw provider output display",
+      "rejected provider output display",
+      "provider runtime promotion without explicit milestone approval"
+    ]
+  },
+  "workflow_rules": {
+    "phase_separated_delivery": "Use separate phases: preflight/branch, implement/apply, validate, review diff, stage only, commit only, push only, snapshot, Linux pull/smoke.",
+    "no_git_add_dot": "Do not use git add .; stage explicit files only.",
+    "temporary_apply_artifacts_outside_repo": "Temporary patches and apply scripts stay outside the repo.",
+    "temporary_apply_artifact_root": "C:\\projects",
+    "run_apply_scripts_from_repo_as": "Run temporary apply scripts from the repo root using python ..\\<script>.py.",
+    "apply_raw_patches_from_repo_as": "Apply raw patches from the repo root using git apply --check ..\\<patch>.patch then git apply ..\\<patch>.patch.",
+    "no_broad_formatters_for_docs_only": "For docs-only milestones, do not run broad formatters that can rewrite unrelated application files.",
+    "long_handoffs_in_code_blocks": "Long handoffs must be delivered as one copy/paste-ready code block.",
+    "push_separate_phase": "Push must be its own separate phase; do not combine commit and push.",
+    "no_repo_wide_mutating_formatters_for_feature_work": "Use targeted Ruff/Black on touched files only. Use whole-repo checks in non-mutating mode when appropriate."
+  },
+  "first_files": {
+    "all_roles": [
+      "AGENTS.md",
+      "readme.md",
+      "docs/project_memory/current_state.md",
+      "docs/project_memory/project_state.json",
+      "docs/project_memory/project_continuity_bootstrap.md",
+      "docs/project_memory/development_workflow.md",
+      "docs/project_memory/developer_delivery_workflow_contract.md",
+      "docs/project_memory/architecture_principles.md",
+      "docs/project_memory/open_questions.md",
+      "docs/project_memory/next_milestone.md",
+      "docs/project_memory/handoffs/architecture_handoff_current.md",
+      "docs/project_memory/handoffs/backend_handoff_current.md",
+      "docs/project_memory/handoffs/qa_handoff_current.md"
+    ]
+  },
+  "model_provider_policy": {
+    "qwen2_5_3b": "Approved local bridge/default experimental model for direct_ollama nutrition explanation provider paths when explicitly enabled.",
+    "qwen3": "Not approved as a bridge/default model. Do not promote without an explicit model-evaluation milestone.",
+    "qwen3_32b": "Research/future premium async candidate only; not approved for normal runtime.",
+    "model_promotion": "No model may be promoted to default without explicit Architecture acceptance, runtime QA, fallback behavior, and project-memory update.",
+    "fallback": "Deterministic fallback remains mandatory for all provider-backed paths.",
+    "boundary": "Provider may propose only inside approved schemas/contracts. Backend validates. User sees only approved output."
+  },
+  "first_files_to_read": {
+    "all_roles": [
+      "AGENTS.md",
+      "readme.md",
+      "docs/project_memory/current_state.md",
+      "docs/project_memory/project_state.json",
+      "docs/project_memory/project_continuity_bootstrap.md",
+      "docs/project_memory/development_workflow.md",
+      "docs/project_memory/developer_delivery_workflow_contract.md",
+      "docs/project_memory/architecture_principles.md",
+      "docs/project_memory/open_questions.md",
+      "docs/project_memory/next_milestone.md",
+      "docs/project_memory/handoffs/architecture_handoff_current.md",
+      "docs/project_memory/handoffs/backend_handoff_current.md",
+      "docs/project_memory/handoffs/qa_handoff_current.md"
+    ]
+  },
+  "exercise_eligibility_matrix_v1": {
+    "status": "implementation checkpoint committed and Linux-validated; final closeout validation/smoke pending",
+    "branch": "feature/exercise-eligibility-matrix-v1",
+    "source_main_commit": "37d210f",
+    "checkpoint_commit": "05d319e",
+    "checkpoint_snapshot": "fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip",
+    "diagnostic_totals": {
+      "total_active_exercises": 240,
+      "total_equipment_compatible_exercises": 237,
+      "total_exercises_with_usable_metadata": 240,
+      "total_specialized_or_accessory_movements": 135,
+      "total_generator_eligible": 232,
+      "total_reachable_in_deterministic_sweep": 54,
+      "total_not_reachable_in_deterministic_sweep": 186,
+      "top_exclusion_reason": "not_supported_by_current_generator_candidate_pools (170)",
+      "weak_movement_families": [
+        "arms_biceps",
+        "arms_triceps",
+        "mobility"
+      ]
     },
-    "active_roadmap": {
-        "current_recommended_milestone": "Daily Coach Natural Draft + Claim Audit v1",
-        "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-        "recommended_owner": "Backend Development",
-        "source_main_commit": "b9b46c9",
-        "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_b9b46c9_main_merge-daily-coach-prompt-lab-voice-lab-v1.zip",
-        "commit_check_mode": "code",
-        "qa_class": "CLASS 2 / CLASS 5 HYBRID",
-        "primary_question": "Can natural draft plus deterministic claim audit produce better user-facing coaching while preserving backend approval, one repair attempt, and deterministic fallback?",
-        "secondary_owner": "Agent Engineering"
+    "files_added": [
+      "services/exercise_eligibility_matrix_service.py",
+      "tools/exercise_eligibility_matrix_diagnostic.py",
+      "tests/test_exercise_eligibility_matrix_v1.py"
+    ],
+    "quality_gate": "test was added before service existed and failed with ModuleNotFoundError, then passed after narrow implementation",
+    "deferred": [
+      "optional diagnostic-service refactor",
+      "complete catalog reachability",
+      "rolling multi-refresh novelty",
+      "persistent exercise exposure tracking",
+      "arms/mobility slot expansion"
+    ]
+  },
+  "nutrition_catalog_serving_foundation_planning_v1": {
+    "status": "authorized planning milestone",
+    "branch": "feature/nutrition-catalog-serving-foundation-planning-v1",
+    "source_main_commit": "f469c89",
+    "milestone_type": "planning / architecture / project memory only",
+    "recommended_next_implementation_milestone": "Nutrition Catalog Diagnostic v1",
+    "recommended_sequence": [
+      "Nutrition Catalog Diagnostic v1",
+      "Nutrition Canonical Food Model Review v1",
+      "Curated Food Catalog Expansion v1",
+      "Serving Unit Normalization / Household Measure Conversion v1",
+      "Nutrition Logging Backend Contract v1",
+      "Nutrition Actuals Confidence v1",
+      "Nutrition Deterministic Food Suggestions v1",
+      "Nutrition AI Meal/Snack Candidate Contract v1"
+    ],
+    "catalog_strategy": "two-layer raw/source staging plus curated canonical app food catalog",
+    "serving_unit_strategy": "default grams plus optional min/max range, confidence, source, and source note",
+    "provider_boundary": "provider may only assemble/explain backend-approved foods, serving units, actuals, targets, gaps, and confidence notes; backend rejects invented facts",
+    "strict_non_goals": [
+      "catalog expansion",
+      "serving unit implementation",
+      "USDA/source import",
+      "food logging changes",
+      "nutrition calculation changes",
+      "provider/Ollama behavior changes",
+      "AI meal generation",
+      "Streamlit UI changes",
+      "workout generation changes",
+      "recovery engine changes",
+      "database migrations",
+      "dependency changes"
+    ]
+  },
+  "nutrition_catalog_diagnostic_v1": {
+    "status": "implemented / diagnostic complete / pending Architecture acceptance",
+    "source_main_commit": "94dc8fd",
+    "branch": "feature/nutrition-catalog-diagnostic-v1",
+    "tools": [
+      "tools/nutrition_catalog_diagnostic.py"
+    ],
+    "services": [
+      "services/nutrition_catalog_diagnostic_service.py"
+    ],
+    "tests": [
+      "tests/test_nutrition_catalog_diagnostic_v1.py"
+    ],
+    "catalog_summary": {
+      "total_legacy_food_records": 3475,
+      "total_canonical_food_records": 222,
+      "active_canonical_food_records": 222,
+      "inactive_canonical_food_records": 0,
+      "raw_source_food_records": 0,
+      "canonical_foods_safe_for_logging": 222,
+      "canonical_foods_safe_for_suggestions": 222,
+      "alias_rows": 555,
+      "foods_with_aliases": 222,
+      "foods_without_aliases": 0,
+      "known_searchable_values": 682
     },
-    "boundaries": {
-        "normal_today_unchanged": true,
-        "developer_mode_only": true,
-        "provider_manual_only": true,
-        "no_public_default_provider_display": true,
-        "no_worker_queue_scheduler_polling": true,
-        "no_crewai": true,
-        "workout_page_canonical": true,
-        "today_workout_dedup": true,
-        "no_provider_ai_workout_changes": true,
-        "no_exercise_variety_work": false,
-        "daily_narrative_voice_contract": true,
-        "no_model_promotion": true,
-        "workout_selection_regression_preserved": true,
-        "developer_mode_voice_lab": true,
-        "synthetic_voice_lab_scenarios": true,
-        "app_side_voice_examples": true,
-        "developer_mode_feedback_capture": true,
-        "daily_narrative_feedback_jsonl": true,
-        "no_provider_on_feedback_save": true,
-        "daily_narrative_feedback_driven_copy_hardening": true,
-        "patch_first_delivery": true,
-        "workout_exercise_variety_rotation": true,
-        "workout_preview_explicit_refresh_only": true,
-        "selected_workout_frozen_after_selection": true,
-        "active_workout_preserved": true,
-        "workout_generation_sizing_persistence_stabilization": true,
-        "paused_catalog_utilization_branch_checkpoint_only": true,
-        "workout_preview_full_slot_rotation": true,
-        "test_first_quality_gate_development_plan": true,
-        "complex_backend_quality_gate": true,
-        "bigger_milestone_narrow_patch_doctrine": true,
-        "patch_stacking_stop_conditions": true,
-        "bug_to_regression_test_rule": true,
-        "v1_v2_scope_rule": true,
-        "exercise_catalog_utilization_specialized_movement_coverage": true,
-        "no_runtime_changes_for_current_docs_milestone": true,
-        "no_workout_generation_changes_for_current_docs_milestone": true,
-        "no_exercise_catalog_logic_changes_for_current_docs_milestone": true,
-        "no_nutrition_changes_for_current_docs_milestone": true,
-        "no_provider_changes_for_current_docs_milestone": true,
-        "exercise_eligibility_matrix_v1": true,
-        "exercise_eligibility_matrix_quality_gate": true,
-        "exercise_eligibility_matrix_diagnostic": true,
-        "no_rolling_exposure_for_current_milestone": true,
-        "no_persistent_exercise_exposure_tracking_for_current_milestone": true,
-        "no_nutrition_changes_for_current_milestone": true,
-        "no_recovery_changes_for_current_milestone": true,
-        "no_provider_ai_workout_generation_for_current_milestone": true,
-        "no_streamlit_ui_rewrite_for_current_milestone": true,
-        "optional_diagnostic_service_refactor_deferred": true,
-        "exercise_eligibility_matrix_v1_accepted": true,
-        "workout_foundation_good_enough_for_now": true,
-        "nutrition_catalog_serving_foundation_planning_v1": true,
-        "current_milestone_docs_only": true,
-        "no_runtime_changes_for_current_planning_milestone": true,
-        "no_catalog_expansion_for_current_planning_milestone": true,
-        "no_serving_unit_implementation_for_current_planning_milestone": true,
-        "no_usda_source_import_for_current_planning_milestone": true,
-        "no_food_logging_changes_for_current_planning_milestone": true,
-        "no_nutrition_calculation_changes_for_current_planning_milestone": true,
-        "no_provider_changes_for_current_planning_milestone": true,
-        "no_streamlit_changes_for_current_planning_milestone": true,
-        "no_workout_changes_for_current_planning_milestone": true,
-        "no_recovery_changes_for_current_planning_milestone": true,
-        "two_layer_food_catalog_strategy": true,
-        "serving_unit_confidence_range_strategy": true,
-        "backend_owns_serving_conversions": true,
-        "nutrition_catalog_diagnostic_v1": true,
-        "nutrition_catalog_diagnostic_read_only": true,
-        "no_catalog_expansion_for_current_diagnostic_milestone": true,
-        "no_serving_unit_implementation_for_current_diagnostic_milestone": true,
-        "no_usda_source_import_for_current_diagnostic_milestone": true,
-        "no_raw_source_rows_for_current_diagnostic_milestone": true,
-        "no_food_logging_changes_for_current_diagnostic_milestone": true,
-        "no_nutrition_calculation_changes_for_current_diagnostic_milestone": true,
-        "no_provider_changes_for_current_diagnostic_milestone": true,
-        "no_streamlit_changes_for_current_diagnostic_milestone": true,
-        "no_workout_changes_for_current_diagnostic_milestone": true,
-        "no_recovery_changes_for_current_diagnostic_milestone": true,
-        "serving_unit_model_missing": true,
-        "nutrition_actuals_confidence_missing": true,
-        "nutrition_serving_unit_data_model_v1_accepted": true,
-        "nutrition_serving_unit_logging_contract_design_v1": true,
-        "no_runtime_changes_for_current_contract_milestone": true,
-        "no_api_changes_for_current_contract_milestone": true,
-        "no_schema_changes_for_current_contract_milestone": true,
-        "no_food_logging_changes_for_current_contract_milestone": true,
-        "no_target_vs_actual_changes_for_current_contract_milestone": true,
-        "no_streamlit_changes_for_current_contract_milestone": true,
-        "no_provider_changes_for_current_contract_milestone": true,
-        "backend_owns_serving_unit_logging_contract": true,
-        "food_entries_remain_grams_bridge_for_serving_unit_v1": true,
-        "serving_unit_provenance_companion_table_preferred": true,
-        "dedicated_log_serving_endpoint_preferred": true,
-        "streamlit_must_not_invent_serving_mappings": true,
-        "provider_must_not_invent_serving_units_or_grams": true,
-        "nutrition_serving_unit_logging_backend_v1": true,
-        "serving_unit_log_serving_endpoint": true,
-        "serving_unit_log_provenance_table": true,
-        "backend_owned_serving_unit_grams_resolution": true,
-        "no_streamlit_changes_for_current_serving_unit_backend_milestone": true,
-        "no_provider_changes_for_current_serving_unit_backend_milestone": true,
-        "no_target_vs_actual_redesign_for_current_serving_unit_backend_milestone": true,
-        "canonical_serving_unit_discovery_api_v1": true,
-        "no_streamlit_changes_for_current_milestone": true,
-        "no_provider_changes_for_current_milestone": true,
-        "no_target_vs_actual_changes_for_current_milestone": true,
-        "serving_unit_discovery_before_streamlit_ui": true,
-        "backend_owns_serving_unit_options": true,
-        "streamlit_serving_unit_logging_ui_v1": true,
-        "streamlit_must_not_query_raw_serving_unit_tables": true,
-        "streamlit_must_not_calculate_serving_unit_grams": true,
-        "serving_unit_id_from_backend_discovery_only": true,
-        "log_serving_payload_excludes_grams_override": true,
-        "no_ai_provider_serving_unit_path": true,
-        "daily_coach_value_aware_provider_comparison_v1": true,
-        "daily_coach_narrative_deterministic_default": true,
-        "daily_coach_narrative_direct_ollama_opt_in": true,
-        "daily_coach_narrative_openai_opt_in": true,
-        "daily_coach_narrative_strict_parser_validator_fallback": true,
-        "daily_coach_narrative_normal_endpoint_hides_metadata": true,
-        "daily_coach_narrative_debug_endpoint_metadata_only": true,
-        "no_nutrition_debug_endpoint_changes_for_current_milestone": true,
-        "no_logging_changes_for_current_milestone": true,
-        "no_report_changes_for_current_milestone": true,
-        "daily_coach_narrative_approved_value_quote_validation_v1": true,
-        "daily_coach_narrative_quoted_values_used_required": true,
-        "daily_coach_narrative_approved_value_claim_registry": true,
-        "daily_coach_narrative_invented_value_claims_rejected": true,
-        "daily_coach_narrative_display_blocked_values_rejected": true,
-        "no_provider_default_change_for_current_milestone": true,
-        "no_live_provider_calls_in_tests_for_current_milestone": true,
-        "daily_coach_provider_trial_matrix_v1": true,
-        "deterministic_remains_default_for_trial_matrix": true,
-        "direct_ollama_openai_remain_opt_in_for_trial_matrix": true,
-        "no_live_provider_calls_in_trial_matrix_tests": true,
-        "no_raw_provider_output_in_trial_artifacts": true,
-        "no_provider_default_change_for_trial_matrix": true,
-        "no_streamlit_changes_for_trial_matrix": true,
-        "no_persistence_changes_for_trial_matrix": true,
-        "daily_coach_provider_trial_diagnostics_v1": true,
-        "daily_coach_provider_trial_diagnostics_local_raw_output_opt_in": true,
-        "daily_coach_provider_trial_diagnostics_no_raw_output_committed": true,
-        "daily_coach_provider_trial_diagnostics_no_secret_output": true,
-        "daily_coach_provider_trial_diagnostics_ollama_cleanup_optional": true,
-        "daily_coach_provider_copy_grounding_context_enrichment_v1": true,
-        "approved_claim_metadata_enrichment": true,
-        "provider_high_value_claim_packaging": true,
-        "daily_narrative_field_role_guidance": true,
-        "trial_matrix_copy_quality_diagnostics": true,
-        "no_provider_default_change_for_copy_grounding": true,
-        "quote_value_validation_mandatory_for_copy_grounding": true,
-        "no_raw_provider_output_public_for_copy_grounding": true,
-        "daily_coach_context_selection_coaching_synthesis_v2": true,
-        "daily_coach_today_story_backend_derived": true,
-        "daily_coach_claim_budgets_v2": true,
-        "daily_coach_adaptive_verbosity_guidance_v2": true,
-        "daily_coach_trial_matrix_v2_quality_diagnostics": true,
-        "no_parser_relaxation_for_context_selection_v2": true,
-        "no_quote_value_validation_relaxation_for_context_selection_v2": true,
-        "no_provider_default_change_for_context_selection_v2": true,
-        "no_streamlit_controls_for_context_selection_v2": true,
-        "no_provider_output_persistence_for_context_selection_v2": true,
-        "daily_coach_provider_human_voice_food_action_specificity_v4": true,
-        "friendly_food_labels_quote_backed": true,
-        "serving_display_backend_approved_only": true,
-        "nutrition_action_context_backend_derived": true,
-        "no_provider_serving_unit_invention": true,
-        "daily_coach_plainspoken_voice_contract": true,
-        "daily_coach_rejected_phrase_registry": true,
-        "daily_coach_food_action_context": true,
-        "daily_coach_friendly_food_labels": true,
-        "daily_coach_no_invented_servings_timing_pairings": true
+    "nutrient_completeness": {
+      "complete_core_macro_foods": 222,
+      "missing_one_or_more_core_macro_foods": 0,
+      "complete_core_macro_percent": 100.0,
+      "optional_nutrient_counts": {
+        "fiber": 0,
+        "sugar": 0,
+        "sodium": 0
+      },
+      "macro_calorie_warning_examples": [
+        "Asparagus",
+        "Mushrooms",
+        "Spinach"
+      ]
     },
-    "process_doctrine": {
-        "complex_backend_quality_gate": [
-            "Diagnose current behavior before patching.",
-            "Identify the exact failing, missing, or underperforming user path.",
-            "Add a failing regression test, diagnostic test, or coverage test where practical.",
-            "Confirm the test fails or exposes the gap before implementation.",
-            "Apply the smallest safe implementation change.",
-            "Prove the new test passes.",
-            "Re-run prior milestone regression tests.",
-            "Re-run the original manual/browser smoke path.",
-            "Update project memory.",
-            "Only then request Architecture acceptance."
-        ],
-        "risk_model": {
-            "low": "docs/typo/isolated helper: normal patch and focused validation",
-            "medium": "deterministic service or bounded integration: light diagnostic, focused test, narrow patch, regression validation, smoke if user-visible",
-            "high": "workout generation, catalog selection/scoring, state/persistence, nutrition targets, provider output, recommendations: diagnostic first, failing/coverage test, narrow patch, regression validation, original smoke, Linux/browser smoke, project memory, Architecture acceptance"
-        },
-        "stop_conditions": [
-            "same bug survives two implementation patches",
-            "tests pass but browser smoke fails",
-            "Linux smoke fails after Windows green",
-            "candidate pools or data shape are unclear",
-            "implementation requires broader scope than approved",
-            "expected file-change budget is exceeded",
-            "persistence/state behavior becomes unstable",
-            "patch fails to apply because of drift and next step is not obvious",
-            "branch accumulates unrelated fixes",
-            "implementation crosses into deferred v2 scope"
-        ],
-        "bug_to_regression_rule": "Every real smoke failure becomes automated regression test, diagnostic/coverage test, documented limitation, or backlog item.",
-        "v1_v2_scope_rule": "Architecture defines v1 acceptance and deferred v2 scope before implementation when a feature could expand.",
-        "provider_ai_rule": "Provider may propose. Backend validates. User sees only approved output."
+    "serving_unit_readiness": {
+      "grams_supported_for_logging": true,
+      "canonical_default_grams_supported": true,
+      "serving_unit_model_or_table_present": false,
+      "household_units_supported": false,
+      "foods_with_no_serving_unit_metadata": 222,
+      "serving_units_representable_without_schema_change": false
     },
-    "historical_required_context": {
-        "daily_coach_async_provider_runtime_design": "Daily Coach Async Provider Runtime Design v1 / DAILY_COACH_ASYNC_PROVIDER_RUNTIME_DESIGN_V1_ACCEPTED",
-        "project_continuity_system": "Project Continuity System v2 / feature/project-continuity-system-v2",
-        "daily_coach_async_persistence_design": "Daily Coach Async Persistence Design v1 / DAILY_COACH_ASYNC_PERSISTENCE_DESIGN_V1_ACCEPTED",
-        "daily_coach_async_persistence_contracts": "Daily Coach Async Persistence Contracts + Schema v1 / feature/daily-coach-async-persistence-contracts-schema-v1",
-        "disallowed_persistence": "provider runtime implementation, raw provider output persistence, rejected provider output persistence are not authorized unless explicitly scoped",
-        "patch_paths": "C:\\projects; python ..\\<script>.py; git apply --check ..\\<patch>.patch",
-        "daily_coach_async_persistence_service_shell": "Daily Coach Async Persistence Service Shell v1 / feature/daily-coach-async-persistence-service-shell-v1 / service/repository shell only",
-        "model_boundaries": "qwen3 is not bridge-enabled; qwen3:32b is research / future premium async candidate only",
-        "fallback": "Deterministic fallback remains mandatory.",
-        "not_authorized": "normal Today provider call; public async narrative display"
+    "logging_assumptions": {
+      "uses_food_id_linkage": true,
+      "uses_grams": true,
+      "uses_quantity_and_unit": false,
+      "uses_servings": false,
+      "uses_meal_grouping": false,
+      "uses_meal_type": false,
+      "macros_persisted_directly_on_logs": false,
+      "macros_recalculated_from_food_nutrients": true,
+      "current_summary": "Food logs are grams-based and linked to legacy foods. Canonical logging uses write-through into legacy food/nutrient tables."
     },
-    "runtime_split": {
-        "windows": [
-            "Primary development workstation at C:\\projects\\fitness_ai. Use Windows for patch application, validation, explicit staging, commit, push, and feature snapshots."
-        ],
-        "linux": [
-            "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
-        ]
+    "actuals_targets_dependencies": {
+      "daily_actuals_service": "services.nutrition_service.get_daily_nutrition",
+      "target_vs_actual_service": "services.nutrition_target_vs_actual_service.build_target_vs_actual_nutrition_summary",
+      "depends_on_tables": [
+        "food_entries",
+        "food_nutrients",
+        "nutrients"
+      ],
+      "actuals_assume_grams": true,
+      "macro_gaps_exist": true,
+      "confidence_represented": false
     },
-    "model_policy": {
-        "qwen2_5_3b": "Approved local bridge/default experimental model for direct_ollama nutrition explanation provider paths when explicitly enabled.",
-        "qwen3": "Not approved as a bridge/default model. Do not promote without an explicit model-evaluation milestone.",
-        "qwen3_32b": "Research/future premium async candidate only; not approved for normal runtime.",
-        "model_promotion": "No model may be promoted to default without explicit Architecture acceptance, runtime QA, fallback behavior, and project-memory update.",
-        "fallback": "Deterministic fallback remains mandatory for all provider-backed paths.",
-        "boundary": "Provider may propose only inside approved schemas/contracts. Backend validates. User sees only approved output."
+    "high_value_staple_coverage": {
+      "present": 43,
+      "missing": 1,
+      "missing_examples": [
+        "mixed nuts"
+      ],
+      "present_but_incomplete": 0
     },
-    "daily_coach_async_boundary": {
-        "current": "Daily Coach async/provider work remains gated by accepted designs and developer-only/manual preview boundaries unless a later milestone explicitly authorizes runtime behavior.",
-        "normal_today_behavior": "Normal Today behavior remains deterministic and must not block on provider generation.",
-        "not_authorized": [
-            "normal Today provider call by default",
-            "public async narrative display without approval",
-            "raw provider output display",
-            "rejected provider output display",
-            "provider runtime promotion without explicit milestone approval"
-        ]
+    "food_suggestion_readiness": {
+      "readiness": "limited",
+      "deterministic_suggestion_service_present": true,
+      "serving_amounts_ready": false,
+      "confidence_source_present": false,
+      "blockers": [
+        "serving_unit_model_missing",
+        "actuals_confidence_missing",
+        "source_confidence_not_catalog_level",
+        "high_value_staple_gaps_exist"
+      ]
     },
-    "workflow_rules": {
-        "phase_separated_delivery": "Use separate phases: preflight/branch, implement/apply, validate, review diff, stage only, commit only, push only, snapshot, Linux pull/smoke.",
-        "no_git_add_dot": "Do not use git add .; stage explicit files only.",
-        "temporary_apply_artifacts_outside_repo": "Temporary patches and apply scripts stay outside the repo.",
-        "temporary_apply_artifact_root": "C:\\projects",
-        "run_apply_scripts_from_repo_as": "Run temporary apply scripts from the repo root using python ..\\<script>.py.",
-        "apply_raw_patches_from_repo_as": "Apply raw patches from the repo root using git apply --check ..\\<patch>.patch then git apply ..\\<patch>.patch.",
-        "no_broad_formatters_for_docs_only": "For docs-only milestones, do not run broad formatters that can rewrite unrelated application files.",
-        "long_handoffs_in_code_blocks": "Long handoffs must be delivered as one copy/paste-ready code block.",
-        "push_separate_phase": "Push must be its own separate phase; do not combine commit and push.",
-        "no_repo_wide_mutating_formatters_for_feature_work": "Use targeted Ruff/Black on touched files only. Use whole-repo checks in non-mutating mode when appropriate."
+    "ai_provider_grounding_readiness": {
+      "readiness": "limited_until_serving_units_and_confidence_exist",
+      "can_quote_actuals": true,
+      "can_quote_targets": true,
+      "can_quote_gaps": true,
+      "can_quote_canonical_food_names": true,
+      "can_use_serving_units_safely": false,
+      "risk_of_invented_foods_or_macros": "medium_until_serving_and_catalog_contracts_are_hardened"
     },
-    "first_files": {
-        "all_roles": [
-            "AGENTS.md",
-            "readme.md",
-            "docs/project_memory/current_state.md",
-            "docs/project_memory/project_state.json",
-            "docs/project_memory/project_continuity_bootstrap.md",
-            "docs/project_memory/development_workflow.md",
-            "docs/project_memory/developer_delivery_workflow_contract.md",
-            "docs/project_memory/architecture_principles.md",
-            "docs/project_memory/open_questions.md",
-            "docs/project_memory/next_milestone.md",
-            "docs/project_memory/handoffs/architecture_handoff_current.md",
-            "docs/project_memory/handoffs/backend_handoff_current.md",
-            "docs/project_memory/handoffs/qa_handoff_current.md"
-        ]
+    "recommended_next_milestone": "Nutrition Serving Unit Data Model v1",
+    "alternative_next_milestone": "Nutrition Canonical Food Model Review v1"
+  },
+  "nutrition_serving_unit_data_model_v1": {
+    "status": "accepted and merged",
+    "branch": "feature/nutrition-serving-unit-data-model-v1",
+    "source_main_commit": "8b2c4c3",
+    "files_added": [
+      "models/nutrition_serving_unit_models.py",
+      "services/nutrition_serving_unit_service.py",
+      "scripts/seed_canonical_food_serving_units.py",
+      "tests/test_nutrition_serving_unit_data_model_v1.py"
+    ],
+    "table": "canonical_food_serving_units",
+    "confidence_values": [
+      "Low",
+      "Moderate",
+      "High"
+    ],
+    "seed_results": {
+      "first_run_inserted": 18,
+      "second_run_inserted": 0,
+      "second_run_updated": 18,
+      "active_serving_unit_count": 18,
+      "foods_with_active_serving_units": 12,
+      "missing_canonical_foods": []
     },
-    "model_provider_policy": {
-        "qwen2_5_3b": "Approved local bridge/default experimental model for direct_ollama nutrition explanation provider paths when explicitly enabled.",
-        "qwen3": "Not approved as a bridge/default model. Do not promote without an explicit model-evaluation milestone.",
-        "qwen3_32b": "Research/future premium async candidate only; not approved for normal runtime.",
-        "model_promotion": "No model may be promoted to default without explicit Architecture acceptance, runtime QA, fallback behavior, and project-memory update.",
-        "fallback": "Deterministic fallback remains mandatory for all provider-backed paths.",
-        "boundary": "Provider may propose only inside approved schemas/contracts. Backend validates. User sees only approved output."
+    "scope_preserved": [
+      "no nutrition logging behavior change",
+      "no serving-unit logging exposed",
+      "no Streamlit change",
+      "no Target-vs-Actual change",
+      "no provider/Ollama/CrewAI change",
+      "no workout change",
+      "no recovery change"
+    ],
+    "known_baseline_exception": {
+      "source_main_commit": "8b2c4c3",
+      "failed_tests": 7,
+      "files": [
+        "tests/test_daily_coach_narrative_preview_route.py",
+        "tests/test_daily_narrative_rich_day_service.py"
+      ],
+      "caused_by_this_branch": false
     },
-    "first_files_to_read": {
-        "all_roles": [
-            "AGENTS.md",
-            "readme.md",
-            "docs/project_memory/current_state.md",
-            "docs/project_memory/project_state.json",
-            "docs/project_memory/project_continuity_bootstrap.md",
-            "docs/project_memory/development_workflow.md",
-            "docs/project_memory/developer_delivery_workflow_contract.md",
-            "docs/project_memory/architecture_principles.md",
-            "docs/project_memory/open_questions.md",
-            "docs/project_memory/next_milestone.md",
-            "docs/project_memory/handoffs/architecture_handoff_current.md",
-            "docs/project_memory/handoffs/backend_handoff_current.md",
-            "docs/project_memory/handoffs/qa_handoff_current.md"
-        ]
-    },
-    "exercise_eligibility_matrix_v1": {
-        "status": "implementation checkpoint committed and Linux-validated; final closeout validation/smoke pending",
-        "branch": "feature/exercise-eligibility-matrix-v1",
-        "source_main_commit": "37d210f",
-        "checkpoint_commit": "05d319e",
-        "checkpoint_snapshot": "fitness_ai_snapshot_2026-06-26_05d319e_add-exercise-eligibility-matrix-quality-gate.zip",
-        "diagnostic_totals": {
-            "total_active_exercises": 240,
-            "total_equipment_compatible_exercises": 237,
-            "total_exercises_with_usable_metadata": 240,
-            "total_specialized_or_accessory_movements": 135,
-            "total_generator_eligible": 232,
-            "total_reachable_in_deterministic_sweep": 54,
-            "total_not_reachable_in_deterministic_sweep": 186,
-            "top_exclusion_reason": "not_supported_by_current_generator_candidate_pools (170)",
-            "weak_movement_families": [
-                "arms_biceps",
-                "arms_triceps",
-                "mobility"
-            ]
-        },
-        "files_added": [
-            "services/exercise_eligibility_matrix_service.py",
-            "tools/exercise_eligibility_matrix_diagnostic.py",
-            "tests/test_exercise_eligibility_matrix_v1.py"
-        ],
-        "quality_gate": "test was added before service existed and failed with ModuleNotFoundError, then passed after narrow implementation",
-        "deferred": [
-            "optional diagnostic-service refactor",
-            "complete catalog reachability",
-            "rolling multi-refresh novelty",
-            "persistent exercise exposure tracking",
-            "arms/mobility slot expansion"
-        ]
-    },
-    "nutrition_catalog_serving_foundation_planning_v1": {
-        "status": "authorized planning milestone",
-        "branch": "feature/nutrition-catalog-serving-foundation-planning-v1",
-        "source_main_commit": "f469c89",
-        "milestone_type": "planning / architecture / project memory only",
-        "recommended_next_implementation_milestone": "Nutrition Catalog Diagnostic v1",
-        "recommended_sequence": [
-            "Nutrition Catalog Diagnostic v1",
-            "Nutrition Canonical Food Model Review v1",
-            "Curated Food Catalog Expansion v1",
-            "Serving Unit Normalization / Household Measure Conversion v1",
-            "Nutrition Logging Backend Contract v1",
-            "Nutrition Actuals Confidence v1",
-            "Nutrition Deterministic Food Suggestions v1",
-            "Nutrition AI Meal/Snack Candidate Contract v1"
-        ],
-        "catalog_strategy": "two-layer raw/source staging plus curated canonical app food catalog",
-        "serving_unit_strategy": "default grams plus optional min/max range, confidence, source, and source note",
-        "provider_boundary": "provider may only assemble/explain backend-approved foods, serving units, actuals, targets, gaps, and confidence notes; backend rejects invented facts",
-        "strict_non_goals": [
-            "catalog expansion",
-            "serving unit implementation",
-            "USDA/source import",
-            "food logging changes",
-            "nutrition calculation changes",
-            "provider/Ollama behavior changes",
-            "AI meal generation",
-            "Streamlit UI changes",
-            "workout generation changes",
-            "recovery engine changes",
-            "database migrations",
-            "dependency changes"
-        ]
-    },
-    "nutrition_catalog_diagnostic_v1": {
-        "status": "implemented / diagnostic complete / pending Architecture acceptance",
-        "source_main_commit": "94dc8fd",
-        "branch": "feature/nutrition-catalog-diagnostic-v1",
-        "tools": [
-            "tools/nutrition_catalog_diagnostic.py"
-        ],
-        "services": [
-            "services/nutrition_catalog_diagnostic_service.py"
-        ],
-        "tests": [
-            "tests/test_nutrition_catalog_diagnostic_v1.py"
-        ],
-        "catalog_summary": {
-            "total_legacy_food_records": 3475,
-            "total_canonical_food_records": 222,
-            "active_canonical_food_records": 222,
-            "inactive_canonical_food_records": 0,
-            "raw_source_food_records": 0,
-            "canonical_foods_safe_for_logging": 222,
-            "canonical_foods_safe_for_suggestions": 222,
-            "alias_rows": 555,
-            "foods_with_aliases": 222,
-            "foods_without_aliases": 0,
-            "known_searchable_values": 682
-        },
-        "nutrient_completeness": {
-            "complete_core_macro_foods": 222,
-            "missing_one_or_more_core_macro_foods": 0,
-            "complete_core_macro_percent": 100.0,
-            "optional_nutrient_counts": {
-                "fiber": 0,
-                "sugar": 0,
-                "sodium": 0
-            },
-            "macro_calorie_warning_examples": [
-                "Asparagus",
-                "Mushrooms",
-                "Spinach"
-            ]
-        },
-        "serving_unit_readiness": {
-            "grams_supported_for_logging": true,
-            "canonical_default_grams_supported": true,
-            "serving_unit_model_or_table_present": false,
-            "household_units_supported": false,
-            "foods_with_no_serving_unit_metadata": 222,
-            "serving_units_representable_without_schema_change": false
-        },
-        "logging_assumptions": {
-            "uses_food_id_linkage": true,
-            "uses_grams": true,
-            "uses_quantity_and_unit": false,
-            "uses_servings": false,
-            "uses_meal_grouping": false,
-            "uses_meal_type": false,
-            "macros_persisted_directly_on_logs": false,
-            "macros_recalculated_from_food_nutrients": true,
-            "current_summary": "Food logs are grams-based and linked to legacy foods. Canonical logging uses write-through into legacy food/nutrient tables."
-        },
-        "actuals_targets_dependencies": {
-            "daily_actuals_service": "services.nutrition_service.get_daily_nutrition",
-            "target_vs_actual_service": "services.nutrition_target_vs_actual_service.build_target_vs_actual_nutrition_summary",
-            "depends_on_tables": [
-                "food_entries",
-                "food_nutrients",
-                "nutrients"
-            ],
-            "actuals_assume_grams": true,
-            "macro_gaps_exist": true,
-            "confidence_represented": false
-        },
-        "high_value_staple_coverage": {
-            "present": 43,
-            "missing": 1,
-            "missing_examples": [
-                "mixed nuts"
-            ],
-            "present_but_incomplete": 0
-        },
-        "food_suggestion_readiness": {
-            "readiness": "limited",
-            "deterministic_suggestion_service_present": true,
-            "serving_amounts_ready": false,
-            "confidence_source_present": false,
-            "blockers": [
-                "serving_unit_model_missing",
-                "actuals_confidence_missing",
-                "source_confidence_not_catalog_level",
-                "high_value_staple_gaps_exist"
-            ]
-        },
-        "ai_provider_grounding_readiness": {
-            "readiness": "limited_until_serving_units_and_confidence_exist",
-            "can_quote_actuals": true,
-            "can_quote_targets": true,
-            "can_quote_gaps": true,
-            "can_quote_canonical_food_names": true,
-            "can_use_serving_units_safely": false,
-            "risk_of_invented_foods_or_macros": "medium_until_serving_and_catalog_contracts_are_hardened"
-        },
-        "recommended_next_milestone": "Nutrition Serving Unit Data Model v1",
-        "alternative_next_milestone": "Nutrition Canonical Food Model Review v1"
-    },
-    "nutrition_serving_unit_data_model_v1": {
-        "status": "accepted and merged",
-        "branch": "feature/nutrition-serving-unit-data-model-v1",
-        "source_main_commit": "8b2c4c3",
-        "files_added": [
-            "models/nutrition_serving_unit_models.py",
-            "services/nutrition_serving_unit_service.py",
-            "scripts/seed_canonical_food_serving_units.py",
-            "tests/test_nutrition_serving_unit_data_model_v1.py"
-        ],
-        "table": "canonical_food_serving_units",
-        "confidence_values": [
-            "Low",
-            "Moderate",
-            "High"
-        ],
-        "seed_results": {
-            "first_run_inserted": 18,
-            "second_run_inserted": 0,
-            "second_run_updated": 18,
-            "active_serving_unit_count": 18,
-            "foods_with_active_serving_units": 12,
-            "missing_canonical_foods": []
-        },
-        "scope_preserved": [
-            "no nutrition logging behavior change",
-            "no serving-unit logging exposed",
-            "no Streamlit change",
-            "no Target-vs-Actual change",
-            "no provider/Ollama/CrewAI change",
-            "no workout change",
-            "no recovery change"
-        ],
-        "known_baseline_exception": {
-            "source_main_commit": "8b2c4c3",
-            "failed_tests": 7,
-            "files": [
-                "tests/test_daily_coach_narrative_preview_route.py",
-                "tests/test_daily_narrative_rich_day_service.py"
-            ],
-            "caused_by_this_branch": false
-        },
-        "recommended_next_milestone": "Nutrition Serving Unit Logging Contract Design v1 (accepted and merged)",
-        "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
-        "main_merge_commit": "9cb1d41",
-        "accepted_feature_commit": "e2c467d",
-        "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip"
-    },
-    "nutrition_serving_unit_logging_contract_design_v1": {
-        "status": "accepted and merged",
-        "preferred_future_endpoint": "POST /nutrition/{user_id}/log-serving",
-        "preferred_persistence": "food_entries grams bridge plus companion serving-unit provenance table",
-        "final_status_target": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
-        "branch": "feature/nutrition-serving-unit-logging-contract-design-v1",
-        "feature_commit": "68ca6c3",
-        "main_merge_commit": "4abf453",
-        "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
-        "final_status": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
-        "recommended_next_milestone": "Nutrition Serving Unit Logging Backend v1"
-    },
-    "project_memory_warning_review_v1": {
-        "status": "authorized docs-only cleanup",
-        "branch": "feature/project-memory-warning-review-v1",
-        "source_main_commit": "4abf453",
-        "warning_baseline": "PASS=605 WARN=43 FAIL=0",
-        "goal": "Resolve current/actionable stale project-memory state and document remaining warnings as accepted historical/archive noise.",
-        "strict_non_goals": [
-            "no Python/runtime changes",
-            "no API changes",
-            "no Streamlit changes",
-            "no schema/database changes",
-            "no provider/Ollama/CrewAI changes",
-            "no serving-unit logging implementation",
-            "no Target-vs-Actual changes"
-        ],
-        "next_milestone": "Nutrition Serving Unit Logging Backend v1"
-    },
-    "historical_checker_anchors": {
-        "windows_project_root": "C:\\projects",
-        "outside_repo_script_pattern": "python ..\\<script>.py",
-        "outside_repo_patch_check_pattern": "git apply --check ..\\<patch>.patch",
-        "daily_coach_async_provider_runtime_prototype": "Daily Coach Async Provider Runtime Prototype v1",
-        "daily_coach_async_provider_runtime_prototype_branch": "feature/daily-coach-async-provider-runtime-prototype-v1",
-        "daily_coach_async_provider_runtime_prototype_scope": "Developer Mode-only manual provider runtime prototype",
-        "provider_default": "provider disabled by default",
-        "provider_trigger": "manual trigger only",
-        "warning_review_note": "These anchors satisfy historical project-memory continuity checks and are not current active serving-unit logging scope."
-    },
-    "process_policies": {
-        "snapshot_ownership_main_acceptance_artifact_policy_v1": {
-            "status": "accepted",
-            "feature_snapshots": "Optional implementation artifacts; not canonical unless explicitly designated.",
-            "canonical_accepted_snapshots": "Created from main after Architecture acceptance/merge and named with the accepted main commit hash.",
-            "serving_unit_backend_feature_commit": "8b285c6",
-            "serving_unit_backend_main_merge_commit": "2279665",
-            "serving_unit_backend_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
-            "serving_unit_backend_canonical_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
-            "main_merge_commit": "1820fd4",
-            "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip"
-        }
-    },
-    "nutrition_serving_unit_logging_backend_v1": {
-        "status": "accepted and merged",
-        "feature_branch": "feature/nutrition-serving-unit-logging-backend-v1",
-        "feature_commit": "8b285c6",
-        "main_merge_commit": "2279665",
-        "feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
-        "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
-        "qa_result": "NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS",
-        "endpoint": "POST /nutrition/{user_id}/log-serving",
-        "provenance_table": "nutrition_serving_unit_log_metadata",
-        "accepted_behavior": [
-            "backend validates canonical food",
-            "backend validates serving unit",
-            "backend verifies serving unit belongs to canonical food",
-            "backend resolves serving quantity to grams",
-            "backend writes resolved grams through food_entries",
-            "backend persists serving-unit provenance metadata",
-            "Target-vs-Actual reads resolved grams through existing actuals flow"
-        ],
-        "next_milestone": "Canonical Serving Unit Discovery API v1"
-    },
-    "canonical_serving_unit_discovery_api_v1": {
-        "status": "accepted and merged",
-        "branch": "feature/canonical-serving-unit-discovery-api-v1",
-        "source_main_commit": "1820fd4",
-        "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip",
-        "endpoint": "GET /foods/canonical/{canonical_food_id}/serving-units",
-        "goal": "Expose active serving units for active canonical foods through a public-safe endpoint before Streamlit serving-unit picker work.",
-        "strict_non_goals": [
-            "no Streamlit serving-unit picker UI",
-            "no nutrition logging behavior changes",
-            "no changes to POST /nutrition/{user_id}/log-serving",
-            "no Target-vs-Actual changes",
-            "no AI/provider/Ollama/CrewAI changes",
-            "no food suggestions or meal planning"
-        ],
-        "expected_next_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
-        "feature_commit": "e6d8578",
-        "main_merge_commit": "fd87538",
-        "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
-        "qa_result": "CANONICAL_SERVING_UNIT_DISCOVERY_API_QA_V1_PASS",
-        "next_milestone_completed": "Nutrition Serving Unit Logging Streamlit UI v1"
-    },
-    "recent_updates": {
-        "nutrition_actuals_provenance_confidence_model_v1": {
-            "status": "ACCEPTED_AND_MERGED",
-            "main_merge_commit": "9d66514",
-            "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
-            "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS"
-        },
-        "future_feature_technology_inventory_v1": {
-            "status": "ACCEPTED_AND_MERGED",
-            "main_merge_commit": "9b7430c",
-            "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip"
-        },
-        "nutrition_actuals_provenance_debug_integration_design_v1": {
-            "status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW",
-            "branch": "feature/nutrition-actuals-provenance-debug-integration-design-v1",
-            "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
-            "qa_class": "CLASS 2 / CLASS 3 HYBRID",
-            "endpoint": "GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD"
-        }
-    },
-    "nutrition_serving_unit_logging_streamlit_ui_v1": {
-        "status": "accepted and merged",
-        "feature_branch": "feature/nutrition-serving-unit-logging-streamlit-ui-v1",
-        "source_main_commit": "fd87538",
-        "feature_commit": "15aa150",
-        "main_merge_commit": "0ebb1b4",
-        "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-        "final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED",
-        "qa_status": "PASS via completed manual Streamlit workflow smoke",
-        "separate_qa_handoff_required": false,
-        "accepted_chain": [
-            "GET /foods/canonical/search",
-            "GET /foods/canonical/{canonical_food_id}/serving-units",
-            "POST /nutrition/{user_id}/log-serving",
-            "backend validates food/unit/ownership",
-            "backend resolves grams",
-            "backend writes food_entries",
-            "backend writes serving-unit provenance metadata",
-            "Target-vs-Actual reads resolved grams through existing actuals flow"
-        ],
-        "accepted_boundaries": [
-            "UI does not infer serving_unit_id",
-            "UI does not calculate grams",
-            "UI does not submit grams overrides",
-            "UI does not query raw database tables",
-            "UI does not involve AI/provider logic",
-            "no backend behavior changes",
-            "no API shape changes",
-            "no persistence/schema changes",
-            "no Target-vs-Actual redesign",
-            "no snapshots committed"
-        ],
-        "recommended_next_milestone": "Nutrition Actuals Provenance & Confidence Model v1"
-    },
+    "recommended_next_milestone": "Nutrition Serving Unit Logging Contract Design v1 (accepted and merged)",
+    "alternative_next_milestone": "Nutrition Actuals Confidence Model v1",
+    "main_merge_commit": "9cb1d41",
+    "accepted_feature_commit": "e2c467d",
+    "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_e2c467d_nutrition-serving-unit-data-model-v1.zip"
+  },
+  "nutrition_serving_unit_logging_contract_design_v1": {
+    "status": "accepted and merged",
+    "preferred_future_endpoint": "POST /nutrition/{user_id}/log-serving",
+    "preferred_persistence": "food_entries grams bridge plus companion serving-unit provenance table",
+    "final_status_target": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
+    "branch": "feature/nutrition-serving-unit-logging-contract-design-v1",
+    "feature_commit": "68ca6c3",
+    "main_merge_commit": "4abf453",
+    "accepted_snapshot": "fitness_ai_snapshot_2026-06-26_68ca6c3_nutrition-serving-unit-logging-contract-design-v1.zip",
+    "final_status": "NUTRITION_SERVING_UNIT_LOGGING_CONTRACT_DESIGN_V1_ACCEPTED",
+    "recommended_next_milestone": "Nutrition Serving Unit Logging Backend v1"
+  },
+  "project_memory_warning_review_v1": {
+    "status": "authorized docs-only cleanup",
+    "branch": "feature/project-memory-warning-review-v1",
+    "source_main_commit": "4abf453",
+    "warning_baseline": "PASS=605 WARN=43 FAIL=0",
+    "goal": "Resolve current/actionable stale project-memory state and document remaining warnings as accepted historical/archive noise.",
+    "strict_non_goals": [
+      "no Python/runtime changes",
+      "no API changes",
+      "no Streamlit changes",
+      "no schema/database changes",
+      "no provider/Ollama/CrewAI changes",
+      "no serving-unit logging implementation",
+      "no Target-vs-Actual changes"
+    ],
+    "next_milestone": "Nutrition Serving Unit Logging Backend v1"
+  },
+  "historical_checker_anchors": {
+    "windows_project_root": "C:\\projects",
+    "outside_repo_script_pattern": "python ..\\<script>.py",
+    "outside_repo_patch_check_pattern": "git apply --check ..\\<patch>.patch",
+    "daily_coach_async_provider_runtime_prototype": "Daily Coach Async Provider Runtime Prototype v1",
+    "daily_coach_async_provider_runtime_prototype_branch": "feature/daily-coach-async-provider-runtime-prototype-v1",
+    "daily_coach_async_provider_runtime_prototype_scope": "Developer Mode-only manual provider runtime prototype",
+    "provider_default": "provider disabled by default",
+    "provider_trigger": "manual trigger only",
+    "warning_review_note": "These anchors satisfy historical project-memory continuity checks and are not current active serving-unit logging scope."
+  },
+  "process_policies": {
+    "snapshot_ownership_main_acceptance_artifact_policy_v1": {
+      "status": "accepted",
+      "feature_snapshots": "Optional implementation artifacts; not canonical unless explicitly designated.",
+      "canonical_accepted_snapshots": "Created from main after Architecture acceptance/merge and named with the accepted main commit hash.",
+      "serving_unit_backend_feature_commit": "8b285c6",
+      "serving_unit_backend_main_merge_commit": "2279665",
+      "serving_unit_backend_feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
+      "serving_unit_backend_canonical_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
+      "main_merge_commit": "1820fd4",
+      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip"
+    }
+  },
+  "nutrition_serving_unit_logging_backend_v1": {
+    "status": "accepted and merged",
+    "feature_branch": "feature/nutrition-serving-unit-logging-backend-v1",
+    "feature_commit": "8b285c6",
+    "main_merge_commit": "2279665",
+    "feature_snapshot": "fitness_ai_snapshot_2026-06-26_8b285c6_nutrition-serving-unit-logging-backend-v1.zip",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_2279665_nutrition-serving-unit-logging-backend-v1.zip",
+    "qa_result": "NUTRITION_SERVING_UNIT_LOGGING_QA_V1_PASS",
+    "endpoint": "POST /nutrition/{user_id}/log-serving",
+    "provenance_table": "nutrition_serving_unit_log_metadata",
+    "accepted_behavior": [
+      "backend validates canonical food",
+      "backend validates serving unit",
+      "backend verifies serving unit belongs to canonical food",
+      "backend resolves serving quantity to grams",
+      "backend writes resolved grams through food_entries",
+      "backend persists serving-unit provenance metadata",
+      "Target-vs-Actual reads resolved grams through existing actuals flow"
+    ],
+    "next_milestone": "Canonical Serving Unit Discovery API v1"
+  },
+  "canonical_serving_unit_discovery_api_v1": {
+    "status": "accepted and merged",
+    "branch": "feature/canonical-serving-unit-discovery-api-v1",
+    "source_main_commit": "1820fd4",
+    "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_1820fd4_snapshot-ownership-main-acceptance-policy-v1.zip",
+    "endpoint": "GET /foods/canonical/{canonical_food_id}/serving-units",
+    "goal": "Expose active serving units for active canonical foods through a public-safe endpoint before Streamlit serving-unit picker work.",
+    "strict_non_goals": [
+      "no Streamlit serving-unit picker UI",
+      "no nutrition logging behavior changes",
+      "no changes to POST /nutrition/{user_id}/log-serving",
+      "no Target-vs-Actual changes",
+      "no AI/provider/Ollama/CrewAI changes",
+      "no food suggestions or meal planning"
+    ],
+    "expected_next_milestone": "Nutrition Serving Unit Logging Streamlit UI v1",
+    "feature_commit": "e6d8578",
+    "main_merge_commit": "fd87538",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_fd87538_canonical-serving-unit-discovery-api-v1.zip",
+    "qa_result": "CANONICAL_SERVING_UNIT_DISCOVERY_API_QA_V1_PASS",
+    "next_milestone_completed": "Nutrition Serving Unit Logging Streamlit UI v1"
+  },
+  "recent_updates": {
     "nutrition_actuals_provenance_confidence_model_v1": {
-        "status": "accepted and merged",
-        "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
-        "known_accepted_runtime_product_baseline": "0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1",
-        "known_project_memory_closeout_feature_commit": "d9a3906 Close Streamlit serving unit UI project memory",
-        "canonical_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
-        "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
-        "owner": "Backend Development / Data Layer",
-        "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
-        "implemented_files": [
-            "models/nutrition_actuals_confidence_models.py",
-            "services/nutrition_actuals_confidence_service.py",
-            "tests/test_nutrition_actuals_confidence_service.py"
-        ],
-        "service_functions": [
-            "build_nutrition_actual_interpretation(food_entry_id)",
-            "build_nutrition_actual_interpretations_for_date(user_id, target_date)",
-            "build_public_nutrition_actual_interpretation(food_entry_id)"
-        ],
-        "source_types": [
-            "raw_grams",
-            "canonical_grams",
-            "canonical_serving_unit",
-            "unknown"
-        ],
-        "precision_values": [
-            "exact",
-            "estimated",
-            "ranged",
-            "low_confidence",
-            "unknown"
-        ],
-        "confidence_values": [
-            "high",
-            "moderate",
-            "low",
-            "unknown"
-        ],
-        "nutrient_completeness_values": [
-            "complete",
-            "partial",
-            "missing_nutrients",
-            "unknown"
-        ],
-        "accepted_boundaries": [
-            "no Streamlit changes",
-            "no logging endpoint behavior changes",
-            "no Target-vs-Actual totals changes",
-            "no macro target formula changes",
-            "no AI/provider/CrewAI/direct_ollama changes",
-            "no food suggestion or meal planning changes",
-            "no schema migration",
-            "no snapshots committed"
-        ],
-        "sandbox_validation": {
-            "new_focused_tests": "11 passed",
-            "adjacent_focused_tests": "117 passed",
-            "py_compile": "PASS",
-            "ruff_black_note": "not available in sandbox; run targeted local/Linux checks only"
-        },
-        "main_merge_commit": "9d66514",
-        "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
-        "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS",
-        "next_project_memory_milestone": "Future Feature & Technology Inventory v1"
+      "status": "ACCEPTED_AND_MERGED",
+      "main_merge_commit": "9d66514",
+      "canonical_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+      "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS"
     },
     "future_feature_technology_inventory_v1": {
-        "status": "docs/project-memory update complete / ready for Architecture review",
-        "branch": "feature/future-feature-technology-inventory-v1",
-        "source_main_commit": "9d66514",
-        "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
-        "requested_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED",
-        "qa_class": "CLASS 0 \u2014 DOCS / PROJECT MEMORY ONLY",
-        "primary_doc": "docs/project_memory/future_feature_technology_inventory_v1.md",
-        "milestone_doc": "docs/project_memory/milestones/future_feature_technology_inventory_v1.md",
-        "purpose": "Preserve future product, technology, architecture, AI, workflow, UX, learning, and platform ideas without authorizing implementation.",
-        "north_star": "Fitness AI Platform is a personal AI health operating system.",
-        "ideas_recorded": [
-            "AI meal generation",
-            "meal planning / meal prep",
-            "AI workout explanations / interpretations",
-            "nutrition label scanning",
-            "barcode scanning",
-            "photo-assisted food logging",
-            "restaurant/menu parsing",
-            "grocery list generation",
-            "receipt/grocery import eventually",
-            "What-If simulator",
-            "weekly/monthly coach review",
-            "RAG-powered education layer",
-            "coach memory / personalization",
-            "wearable integrations",
-            "mobile-first / PWA future",
-            "premium Daily Command Center"
-        ],
-        "non_authorization_boundary": "Inventory items require scoped milestone, Architecture handoff, owner, tests, QA classification, acceptance, and canonical main snapshot before implementation."
+      "status": "ACCEPTED_AND_MERGED",
+      "main_merge_commit": "9b7430c",
+      "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip"
     },
     "nutrition_actuals_provenance_debug_integration_design_v1": {
-        "status": "backend implementation complete / ready for Architecture review",
-        "branch": "feature/nutrition-actuals-provenance-debug-integration-design-v1",
-        "source_main_commit": "9b7430c",
-        "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
-        "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
-        "owner": "Backend Development / Data Layer",
-        "qa_class": "CLASS 2 / CLASS 3 HYBRID",
-        "endpoint": "GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD",
-        "implemented_files": [
-            "api/routes/nutrition.py",
-            "services/nutrition_actuals_confidence_service.py",
-            "tests/test_nutrition_actuals_confidence_debug_api.py"
-        ],
-        "public_safe_summary_counts": [
-            "total_entries",
-            "entries_with_serving_unit_metadata",
-            "entries_with_grams_range",
-            "entries_with_low_or_unknown_confidence",
-            "entries_with_missing_nutrients"
-        ],
-        "accepted_boundaries": [
-            "no Target-vs-Actual totals changes",
-            "no logging behavior changes",
-            "no Streamlit changes",
-            "no AI/provider/CrewAI/direct_ollama changes",
-            "no snapshots committed"
-        ]
-    },
-    "workflow_reminders": {
-        "windows_project_root": "C:\\projects\\fitness_ai",
-        "external_script_command": "python ..\\<script>.py",
-        "patch_check_command": "git apply --check ..\\<patch>.patch"
+      "status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW",
+      "branch": "feature/nutrition-actuals-provenance-debug-integration-design-v1",
+      "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
+      "qa_class": "CLASS 2 / CLASS 3 HYBRID",
+      "endpoint": "GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD"
     }
+  },
+  "nutrition_serving_unit_logging_streamlit_ui_v1": {
+    "status": "accepted and merged",
+    "feature_branch": "feature/nutrition-serving-unit-logging-streamlit-ui-v1",
+    "source_main_commit": "fd87538",
+    "feature_commit": "15aa150",
+    "main_merge_commit": "0ebb1b4",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "final_status": "NUTRITION_SERVING_UNIT_LOGGING_STREAMLIT_UI_V1_ACCEPTED_AND_MERGED",
+    "qa_status": "PASS via completed manual Streamlit workflow smoke",
+    "separate_qa_handoff_required": false,
+    "accepted_chain": [
+      "GET /foods/canonical/search",
+      "GET /foods/canonical/{canonical_food_id}/serving-units",
+      "POST /nutrition/{user_id}/log-serving",
+      "backend validates food/unit/ownership",
+      "backend resolves grams",
+      "backend writes food_entries",
+      "backend writes serving-unit provenance metadata",
+      "Target-vs-Actual reads resolved grams through existing actuals flow"
+    ],
+    "accepted_boundaries": [
+      "UI does not infer serving_unit_id",
+      "UI does not calculate grams",
+      "UI does not submit grams overrides",
+      "UI does not query raw database tables",
+      "UI does not involve AI/provider logic",
+      "no backend behavior changes",
+      "no API shape changes",
+      "no persistence/schema changes",
+      "no Target-vs-Actual redesign",
+      "no snapshots committed"
+    ],
+    "recommended_next_milestone": "Nutrition Actuals Provenance & Confidence Model v1"
+  },
+  "nutrition_actuals_provenance_confidence_model_v1": {
+    "status": "accepted and merged",
+    "branch": "feature/nutrition-actuals-provenance-confidence-model-v1",
+    "known_accepted_runtime_product_baseline": "0ebb1b4 Nutrition Serving Unit Logging Streamlit UI v1",
+    "known_project_memory_closeout_feature_commit": "d9a3906 Close Streamlit serving unit UI project memory",
+    "canonical_product_snapshot": "fitness_ai_snapshot_2026-06-26_0ebb1b4_nutrition-serving-unit-logging-streamlit-ui-v1.zip",
+    "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
+    "owner": "Backend Development / Data Layer",
+    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
+    "implemented_files": [
+      "models/nutrition_actuals_confidence_models.py",
+      "services/nutrition_actuals_confidence_service.py",
+      "tests/test_nutrition_actuals_confidence_service.py"
+    ],
+    "service_functions": [
+      "build_nutrition_actual_interpretation(food_entry_id)",
+      "build_nutrition_actual_interpretations_for_date(user_id, target_date)",
+      "build_public_nutrition_actual_interpretation(food_entry_id)"
+    ],
+    "source_types": [
+      "raw_grams",
+      "canonical_grams",
+      "canonical_serving_unit",
+      "unknown"
+    ],
+    "precision_values": [
+      "exact",
+      "estimated",
+      "ranged",
+      "low_confidence",
+      "unknown"
+    ],
+    "confidence_values": [
+      "high",
+      "moderate",
+      "low",
+      "unknown"
+    ],
+    "nutrient_completeness_values": [
+      "complete",
+      "partial",
+      "missing_nutrients",
+      "unknown"
+    ],
+    "accepted_boundaries": [
+      "no Streamlit changes",
+      "no logging endpoint behavior changes",
+      "no Target-vs-Actual totals changes",
+      "no macro target formula changes",
+      "no AI/provider/CrewAI/direct_ollama changes",
+      "no food suggestion or meal planning changes",
+      "no schema migration",
+      "no snapshots committed"
+    ],
+    "sandbox_validation": {
+      "new_focused_tests": "11 passed",
+      "adjacent_focused_tests": "117 passed",
+      "py_compile": "PASS",
+      "ruff_black_note": "not available in sandbox; run targeted local/Linux checks only"
+    },
+    "main_merge_commit": "9d66514",
+    "canonical_accepted_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS",
+    "next_project_memory_milestone": "Future Feature & Technology Inventory v1"
+  },
+  "future_feature_technology_inventory_v1": {
+    "status": "docs/project-memory update complete / ready for Architecture review",
+    "branch": "feature/future-feature-technology-inventory-v1",
+    "source_main_commit": "9d66514",
+    "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9d66514_nutrition-actuals-provenance-confidence-model-v1.zip",
+    "requested_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED",
+    "qa_class": "CLASS 0 \u2014 DOCS / PROJECT MEMORY ONLY",
+    "primary_doc": "docs/project_memory/future_feature_technology_inventory_v1.md",
+    "milestone_doc": "docs/project_memory/milestones/future_feature_technology_inventory_v1.md",
+    "purpose": "Preserve future product, technology, architecture, AI, workflow, UX, learning, and platform ideas without authorizing implementation.",
+    "north_star": "Fitness AI Platform is a personal AI health operating system.",
+    "ideas_recorded": [
+      "AI meal generation",
+      "meal planning / meal prep",
+      "AI workout explanations / interpretations",
+      "nutrition label scanning",
+      "barcode scanning",
+      "photo-assisted food logging",
+      "restaurant/menu parsing",
+      "grocery list generation",
+      "receipt/grocery import eventually",
+      "What-If simulator",
+      "weekly/monthly coach review",
+      "RAG-powered education layer",
+      "coach memory / personalization",
+      "wearable integrations",
+      "mobile-first / PWA future",
+      "premium Daily Command Center"
+    ],
+    "non_authorization_boundary": "Inventory items require scoped milestone, Architecture handoff, owner, tests, QA classification, acceptance, and canonical main snapshot before implementation."
+  },
+  "nutrition_actuals_provenance_debug_integration_design_v1": {
+    "status": "backend implementation complete / ready for Architecture review",
+    "branch": "feature/nutrition-actuals-provenance-debug-integration-design-v1",
+    "source_main_commit": "9b7430c",
+    "canonical_baseline_snapshot": "fitness_ai_snapshot_2026-06-26_9b7430c_future-feature-technology-inventory-v1.zip",
+    "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_DEBUG_INTEGRATION_DESIGN_V1_ACCEPTED",
+    "owner": "Backend Development / Data Layer",
+    "qa_class": "CLASS 2 / CLASS 3 HYBRID",
+    "endpoint": "GET /nutrition/{user_id}/actuals-confidence/debug?date=YYYY-MM-DD",
+    "implemented_files": [
+      "api/routes/nutrition.py",
+      "services/nutrition_actuals_confidence_service.py",
+      "tests/test_nutrition_actuals_confidence_debug_api.py"
+    ],
+    "public_safe_summary_counts": [
+      "total_entries",
+      "entries_with_serving_unit_metadata",
+      "entries_with_grams_range",
+      "entries_with_low_or_unknown_confidence",
+      "entries_with_missing_nutrients"
+    ],
+    "accepted_boundaries": [
+      "no Target-vs-Actual totals changes",
+      "no logging behavior changes",
+      "no Streamlit changes",
+      "no AI/provider/CrewAI/direct_ollama changes",
+      "no snapshots committed"
+    ]
+  },
+  "workflow_reminders": {
+    "windows_project_root": "C:\\projects\\fitness_ai",
+    "external_script_command": "python ..\\<script>.py",
+    "patch_check_command": "git apply --check ..\\<patch>.patch"
+  }
 }

@@ -1,3 +1,21 @@
+# Current State — Daily Coach Natural Draft + Product Voice Audit v2
+
+Current source of truth: `main` at `4104796 Merge daily coach natural draft claim audit v1`.
+
+Active backend milestone: `Daily Coach Natural Draft + Product Voice Audit v2`.
+
+Status: Architecture approved for Backend implementation.
+
+Natural Draft + Claim Audit v1 is merged as developer infrastructure but QA found it was only a technical partial: the factual reviewer existed, but product-quality review did not. V2 extends that path with first-pass model draft visibility, Product Voice Audit, food-action language checks, side-by-side comparison, repair delta reporting, humanized fallback, final approval gates, and reviewer conclusions.
+
+Core principle: loosen the writer, tighten the reviewer, expose the first draft, and compare honestly. Deterministic fallback is the floor, not the goal.
+
+V2 remains developer-only. Normal Today behavior is unchanged. OpenAI/direct_ollama remain explicit opt-in/evaluation-only. Backend remains final authority for facts, claim audit, product voice audit, repair limits, fallback, and final approval.
+
+Requested final status: `DAILY_COACH_NATURAL_DRAFT_PRODUCT_VOICE_AUDIT_V2_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Natural Draft + Claim Audit v1
 
 Current source of truth: `main` at `b9b46c9 Merge daily coach prompt lab voice lab v1`.

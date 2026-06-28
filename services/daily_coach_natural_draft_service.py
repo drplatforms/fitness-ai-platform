@@ -9,6 +9,7 @@ from models.daily_coach_natural_draft_audit_models import (
     ApprovedCoachBrief,
     NaturalCoachDraft,
 )
+from services.daily_coach_food_action_language_service import humanize_food_action_text
 from services.daily_coach_value_narrative_service import (
     DAILY_COACH_VALUE_NARRATIVE_PROVIDER_ENV,
     OLLAMA_BASE_URL_ENV,
@@ -139,14 +140,20 @@ def _deterministic_natural_draft(brief: ApprovedCoachBrief) -> NaturalCoachDraft
             if food.allowed_conditions
             else f"if {reason} is still short"
         )
-        body_parts.append(f"Add {food.friendly_name} {condition}.")
+        if food.friendly_name.lower() == "oatmeal":
+            food_sentence = f"Have {food.friendly_name} {condition}."
+        elif food.friendly_name.lower() == "canned tuna":
+            food_sentence = f"Eat some {food.friendly_name} {condition}."
+        else:
+            food_sentence = f"Have {food.friendly_name} {condition}."
+        body_parts.append(humanize_food_action_text(food_sentence, brief))
     if not body_parts:
         body_parts.append(
             brief.today_intent or "Keep the next action small and easy to verify."
         )
     return NaturalCoachDraft(
         headline=_headline_for_brief(brief),
-        body=" ".join(body_parts),
+        body=humanize_food_action_text(" ".join(body_parts), brief),
         provider=PROVIDER_DETERMINISTIC,
         model=None,
     )

@@ -6,6 +6,17 @@ from typing import Any, Literal
 DailyCoachNaturalDraftProvider = Literal["deterministic", "direct_ollama", "openai"]
 ClaimAuditSeverity = Literal["info", "warn", "fail", "block"]
 ClaimAuditDecision = Literal["approve", "repair_required", "fallback_required"]
+ProductVoiceAuditMode = Literal["exploration", "audit", "repair", "approval"]
+ProductVoiceAuditDecision = Literal["approve", "repair_required", "fallback_required"]
+ReviewerConclusion = Literal[
+    "model_failure",
+    "brief_failure",
+    "audit_failure",
+    "repair_failure",
+    "fallback_failure",
+    "product_voice_failure",
+    "success",
+]
 FinalCopySource = Literal[
     "draft_approved",
     "repair_approved",
@@ -177,6 +188,48 @@ class ClaimAuditResult:
 
 
 @dataclass(frozen=True)
+class ProductVoiceAuditScore:
+    dimension: str
+    score: int
+    reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ProductVoiceAuditFinding:
+    finding_type: str
+    severity: ClaimAuditSeverity
+    text_span: str
+    reason: str
+    repair_instruction: str | None = None
+    repairable: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ProductVoiceAuditResult:
+    passed: bool
+    mode: ProductVoiceAuditMode
+    decision: ProductVoiceAuditDecision
+    scores: tuple[ProductVoiceAuditScore, ...] = field(default_factory=tuple)
+    findings: tuple[ProductVoiceAuditFinding, ...] = field(default_factory=tuple)
+    mechanical_food_action_count: int = 0
+    backend_phrase_count: int = 0
+    stale_skeleton_count: int = 0
+    product_readiness_score: int = 1
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["scores"] = [score.to_dict() for score in self.scores]
+        payload["findings"] = [finding.to_dict() for finding in self.findings]
+        return payload
+
+
+@dataclass(frozen=True)
 class RepairAttemptResult:
     attempted: bool
     provider: DailyCoachNaturalDraftProvider
@@ -208,6 +261,11 @@ class NaturalDraftAuditRunResult:
     repair_result: RepairAttemptResult
     final_copy: NaturalCoachDraft | None
     final_source: FinalCopySource
+    deterministic_fallback: NaturalCoachDraft | None = None
+    product_voice_audit_result: ProductVoiceAuditResult | None = None
+    repaired_product_voice_audit_result: ProductVoiceAuditResult | None = None
+    fallback_product_voice_audit_result: ProductVoiceAuditResult | None = None
+    reviewer_conclusion: ReviewerConclusion = "success"
     runtime_metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -219,4 +277,24 @@ class NaturalDraftAuditRunResult:
         payload["audit_result"] = self.audit_result.to_dict()
         payload["repair_result"] = self.repair_result.to_dict()
         payload["final_copy"] = self.final_copy.to_dict() if self.final_copy else None
+        payload["deterministic_fallback"] = (
+            self.deterministic_fallback.to_dict()
+            if self.deterministic_fallback
+            else None
+        )
+        payload["product_voice_audit_result"] = (
+            self.product_voice_audit_result.to_dict()
+            if self.product_voice_audit_result
+            else None
+        )
+        payload["repaired_product_voice_audit_result"] = (
+            self.repaired_product_voice_audit_result.to_dict()
+            if self.repaired_product_voice_audit_result
+            else None
+        )
+        payload["fallback_product_voice_audit_result"] = (
+            self.fallback_product_voice_audit_result.to_dict()
+            if self.fallback_product_voice_audit_result
+            else None
+        )
         return payload

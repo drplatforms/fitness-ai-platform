@@ -12,6 +12,7 @@ from models.daily_coach_natural_draft_audit_models import (
     ApprovedRecoveryInterpretation,
     ApprovedTrainingAction,
 )
+from services.daily_coach_food_action_language_service import friendly_food_display_name
 from services.daily_coach_synthesis_service import build_daily_coach_synthesis
 from services.daily_coach_value_narrative_service import (
     build_daily_coach_value_aware_provider_context,
@@ -49,6 +50,10 @@ _BLOCKED_PHRASES = (
     "easy protein bump",
     "fatigue does not require backing off today",
     "Tuna, Canned in Water",
+    "add dry oats",
+    "use dry oats",
+    "add canned tuna",
+    "use canned tuna",
 )
 
 _FRIENDLY_FOOD_NAMES = {
@@ -110,6 +115,8 @@ def build_approved_coach_brief(
         blocked_phrases=_BLOCKED_PHRASES,
         claim_registry=claim_registry,
         display_policy={
+            "gate_modes": ["exploration", "audit", "repair", "approval"],
+            "first_pass_capture_required": True,
             "raw_db_rows_allowed": False,
             "canonical_food_names_user_facing": "blocked_when_friendly_name_exists",
             "personal_name_usage": policy.visible_name_usage,
@@ -118,7 +125,8 @@ def build_approved_coach_brief(
         },
         verbosity_policy={
             "shape": "headline plus natural body",
-            "target": "short useful note",
+            "target": "natural coach note, not a field-by-field compliance wrapper",
+            "exploration_mode": "allow the writer enough room to show whether the brief supports useful coaching",
             "avoid": "report tone, slogans, and field-by-field compliance voice",
         },
         repair_policy={
@@ -138,7 +146,9 @@ def build_approved_coach_brief(
             ],
         },
         fallback_policy={
-            "after_failed_repair": "deterministic_fallback",
+            "after_failed_repair": "humanized_deterministic_fallback",
+            "fallback_is_floor_not_goal": True,
+            "must_pass_product_voice_audit": True,
             "normal_today_unchanged": True,
         },
     )
@@ -150,7 +160,9 @@ def blocked_natural_draft_phrases() -> tuple[str, ...]:
 
 def friendly_food_name(canonical_name: str) -> str:
     normalized = _normalize_text(canonical_name)
-    return _FRIENDLY_FOOD_NAMES.get(normalized, _fallback_friendly_name(canonical_name))
+    return _FRIENDLY_FOOD_NAMES.get(
+        normalized, friendly_food_display_name(canonical_name)
+    )
 
 
 def _approved_facts(context: Mapping[str, Any]) -> list[ApprovedCoachFact]:

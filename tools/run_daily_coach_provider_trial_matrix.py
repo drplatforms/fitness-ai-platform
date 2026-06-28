@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -132,6 +133,26 @@ class TrialMatrixRow:
     fact_dumping_flag: bool = False
     synthesis_quality_notes: list[str] = field(default_factory=list)
     manual_actionability_score: str = ""
+    approved_context_brief_present: bool = False
+    approved_context_brief_sentence_count: int = 0
+    approved_context_brief_claim_keys: list[str] = field(default_factory=list)
+    claim_backing_map_present: bool = False
+    today_story_main_tension: str = ""
+    today_story_desired_coaching_move: str = ""
+    verbosity_budget_mode: str = ""
+    verbosity_budget_target_min: int | None = None
+    verbosity_budget_target_max: int | None = None
+    output_word_count: int = 0
+    adaptive_verbosity_used: bool = False
+    robotic_phrase_flags: list[str] = field(default_factory=list)
+    framework_phrase_flags: list[str] = field(default_factory=list)
+    repeated_support_count: int = 0
+    context_brief_claims_used: list[str] = field(default_factory=list)
+    claim_backing_map_claims_used: list[str] = field(default_factory=list)
+    manual_voice_score: str = ""
+    manual_usefulness_score: str = ""
+    manual_naturalness_score: str = ""
+    manual_not_deterministic_score: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -495,6 +516,48 @@ def _run_case(
             approved, internal_provider_context_summary
         ),
         manual_actionability_score="",
+        approved_context_brief_present=_approved_context_brief_present(
+            internal_provider_context_summary
+        ),
+        approved_context_brief_sentence_count=_approved_context_brief_sentence_count(
+            internal_provider_context_summary
+        ),
+        approved_context_brief_claim_keys=_approved_context_brief_claim_keys(
+            internal_provider_context_summary
+        ),
+        claim_backing_map_present=_claim_backing_map_present(
+            internal_provider_context_summary
+        ),
+        today_story_main_tension=_today_story_main_tension(
+            internal_provider_context_summary
+        ),
+        today_story_desired_coaching_move=_today_story_desired_coaching_move(
+            internal_provider_context_summary
+        ),
+        verbosity_budget_mode=_verbosity_budget_mode(internal_provider_context_summary),
+        verbosity_budget_target_min=_verbosity_budget_limit(
+            internal_provider_context_summary, limit_name="target_words_min"
+        ),
+        verbosity_budget_target_max=_verbosity_budget_limit(
+            internal_provider_context_summary, limit_name="target_words_max"
+        ),
+        output_word_count=_output_word_count(approved),
+        adaptive_verbosity_used=_adaptive_verbosity_used(
+            approved, internal_provider_context_summary
+        ),
+        robotic_phrase_flags=_robotic_phrase_flags(approved),
+        framework_phrase_flags=_framework_phrase_flags(approved),
+        repeated_support_count=_repeated_support_count(approved),
+        context_brief_claims_used=_context_brief_claims_used(
+            approved, internal_provider_context_summary
+        ),
+        claim_backing_map_claims_used=_claim_backing_map_claims_used(
+            approved, internal_provider_context_summary
+        ),
+        manual_voice_score="",
+        manual_usefulness_score="",
+        manual_naturalness_score="",
+        manual_not_deterministic_score="",
     )
     if _should_cleanup_ollama(case, ollama_unload_after_run, skip_ollama_cleanup):
         cleanup_status = ollama_cleanup(
@@ -758,6 +821,8 @@ def render_summary_markdown(
             "14. Should any provider become default now? Expected answer: no.",
             "15. Did today_story improve specificity without creating a fact dump?",
             "16. Did adaptive verbosity improve actionability while staying scannable?",
+            "17. Did the output use the approved_context_brief without copying framework language?",
+            "18. Did the output avoid robotic/framework phrases?",
             "",
             "## Manual review notes",
             "",
@@ -1011,6 +1076,175 @@ def _synthesis_quality_notes(
     if not notes:
         notes.append("manual_review")
     return notes
+
+
+def _approved_context_brief(
+    provider_context_summary: Mapping[str, Any],
+) -> dict[str, Any]:
+    value = provider_context_summary.get("approved_context_brief") or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _approved_context_brief_sentences(
+    provider_context_summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    sentences = _approved_context_brief(provider_context_summary).get("sentences") or []
+    return [item for item in sentences if isinstance(item, dict)]
+
+
+def _approved_context_brief_present(
+    provider_context_summary: Mapping[str, Any],
+) -> bool:
+    return bool(_approved_context_brief_sentences(provider_context_summary))
+
+
+def _approved_context_brief_sentence_count(
+    provider_context_summary: Mapping[str, Any],
+) -> int:
+    return len(_approved_context_brief_sentences(provider_context_summary))
+
+
+def _approved_context_brief_claim_keys(
+    provider_context_summary: Mapping[str, Any],
+) -> list[str]:
+    keys: list[str] = []
+    for sentence in _approved_context_brief_sentences(provider_context_summary):
+        keys.extend(_safe_string_list(sentence.get("claim_keys")))
+    return list(dict.fromkeys(keys))
+
+
+def _claim_backing_map(provider_context_summary: Mapping[str, Any]) -> dict[str, Any]:
+    value = provider_context_summary.get("claim_backing_map") or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _claim_backing_map_present(provider_context_summary: Mapping[str, Any]) -> bool:
+    return bool(_claim_backing_map(provider_context_summary))
+
+
+def _today_story_main_tension(provider_context_summary: Mapping[str, Any]) -> str:
+    value = _today_story(provider_context_summary).get("main_tension")
+    return str(value) if value else ""
+
+
+def _today_story_desired_coaching_move(
+    provider_context_summary: Mapping[str, Any],
+) -> str:
+    value = _today_story(provider_context_summary).get("desired_coaching_move")
+    return str(value) if value else ""
+
+
+def _verbosity_budget(provider_context_summary: Mapping[str, Any]) -> dict[str, Any]:
+    value = provider_context_summary.get("verbosity_budget") or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _verbosity_budget_mode(provider_context_summary: Mapping[str, Any]) -> str:
+    value = _verbosity_budget(provider_context_summary).get("mode")
+    return str(value) if value else ""
+
+
+def _verbosity_budget_limit(
+    provider_context_summary: Mapping[str, Any], *, limit_name: str
+) -> int | None:
+    value = _verbosity_budget(provider_context_summary).get(limit_name)
+    return (
+        int(value)
+        if isinstance(value, int | float | str) and str(value).isdigit()
+        else None
+    )
+
+
+def _output_word_count(approved: Any) -> int:
+    return len(re.findall(r"\b\w+\b", _approved_public_text(approved)))
+
+
+def _adaptive_verbosity_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> bool:
+    mode = _verbosity_budget_mode(provider_context_summary)
+    word_count = _output_word_count(approved)
+    min_words = _verbosity_budget_limit(
+        provider_context_summary, limit_name="target_words_min"
+    )
+    if mode == "rich" and min_words is not None:
+        return word_count >= min_words
+    if mode in {"normal", "limited"}:
+        return word_count > 0
+    return False
+
+
+def _robotic_phrase_flags(approved: Any) -> list[str]:
+    text = _approved_public_text(approved).lower()
+    fragments = [
+        "based on the provided data",
+        "as an ai coach",
+        "maintain current direction",
+        "progress gradually",
+        "markers remain stable",
+    ]
+    return [fragment for fragment in fragments if fragment in text]
+
+
+def _framework_phrase_flags(approved: Any) -> list[str]:
+    text = _approved_public_text(approved).lower()
+    fragments = [
+        "main lever",
+        "effort anchor",
+        "planned effort range",
+        "bigger nutrition overhaul",
+        "backend-approved",
+        "approved context",
+        "claim keys",
+        "validator",
+        "schema",
+        "json",
+    ]
+    return [fragment for fragment in fragments if fragment in text]
+
+
+def _repeated_support_count(approved: Any) -> int:
+    return _approved_public_text(approved).lower().count("support")
+
+
+def _context_brief_claims_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> list[str]:
+    quoted = set(_quoted_values(approved))
+    return [
+        key
+        for key in _approved_context_brief_claim_keys(provider_context_summary)
+        if key in quoted
+    ]
+
+
+def _claim_backing_map_claims_used(
+    approved: Any, provider_context_summary: Mapping[str, Any]
+) -> list[str]:
+    quoted = set(_quoted_values(approved))
+    claim_keys: list[str] = []
+    for item in _claim_backing_map(provider_context_summary).values():
+        if isinstance(item, dict):
+            claim_key = item.get("claim_key")
+            if isinstance(claim_key, str) and claim_key in quoted:
+                claim_keys.append(claim_key)
+    return list(dict.fromkeys(claim_keys))
+
+
+def _approved_public_text(approved: Any) -> str:
+    if not isinstance(approved, dict):
+        return ""
+    return " ".join(
+        str(approved.get(field) or "")
+        for field in [
+            "headline",
+            "summary",
+            "nutrition_note",
+            "training_note",
+            "recovery_note",
+            "priority_action",
+        ]
+    )
 
 
 def _generic_copy_flags(approved: Any) -> list[str]:

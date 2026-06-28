@@ -1,3 +1,22 @@
+# Open Questions — Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3
+
+## Active
+
+1. Does `gpt-5.5` use `approved_context_brief` as a natural conversation starter without copying framework phrasing?
+2. Does `claim_backing_map` improve natural quote-backed phrasing for nutrition status, food suggestions, RIR, readiness, and fatigue risk?
+3. Does adaptive verbosity produce richer coaching only when it improves usefulness and actionability?
+4. Should v3 hard-fail phrase rules expand beyond the currently obvious bad phrases after QA review?
+5. Does the primary user `102` / `2026-06-27` output meet voice naturalness, specificity, usefulness, grounding, and product-readiness targets?
+
+## Closed/unchanged boundaries
+
+- Provider factual authority is not expanded.
+- Parser, quote/value validation, and deterministic fallback remain mandatory.
+- Deterministic remains default; OpenAI/direct_ollama remain opt-in/evaluation-only.
+- Raw provider output remains local-only diagnostic material.
+
+---
+
 # Open Questions — Daily Coach Provider Copy Grounding & Approved Context Enrichment v1
 
 ## Active

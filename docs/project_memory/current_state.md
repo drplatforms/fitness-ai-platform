@@ -1,3 +1,21 @@
+# Current State — Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3
+
+Current source of truth: `feature/daily-coach-context-selection-coaching-synthesis-v2` at `2cd7708`.
+
+Active backend milestone: `Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3`.
+
+Architecture status: approved for Backend implementation.
+
+Status: backend implementation patch ready for local validation.
+
+V3 addresses product-copy quality after v2 technical pass by giving providers a more natural, human-readable, claim-backed context starter while preserving strict backend truth boundaries. The implementation adds `approved_context_brief`, `claim_backing_map`, cleaned today_story phrasing, natural voice examples/anti-examples, explicit `verbosity_budget`, hard/diagnostic phrase checks, and v3 trial-matrix diagnostics.
+
+Boundaries remain unchanged: deterministic is default; OpenAI/direct_ollama remain opt-in/evaluation-only; provider output is parsed, quote/value validated, approved, or deterministically fallen back; no raw provider output is public; no provider output persistence, Streamlit provider controls, nutrition/workout/recovery/report changes, RAG, Prompt Lab, embeddings, or multi-agent orchestration are included.
+
+Requested final status: `DAILY_COACH_PROVIDER_VOICE_CONTEXT_FREEDOM_RICH_SYNTHESIS_V3_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Provider Context Selection & Coaching Synthesis v2
 
 Current source of truth: accepted copy-grounding branch baseline at `2bbffdb`.

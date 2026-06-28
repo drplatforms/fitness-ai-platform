@@ -23,9 +23,12 @@ from models.daily_coach_value_narrative_models import (
     ApprovedDailyCoachValueNarrative,
     ApprovedNarrativeValueClaim,
     CandidateDailyCoachValueNarrative,
+    DailyCoachApprovedContextBriefSentence,
+    DailyCoachClaimBackingGuide,
     DailyCoachTodayStory,
     DailyCoachValueNarrativeResult,
     DailyCoachValueNarrativeRuntimeMetadata,
+    DailyCoachVerbosityBudget,
 )
 from services.daily_coach_narrative_validation_service import (
     parse_daily_coach_value_narrative_candidate,
@@ -91,6 +94,31 @@ _CANDIDATE_SCHEMA: dict[str, Any] = {
         "reason_codes": {"type": "array", "items": {"type": "string"}},
         "quoted_values_used": {"type": "array", "items": {"type": "string"}},
     },
+}
+
+
+_V3_HARD_FAIL_STYLE_PHRASES = {
+    "main lever",
+    "effort anchor",
+    "planned effort range",
+    "bigger nutrition overhaul",
+    "backend-approved",
+    "approved context",
+    "claim keys",
+    "validator",
+    "schema",
+    "json",
+    "based on the provided data",
+    "as an ai coach",
+}
+
+_V3_ROBOTIC_PHRASES = {
+    "make nutrition support",
+    "keep training controlled",
+    "markers remain stable",
+    "maintain current direction",
+    "progress gradually",
+    "supports confident training while staying inside",
 }
 
 
@@ -333,12 +361,12 @@ def build_daily_coach_value_narrative_prompt(
     value_context: dict[str, Any],
 ) -> str:
     example = {
-        "headline": "Steady Strength Day",
-        "summary": "Recovery is supportive today, so keep the plan controlled and specific.",
-        "nutrition_note": "Protein is below target based on logged meals; use an approved protein option if it fits your day.",
-        "training_note": "Use the approved strength plan and keep RIR 2-4 as the effort anchor.",
-        "recovery_note": "Readiness is High and fatigue risk is Low, which supports confident but not reckless training.",
-        "priority_action": "Complete the planned session and choose one approved protein-support option.",
+        "headline": "Clean Strength Day",
+        "summary": "You are clear to train today, but nutrition should not be ignored.",
+        "nutrition_note": "Protein is the easiest fix today; use one approved option if it fits your meals.",
+        "training_note": "Keep a couple reps in reserve and make clean execution the win.",
+        "recovery_note": "Readiness is High and fatigue risk is Low, so you do not need to back off today.",
+        "priority_action": "Get the planned strength session done cleanly, then choose one simple approved protein option.",
         "confidence": synthesis.confidence,
         "reason_codes": ["provider_candidate_value_aware"],
         "quoted_values_used": [
@@ -350,6 +378,10 @@ def build_daily_coach_value_narrative_prompt(
     }
     _enrich_provider_context_packaging(value_context)
     field_roles = value_context.get("field_role_guidance") or _field_role_guidance()
+    approved_context_brief = value_context.get("approved_context_brief") or {}
+    claim_backing_map = value_context.get("claim_backing_map") or {}
+    verbosity_budget = value_context.get("verbosity_budget") or {}
+    voice_examples = value_context.get("voice_examples") or _voice_examples()
     claim_rules = value_context.get("claim_usage_rules") or _claim_usage_rules(
         value_context.get("claim_budgets")
         or _claim_budgets(
@@ -363,44 +395,46 @@ def build_daily_coach_value_narrative_prompt(
             ),
         )
     )
+    today_story_payload = {
+        "today_story": value_context.get("today_story"),
+        "claim_budgets": value_context.get("claim_budgets"),
+        "adaptive_verbosity_guidance": value_context.get("adaptive_verbosity_guidance"),
+    }
     return (
-        "Write a Daily Coach card from backend-approved facts.\n"
+        "Write a Daily Coach card from the supplied safe facts and context.\n"
+        "The voice should sound like a real practical coach talking to a person.\n"
         "Target useful, grounded, scannable coaching; not maximum brevity and not a report.\n"
-        "Sound like a practical coach: specific, calm, concise, and useful.\n"
+        "Use approved_context_brief as the conversation starter, then rewrite naturally instead of copying backend-shaped phrases.\n"
         "Use 3-6 high-value approved claims when context is rich; use fewer when context is thin, limited, or data-quality-limited.\n"
-        "Connect nutrition, training, and recovery only when the approved today_story supports it.\n"
-        "Allow more words only when they improve the priority action, connect multiple domains, or explain food/training/recovery context clearly.\n"
-        "Keep wording shorter when context is sparse, wording becomes generic, prose becomes a report, metrics repeat, or explanations are unsupported.\n"
-        "Prefer high_value_claims, preferred_claims_by_field, today_story, and claim_budgets.\n"
-        "Do not dump all claims. Prefer status over numbers when exact numbers are not necessary.\n"
+        "Use verbosity_budget to decide length. Allow more words only when they improve usefulness, connect nutrition/training/recovery, or clarify the priority action.\n"
+        "Do not pad, repeat metrics, or turn the card into a report.\n"
+        "Prefer claim_backing_map allowed phrasings for natural language. Avoid every disallowed phrasing.\n"
+        "Do not dump all claims. Prefer normal coach language over framework language.\n"
         "Use limitations as uncertainty/context, not as user blame.\n"
-        "Do not mention backend, approved context, validator, schema, provider, JSON, or internal process in user-facing fields.\n"
+        "Do not mention backend, approved context, validator, schema, provider, JSON, claim keys, or internal process in user-facing fields.\n"
         "Every concrete value/status/food/amount used in prose must be declared in quoted_values_used.\n"
         "quoted_values_used may contain only exact keys from approved_value_claims. Never use food names, amounts, or phrases as quote keys.\n"
         "Return one raw JSON object only. No markdown, no code fences, no prose wrapper, no extra keys.\n"
         "Do not calculate targets, gaps, readiness, fatigue, servings, or nutrition values.\n"
         "Do not say recovery is missing when recovery_signal or approved recovery values exist.\n"
-        "Do not say 'without needing to address training or recovery'.\n"
         "Do not say the user is under-eating unless that exact claim is approved.\n"
         "Do not say the user needs calories unless calorie targets are display-approved.\n"
-        "Do not prescribe exact food amounts unless approved food suggestions include those amounts.\n\n"
+        "Do not prescribe exact food amounts unless approved food suggestions include those amounts.\n"
+        "Avoid these robotic phrases in user-facing fields: main lever, effort anchor, planned effort range, bigger nutrition overhaul, based on the provided data, as an AI coach.\n\n"
+        "APPROVED_CONTEXT_BRIEF:\n"
+        f"{json.dumps(approved_context_brief, indent=2, default=str)}\n\n"
+        "CLAIM_BACKING_MAP:\n"
+        f"{json.dumps(claim_backing_map, indent=2, default=str)}\n\n"
+        "VOICE_EXAMPLES:\n"
+        f"{json.dumps(voice_examples, indent=2, default=str)}\n\n"
+        "VERBOSITY_BUDGET:\n"
+        f"{json.dumps(verbosity_budget, indent=2, default=str)}\n\n"
         "FIELD_ROLE_GUIDANCE:\n"
         f"{json.dumps(field_roles, indent=2, default=str)}\n\n"
         "CLAIM_USAGE_RULES:\n"
         f"{json.dumps(claim_rules, indent=2, default=str)}\n\n"
         "TODAY_STORY_AND_CLAIM_BUDGETS:\n"
-        + json.dumps(
-            {
-                "today_story": value_context.get("today_story"),
-                "claim_budgets": value_context.get("claim_budgets"),
-                "adaptive_verbosity_guidance": value_context.get(
-                    "adaptive_verbosity_guidance"
-                ),
-            },
-            indent=2,
-            default=str,
-        )
-        + "\n\n"
+        f"{json.dumps(today_story_payload, indent=2, default=str)}\n\n"
         "REQUIRED_JSON_SCHEMA:\n"
         f"{json.dumps(_CANDIDATE_SCHEMA, indent=2)}\n\n"
         "VALID_EXAMPLE_SHAPE_ONLY:\n"
@@ -1035,7 +1069,7 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
     if isinstance(training, dict):
         training_text = " ".join(str(value) for value in training.values() if value)
         rir_match = re.search(
-            r"RIR\s*(\d+(?:\.\d+)?)\s*[-â€“]\s*(\d+(?:\.\d+)?)",
+            r"RIR\s*(\d+(?:\.\d+)?)\s*[-ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“]\s*(\d+(?:\.\d+)?)",
             training_text,
             re.IGNORECASE,
         )
@@ -1056,7 +1090,7 @@ def _build_approved_value_claims(context: dict[str, Any]) -> list[dict[str, Any]
                 priority=1,
                 section_hint="training_note",
                 coaching_use="support_training_action",
-                display_hint="Use as the approved execution anchor.",
+                display_hint="Use as an effort range; prefer natural language such as a couple reps in reserve.",
                 value_style="range_allowed",
             )
 
@@ -1131,10 +1165,17 @@ def _enrich_provider_context_packaging(context: dict[str, Any]) -> None:
     claims = _display_allowed_claims(context.get("approved_value_claims") or [])
     today_story = _build_today_story(context, claims)
     claim_budgets = _claim_budgets(context, claims, today_story)
+    verbosity_budget = _verbosity_budget(context, claims, today_story)
     context["today_story"] = today_story.to_dict()
     context["claim_budgets"] = claim_budgets
+    context["verbosity_budget"] = verbosity_budget.to_dict()
+    context["approved_context_brief"] = _approved_context_brief(
+        context, claims, today_story
+    )
+    context["claim_backing_map"] = _claim_backing_map(claims)
+    context["voice_examples"] = _voice_examples()
     context["adaptive_verbosity_guidance"] = _adaptive_verbosity_guidance(
-        context, claims, claim_budgets
+        context, claims, claim_budgets, verbosity_budget
     )
     context["provider_task_context"] = _provider_task_context(
         context, claims, claim_budgets
@@ -1154,11 +1195,15 @@ def _build_today_story(
 ) -> DailyCoachTodayStory:
     claim_keys = {str(claim.get("key")) for claim in claims}
     synthesis = context.get("daily_coach_synthesis") or {}
-    nutrition = context.get("approved_nutrition") or {}
     limitations = context.get("approved_limitations") or []
     food_keys = [
         key for key in claim_keys if key.startswith("nutrition.food_suggestion")
     ]
+    calories_key = (
+        "nutrition.calories.status"
+        if "nutrition.calories.status" in claim_keys
+        else None
+    )
     protein_key = (
         "nutrition.protein.status" if "nutrition.protein.status" in claim_keys else None
     )
@@ -1170,32 +1215,56 @@ def _build_today_story(
         "recovery.fatigue_risk" if "recovery.fatigue_risk" in claim_keys else None
     )
     limitation_keys = [key for key in claim_keys if key.startswith("limitation.")]
+    has_recovery = bool(readiness_key or fatigue_key)
+    has_training = bool(rir_key)
+    has_nutrition = bool(calories_key or protein_key or food_keys)
+    data_limited = _context_is_data_quality_limited(context)
 
-    if isinstance(nutrition, dict) and (
-        protein_key or food_keys or nutrition.get("available")
-    ):
-        day_type = "nutrition_support"
-        why = "Approved nutrition context can make today's action more specific."
-        priority_angle = "Use one approved nutrition-support action if it fits the day."
-    elif rir_key:
-        day_type = "training_execution_focus"
-        why = "Training guidance has an approved execution anchor."
-        priority_angle = "Complete the planned work with the approved effort anchor."
-    elif limitation_keys or limitations:
+    if data_limited:
         day_type = "data_quality_check"
-        why = "Available context is useful but limited, so avoid over-interpreting it."
-        priority_angle = "Improve logging quality before drawing stronger conclusions."
+        human_label = "Logging Check Day"
+        main_tension = (
+            "Useful context exists, but logging quality limits stronger conclusions."
+        )
+        desired_move = "Keep the advice simple and improve the next useful log entry."
+    elif has_nutrition and has_training and has_recovery:
+        day_type = "nutrition_supported_strength_day"
+        human_label = "Nutrition-Supported Strength Day"
+        main_tension = "Training is appropriate today, but nutrition intake may need simple support."
+        desired_move = (
+            "Connect clean training execution with one simple nutrition support action."
+        )
+    elif has_nutrition:
+        day_type = "nutrition_support"
+        human_label = "Nutrition Support Day"
+        main_tension = "The clearest improvement today is a simple nutrition action."
+        desired_move = "Use one approved food or logging action if it fits the day."
+    elif has_training:
+        day_type = "training_execution_focus"
+        human_label = "Training Execution Day"
+        main_tension = (
+            "The win today is doing the planned work without chasing extra intensity."
+        )
+        desired_move = "Complete the planned work cleanly and stay within the approved effort range."
+    elif limitation_keys or limitations:
+        day_type = "maintain_and_log"
+        human_label = "Maintain and Log Day"
+        main_tension = (
+            "The available context is useful but not complete enough for a bigger call."
+        )
+        desired_move = "Keep the next action small, specific, and easy to verify."
     else:
         day_type = "controlled_progress"
-        why = "Approved context supports steady execution without overcorrection."
-        priority_angle = str(
+        human_label = "Steady Execution Day"
+        main_tension = "Today does not need a major adjustment."
+        desired_move = str(
             synthesis.get("recommended_focus")
             or "Keep the next action simple and specific."
         )
 
     primary_claim_keys = [
         key
-        for key in [protein_key, rir_key, readiness_key, fatigue_key]
+        for key in [calories_key, protein_key, rir_key, readiness_key, fatigue_key]
         if key is not None
     ]
     for key in sorted(food_keys):
@@ -1207,29 +1276,45 @@ def _build_today_story(
         key for key in sorted(food_keys) if key not in primary_claim_keys
     ]
 
+    training_implication = (
+        "Do the planned session without turning it into a max-effort day."
+        if has_training
+        else "Do not invent training details beyond the approved plan context."
+    )
+    nutrition_implication = (
+        "Use one simple approved food option if it fits the day."
+        if food_keys
+        else (
+            "Use nutrition status only when it makes the action clearer."
+            if has_nutrition
+            else "Keep nutrition language cautious because approved nutrition context is limited."
+        )
+    )
+    recovery_implication = (
+        "Recovery does not require backing off today."
+        if has_recovery
+        else "Avoid claiming recovery details that are not approved."
+    )
+    avoid_overreaction = "Do not turn this into a max-effort workout, a full nutrition reset, or a trend claim."
+
     return DailyCoachTodayStory(
         day_type=day_type,  # type: ignore[arg-type]
-        why=why,
-        nutrition_angle=(
-            "Use approved nutrition status and food suggestions only when they make the action clearer."
-            if isinstance(nutrition, dict) and nutrition.get("available")
-            else "Nutrition context is limited; keep nutrition language cautious."
-        ),
-        training_angle=(
-            "Anchor training language to the approved RIR/execution context."
-            if rir_key
-            else "Do not invent training details beyond the approved plan context."
-        ),
-        recovery_angle=(
-            "Use readiness/fatigue status to explain training confidence without overclaiming."
-            if readiness_key or fatigue_key
-            else "Avoid claiming recovery details that are not approved."
-        ),
-        priority_angle=priority_angle,
-        avoid_overreaction_angle="Do not turn one day of context into a trend, diagnosis, deficit, surplus, or prescription.",
+        why=main_tension,
+        nutrition_angle=nutrition_implication,
+        training_angle=training_implication,
+        recovery_angle=recovery_implication,
+        priority_angle=desired_move,
+        avoid_overreaction_angle=avoid_overreaction,
         primary_claim_keys=primary_claim_keys,
         optional_action_claim_keys=optional_action_claim_keys[:3],
         limitation_claim_keys=sorted(limitation_keys)[:2],
+        human_label=human_label,
+        main_tension=main_tension,
+        training_implication=training_implication,
+        nutrition_implication=nutrition_implication,
+        recovery_implication=recovery_implication,
+        avoid_overreaction=avoid_overreaction,
+        desired_coaching_move=desired_move,
     )
 
 
@@ -1266,7 +1351,37 @@ def _rich_context_available(
         if any(str(claim.get("key") or "").startswith(prefix) for claim in claims)
     )
     return (
-        len(claims) >= 5 and domain_count >= 2 and bool(today_story.primary_claim_keys)
+        len(claims) >= 5
+        and domain_count >= 3
+        and bool(today_story.primary_claim_keys)
+        and not _context_is_data_quality_limited(context)
+    )
+
+
+def _verbosity_budget(
+    context: dict[str, Any],
+    claims: list[dict[str, Any]],
+    today_story: DailyCoachTodayStory,
+) -> DailyCoachVerbosityBudget:
+    if _context_is_data_quality_limited(context):
+        return DailyCoachVerbosityBudget(
+            mode="limited",
+            target_words_min=60,
+            target_words_max=100,
+            guidance="Be brief and emphasize what can be trusted.",
+        )
+    if _rich_context_available(context, claims, today_story):
+        return DailyCoachVerbosityBudget(
+            mode="rich",
+            target_words_min=120,
+            target_words_max=180,
+            guidance="Use enough detail to connect nutrition, training, and recovery naturally. Do not pad.",
+        )
+    return DailyCoachVerbosityBudget(
+        mode="normal",
+        target_words_min=90,
+        target_words_max=130,
+        guidance="Use a short but useful card. Add detail only when it improves the action.",
     )
 
 
@@ -1274,12 +1389,13 @@ def _adaptive_verbosity_guidance(
     context: dict[str, Any],
     claims: list[dict[str, Any]],
     claim_budgets: dict[str, Any],
+    verbosity_budget: DailyCoachVerbosityBudget,
 ) -> dict[str, Any]:
-    rich = int(claim_budgets["total"]["max"]) >= 6
     return {
         "target": "useful, grounded, scannable coaching",
         "not_the_target": "maximum brevity or maximum verbosity",
-        "recommended_word_budget": "90-140" if rich else "55-95",
+        "recommended_word_budget": f"{verbosity_budget.target_words_min}-{verbosity_budget.target_words_max}",
+        "mode": verbosity_budget.mode,
         "allow_more_words_when": [
             "approved context is rich",
             "extra words improve the priority action",
@@ -1296,6 +1412,227 @@ def _adaptive_verbosity_guidance(
         "claim_budget_max": claim_budgets["total"]["max"],
         "available_claim_count": len(claims),
     }
+
+
+def _approved_context_brief(
+    context: dict[str, Any],
+    claims: list[dict[str, Any]],
+    today_story: DailyCoachTodayStory,
+) -> dict[str, Any]:
+    available = {str(claim.get("key")) for claim in claims}
+    sentences: list[DailyCoachApprovedContextBriefSentence] = []
+
+    def add_sentence(text: str, claim_keys: list[str]) -> None:
+        backed_keys = [key for key in claim_keys if key in available]
+        if backed_keys and not _contains_framework_phrase(text):
+            sentences.append(
+                DailyCoachApprovedContextBriefSentence(
+                    text=text,
+                    claim_keys=backed_keys,
+                )
+            )
+
+    if "training.rir_range" in available:
+        add_sentence(
+            "Today's training should stay clean and controlled instead of becoming a max-effort session.",
+            ["training.rir_range"],
+        )
+    if {
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    }.issubset(available):
+        add_sentence(
+            "Recovery looks favorable: readiness is High and fatigue risk is Low.",
+            ["recovery.readiness_level", "recovery.fatigue_risk"],
+        )
+    if {
+        "nutrition.calories.status",
+        "nutrition.protein.status",
+    }.issubset(available):
+        add_sentence(
+            "Nutrition is the main support area today because calories and protein are below target.",
+            ["nutrition.calories.status", "nutrition.protein.status"],
+        )
+    elif "nutrition.protein.status" in available:
+        add_sentence(
+            "Protein is the easiest nutrition lever to clean up today.",
+            ["nutrition.protein.status"],
+        )
+    food_key = _first_claim_key_with_suffix(
+        available, "nutrition.food_suggestion", ".display_name"
+    )
+    if food_key:
+        display_name = _claim_value_by_key(claims, food_key)
+        if display_name:
+            add_sentence(
+                f"One approved option is {display_name}.",
+                [food_key],
+            )
+    if today_story.desired_coaching_move and today_story.primary_claim_keys:
+        add_sentence(
+            str(today_story.desired_coaching_move),
+            list(today_story.primary_claim_keys)[:3],
+        )
+
+    return {"sentences": [sentence.to_dict() for sentence in sentences[:5]]}
+
+
+def _claim_backing_map(claims: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    claim_keys = {str(claim.get("key")) for claim in claims}
+    backing: dict[str, DailyCoachClaimBackingGuide] = {}
+
+    def add(
+        label: str,
+        claim_key: str,
+        *,
+        allowed: list[str],
+        disallowed: list[str],
+    ) -> None:
+        if claim_key in claim_keys:
+            backing[label] = DailyCoachClaimBackingGuide(
+                claim_key=claim_key,
+                allowed_phrasings=allowed,
+                disallowed_phrasings=disallowed,
+            )
+
+    add(
+        "calories are below target",
+        "nutrition.calories.status",
+        allowed=[
+            "calories are below target",
+            "calories are lagging",
+            "calorie intake is behind the target",
+        ],
+        disallowed=[
+            "you are underfed",
+            "you are in a severe deficit",
+            "you are compromising recovery",
+        ],
+    )
+    add(
+        "protein is below target",
+        "nutrition.protein.status",
+        allowed=[
+            "protein is below target",
+            "protein is the easiest fix today",
+            "a simple protein option would help support the day",
+        ],
+        disallowed=[
+            "you failed protein",
+            "you are losing muscle",
+            "you need protein immediately",
+        ],
+    )
+    food_key = _first_claim_key_with_suffix(
+        claim_keys, "nutrition.food_suggestion", ".display_name"
+    )
+    if food_key:
+        display_name = (
+            _claim_value_by_key(claims, food_key) or "the approved food option"
+        )
+        add(
+            f"{display_name} is approved",
+            food_key,
+            allowed=[
+                f"an approved option like {display_name}",
+                f"one simple option is {display_name}",
+            ],
+            disallowed=[
+                f"you must eat {display_name}",
+                f"{display_name} is required",
+                f"{display_name} will fix the day",
+            ],
+        )
+    add(
+        "RIR range",
+        "training.rir_range",
+        allowed=[
+            "keep a couple reps in reserve",
+            "stay within RIR 2-4",
+            "do not turn it into a max-effort day",
+        ],
+        disallowed=["go to failure", "push past the plan", "increase intensity"],
+    )
+    add(
+        "readiness is High",
+        "recovery.readiness_level",
+        allowed=[
+            "readiness is High",
+            "recovery is on your side",
+            "you are clear to train today",
+        ],
+        disallowed=[
+            "you are fully recovered",
+            "you cannot overdo it",
+            "recovery guarantees performance",
+        ],
+    )
+    add(
+        "fatigue risk is Low",
+        "recovery.fatigue_risk",
+        allowed=[
+            "fatigue risk is Low",
+            "fatigue does not require backing off today",
+        ],
+        disallowed=["there is no fatigue", "fatigue is not a concern at all"],
+    )
+    return {label: guide.to_dict() for label, guide in backing.items()}
+
+
+def _voice_examples() -> dict[str, list[dict[str, str]]]:
+    return {
+        "examples": [
+            {
+                "bad": "Calories are below target today, so make nutrition support the main lever while keeping training controlled.",
+                "better": "You're clear to train today, but don't make the workout do all the work. Get the planned strength session done cleanly, then use one simple approved food option if it fits your meals.",
+            },
+            {
+                "bad": "Use RIR 2-4 as your effort anchor.",
+                "better": "Keep a couple reps in reserve and make clean execution the win.",
+            },
+            {
+                "bad": "Protein is also below target; adding a simple protein option can support the day without turning this into a bigger nutrition overhaul.",
+                "better": "Protein is the easiest fix today. A simple approved option is enough; this does not need to become a full meal-plan reset.",
+            },
+            {
+                "bad": "Recovery supports confident training while staying inside the planned effort range.",
+                "better": "Recovery is on your side today, so you do not need to back off Ã¢â‚¬â€ just do not turn it into a max-effort session.",
+            },
+        ]
+    }
+
+
+def _context_is_data_quality_limited(context: dict[str, Any]) -> bool:
+    synthesis = context.get("daily_coach_synthesis") or {}
+    scenario = str(synthesis.get("scenario") or "").lower()
+    if scenario == "data_quality_limited":
+        return True
+    return any(
+        "data quality" in str(item).lower()
+        for item in context.get("approved_limitations") or []
+    )
+
+
+def _contains_framework_phrase(text: str) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in _V3_HARD_FAIL_STYLE_PHRASES)
+
+
+def _first_claim_key_with_suffix(
+    claim_keys: set[str], prefix: str, suffix: str
+) -> str | None:
+    for key in sorted(claim_keys):
+        if key.startswith(prefix) and key.endswith(suffix):
+            return key
+    return None
+
+
+def _claim_value_by_key(claims: list[dict[str, Any]], claim_key: str) -> str | None:
+    for claim in claims:
+        if str(claim.get("key") or "") == claim_key:
+            value = claim.get("value")
+            return str(value) if value not in {None, "", "Unknown", "unknown"} else None
+    return None
 
 
 def _display_allowed_claims(claims: Any) -> list[dict[str, Any]]:
@@ -1359,8 +1696,8 @@ def _provider_task_context(
 ) -> dict[str, Any]:
     synthesis = context.get("daily_coach_synthesis") or {}
     return {
-        "task": "Write one grounded, scannable Daily Coach card from approved claims.",
-        "tone": "practical coach, specific, calm, useful, not a report dump",
+        "task": "Write one grounded, scannable Daily Coach card from safe facts and natural context.",
+        "tone": "direct practical coach, natural, specific, calm, useful, not a report dump",
         "target_total_claims": (
             f"{claim_budgets['total']['min']}-{claim_budgets['total']['max']}"
         ),
@@ -1501,6 +1838,11 @@ def _provider_context_summary(value_context: dict[str, Any]) -> dict[str, Any]:
         "adaptive_verbosity_guidance": dict(
             value_context.get("adaptive_verbosity_guidance") or {}
         ),
+        "approved_context_brief": dict(
+            value_context.get("approved_context_brief") or {}
+        ),
+        "claim_backing_map": dict(value_context.get("claim_backing_map") or {}),
+        "verbosity_budget": dict(value_context.get("verbosity_budget") or {}),
     }
 
 

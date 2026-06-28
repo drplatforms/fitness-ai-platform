@@ -1,3 +1,34 @@
+# Next Milestone — Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3 QA
+
+Owner: QA / Regression Testing with Backend and Agent Engineering support.
+
+Baseline: implementation branch `feature/daily-coach-provider-voice-context-freedom-rich-synthesis-v3`.
+
+Recommended QA status: `DAILY_COACH_PROVIDER_VOICE_CONTEXT_FREEDOM_RICH_SYNTHESIS_V3_QA_PASS`.
+
+## Goal
+
+Validate that v3 makes provider Daily Coach copy materially more natural, specific, and useful while preserving deterministic default, opt-in providers, strict parser behavior, approved-value quote validation, and sanitized diagnostics.
+
+## Primary case
+
+- user_id: 102
+- date: 2026-06-27
+- provider: openai
+- model: gpt-5.5
+
+## Pass focus
+
+- `approved_context_brief` is present and claim-backed;
+- `claim_backing_map` guides natural phrasing without creating new authority;
+- today_story uses structured coaching meaning instead of deterministic/report phrasing;
+- rich context uses adaptive verbosity without filler or fact dumping;
+- flagged phrases such as `main lever`, `effort anchor`, and `planned effort range` do not appear in approved output;
+- every concrete value/status/food/amount is declared in `quoted_values_used`;
+- normal artifacts remain sanitized and raw provider output remains local-only diagnostics.
+
+---
+
 # Next Milestone — Daily Coach Provider Context Selection & Coaching Synthesis v2 QA
 
 Owner: QA / Regression Testing with Backend and Agent Engineering support.

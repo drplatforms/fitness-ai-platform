@@ -726,6 +726,7 @@ def test_rich_context_uses_v2_today_story_claim_budgets_and_adaptive_verbosity()
     today_story = summary["today_story"]
     assert today_story["day_type"] in {
         "nutrition_support",
+        "nutrition_supported_strength_day",
         "training_execution_focus",
         "controlled_progress",
     }
@@ -751,3 +752,93 @@ def test_prompt_includes_today_story_budgets_and_adaptive_verbosity_guidance() -
     assert "What kind of day" not in prompt
     assert "useful, grounded, scannable coaching" in prompt
     assert "model repeats metrics" in prompt
+
+
+def test_v3_context_includes_context_brief_backing_map_and_verbosity_budget() -> None:
+    context = _value_context()
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=context,
+        environ={},
+    )
+
+    summary = result.provider_context_summary
+    brief = summary["approved_context_brief"]
+    assert brief["sentences"]
+    assert all(sentence["claim_keys"] for sentence in brief["sentences"])
+    brief_text = " ".join(sentence["text"] for sentence in brief["sentences"])
+    for banned in ["main lever", "effort anchor", "planned effort range"]:
+        assert banned not in brief_text.lower()
+
+    backing_map = summary["claim_backing_map"]
+    assert backing_map
+    assert any(
+        item["claim_key"] == "training.rir_range" for item in backing_map.values()
+    )
+    assert summary["verbosity_budget"]["mode"] in {"normal", "rich"}
+    assert summary["verbosity_budget"]["target_words_min"] > 0
+
+
+def test_v3_prompt_includes_natural_voice_examples_and_context_brief() -> None:
+    context = _value_context()
+    prompt = build_daily_coach_value_narrative_prompt(
+        _synthesis(), value_context=context
+    )
+
+    assert "APPROVED_CONTEXT_BRIEF" in prompt
+    assert "CLAIM_BACKING_MAP" in prompt
+    assert "VOICE_EXAMPLES" in prompt
+    assert "VERBOSITY_BUDGET" in prompt
+    assert "real practical coach" in prompt
+    assert "Keep a couple reps in reserve" in prompt
+    assert "main lever" in prompt
+
+
+def test_v3_framework_phrase_candidate_falls_back() -> None:
+    def fake_generate(model: str, prompt: str, timeout: float) -> str:
+        payload = json.loads(_valid_candidate())
+        payload["summary"] = "Make nutrition support the main lever today."
+        payload["training_note"] = "Use RIR 2-4 as your effort anchor."
+        payload["quoted_values_used"] = [
+            "nutrition.protein.status",
+            "training.rir_range",
+        ]
+        return json.dumps(payload)
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={
+            "DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA,
+            "DAILY_COACH_NARRATIVE_MODEL": "ollama/test",
+        },
+        direct_ollama_generate=fake_generate,
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert result.runtime_metadata.fallback_reason == "candidate_validation_failure"
+    assert any(
+        "main lever" in error for error in result.runtime_metadata.validation_errors
+    )
+
+
+def test_v3_raw_claim_key_candidate_falls_back() -> None:
+    def fake_generate(model: str, prompt: str, timeout: float) -> str:
+        payload = json.loads(_valid_candidate())
+        payload["priority_action"] = "Use nutrition.protein.status to guide the day."
+        return json.dumps(payload)
+
+    result = build_daily_coach_value_narrative_from_synthesis(
+        _synthesis(),
+        value_context=_value_context(),
+        environ={
+            "DAILY_COACH_NARRATIVE_PROVIDER": PROVIDER_DIRECT_OLLAMA,
+            "DAILY_COACH_NARRATIVE_MODEL": "ollama/test",
+        },
+        direct_ollama_generate=fake_generate,
+    )
+
+    assert result.runtime_metadata.fallback_used is True
+    assert any(
+        "raw claim keys" in error for error in result.runtime_metadata.validation_errors
+    )

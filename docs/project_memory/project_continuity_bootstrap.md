@@ -1,3 +1,21 @@
+# Project Continuity Bootstrap — Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3
+
+Current source of truth: `2cd7708 Add daily coach context selection coaching synthesis v2`.
+
+Active milestone: `Daily Coach Provider Voice, Context Freedom & Rich Synthesis v3`.
+
+Architecture status: approved for Backend implementation.
+
+## Current work
+
+V3 keeps the strict provider safety fence from v1/v2 but changes the provider-facing context shape. The model gets a natural, claim-backed `approved_context_brief`, a `claim_backing_map`, cleaned today_story meaning, compact voice examples/anti-examples, and an explicit `verbosity_budget` so rich context can produce useful, grounded, scannable coaching instead of robotic report-like copy.
+
+## Standing boundaries
+
+Backend computes, validates, and approves facts. Provider output is candidate wording only. The backend parser, quote/value validator, approved narrative conversion, and deterministic fallback remain mandatory. Deterministic remains default. OpenAI and direct_ollama remain opt-in. Do not persist provider output, expose raw diagnostics publicly, add Streamlit provider controls, change nutrition/workout/recovery/report calculations, or add RAG/multi-agent/Prompt Lab work in this milestone.
+
+---
+
 # Project Continuity Bootstrap — Daily Coach Provider Copy Grounding & Approved Context Enrichment v1
 
 Current baseline: `60fe77b Use OpenAI Responses API for Daily Coach narrative provider`.

@@ -647,6 +647,18 @@ _VALUE_NARRATIVE_FORBIDDEN_FRAGMENTS = [
     "debug payload",
     "provider metadata",
     "internal validator",
+    "main lever",
+    "effort anchor",
+    "planned effort range",
+    "bigger nutrition overhaul",
+    "backend-approved",
+    "approved context",
+    "claim keys",
+    "validator",
+    "schema",
+    "json",
+    "based on the provided data",
+    "as an ai coach",
 ]
 
 _VALUE_NARRATIVE_MARKDOWN_FRAGMENTS = ["```", "###", "**", "- headline"]
@@ -769,6 +781,9 @@ def validate_daily_coach_value_narrative_candidate(
 
     if _contains_internal_metadata_value_narrative(text_lower):
         errors.append("candidate must not expose raw/debug/provider/internal metadata.")
+
+    if _contains_raw_claim_key(public_text):
+        errors.append("candidate must not expose raw claim keys in user-facing prose.")
 
     errors.extend(_validate_value_quote_claims(candidate, value_context))
 
@@ -1001,5 +1016,21 @@ def _contains_internal_metadata_value_narrative(text_lower: str) -> bool:
         "sql",
         "traceback",
         "json schema",
+        "backend-approved",
+        "approved context",
+        "claim keys",
+        "validator",
+        "schema",
+        "as an ai coach",
     ]
     return any(term in text_lower for term in internal_terms)
+
+
+def _contains_raw_claim_key(public_text: str) -> bool:
+    return bool(
+        re.search(
+            r"\b(?:nutrition|training|recovery|limitation)\.[a-z0-9_]+(?:\.[a-z0-9_]+)*\b",
+            public_text,
+            re.IGNORECASE,
+        )
+    )

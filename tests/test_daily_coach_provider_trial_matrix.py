@@ -633,6 +633,8 @@ class FakeEnrichedResult(FakeResult):
             },
             "today_story": {
                 "day_type": "training_execution_focus",
+                "main_tension": "The win today is doing the planned work without chasing extra intensity.",
+                "desired_coaching_move": "Complete the planned work cleanly and stay within the approved effort range.",
                 "primary_claim_keys": [
                     "recovery.readiness_level",
                     "recovery.fatigue_risk",
@@ -646,6 +648,35 @@ class FakeEnrichedResult(FakeResult):
                 "total": {"min": 3, "max": 6},
                 "recovery_note": {"min": 1, "max": 2},
                 "training_note": {"min": 1, "max": 1},
+            },
+            "approved_context_brief": {
+                "sentences": [
+                    {
+                        "text": "Recovery looks favorable: readiness is High and fatigue risk is Low.",
+                        "claim_keys": [
+                            "recovery.readiness_level",
+                            "recovery.fatigue_risk",
+                        ],
+                    }
+                ]
+            },
+            "claim_backing_map": {
+                "readiness is High": {
+                    "claim_key": "recovery.readiness_level",
+                    "allowed_phrasings": ["readiness is High"],
+                    "disallowed_phrasings": ["you are fully recovered"],
+                },
+                "fatigue risk is Low": {
+                    "claim_key": "recovery.fatigue_risk",
+                    "allowed_phrasings": ["fatigue risk is Low"],
+                    "disallowed_phrasings": ["there is no fatigue"],
+                },
+            },
+            "verbosity_budget": {
+                "mode": "rich",
+                "target_words_min": 10,
+                "target_words_max": 180,
+                "guidance": "Use enough detail to connect context naturally.",
             },
         }
         return payload
@@ -696,10 +727,35 @@ def test_trial_matrix_includes_copy_grounding_review_fields(tmp_path: Path) -> N
     assert "training_note:below_min" in row.field_budget_flags
     assert row.fact_dumping_flag is False
     assert "food_suggestion_available_but_unused" in row.synthesis_quality_notes
+    assert row.approved_context_brief_present is True
+    assert row.approved_context_brief_sentence_count == 1
+    assert row.approved_context_brief_claim_keys == [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
+    assert row.claim_backing_map_present is True
+    assert row.today_story_main_tension
+    assert row.today_story_desired_coaching_move
+    assert row.verbosity_budget_mode == "rich"
+    assert row.verbosity_budget_target_min == 10
+    assert row.verbosity_budget_target_max == 180
+    assert row.output_word_count > 0
+    assert row.adaptive_verbosity_used is True
+    assert row.context_brief_claims_used == [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
+    assert row.claim_backing_map_claims_used == [
+        "recovery.readiness_level",
+        "recovery.fatigue_risk",
+    ]
     payload = json.loads((tmp_path / "trial_matrix.jsonl").read_text().splitlines()[0])
     assert payload["declared_claim_count"] == 2
     assert payload["today_story_day_type"] == "training_execution_focus"
     assert payload["claim_budget_max"] == 6
+    assert payload["approved_context_brief_present"] is True
+    assert payload["verbosity_budget_mode"] == "rich"
+    assert payload["output_word_count"] > 0
     summary = (tmp_path / "trial_matrix_summary.md").read_text(encoding="utf-8")
     assert "today_story_day_type" in summary
     assert "high_value_claims_used" in summary

@@ -1,14 +1,14 @@
 {
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_42d0bd4_main_merge-daily-coach-wide-context-ceiling-trial-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_490d2ae_main_merge-daily-coach-wide-context-copy-cleanup-qa-readability-v1.zip",
     "commit_check_mode": "code",
-    "current_recommended_milestone": "Daily Coach Wide Context Copy Cleanup + QA Readability v1",
+    "current_recommended_milestone": "Daily Coach Full User-Day Free-Range Payload Baseline v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can prompt/context cleanup and QA-readable artifacts reduce backend-shaped copy leakage without changing production behavior?",
-    "qa_class": "CLASS 2 / CLASS 5 HYBRID",
+    "primary_question": "Can GPT-5.5 write a useful Daily Coach note from a neutral full user-day data packet without app-copy cage?",
+    "qa_class": "DEVELOPER_ONLY_PROVIDER_EXPERIMENT_PAYLOAD_VISIBILITY",
     "recommended_owner": "Backend Development",
     "secondary_owner": "Agent Engineering",
-    "source_main_commit": "42d0bd4"
+    "source_main_commit": "490d2ae"
   },
   "boundaries": {
     "active_workout_preserved": true,
@@ -29,6 +29,7 @@
     "daily_coach_context_selection_coaching_synthesis_v2": true,
     "daily_coach_food_action_context": true,
     "daily_coach_friendly_food_labels": true,
+    "daily_coach_full_user_day_free_range_payload_baseline_v1": true,
     "daily_coach_narrative_approved_value_claim_registry": true,
     "daily_coach_narrative_approved_value_quote_validation_v1": true,
     "daily_coach_narrative_debug_endpoint_metadata_only": true,
@@ -45,6 +46,7 @@
     "daily_coach_plainspoken_voice_contract": true,
     "daily_coach_provider_copy_grounding_context_enrichment_v1": true,
     "daily_coach_provider_human_voice_food_action_specificity_v4": true,
+    "daily_coach_provider_payload_debug_artifact_opt_in": true,
     "daily_coach_provider_trial_diagnostics_local_raw_output_opt_in": true,
     "daily_coach_provider_trial_diagnostics_no_raw_output_committed": true,
     "daily_coach_provider_trial_diagnostics_no_secret_output": true,
@@ -75,6 +77,9 @@
     "first_pass_model_draft_visibility": true,
     "food_entries_remain_grams_bridge_for_serving_unit_v1": true,
     "friendly_food_labels_quote_backed": true,
+    "full_user_day_free_range_first_pass_capture_before_audit": true,
+    "full_user_day_no_app_copy_cage": true,
+    "full_user_day_repeat_consistency_trial": true,
     "humanized_fallback_required": true,
     "log_serving_payload_excludes_grams_override": true,
     "no_ai_provider_serving_unit_path": true,
@@ -92,6 +97,7 @@
     "no_live_provider_calls_in_trial_matrix_tests": true,
     "no_logging_changes_for_current_milestone": true,
     "no_model_promotion": true,
+    "no_normal_today_changes_for_full_user_day_free_range": true,
     "no_normal_today_changes_for_wide_context_copy_cleanup": true,
     "no_nutrition_calculation_changes_for_current_diagnostic_milestone": true,
     "no_nutrition_calculation_changes_for_current_planning_milestone": true,
@@ -101,6 +107,7 @@
     "no_parser_relaxation_for_context_selection_v2": true,
     "no_persistence_changes_for_trial_matrix": true,
     "no_persistent_exercise_exposure_tracking_for_current_milestone": true,
+    "no_phrase_ban_milestone_for_full_user_day_free_range": true,
     "no_product_voice_audit_rewrite_for_wide_context_copy_cleanup": true,
     "no_provider_ai_workout_changes": true,
     "no_provider_ai_workout_generation_for_current_milestone": true,
@@ -116,11 +123,14 @@
     "no_provider_default_change_for_trial_matrix": true,
     "no_provider_on_feedback_save": true,
     "no_provider_output_persistence_for_context_selection_v2": true,
+    "no_provider_promotion_for_full_user_day_free_range": true,
     "no_provider_promotion_for_wide_context_copy_cleanup": true,
     "no_provider_promotion_for_wide_context_trial": true,
     "no_provider_serving_unit_invention": true,
     "no_public_default_provider_display": true,
     "no_quote_value_validation_relaxation_for_context_selection_v2": true,
+    "no_raw_db_rows_for_full_user_day_free_range": true,
+    "no_raw_provider_envelope_persistence_for_full_user_day_free_range": true,
     "no_raw_provider_envelope_persistence_for_wide_context_trial": true,
     "no_raw_provider_output_in_trial_artifacts": true,
     "no_raw_provider_output_public_for_copy_grounding": true,
@@ -860,6 +870,11 @@
     "windows": [
       "Primary development workstation at C:\\projects\\fitness_ai. Use Windows for patch application, validation, explicit staging, commit, push, and feature snapshots."
     ]
+  },
+  "status": {
+    "active_backend_milestone": "Daily Coach Full User-Day Free-Range Payload Baseline v1",
+    "active_backend_status": "backend_implementation_patch_ready_for_local_validation",
+    "requested_final_status": "DAILY_COACH_FULL_USER_DAY_FREE_RANGE_PAYLOAD_BASELINE_V1_IMPLEMENTATION_COMPLETE"
   },
   "workflow_reminders": {
     "external_script_command": "python ..\\<script>.py",

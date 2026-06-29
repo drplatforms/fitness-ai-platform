@@ -1,22 +1,30 @@
-# Open Questions — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
+# Open Questions — Daily Coach Wide Context Uncaged GPT-5.5 Ceiling Trial v1
 
 ## Active
 
-1. Does the focused patch block final approval when fallback fails Product Voice Audit?
-2. Does `reviewer_conclusion=fallback_failure` prevent final approved copy from being emitted?
-3. Does Product Voice Audit stop assigning product readiness 5 to backend-shaped but factually safe copy?
-4. Does repair handle product-voice-only problems before fallback?
-5. Does stable_comparison repair food/display wording while preserving valid first-pass specificity?
-6. Do side-by-side artifacts clearly show `fallback_blocked` and `no_approved_copy` states?
-7. Does the patch avoid turning Product Voice Audit into a pre-generation writer cage?
+1. Does GPT-5.5 produce a meaningfully better first-pass Daily Coach note with a wider backend-approved context packet?
+2. Does wide context plus a minimal prompt outperform the current narrow Natural Draft path?
+3. Which variant has the best balance of practical coaching feel, specificity, action clarity, and factual safety?
+4. Does the wide-context packet give enough useful material without dumping raw DB rows or internal provider/runtime data?
+5. Do token/cost telemetry fields provide enough visibility for future provider economics?
+6. Should future provider architecture build around a stronger wide-context first pass if GPT-5.5 performs well?
+7. If GPT-5.5 still sounds boxed-in with this setup, should Backend stop investing in narrow prompt/audit tweaks for Daily Coach copy?
+
+## Known baseline drift
+
+- `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches on the supplied `718c614` snapshot.
+- Example mismatch: expected `Read the day before adding more`; actual `Consider the full day`.
+- Architecture decision: document this drift and proceed with the ceiling trial.
+- This milestone must not silently patch unrelated rich-day copy expectations.
+- Full-suite green must not be claimed if the drift remains.
 
 ## Closed/unchanged boundaries
 
-- Natural Draft + Product Voice Audit remains developer-only.
+- Wide Context Ceiling Trial is developer-only.
 - Normal Today behavior is unchanged.
-- Existing provider endpoint behavior is unchanged unless explicitly scoped later.
+- Existing provider endpoint behavior is unchanged.
 - Deterministic remains default.
 - OpenAI/direct_ollama remain explicit opt-in/evaluation-only.
-- Backend remains final authority for facts, claim audit, product voice audit, repair limits, fallback, and approval.
-- Raw provider output is not written by default.
-- No public UI, Streamlit provider controls, RAG, embeddings, meal planning, workout generation, recovery score changes, worker, scheduler, or queue are included.
+- Backend remains final authority for facts, approved context, artifact safety, and future approval decisions.
+- Raw provider envelopes are not persisted in default artifacts.
+- No public UI, Streamlit provider controls, RAG, embeddings, meal planning, workout generation, recovery-score, worker, scheduler, queue, or production provider promotion is included.

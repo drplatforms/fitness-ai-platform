@@ -1,3 +1,21 @@
+# Current State — Daily Coach Wide Context Uncaged GPT-5.5 Ceiling Trial v1
+
+Current source of truth: `main` at `718c614 Merge daily coach product voice audit gate fix v1`.
+
+Active backend milestone: `Daily Coach Wide Context Uncaged GPT-5.5 Ceiling Trial v1`.
+
+Status: Architecture accepted Backend Continuation Onboarding and directed Backend to proceed with the ceiling trial. Backend implementation is complete and ready for Architecture / QA review.
+
+Purpose: answer whether GPT-5.5 can write genuinely better Daily Coach copy when given richer backend-approved context and fewer pre-draft writing shackles. This is a developer-only ceiling trial, not production integration, not provider promotion, not normal Today replacement, and not another Product Voice Audit phrase patch.
+
+Implementation direction: wide context packet builder, minimal writer prompt variants, exact first-pass draft capture, side-by-side comparison against deterministic and current narrow path, token/cost telemetry fields, sanitized artifacts, QA scoring template, and baseline drift documentation.
+
+Known baseline drift documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches on the supplied 718c614 snapshot, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside the ceiling trial unless it directly blocks targeted validation. Full-suite green must not be claimed if this drift remains.
+
+Requested final status: `DAILY_COACH_WIDE_CONTEXT_UNCAGED_GPT55_CEILING_TRIAL_V1_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
 
 Current source of truth: `feature/daily-coach-natural-draft-product-voice-audit-v2` at `9ba9579 Add daily coach natural draft product voice audit v2`.

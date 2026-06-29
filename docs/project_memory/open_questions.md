@@ -1,3 +1,34 @@
+# Open Questions — Daily Coach Full User-Day Free-Range Payload Baseline v1
+
+1. Does GPT-5.5 produce more natural, useful Daily Coach copy when the provider prompt contains neutral user-day data instead of app-generated coach prose?
+2. Does the exact `provider_input_prompt.md` confirm no app-copy cage, old Daily Coach example, deterministic fallback copy, Product Voice Audit finding, or phrase-ban wall is being fed to the model?
+3. Does the full user-day packet include enough nutrition, training, recovery, and uncertainty context for useful synthesis?
+4. Does the broader food candidate list improve food guidance without causing invented servings, timing, pairings, or unlogged-food claims?
+5. Do repeated runs show usable consistency, or is quality a one-off lucky draft?
+6. Do post-hoc app-copy and claim-risk diagnostics catch unsupported facts without altering first-pass output?
+7. Is token/cost acceptable for a future provider lane if Architecture later chooses to promote any version of this path?
+8. If free-range first-pass output is still backend-shaped, should Architecture route to deterministic phrase-source cleanup, a different payload design, or abandon provider copy for Daily Coach?
+
+Closed boundaries for this milestone:
+
+- developer-only tooling
+- normal Today unchanged
+- deterministic remains default
+- OpenAI/direct_ollama explicit opt-in/evaluation-only
+- no provider promotion
+- no production persistence of provider output
+- no raw provider envelopes or secrets in artifacts
+- no raw DB rows
+- no public UI
+- no Product Voice Audit rewrite
+- no phrase-ban milestone
+- no meal planning/workout generation/nutrition target/recovery score changes
+- no RAG, embeddings, or multi-agent runtime
+
+Known baseline drift remains documented and unpatched: `tests/test_daily_narrative_rich_day_service.py` expected `Read the day before adding more` vs actual `Consider the full day`.
+
+---
+
 # Open Questions — Daily Coach Wide Context Copy Cleanup + QA Readability v1
 
 ## Active

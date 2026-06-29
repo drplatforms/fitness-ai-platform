@@ -1,3 +1,67 @@
+# Next Milestone — Daily Coach Full User-Day Free-Range Payload Baseline v1
+
+Recommended branch: `feature/daily-coach-full-user-day-free-range-payload-baseline-v1`.
+
+Baseline: `main` at `490d2ae Merge daily coach wide context copy cleanup qa readability v1`.
+
+Requested final status: `DAILY_COACH_FULL_USER_DAY_FREE_RANGE_PAYLOAD_BASELINE_V1_IMPLEMENTATION_COMPLETE`.
+
+## Goal
+
+Create a developer-only free-range Daily Coach provider trial that gives GPT-5.5 a broad neutral structured user-day packet instead of app/deterministic prose.
+
+The milestone must answer:
+
+```text
+Can GPT-5.5 write a genuinely useful Daily Coach note when given the full useful user-day picture and no app-copy cage?
+```
+
+## Required implementation
+
+- separate free-range service/tool path
+- structured full user-day packet
+- UserHealthState projection with included/omitted field coverage
+- nutrition targets/actuals/deltas when available
+- broader food candidate list with macro values when upstream data allows
+- structured training and recovery facts
+- minimal free-range prompt variants
+- repeated-run support
+- exact first-pass capture before post-hoc diagnostics
+- opt-in provider payload debug artifacts
+- token/cost telemetry
+- pasteback report and QA-readable artifacts
+- project memory updates
+
+## Required artifacts
+
+```text
+provider_input_prompt.md                  # only with --write-provider-payload-debug
+provider_payload_debug.json                # only with --write-provider-payload-debug
+full_user_day_packet.json
+full_user_day_packet_summary.md
+first_pass_drafts.md
+first_pass_drafts_compact.md
+side_by_side_comparison.md
+best_variant_summary.md
+product_language_findings.md
+claim_risk_summary.md
+consistency_summary.md
+token_cost_telemetry.md
+token_cost_telemetry.csv
+artifact_safety_summary.md
+pasteback_report.md
+```
+
+## Boundaries
+
+No production Today replacement, OpenAI default, provider promotion, public UI, Streamlit controls, final approval bypass, raw DB dumps, raw provider envelope persistence, secrets in artifacts, medical advice generation, meal planning changes, workout generation changes, nutrition target changes, recovery score changes, RAG, embeddings, multi-agent runtime, or stale-doc hygiene side quests.
+
+## Known baseline drift
+
+Continue documenting the existing `tests/test_daily_narrative_rich_day_service.py` copy-expectation drift. Do not patch it unless Architecture explicitly scopes that cleanup.
+
+---
+
 # Next Milestone — Daily Coach Wide Context Copy Cleanup + QA Readability v1
 
 Owner: Backend Development with Architecture, QA, and Agent Engineering review.

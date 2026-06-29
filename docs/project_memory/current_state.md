@@ -1,3 +1,21 @@
+# Current State — Daily Coach Full User-Day Free-Range Payload Baseline v1
+
+Current source of truth: `main` at `490d2ae Merge daily coach wide context copy cleanup qa readability v1`.
+
+Active backend milestone: `Daily Coach Full User-Day Free-Range Payload Baseline v1`.
+
+Status: Architecture stopped the phrase-cleanup loop after provider payload forensics showed GPT-5.5 still received app/deterministic prose through the rendered prompt. Backend is implementing a developer-only free-range payload baseline from the last accepted main snapshot, not from the failed v2 branch.
+
+Purpose: answer whether GPT-5.5 can write a genuinely useful Daily Coach note when given a broad neutral structured user-day packet instead of app-generated coach prose, deterministic fallback copy, phrase bans, repair context, or Product Voice Audit scaffolding.
+
+Implementation direction: build a `DailyCoachFullUserDayPacket`, render it as provider-visible data, support minimal/practical/direct free-range prompt variants, support repeated runs, capture exact first-pass drafts before any post-hoc diagnostics, and add opt-in provider payload debug artifacts (`provider_input_prompt.md` and `provider_payload_debug.json`).
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside unrelated Daily Coach provider milestones.
+
+Requested final status: `DAILY_COACH_FULL_USER_DAY_FREE_RANGE_PAYLOAD_BASELINE_V1_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Wide Context Copy Cleanup + QA Readability v1
 
 Current source of truth: `main` at `42d0bd4 Merge daily coach wide context ceiling trial v1`.

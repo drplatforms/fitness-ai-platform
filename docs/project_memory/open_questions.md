@@ -1,22 +1,22 @@
-# Open Questions — Daily Coach Natural Draft + Claim Audit v1
+# Open Questions — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
 
 ## Active
 
-1. Does a cleaner `ApprovedCoachBrief` let GPT-5.5 produce more natural coaching than the constrained v5 provider path?
-2. Does deterministic claim extraction catch the high-risk claims that matter most for v1: food, macro status, serving, timing, training, recovery, causal, addressing, medical/body, and judgment language?
-3. Does claim audit reject unsupported claims without over-blocking safe natural wording?
-4. Does the single repair attempt remove repairable issues without inventing new facts?
-5. Does deterministic fallback trigger after non-repairable findings or failed repair?
-6. Are sanitized artifacts useful enough for QA to compare natural draft output against prior constrained provider output?
-7. If natural draft improves voice, what is the next runtime QA path before any product/default exposure?
+1. Does the focused patch block final approval when fallback fails Product Voice Audit?
+2. Does `reviewer_conclusion=fallback_failure` prevent final approved copy from being emitted?
+3. Does Product Voice Audit stop assigning product readiness 5 to backend-shaped but factually safe copy?
+4. Does repair handle product-voice-only problems before fallback?
+5. Does stable_comparison repair food/display wording while preserving valid first-pass specificity?
+6. Do side-by-side artifacts clearly show `fallback_blocked` and `no_approved_copy` states?
+7. Does the patch avoid turning Product Voice Audit into a pre-generation writer cage?
 
 ## Closed/unchanged boundaries
 
-- Natural Draft + Claim Audit is developer-only.
+- Natural Draft + Product Voice Audit remains developer-only.
 - Normal Today behavior is unchanged.
 - Existing provider endpoint behavior is unchanged unless explicitly scoped later.
 - Deterministic remains default.
 - OpenAI/direct_ollama remain explicit opt-in/evaluation-only.
-- Backend remains final authority for facts, audit, repair limits, fallback, and approval.
+- Backend remains final authority for facts, claim audit, product voice audit, repair limits, fallback, and approval.
 - Raw provider output is not written by default.
 - No public UI, Streamlit provider controls, RAG, embeddings, meal planning, workout generation, recovery score changes, worker, scheduler, or queue are included.

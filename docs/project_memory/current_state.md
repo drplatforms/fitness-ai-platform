@@ -1,3 +1,37 @@
+# Current State — Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1
+
+Current source of truth: `feature/daily-coach-natural-draft-product-voice-audit-v2` at `9ba9579 Add daily coach natural draft product voice audit v2`.
+
+Active backend patch: `Daily Coach Product Voice Audit Calibration + Final Approval Gate Fix v1`.
+
+Status: Architecture routed v2 back to Backend for a focused approval-gate and audit-calibration patch.
+
+QA found v2 architecture is useful as a diagnostic system, but final approval was wrong: failed fallback could still become final approved copy, Product Voice Audit was too lenient, food-action language was incomplete, and repair gave up too early when first-pass copy only needed light wording cleanup.
+
+Patch direction: keep the writer loose, sharpen the reviewer, prefer light product-voice repair over fallback when factual claims are safe, and block final approval when fallback itself fails Product Voice Audit.
+
+Required status: `DAILY_COACH_PRODUCT_VOICE_AUDIT_CALIBRATION_FINAL_APPROVAL_GATE_FIX_V1_IMPLEMENTATION_COMPLETE`.
+
+---
+
+# Current State — Daily Coach Natural Draft + Product Voice Audit v2
+
+Current source of truth: `main` at `4104796 Merge daily coach natural draft claim audit v1`.
+
+Active backend milestone: `Daily Coach Natural Draft + Product Voice Audit v2`.
+
+Status: Architecture approved for Backend implementation.
+
+Natural Draft + Claim Audit v1 is merged as developer infrastructure but QA found it was only a technical partial: the factual reviewer existed, but product-quality review did not. V2 extends that path with first-pass model draft visibility, Product Voice Audit, food-action language checks, side-by-side comparison, repair delta reporting, humanized fallback, final approval gates, and reviewer conclusions.
+
+Core principle: loosen the writer, tighten the reviewer, expose the first draft, and compare honestly. Deterministic fallback is the floor, not the goal.
+
+V2 remains developer-only. Normal Today behavior is unchanged. OpenAI/direct_ollama remain explicit opt-in/evaluation-only. Backend remains final authority for facts, claim audit, product voice audit, repair limits, fallback, and final approval.
+
+Requested final status: `DAILY_COACH_NATURAL_DRAFT_PRODUCT_VOICE_AUDIT_V2_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Natural Draft + Claim Audit v1
 
 Current source of truth: `main` at `b9b46c9 Merge daily coach prompt lab voice lab v1`.

@@ -931,7 +931,14 @@ def _resolve_variant(variant_id: str) -> DailyCoachFullUserDayPromptVariant:
 
 
 def _configured_provider(provider: str, env: Mapping[str, str]) -> str:
-    return (env.get(FULL_USER_DAY_PROVIDER_ENV) or provider).strip().lower()
+    explicit_provider = (provider or "").strip().lower()
+    if explicit_provider:
+        return explicit_provider
+    return (
+        (env.get(FULL_USER_DAY_PROVIDER_ENV) or DEFAULT_FULL_USER_DAY_PROVIDER)
+        .strip()
+        .lower()
+    )
 
 
 def _timeout_seconds(provider: str, env: Mapping[str, str]) -> float:

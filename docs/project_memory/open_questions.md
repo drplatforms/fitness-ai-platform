@@ -1,3 +1,34 @@
+# Open Questions — Daily Coach Free-Range Output Completion + Coach Surface Polish + Data Seeding v3
+
+1. Does completion diagnostics prevent/identify cut-off free-range drafts clearly enough for QA to trust first-pass artifacts?
+2. Do display-ready numeric fields prevent raw `.0`, alarming deficit ranges, enum capitalization, and awkward macro prose from leaking into coach copy?
+3. Do macro and food option cards make dense nutrition data easier to inspect without replacing the full coach note?
+4. Do AI snack candidates give the model practical food combinations without inventing foods outside the candidate pool?
+5. Does bounded practical food seeding improve carb/fat/calorie guidance when more than lean protein is needed?
+6. Does weight-trend anomaly handling suppress low-confidence 22 lb-style signals from coach copy while preserving raw debug evidence?
+7. Does session naming visibility make clear whether the model saw an internal workout model label or a user-facing session name?
+8. Do voice-style findings preserve useful coach energy without allowing unsafe hypeman advice?
+9. Does the live GPT-5.5 run show stronger, more complete, better formatted first-pass notes after v3?
+
+Closed boundaries for this milestone:
+
+- developer-only tooling
+- full note preserved; no Today-card renderer/compressor
+- normal Today unchanged
+- deterministic remains default
+- OpenAI/direct_ollama explicit opt-in/evaluation-only
+- no provider promotion
+- no production persistence of provider output
+- no raw provider envelopes, secrets, or raw DB rows in artifacts
+- no public UI
+- no restrictive reviewer/renderer gate or phrase-ban loop
+- no meal planning/workout generation/nutrition target/recovery score changes
+- no RAG, embeddings, multi-agent runtime, local/cheaper model comparison, Headroom/context compression, or full food expansion
+
+Known baseline drift remains documented and unpatched: `tests/test_daily_narrative_rich_day_service.py` expected `Read the day before adding more` vs actual `Consider the full day`.
+
+---
+
 # Open Questions — Daily Coach Free-Range Voice + Precision + Payload Enrichment v2
 
 1. Which voice variant produces the strongest full coach note: practical, direct, strict, empathetic, or hypeman?

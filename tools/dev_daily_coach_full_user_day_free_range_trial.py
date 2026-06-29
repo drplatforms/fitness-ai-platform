@@ -46,6 +46,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--write-model-input-manifest", action="store_true")
     parser.add_argument("--write-precision-summary", action="store_true")
     parser.add_argument("--write-food-candidate-summary", action="store_true")
+    parser.add_argument("--write-completion-diagnostics", action="store_true")
+    parser.add_argument("--write-food-option-card", action="store_true")
+    parser.add_argument("--write-macro-display-card", action="store_true")
+    parser.add_argument("--write-ai-snack-candidates", action="store_true")
+    parser.add_argument("--write-number-formatting-summary", action="store_true")
+    parser.add_argument("--write-voice-style-findings", action="store_true")
     parser.add_argument("--include-voice-variants", action="store_true")
     parser.add_argument("--write-pasteback-report", action="store_true")
     parser.add_argument("--print-first-pass", action="store_true")
@@ -83,6 +89,12 @@ def main(argv: list[str] | None = None) -> int:
             write_model_input_manifest=args.write_model_input_manifest,
             write_precision_summary=args.write_precision_summary,
             write_food_candidate_summary=args.write_food_candidate_summary,
+            write_completion_diagnostics=args.write_completion_diagnostics,
+            write_food_option_card=args.write_food_option_card,
+            write_macro_display_card=args.write_macro_display_card,
+            write_ai_snack_candidates=args.write_ai_snack_candidates,
+            write_number_formatting_summary=args.write_number_formatting_summary,
+            write_voice_style_findings=args.write_voice_style_findings,
             include_voice_variants=args.include_voice_variants,
         )
         if args.json:
@@ -105,6 +117,12 @@ def main(argv: list[str] | None = None) -> int:
             write_model_input_manifest=args.write_model_input_manifest,
             write_precision_summary=args.write_precision_summary,
             write_food_candidate_summary=args.write_food_candidate_summary,
+            write_completion_diagnostics=args.write_completion_diagnostics,
+            write_food_option_card=args.write_food_option_card,
+            write_macro_display_card=args.write_macro_display_card,
+            write_ai_snack_candidates=args.write_ai_snack_candidates,
+            write_number_formatting_summary=args.write_number_formatting_summary,
+            write_voice_style_findings=args.write_voice_style_findings,
             include_voice_variants=args.include_voice_variants,
         )
         if args.json:
@@ -178,6 +196,36 @@ def _print_requested_sections(args, output_dir: Path) -> None:
             args.write_food_candidate_summary,
             "food_candidate_summary.md",
             "Food candidate summary",
+        ),
+        (
+            args.write_completion_diagnostics,
+            "completion_diagnostics.md",
+            "Completion diagnostics",
+        ),
+        (
+            args.write_food_option_card,
+            "food_option_card.md",
+            "Food option card",
+        ),
+        (
+            args.write_macro_display_card,
+            "macro_display_card.md",
+            "Macro display card",
+        ),
+        (
+            args.write_ai_snack_candidates,
+            "ai_snack_candidates.md",
+            "AI snack candidates",
+        ),
+        (
+            args.write_number_formatting_summary,
+            "number_formatting_summary.md",
+            "Number formatting summary",
+        ),
+        (
+            args.write_voice_style_findings,
+            "voice_style_findings.md",
+            "Voice style findings",
         ),
     )
     for enabled, filename, label in section_map:

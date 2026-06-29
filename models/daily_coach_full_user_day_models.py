@@ -28,6 +28,10 @@ class DailyCoachFullUserDayPacket:
     user_health_state_field_coverage: dict[str, Any] = field(default_factory=dict)
     nutrition: dict[str, Any] = field(default_factory=dict)
     food_candidates: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    ai_snack_candidates: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    macro_display_card: dict[str, Any] = field(default_factory=dict)
+    food_option_card: dict[str, Any] = field(default_factory=dict)
+    number_formatting: dict[str, Any] = field(default_factory=dict)
     training: dict[str, Any] = field(default_factory=dict)
     recovery: dict[str, Any] = field(default_factory=dict)
     deterministic_calculations: dict[str, Any] = field(default_factory=dict)
@@ -58,6 +62,9 @@ class DailyCoachFullUserDayProviderCallResult:
     cached_input_tokens: int | None = None
     estimated_cost_usd: float | None = None
     cost_estimate_basis: str | None = None
+    finish_reason: str | None = None
+    completion_status: str | None = None
+    max_output_tokens: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

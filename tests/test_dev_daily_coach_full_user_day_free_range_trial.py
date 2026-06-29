@@ -91,6 +91,12 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
         assert kwargs["write_model_input_manifest"] is True
         assert kwargs["write_precision_summary"] is True
         assert kwargs["write_food_candidate_summary"] is True
+        assert kwargs["write_completion_diagnostics"] is True
+        assert kwargs["write_food_option_card"] is True
+        assert kwargs["write_macro_display_card"] is True
+        assert kwargs["write_ai_snack_candidates"] is True
+        assert kwargs["write_number_formatting_summary"] is True
+        assert kwargs["write_voice_style_findings"] is True
         assert kwargs["include_voice_variants"] is True
         output_dir = kwargs["output_dir"]
         result = _fake_result()
@@ -110,6 +116,18 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
             "precision", encoding="utf-8"
         )
         (output_dir / "food_candidate_summary.md").write_text("food", encoding="utf-8")
+        (output_dir / "completion_diagnostics.md").write_text(
+            "completion", encoding="utf-8"
+        )
+        (output_dir / "food_option_card.md").write_text("food card", encoding="utf-8")
+        (output_dir / "macro_display_card.md").write_text(
+            "macro card", encoding="utf-8"
+        )
+        (output_dir / "ai_snack_candidates.md").write_text("snacks", encoding="utf-8")
+        (output_dir / "number_formatting_summary.md").write_text(
+            "numbers", encoding="utf-8"
+        )
+        (output_dir / "voice_style_findings.md").write_text("voice", encoding="utf-8")
         return result
 
     monkeypatch.setattr(
@@ -128,6 +146,12 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
             "--write-model-input-manifest",
             "--write-precision-summary",
             "--write-food-candidate-summary",
+            "--write-completion-diagnostics",
+            "--write-food-option-card",
+            "--write-macro-display-card",
+            "--write-ai-snack-candidates",
+            "--write-number-formatting-summary",
+            "--write-voice-style-findings",
             "--include-voice-variants",
             "--write-pasteback-report",
             "--print-first-pass",
@@ -147,12 +171,19 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
     assert "manifest" in captured.out
     assert "precision" in captured.out
     assert "food" in captured.out
+    assert "completion" in captured.out
+    assert "food card" in captured.out
+    assert "macro card" in captured.out
+    assert "snacks" in captured.out
+    assert "numbers" in captured.out
+    assert "voice" in captured.out
 
 
 def test_cli_run_matrix_json(monkeypatch, tmp_path: Path, capsys) -> None:
     def fake_matrix(**kwargs):
         assert kwargs["scenarios"] == ["rich_nutrition_training_recovery"]
         assert kwargs["write_provider_payload_debug"] is False
+        assert kwargs["write_completion_diagnostics"] is False
         assert kwargs["include_voice_variants"] is False
         return [_fake_result()]
 

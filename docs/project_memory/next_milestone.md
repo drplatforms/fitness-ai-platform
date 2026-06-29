@@ -1,3 +1,46 @@
+# Next Milestone — Daily Coach Free-Range Output Completion + Coach Surface Polish + Data Seeding v3
+
+Source baseline: `feature/daily-coach-free-range-voice-precision-payload-enrichment-v2` at `d731a6c Enrich free range voice precision payload`.
+
+Backend branch: `feature/daily-coach-free-range-output-completion-coach-surface-polish-data-seeding-v3`.
+
+Requested status: `DAILY_COACH_FREE_RANGE_OUTPUT_COMPLETION_COACH_SURFACE_POLISH_DATA_SEEDING_V3_IMPLEMENTATION_COMPLETE`.
+
+Architecture decision: continue the free-range coach experiment. Do not merge v2 yet, do not move to docs cleanup, do not onboard new Architecture continuation, and do not switch to a restrictive reviewer/renderer gate.
+
+Required implementation:
+
+- fix deterministic provider opt-in regression so deterministic runs never require `--allow-live-provider` while OpenAI/direct_ollama remain explicit opt-in
+- add completion/truncation diagnostics with finish reason, output tokens, max output tokens, completion status, and local truncation heuristics
+- increase developer-only output token budget for the free-range path
+- add display-ready numeric values for calories, macros, weight change, volume load, RIR, recovery fields, and food values
+- add compact macro display card artifacts
+- add food option card artifacts
+- add developer-only AI snack / mini-meal candidate artifacts from known candidate foods only
+- add bounded practical food seed expansion for this free-range scenario/candidate builder
+- add low-confidence/anomaly handling for suspicious weight trends without deleting raw debug evidence
+- add workout/session naming visibility fields (`internal_workout_model`, `user_facing_session_name`, `session_type`, `session_intensity`, `session_name_source`)
+- preserve exact first-pass drafts before diagnostics, repair, fallback, or phrase cleanup
+- preserve provider payload debug, full user-day packet, model input manifest, precision/food/voice summaries, token/cost telemetry, and artifact safety
+- update pasteback report with completion, cards, snacks, number formatting, weight trend handling, session naming, voice findings, claim risk, consistency, token/cost, artifact safety, and known baseline drift
+
+Boundaries:
+
+- developer-only experiment
+- normal Today unchanged
+- no production Today replacement
+- no restrictive reviewer/renderer gate
+- no OpenAI default or provider promotion
+- no public UI or Streamlit controls
+- no raw provider envelope persistence, secrets, or raw DB dumps
+- no medical advice generation
+- no meal planning/workout generation/nutrition target/recovery score changes
+- no RAG, embeddings, multi-agent runtime, local/cheaper model comparison, Headroom/context compression, or full 450–500 food expansion
+
+Known baseline drift remains documented and unpatched: `tests/test_daily_narrative_rich_day_service.py` expected `Read the day before adding more` vs actual `Consider the full day`.
+
+---
+
 # Next Milestone — Daily Coach Free-Range Voice + Precision + Payload Enrichment v2
 
 Recommended branch: `feature/daily-coach-free-range-voice-precision-payload-enrichment-v2`.

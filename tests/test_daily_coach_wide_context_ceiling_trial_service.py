@@ -37,12 +37,12 @@ def _fake_synthesis() -> SimpleNamespace:
         scenario="aligned_managed",
         confidence="Moderate",
         today_summary="Training is appropriate, but nutrition needs a simple check.",
-        recovery_signal="Recovery looks supportive enough to train.",
+        recovery_signal="Today is a green-light day for training.",
         training_signal="Planned strength work is appropriate today.",
         workout_guidance="Keep most working sets around RIR 2-3.",
         execution_context="Recent training is logged.",
         logging_focus="Protein is the clearest nutrition item to verify.",
-        plan_fit_note="The current plan fits the available context.",
+        plan_fit_note="The planned session fits the available context.",
         recommended_focus="Train cleanly and verify protein before the day gets away.",
         reason_codes=["aligned_managed", "protein_status_visible"],
         limitations=["Nutrition logging may not capture the whole day."],
@@ -204,7 +204,13 @@ def test_wide_context_writer_prompt_is_short_uncaged_and_not_narrow_path_cage() 
     assert "claim_key" not in prompt
     assert "validator" not in prompt.lower()
     assert "APPROVED_CONTEXT" not in prompt
-    assert "approved option" not in prompt.lower()
+    lowered = prompt.lower()
+    assert "approved option" not in lowered
+    assert "green-light day" not in lowered
+    assert "planned session" not in lowered
+    assert "planned workout" not in lowered
+    assert "today’s strength work" in lowered
+    assert "good day to train" in lowered or "recovery supports today" in lowered
     assert "REQUIRED_JSON_SCHEMA" not in prompt
 
 
@@ -441,15 +447,15 @@ def test_writer_prompt_cleans_backend_shaped_food_language() -> None:
         addressing_policy=AddressingPolicy(),
         approved_facts=(),
         approved_interpretations=(
-            "Nutrition is lagging and protein gap is still open.",
+            "Nutrition is lagging and close any remaining protein gap.",
         ),
         approved_food_actions=(
             ApprovedFoodAction(
                 food_claim_key="nutrition.food_suggestion.1",
                 canonical_name="Canned Tuna",
                 friendly_name="canned tuna",
-                macro_reason="protein gap is still open",
-                allowed_conditions=("if protein gap is still open",),
+                macro_reason="remaining protein gap",
+                allowed_conditions=("if close any remaining protein gap",),
                 serving_display=None,
                 serving_allowed=False,
             ),
@@ -460,7 +466,7 @@ def test_writer_prompt_cleans_backend_shaped_food_language() -> None:
         {
             "display_name": "Chicken Breast",
             "macro_gap_addressed": "calorie gap is still open",
-            "summary": "Use an approved option like chicken breast.",
+            "summary": "Use an approved option like chicken breast to close any remaining protein gap.",
         }
     ]
     packet = build_daily_coach_wide_context_packet(
@@ -479,6 +485,8 @@ def test_writer_prompt_cleans_backend_shaped_food_language() -> None:
     assert "approved option" not in lowered
     assert "nutrition is lagging" not in lowered
     assert "protein gap is still open" not in lowered
+    assert "remaining protein gap" not in lowered
+    assert "close any remaining protein gap" not in lowered
     assert "calorie gap is still open" not in lowered
     assert "protein is still short" in lowered
     assert "calories are still short" in lowered
@@ -493,8 +501,12 @@ def test_product_language_scan_flags_required_backend_shaped_phrases() -> None:
             "Approved options include tuna.",
             "Use an approved option like chicken.",
             "The protein gap is still open.",
+            "Close any remaining protein gap.",
+            "The remaining protein gap matters.",
             "The calorie gap is still open.",
+            "Today is a green-light day.",
             "Do the planned workout as written.",
+            "The planned session and planned workout are ready.",
         ]
     )
 
@@ -502,14 +514,20 @@ def test_product_language_scan_flags_required_backend_shaped_phrases() -> None:
     patterns = {finding["pattern"] for finding in findings}
 
     assert "Nutrition is lagging" in patterns
+    assert "approved options include" in patterns
     assert "approved options" in patterns
     assert "approved option" in patterns
     assert "use an approved option" in patterns
     assert "protein gap is still open" in patterns
+    assert "remaining protein gap" in patterns
+    assert "close any remaining protein gap" in patterns
     assert "calorie gap is still open" in patterns
     assert "gap is still open" in patterns
+    assert "green-light day" in patterns
     assert "do the planned workout as written" in patterns
     assert "planned workout as written" in patterns
+    assert "planned session" in patterns
+    assert "planned workout" in patterns
 
 
 def test_product_language_findings_artifact_flags_bad_first_pass_copy(
@@ -538,7 +556,7 @@ def test_product_language_findings_artifact_flags_bad_first_pass_copy(
 
     def fake_provider(model: str, prompt: str, timeout: float, env: dict):
         return DailyCoachWideContextProviderCallResult(
-            raw_text="Nutrition is lagging. Use an approved option like tuna because the protein gap is still open. Do the planned workout as written."
+            raw_text="Nutrition is lagging. Use an approved option like tuna because the remaining protein gap is open. Today is a green-light day, so do the planned workout as written."
         )
 
     result = run_daily_coach_wide_context_ceiling_trial_scenario(
@@ -557,7 +575,8 @@ def test_product_language_findings_artifact_flags_bad_first_pass_copy(
 
     assert "Nutrition is lagging" in findings
     assert "approved option" in findings
-    assert "protein gap is still open" in findings
+    assert "remaining protein gap" in findings
+    assert "green-light day" in findings
     assert "planned workout as written" in findings
     assert "Total findings:" in findings
 
@@ -600,3 +619,90 @@ def test_pasteback_report_is_terminal_friendly(tmp_path: Path, monkeypatch) -> N
     assert "Token / Cost Summary" in report
     assert "Known Baseline Drift" in report
     assert BASELINE_DRIFT["test_file"] in report
+
+
+def test_writer_prompt_presents_foods_as_user_facing_choices() -> None:
+    packet = build_daily_coach_wide_context_packet(
+        user_id=102,
+        target_date="2026-06-27",
+        scenario_id="aligned_managed",
+        brief=_fake_brief(),
+        synthesis=_fake_synthesis(),
+        health_state=_fake_health_state(),
+        value_context=_fake_value_context(),
+    )
+
+    prompt = build_wide_context_writer_prompt(packet, "wide_context_practical_coach")
+    lowered = prompt.lower()
+
+    assert "food ideas that may be mentioned if relevant" in lowered
+    assert "greek yogurt" in lowered
+    assert "approved option" not in lowered
+    assert "approved options" not in lowered
+    assert "approved options include" not in lowered
+    assert "protein is still short" in lowered
+
+
+def test_pasteback_report_includes_full_exact_key_outputs(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "services.daily_coach_wide_context_ceiling_trial_service.get_daily_coach_natural_draft_scenario",
+        lambda scenario_id: {
+            "scenario_id": scenario_id,
+            "user_id": 102,
+            "target_date": "2026-06-27",
+        },
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_wide_context_ceiling_trial_service.build_daily_coach_wide_context_packet",
+        lambda **kwargs: build_daily_coach_wide_context_packet(
+            user_id=102,
+            target_date="2026-06-27",
+            scenario_id="aligned_managed",
+            brief=_fake_brief(),
+            synthesis=_fake_synthesis(),
+            health_state=_fake_health_state(),
+            value_context=_fake_value_context(),
+        ),
+    )
+
+    long_best = "BEST_VARIANT_FULL_TEXT " + "keep every word " * 90
+    long_narrow = "CURRENT_NARROW_FULL_TEXT " + "narrow words " * 80
+    long_baseline = "DETERMINISTIC_BASELINE_FULL_TEXT " + "baseline words " * 80
+
+    monkeypatch.setattr(
+        "services.daily_coach_wide_context_ceiling_trial_service._deterministic_baseline_note",
+        lambda packet: long_baseline,
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_wide_context_ceiling_trial_service._current_narrow_path_output",
+        lambda **kwargs: long_narrow,
+    )
+
+    def fake_provider(model: str, prompt: str, timeout: float, env: dict):
+        return DailyCoachWideContextProviderCallResult(raw_text=long_best)
+
+    result = run_daily_coach_wide_context_ceiling_trial_scenario(
+        scenario_id="aligned_managed",
+        provider="openai",
+        model="gpt-5.5",
+        variants=["current_narrow_path", "wide_context_practical_coach"],
+        allow_live_provider=True,
+        environ={"OPENAI_API_KEY": "test-key"},
+        provider_generate=fake_provider,
+        output_dir=tmp_path,
+    )
+
+    write_wide_context_ceiling_trial_artifacts(tmp_path, [result])
+    report = (tmp_path / "pasteback_report.md").read_text(encoding="utf-8")
+    first_pass = (tmp_path / "first_pass_drafts.md").read_text(encoding="utf-8")
+
+    assert "Full Exact Key Outputs" in report
+    assert long_baseline in report
+    assert long_narrow in report
+    assert long_best.strip() in report
+    assert long_best.strip() in first_pass
+    assert "BEST_VARIANT_FULL_TEXT" in (
+        tmp_path / "first_pass_drafts_compact.md"
+    ).read_text(encoding="utf-8")

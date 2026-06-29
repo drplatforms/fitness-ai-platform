@@ -1,27 +1,26 @@
-# Next Milestone — Daily Coach Wide Context Copy Cleanup + QA Readability v1
+# Next Milestone — Daily Coach Wide Context User-Facing Language Cleanup v2
 
 Owner: Backend Development with Architecture, QA, and Agent Engineering review.
 
-Baseline: `main` at `42d0bd4 Merge daily coach wide context ceiling trial v1`.
+Baseline: `main` at `490d2ae Merge daily coach wide context copy cleanup qa readability v1`.
 
-Baseline snapshot: `fitness_ai_snapshot_2026-06-28_42d0bd4_main_merge-daily-coach-wide-context-ceiling-trial-v1.zip`.
+Baseline snapshot: `fitness_ai_snapshot_2026-06-28_490d2ae_main_merge-daily-coach-wide-context-copy-cleanup-qa-readability-v1.zip`.
 
-Recommended branch: `feature/daily-coach-wide-context-copy-cleanup-qa-readability-v1`.
+Recommended branch: `feature/daily-coach-wide-context-user-facing-language-cleanup-v2`.
 
-Goal: keep the wide-context ceiling-trial architecture, but improve user-facing first-pass copy language, prompt/context packaging, and terminal-friendly QA artifact readability.
+Goal: keep the wide-context approach, but make the best first-pass GPT-5.5 output sound more user-facing and coach-like by removing remaining backend-shaped language from provider-facing context and prompt packaging.
 
 Required outputs:
 
-- prompt/context cleanup for backend-shaped user-facing wording;
-- food choices represented as plain food language, not internal approval language;
-- product-language diagnostic scan for QA readability;
-- compact first-pass draft artifact;
-- variant score summary artifact;
-- best variant summary artifact;
-- product language findings artifact;
-- pasteback report artifact printable with `cat "$out/pasteback_report.md"`;
-- optional CLI print flags for first pass, compact comparison, best variant, product issues, and pasteback report path;
-- targeted tests for copy cleanup, scan behavior, artifact generation, and CLI flags;
+- remove writer-facing `approved option` / `approved options include` wording;
+- reduce default `remaining protein gap` / `close any remaining protein gap` wording;
+- avoid `green-light day` unless explicitly approved later;
+- reduce generic `planned session` / `planned workout` phrasing when actual session wording is available;
+- preserve exact first-pass draft capture in `first_pass_drafts.md`;
+- update `pasteback_report.md` so full exact deterministic baseline, current narrow path, and best wide-context variant are included;
+- expand product-language diagnostic scan with the v2 phrases;
+- keep existing QA readability flags and artifacts;
+- targeted tests for prompt/context cleanup, scan behavior, pasteback full-best-variant behavior, CLI compatibility, and unchanged boundaries;
 - project memory updates.
 
 Boundaries:
@@ -37,7 +36,7 @@ Boundaries:
 - no secrets, raw DB rows, or public UI exposure;
 - no parser relaxation;
 - no Product Voice Audit rewrite;
-- no meal planning, workout generation, nutrition target mutation, or recovery score mutation.
+- no meal planning, workout generation, nutrition target mutation, recovery score mutation, RAG, embeddings, or multi-agent runtime.
 
 Known baseline drift to document, not patch here:
 
@@ -45,4 +44,4 @@ Known baseline drift to document, not patch here:
 - Example: expected `Read the day before adding more`; actual `Consider the full day`.
 - Full-suite green must not be claimed if this remains.
 
-Requested final status: `DAILY_COACH_WIDE_CONTEXT_COPY_CLEANUP_QA_READABILITY_V1_IMPLEMENTATION_COMPLETE`.
+Requested final status: `DAILY_COACH_WIDE_CONTEXT_USER_FACING_LANGUAGE_CLEANUP_V2_IMPLEMENTATION_COMPLETE`.

@@ -1,14 +1,14 @@
 {
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_42d0bd4_main_merge-daily-coach-wide-context-ceiling-trial-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-28_490d2ae_main_merge-daily-coach-wide-context-copy-cleanup-qa-readability-v1.zip",
     "commit_check_mode": "code",
-    "current_recommended_milestone": "Daily Coach Wide Context Copy Cleanup + QA Readability v1",
+    "current_recommended_milestone": "Daily Coach Wide Context User-Facing Language Cleanup v2",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can prompt/context cleanup and QA-readable artifacts reduce backend-shaped copy leakage without changing production behavior?",
+    "primary_question": "Can v2 provider-facing language cleanup remove remaining backend-shaped phrases while preserving exact first-pass capture and QA readability?",
     "qa_class": "CLASS 2 / CLASS 5 HYBRID",
     "recommended_owner": "Backend Development",
     "secondary_owner": "Agent Engineering",
-    "source_main_commit": "42d0bd4"
+    "source_main_commit": "490d2ae"
   },
   "boundaries": {
     "active_workout_preserved": true,
@@ -57,6 +57,7 @@
     "daily_coach_value_aware_provider_comparison_v1": true,
     "daily_coach_wide_context_copy_cleanup_qa_readability_v1": true,
     "daily_coach_wide_context_uncaged_gpt55_ceiling_trial_v1": true,
+    "daily_coach_wide_context_user_facing_language_cleanup_v2": true,
     "daily_narrative_feedback_driven_copy_hardening": true,
     "daily_narrative_feedback_jsonl": true,
     "daily_narrative_field_role_guidance": true,
@@ -242,6 +243,12 @@
     "previous_accepted_milestone": "Daily Coach Product Voice Audit Gate Fix v1",
     "previous_main_merge_commit": "718c614",
     "previous_snapshot": "fitness_ai_snapshot_2026-06-28_718c614_main_merge-daily-coach-product-voice-audit-gate-fix-v1.zip"
+  },
+  "current_state": {
+    "active_backend_milestone": "Daily Coach Wide Context User-Facing Language Cleanup v2",
+    "active_backend_status": "implementation_patch_ready_for_validation",
+    "current_source_of_truth": "main at 490d2ae Merge daily coach wide context copy cleanup qa readability v1",
+    "requested_backend_status": "DAILY_COACH_WIDE_CONTEXT_USER_FACING_LANGUAGE_CLEANUP_V2_IMPLEMENTATION_COMPLETE"
   },
   "daily_coach_async_boundary": {
     "current": "Daily Coach async/provider work remains gated by accepted designs and developer-only/manual preview boundaries unless a later milestone explicitly authorizes runtime behavior.",

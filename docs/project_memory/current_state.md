@@ -1,3 +1,21 @@
+# Current State — Daily Coach Wide Context User-Facing Language Cleanup v2
+
+Current source of truth: `main` at `490d2ae Merge daily coach wide context copy cleanup qa readability v1`.
+
+Active backend milestone: `Daily Coach Wide Context User-Facing Language Cleanup v2`.
+
+Status: Architecture accepted the v1 copy cleanup/readability infrastructure as developer-only and routed Backend to remove remaining backend-shaped wording from the best first-pass GPT-5.5 output while preserving the wide-context direction and QA readability wins.
+
+Purpose: keep the wide-context provider-copy diagnostic path, but make provider-facing context more user-facing so the model stops repeating phrases such as `approved option`, `remaining protein gap`, `green-light day`, `planned session`, and `planned workout`. This remains developer-only and is not production integration, OpenAI promotion, or a new approval-gate milestone.
+
+Implementation direction: sanitize writer-facing context and prompt wording more aggressively, expand the diagnostic product-language scan, preserve exact first-pass draft capture, and make `pasteback_report.md` include the full exact deterministic baseline, current narrow path, and best wide-context variant while allowing non-winning variants to stay compact.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches on the supplied lineage, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside unrelated milestones unless directly scoped.
+
+Requested final status: `DAILY_COACH_WIDE_CONTEXT_USER_FACING_LANGUAGE_CLEANUP_V2_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Wide Context Copy Cleanup + QA Readability v1
 
 Current source of truth: `main` at `42d0bd4 Merge daily coach wide context ceiling trial v1`.

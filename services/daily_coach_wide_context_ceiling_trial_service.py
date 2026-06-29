@@ -83,6 +83,11 @@ PRODUCT_LANGUAGE_PATTERNS: tuple[dict[str, str], ...] = (
         "suggestion": "Use 'Nutrition is lacking' or say calories/protein are still short.",
     },
     {
+        "pattern": "approved options include",
+        "category": "backend_approval_language",
+        "suggestion": "Say the foods directly, such as canned tuna, chicken breast, or turkey breast.",
+    },
+    {
         "pattern": "approved options",
         "category": "backend_approval_language",
         "suggestion": "Say the foods directly, such as canned tuna, chicken breast, or turkey breast.",
@@ -96,6 +101,16 @@ PRODUCT_LANGUAGE_PATTERNS: tuple[dict[str, str], ...] = (
         "pattern": "use an approved option",
         "category": "backend_approval_language",
         "suggestion": "Use direct food language such as eat some canned tuna or chicken breast.",
+    },
+    {
+        "pattern": "remaining protein gap",
+        "category": "macro_gap_wording",
+        "suggestion": "Say if protein is still short or if you still need more protein.",
+    },
+    {
+        "pattern": "close any remaining protein gap",
+        "category": "macro_gap_wording",
+        "suggestion": "Say eat more protein if protein is still short.",
     },
     {
         "pattern": "protein gap is still open",
@@ -113,6 +128,11 @@ PRODUCT_LANGUAGE_PATTERNS: tuple[dict[str, str], ...] = (
         "suggestion": "Say the specific macro is still short.",
     },
     {
+        "pattern": "green-light day",
+        "category": "recovery_readiness_wording",
+        "suggestion": "Say recovery supports today’s session or the user is in a good spot to train.",
+    },
+    {
         "pattern": "do the planned workout as written",
         "category": "training_action_wording",
         "suggestion": "Use the session name or say do today’s strength session.",
@@ -121,6 +141,16 @@ PRODUCT_LANGUAGE_PATTERNS: tuple[dict[str, str], ...] = (
         "pattern": "planned workout as written",
         "category": "training_action_wording",
         "suggestion": "Use actual session language when available.",
+    },
+    {
+        "pattern": "planned session",
+        "category": "training_action_wording",
+        "suggestion": "Use the session name when available or say today’s session.",
+    },
+    {
+        "pattern": "planned workout",
+        "category": "training_action_wording",
+        "suggestion": "Use the session name when available or say today’s workout.",
     },
 )
 
@@ -402,7 +432,7 @@ def write_wide_context_ceiling_trial_artifacts(
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     run_config = {
-        "milestone": "daily_coach_wide_context_copy_cleanup_qa_readability_v1",
+        "milestone": "daily_coach_wide_context_user_facing_language_cleanup_v2",
         "developer_only": True,
         "normal_today_unchanged": True,
         "run_count": len(results),
@@ -726,12 +756,27 @@ def _coach_friendly_text(value: Any) -> str:
             r"\b[Uu]se an approved option like\b",
             "Eat a simple food like",
         ),
-        (r"\b[Aa]pproved options include\b", "Food options include"),
-        (r"\bapproved options\b", "food options"),
-        (r"\bapproved option\b", "food option"),
+        (r"\b[Aa]pproved options include\b", "Food choices include"),
+        (r"\bapproved options include\b", "food choices include"),
+        (r"\bapproved options\b", "food choices"),
+        (r"\bapproved option\b", "food choice"),
+        (
+            r"\b[Cc]lose any remaining protein gap\b",
+            "Get more protein if protein is still short",
+        ),
+        (
+            r"\bclose any remaining protein gap\b",
+            "get more protein if protein is still short",
+        ),
+        (r"\bremaining protein gap\b", "protein is still short"),
         (r"\bprotein gap is still open\b", "protein is still short"),
         (r"\bcalorie gap is still open\b", "calories are still short"),
         (r"\bgap is still open\b", "that need is still short"),
+        (
+            r"\b[Tt]oday is a green-light day\b",
+            "Recovery supports today’s training",
+        ),
+        (r"\bgreen-light day\b", "good day to train"),
         (
             r"\b[Dd]o the planned workout as written\b",
             "Do today’s strength session",
@@ -740,6 +785,11 @@ def _coach_friendly_text(value: Any) -> str:
             r"\bplanned workout as written\b",
             "today’s strength session",
         ),
+        (r"\b[Pp]lanned strength work\b", "Today’s strength work"),
+        (r"\bplanned strength work\b", "today’s strength work"),
+        (r"\bplanned training\b", "today’s training"),
+        (r"\bplanned session\b", "today’s session"),
+        (r"\bplanned workout\b", "today’s workout"),
     )
     for pattern, replacement in replacements:
         text = re.sub(pattern, replacement, text)
@@ -1340,7 +1390,7 @@ def _sum_optional_ints(left: Any, right: Any) -> int | None:
 def _build_run_id(provider: str, scenario_id: str) -> str:
     timestamp = datetime.now(UTC).replace(microsecond=0).isoformat()
     safe_scenario = re.sub(r"[^a-zA-Z0-9_-]+", "_", scenario_id)
-    return f"daily_coach_wide_context_uncaged_gpt55_ceiling_trial_v1_{safe_scenario}_{provider}_{timestamp.replace(':', '').replace('+', 'z')}"
+    return f"daily_coach_wide_context_user_facing_language_cleanup_v2_{safe_scenario}_{provider}_{timestamp.replace(':', '').replace('+', 'z')}"
 
 
 def _context_packet_summary(
@@ -1528,6 +1578,10 @@ def _render_pasteback_report(
             f"- Best variant(s): {', '.join(best_labels) if best_labels else 'unavailable'}",
             "- Recommended QA classification: PENDING_QA_REVIEW",
             "",
+            "## Full Exact Key Outputs",
+            "",
+            _render_full_exact_key_outputs(results),
+            "",
             "## Compact First-Pass Drafts",
             "",
             _render_first_pass_drafts_compact(results),
@@ -1561,6 +1615,42 @@ def _render_pasteback_report(
             "",
         ]
     )
+    return "\n".join(lines)
+
+
+def _render_full_exact_key_outputs(
+    results: Sequence[DailyCoachWideContextTrialRunResult],
+) -> str:
+    lines: list[str] = []
+    for run in results:
+        best = _select_best_variant(run)
+        baseline = run.variants[0].deterministic_baseline if run.variants else ""
+        narrow = run.variants[0].current_narrow_path_output if run.variants else None
+        lines.extend(
+            [
+                f"### {run.scenario_id}",
+                "",
+                "#### Deterministic baseline — full exact text",
+                "",
+                baseline or "(unavailable)",
+                "",
+                "#### Current narrow path — full exact text",
+                "",
+                narrow or "(unavailable)",
+                "",
+            ]
+        )
+        if best is None:
+            lines.extend(["#### Best wide-context variant", "", "(unavailable)", ""])
+            continue
+        lines.extend(
+            [
+                f"#### Best wide-context variant — {best.variant_id} — full exact text",
+                "",
+                best.first_pass_draft or "(no draft)",
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 

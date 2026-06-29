@@ -171,7 +171,7 @@ def build_daily_coach_full_user_day_packet(
         resolved_health_state
     )
     packet = DailyCoachFullUserDayPacket(
-        packet_version="daily_coach_full_user_day_free_range_payload_baseline_v1",
+        packet_version="daily_coach_free_range_voice_precision_payload_enrichment_v2",
         user_id=user_id,
         date=target_date,
         scenario_id=scenario_id,
@@ -233,6 +233,7 @@ def build_full_user_day_free_range_prompt(
         "Use the data packet below.\n"
         "Sound like a practical human coach.\n"
         "Use specific training, nutrition, recovery, and food details when they help.\n"
+        "Use precision metadata: quote direct values directly when quote_style is direct; use about/roughly only when quote_style is hedged or value_precision is an estimate.\n"
         "If data is missing or uncertain, say that naturally.\n"
         "Do not invent facts.\n"
         "Return only the coach note.\n\n"
@@ -253,6 +254,10 @@ def run_daily_coach_full_user_day_free_range_scenario(
     allow_live_provider: bool = False,
     output_dir: Path | None = None,
     write_provider_payload_debug: bool = False,
+    write_model_input_manifest: bool = False,
+    write_precision_summary: bool = False,
+    write_food_candidate_summary: bool = False,
+    include_voice_variants: bool = False,
     environ: Mapping[str, str] | None = None,
     provider_generate: FullUserDayProviderCallable | None = None,
 ) -> DailyCoachFullUserDayTrialRunResult:
@@ -264,7 +269,10 @@ def run_daily_coach_full_user_day_free_range_scenario(
     resolved_model = (
         model or env.get(FULL_USER_DAY_MODEL_ENV) or DEFAULT_FULL_USER_DAY_MODEL
     )
-    selected_variants = tuple(variants or _default_variant_order())
+    selected_variants = tuple(
+        variants
+        or _default_variant_order(include_voice_variants=include_voice_variants)
+    )
     resolved_repeat = max(1, min(int(repeat or 1), 10))
     run_id = _build_run_id(resolved_provider, scenario_id)
     user_id = int(scenario["user_id"])
@@ -292,6 +300,10 @@ def run_daily_coach_full_user_day_free_range_scenario(
                 output_dir,
                 [result],
                 write_provider_payload_debug=write_provider_payload_debug,
+                write_model_input_manifest=write_model_input_manifest,
+                write_precision_summary=write_precision_summary,
+                write_food_candidate_summary=write_food_candidate_summary,
+                include_voice_variants=include_voice_variants,
             )
         return result
     draft_results: list[DailyCoachFullUserDayDraftResult] = []
@@ -327,6 +339,10 @@ def run_daily_coach_full_user_day_free_range_scenario(
             "repair_or_fallback_before_first_pass": False,
             "repeat": resolved_repeat,
             "provider_payload_debug_available": write_provider_payload_debug,
+            "model_input_manifest_available": write_model_input_manifest,
+            "precision_summary_available": write_precision_summary,
+            "food_candidate_summary_available": write_food_candidate_summary,
+            "include_voice_variants": include_voice_variants,
         },
     )
     _assert_run_sanitized(result)
@@ -335,6 +351,10 @@ def run_daily_coach_full_user_day_free_range_scenario(
             output_dir,
             [result],
             write_provider_payload_debug=write_provider_payload_debug,
+            write_model_input_manifest=write_model_input_manifest,
+            write_precision_summary=write_precision_summary,
+            write_food_candidate_summary=write_food_candidate_summary,
+            include_voice_variants=include_voice_variants,
         )
     return result
 
@@ -349,6 +369,10 @@ def run_daily_coach_full_user_day_free_range_matrix(
     allow_live_provider: bool = False,
     output_dir: Path,
     write_provider_payload_debug: bool = False,
+    write_model_input_manifest: bool = False,
+    write_precision_summary: bool = False,
+    write_food_candidate_summary: bool = False,
+    include_voice_variants: bool = False,
     environ: Mapping[str, str] | None = None,
     provider_generate: FullUserDayProviderCallable | None = None,
 ) -> list[DailyCoachFullUserDayTrialRunResult]:
@@ -364,6 +388,10 @@ def run_daily_coach_full_user_day_free_range_matrix(
             environ=environ,
             provider_generate=provider_generate,
             write_provider_payload_debug=write_provider_payload_debug,
+            write_model_input_manifest=write_model_input_manifest,
+            write_precision_summary=write_precision_summary,
+            write_food_candidate_summary=write_food_candidate_summary,
+            include_voice_variants=include_voice_variants,
         )
         for scenario_id in selected_scenarios
     ]
@@ -371,6 +399,10 @@ def run_daily_coach_full_user_day_free_range_matrix(
         output_dir,
         results,
         write_provider_payload_debug=write_provider_payload_debug,
+        write_model_input_manifest=write_model_input_manifest,
+        write_precision_summary=write_precision_summary,
+        write_food_candidate_summary=write_food_candidate_summary,
+        include_voice_variants=include_voice_variants,
     )
     return results
 
@@ -380,15 +412,23 @@ def write_daily_coach_full_user_day_artifacts(
     results: Sequence[DailyCoachFullUserDayTrialRunResult],
     *,
     write_provider_payload_debug: bool = False,
+    write_model_input_manifest: bool = False,
+    write_precision_summary: bool = False,
+    write_food_candidate_summary: bool = False,
+    include_voice_variants: bool = False,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     run_config = {
-        "milestone": "daily_coach_full_user_day_free_range_payload_baseline_v1",
+        "milestone": "daily_coach_free_range_voice_precision_payload_enrichment_v2",
         "developer_only": True,
         "normal_today_unchanged": True,
         "run_count": len(results),
         "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "write_provider_payload_debug": write_provider_payload_debug,
+        "write_model_input_manifest": write_model_input_manifest,
+        "write_precision_summary": write_precision_summary,
+        "write_food_candidate_summary": write_food_candidate_summary,
+        "include_voice_variants": include_voice_variants,
         "baseline_drift": dict(BASELINE_DRIFT),
     }
     _write_json(output_dir / "run_config.json", run_config)
@@ -398,6 +438,18 @@ def write_daily_coach_full_user_day_artifacts(
     )
     (output_dir / "prompt_variants.md").write_text(
         _render_prompt_variants(), encoding="utf-8"
+    )
+    (output_dir / "voice_variant_summary.md").write_text(
+        _render_voice_variant_summary(), encoding="utf-8"
+    )
+    (output_dir / "precision_usage_summary.md").write_text(
+        _render_precision_usage_summary(results), encoding="utf-8"
+    )
+    (output_dir / "food_candidate_summary.md").write_text(
+        _render_food_candidate_summary(results), encoding="utf-8"
+    )
+    (output_dir / "model_input_manifest.md").write_text(
+        _render_model_input_manifest(results), encoding="utf-8"
     )
     (output_dir / "first_pass_drafts.md").write_text(
         _render_first_pass_drafts(results), encoding="utf-8"
@@ -628,6 +680,8 @@ def _nutrition_payload(
                 "confidence": comparison.get("confidence"),
                 "display_allowed": comparison.get("display_allowed"),
                 "limitations": comparison.get("limitations"),
+                "value_precision": _macro_value_precision(comparison),
+                "quote_style": _macro_quote_style(comparison),
             }
         )
     return _drop_unknowns(
@@ -662,7 +716,7 @@ def _food_candidates(
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    def add(item: Mapping[str, Any]) -> None:
+    def add(item: Mapping[str, Any], *, source: str | None = None) -> None:
         plain_name = _plain_food_name(
             item.get("plain_name_for_user")
             or item.get("display_name")
@@ -676,33 +730,51 @@ def _food_candidates(
         if key in seen:
             return
         seen.add(key)
-        candidates.append(
-            _drop_unknowns(
-                {
-                    "display_name": plain_name,
-                    "plain_name_for_user": plain_name,
-                    "serving_size": item.get("serving_size")
-                    or item.get("serving_display")
-                    or item.get("suggested_grams"),
-                    "estimated_calories": item.get("estimated_calories"),
-                    "estimated_protein_g": item.get("estimated_protein_g"),
-                    "estimated_carbs_g": item.get("estimated_carbs_g")
-                    or item.get("estimated_carbohydrate_g"),
-                    "estimated_fat_g": item.get("estimated_fat_g"),
-                    "why_useful_today": _food_reason(
-                        item.get("why_useful_today")
-                        or item.get("macro_reason")
-                        or item.get("macro_gap_addressed")
-                        or item.get("summary")
-                    ),
-                    "helps_with": _macro_label(
-                        item.get("helps_with") or item.get("macro_gap_addressed")
-                    ),
-                    "source": item.get("source") or "nutrition_suggestion",
-                    "confidence": item.get("confidence"),
-                }
-            )
+        serving_size = _format_serving_size(
+            item.get("serving_size")
+            or item.get("serving_display")
+            or item.get("suggested_grams")
         )
+        precision = _food_value_precision(item, source=source)
+        quote_style = _food_quote_style(precision)
+        helps_with = _macro_label(
+            item.get("helps_with") or item.get("macro_gap_addressed")
+        )
+        candidate = _drop_unknowns(
+            {
+                "display_name": plain_name,
+                "plain_name_for_user": plain_name,
+                "serving_size": serving_size,
+                "estimated_calories": item.get("estimated_calories"),
+                "estimated_protein_g": item.get("estimated_protein_g"),
+                "estimated_carbs_g": item.get("estimated_carbs_g")
+                or item.get("estimated_carbohydrate_g"),
+                "estimated_fat_g": item.get("estimated_fat_g"),
+                "value_precision": precision,
+                "quote_style": quote_style,
+                "display_phrase": _food_display_phrase(
+                    plain_name=plain_name,
+                    serving_size=serving_size,
+                    calories=item.get("estimated_calories"),
+                    protein=item.get("estimated_protein_g"),
+                    carbs=item.get("estimated_carbs_g")
+                    or item.get("estimated_carbohydrate_g"),
+                    fat=item.get("estimated_fat_g"),
+                    quote_style=quote_style,
+                ),
+                "why_useful_today": _food_reason(
+                    item.get("why_useful_today")
+                    or item.get("macro_reason")
+                    or item.get("macro_gap_addressed")
+                    or item.get("summary")
+                ),
+                "helps_with": helps_with,
+                "category": _food_category(helps_with),
+                "source": source or item.get("source") or "nutrition_suggestion",
+                "confidence": item.get("confidence"),
+            }
+        )
+        candidates.append(candidate)
 
     nutrition = (
         value_context.get("approved_nutrition")
@@ -712,7 +784,7 @@ def _food_candidates(
     if isinstance(nutrition, Mapping):
         for suggestion in nutrition.get("approved_food_suggestions") or []:
             if isinstance(suggestion, Mapping):
-                add(suggestion)
+                add(suggestion, source="nutrition_food_suggestion")
     for action in brief.approved_food_actions:
         add(
             {
@@ -724,7 +796,8 @@ def _food_candidates(
                 ),
                 "source": "coach_brief_food_action",
                 "confidence": "backend_selected",
-            }
+            },
+            source="coach_brief_food_action",
         )
     return candidates[:limit]
 
@@ -740,25 +813,32 @@ def _training_payload(health_state: Any, synthesis: Any) -> dict[str, Any]:
             "plan_fit_note",
         )
     )
-    return _drop_unknowns(
-        {
-            "has_workout_data": getattr(training_state, "has_workout_data", None),
-            "workout_count": getattr(training_state, "workout_count", None),
-            "adherence_level": getattr(training_state, "adherence_level", None),
-            "training_trend": getattr(training_state, "training_trend", None),
-            "total_volume_load": getattr(training_state, "total_volume_load", None),
-            "avg_rir": getattr(training_state, "avg_rir", None),
-            "training_load": getattr(training_state, "training_load", None),
-            "recovery_demand": getattr(training_state, "recovery_demand", None),
-            "scheduled_session_name": _extract_session_name(candidate_text),
-            "training_suitability": _training_suitability(health_state),
-            "actual_set_logging_completeness": (
-                "available"
-                if getattr(training_state, "has_workout_data", None)
-                else "unknown"
-            ),
-        }
-    )
+    set_level_data = _set_level_training_data(training_state)
+    payload = {
+        "has_workout_data": getattr(training_state, "has_workout_data", None),
+        "workout_count": getattr(training_state, "workout_count", None),
+        "adherence_level": getattr(training_state, "adherence_level", None),
+        "training_trend": getattr(training_state, "training_trend", None),
+        "total_volume_load": getattr(training_state, "total_volume_load", None),
+        "avg_rir": getattr(training_state, "avg_rir", None),
+        "training_load": getattr(training_state, "training_load", None),
+        "recovery_demand": getattr(training_state, "recovery_demand", None),
+        "scheduled_session_name": _extract_session_name(candidate_text),
+        "training_suitability": _training_suitability(health_state),
+        "actual_set_logging_completeness": (
+            "available"
+            if getattr(training_state, "has_workout_data", None)
+            else "unknown"
+        ),
+        "set_level_data_available": bool(set_level_data),
+        "set_level_data": set_level_data,
+        "set_level_data_unavailable_reason": (
+            None
+            if set_level_data
+            else "no structured set-level data exposed by UserHealthState.training_state in this path"
+        ),
+    }
+    return _drop_unknowns(payload)
 
 
 def _recovery_payload(health_state: Any) -> dict[str, Any]:
@@ -1017,6 +1097,129 @@ def _plain_food_name(value: Any) -> str:
     return text
 
 
+def _macro_value_precision(comparison: Mapping[str, Any]) -> str:
+    confidence = str(comparison.get("confidence") or "").lower()
+    if confidence in {"low", "limited", "unknown"}:
+        return "unknown_or_incomplete"
+    if comparison.get("display_allowed") is False:
+        return "unknown_or_incomplete"
+    return "exact_app_calculated"
+
+
+def _macro_quote_style(comparison: Mapping[str, Any]) -> str:
+    return (
+        "direct"
+        if _macro_value_precision(comparison) == "exact_app_calculated"
+        else "hedged"
+    )
+
+
+def _food_value_precision(item: Mapping[str, Any], *, source: str | None = None) -> str:
+    explicit = item.get("value_precision")
+    if explicit:
+        return str(explicit)
+    confidence = str(item.get("confidence") or "").lower()
+    has_macro_values = any(
+        item.get(key) is not None
+        for key in (
+            "estimated_calories",
+            "estimated_protein_g",
+            "estimated_carbs_g",
+            "estimated_carbohydrate_g",
+            "estimated_fat_g",
+        )
+    )
+    if source == "coach_brief_food_action" and not has_macro_values:
+        return "unknown_or_incomplete"
+    if confidence in {"low", "generic", "estimate", "estimated"}:
+        return "generic_estimate"
+    if has_macro_values:
+        return "database_calculated"
+    return "unknown_or_incomplete"
+
+
+def _food_quote_style(precision: str) -> str:
+    if precision in {
+        "exact_app_calculated",
+        "database_calculated",
+        "rounded_from_database",
+    }:
+        return "direct"
+    return "hedged"
+
+
+def _format_serving_size(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, int | float):
+        return f"{value:g}g"
+    text = str(value).strip()
+    if text.isdigit():
+        return f"{text}g"
+    return text
+
+
+def _food_display_phrase(
+    *,
+    plain_name: str,
+    serving_size: str | None,
+    calories: Any,
+    protein: Any,
+    carbs: Any,
+    fat: Any,
+    quote_style: str,
+) -> str:
+    prefix = "roughly " if quote_style == "hedged" else ""
+    parts: list[str] = []
+    if protein not in (None, ""):
+        parts.append(f"{prefix}{protein}g protein")
+    if calories not in (None, ""):
+        parts.append(f"{prefix}{calories} calories")
+    if carbs not in (None, ""):
+        parts.append(f"{prefix}{carbs}g carbs")
+    if fat not in (None, ""):
+        parts.append(f"{prefix}{fat}g fat")
+    food = f"{serving_size} {plain_name}" if serving_size else plain_name
+    return f"{food} — {', '.join(parts)}" if parts else food
+
+
+def _food_category(helps_with: Any) -> str | None:
+    value = str(helps_with or "").lower()
+    if "protein" in value:
+        return "protein_foods_that_may_help"
+    if "carb" in value:
+        return "carb_foods_that_may_help"
+    if "fat" in value:
+        return "fat_support_foods_that_may_help"
+    if "calorie" in value:
+        return "calorie_foods_that_may_help"
+    return "food_choices_that_fit_today"
+
+
+def _set_level_training_data(training_state: Any) -> list[dict[str, Any]]:
+    if training_state is None:
+        return []
+    for attr in (
+        "set_level_data",
+        "exercise_sets",
+        "logged_sets",
+        "actual_sets",
+        "sets",
+        "recent_sets",
+    ):
+        value = getattr(training_state, attr, None)
+        if not isinstance(value, list | tuple):
+            continue
+        rows = []
+        for item in value[:40]:
+            if isinstance(item, Mapping):
+                rows.append(_safe_mapping(item))
+            else:
+                rows.append(_object_to_dict(item))
+        return [row for row in rows if row]
+    return []
+
+
 def _drop_unknowns(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         key: value
@@ -1060,14 +1263,39 @@ def _prompt_variants() -> dict[str, DailyCoachFullUserDayPromptVariant]:
             purpose="Full useful user-day data packet with direct, no-fluff coaching framing.",
             writer_instruction="Write today’s Daily Coach note directly. Be useful, specific, and concise.",
         ),
+        "free_range_full_user_day_strict_coach": DailyCoachFullUserDayPromptVariant(
+            variant_id="free_range_full_user_day_strict_coach",
+            label="Free-range full user-day strict coach",
+            purpose="Firm, assertive, no-nonsense coaching without cruelty or unsafe intensity.",
+            writer_instruction="Write today’s Daily Coach note as a strict coach: firm, clear, and no-nonsense, but never cruel or reckless.",
+        ),
+        "free_range_full_user_day_empathetic_coach": DailyCoachFullUserDayPromptVariant(
+            variant_id="free_range_full_user_day_empathetic_coach",
+            label="Free-range full user-day empathetic coach",
+            purpose="Understanding, reassuring, motivational coaching that still uses the facts.",
+            writer_instruction="Write today’s Daily Coach note as an empathetic coach: reassuring, human, and motivating while staying specific.",
+        ),
+        "free_range_full_user_day_hypeman_coach": DailyCoachFullUserDayPromptVariant(
+            variant_id="free_range_full_user_day_hypeman_coach",
+            label="Free-range full user-day hypeman coach",
+            purpose="Energetic, exciting coaching that motivates hard work while preserving safe constraints.",
+            writer_instruction="Write today’s Daily Coach note as a high-energy hypeman coach: motivating and intense, but keep reps safe, clean, and inside the plan.",
+        ),
     }
 
 
-def _default_variant_order() -> tuple[str, ...]:
-    return (
+def _default_variant_order(*, include_voice_variants: bool = False) -> tuple[str, ...]:
+    base = (
         "free_range_full_user_day_minimal",
         "free_range_full_user_day_practical_coach",
         "free_range_full_user_day_direct_coach",
+    )
+    if not include_voice_variants:
+        return base
+    return base + (
+        "free_range_full_user_day_strict_coach",
+        "free_range_full_user_day_empathetic_coach",
+        "free_range_full_user_day_hypeman_coach",
     )
 
 
@@ -1293,7 +1521,7 @@ def _deterministic_free_range_draft(
 def _build_run_id(provider: str, scenario_id: str) -> str:
     timestamp = datetime.now(UTC).replace(microsecond=0).isoformat()
     safe_scenario = re.sub(r"[^a-zA-Z0-9_-]+", "_", scenario_id)
-    return f"daily_coach_full_user_day_free_range_payload_baseline_v1_{safe_scenario}_{provider}_{timestamp.replace(':', '').replace('+', 'z')}"
+    return f"daily_coach_free_range_voice_precision_payload_enrichment_v2_{safe_scenario}_{provider}_{timestamp.replace(':', '').replace('+', 'z')}"
 
 
 def _packet_summaries(
@@ -1350,6 +1578,146 @@ def _render_prompt_variants() -> str:
     return "\n".join(lines)
 
 
+def _render_voice_variant_summary() -> str:
+    lines = ["# Voice Variant Summary", ""]
+    for variant in _prompt_variants().values():
+        lines.extend(
+            [
+                f"## {variant.variant_id}",
+                f"Label: {variant.label}",
+                f"Purpose: {variant.purpose}",
+                "No phrase bans or old app-copy examples are included in this voice definition.",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _render_precision_usage_summary(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = [
+        "# Precision Usage Summary",
+        "",
+        "Precision contract: quote direct values directly when quote_style is direct; hedge only when quote_style is hedged or value_precision is an estimate.",
+        "",
+    ]
+    for packet in _packet_summaries(results):
+        lines.extend([f"## {packet['scenario_id']}", ""])
+        food_counts: dict[str, int] = {}
+        quote_counts: dict[str, int] = {}
+        for food in packet.get("food_candidates") or []:
+            food_counts[str(food.get("value_precision") or "missing")] = (
+                food_counts.get(str(food.get("value_precision") or "missing"), 0) + 1
+            )
+            quote_counts[str(food.get("quote_style") or "missing")] = (
+                quote_counts.get(str(food.get("quote_style") or "missing"), 0) + 1
+            )
+        lines.append(f"Food value precision: {food_counts or 'none'}")
+        lines.append(f"Food quote styles: {quote_counts or 'none'}")
+        macro_rows = (packet.get("nutrition") or {}).get(
+            "macro_targets_actuals_deltas", {}
+        )
+        if macro_rows:
+            lines.append("Macro precision:")
+            for macro, data in macro_rows.items():
+                lines.append(
+                    f"- {macro}: value_precision={data.get('value_precision')}; quote_style={data.get('quote_style')}"
+                )
+        else:
+            lines.append("Macro precision: none")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _render_food_candidate_summary(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = ["# Food Candidate Summary", ""]
+    for packet in _packet_summaries(results):
+        foods = packet.get("food_candidates") or []
+        lines.extend(
+            [
+                f"## {packet['scenario_id']}",
+                f"Food candidate count: {len(foods)}",
+                "",
+            ]
+        )
+        for food in foods:
+            lines.append(
+                f"- {food.get('display_phrase') or food.get('plain_name_for_user')}: category={food.get('category')}; value_precision={food.get('value_precision')}; quote_style={food.get('quote_style')}; source={food.get('source')}"
+            )
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _render_model_input_manifest(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = [
+        "# Model Input Manifest",
+        "",
+        "Answers what the provider saw. Developer-only diagnostic; raw provider envelopes and secrets are not persisted.",
+        "",
+    ]
+    for run in results:
+        lines.extend(
+            [
+                f"## {run.scenario_id}",
+                f"Provider/model: {run.provider} / {run.model or 'default'}",
+                "",
+            ]
+        )
+        packet = next(
+            (
+                variant.full_user_day_packet
+                for variant in run.variants
+                if variant.full_user_day_packet
+            ),
+            None,
+        )
+        prompt = (
+            next(
+                (
+                    variant.provider_input_prompt
+                    for variant in run.variants
+                    if variant.provider_input_prompt
+                ),
+                "",
+            )
+            or ""
+        )
+        if not packet:
+            lines.extend(["Packet unavailable.", ""])
+            continue
+        packet_text = json.dumps(packet.to_dict(), default=str)
+        lines.extend(
+            [
+                f"Prompt character count: {len(prompt)}",
+                f"Food candidates seen: {len(packet.food_candidates)}",
+                f"Macro fields seen: {', '.join(packet.nutrition.get('macro_targets_actuals_deltas', {}).keys()) or 'none'}",
+                f"Training fields seen: {', '.join(packet.training.keys()) or 'none'}",
+                f"Set-level data available: {packet.training.get('set_level_data_available', False)}",
+                f"Set-level data reason: {packet.training.get('set_level_data_unavailable_reason', 'available')}",
+                f"Recovery fields seen: {', '.join(packet.recovery.keys()) or 'none'}",
+                f"UserHealthState included fields: {len(packet.user_health_state_field_coverage.get('included_fields') or [])}",
+                f"UserHealthState omitted fields: {len(packet.user_health_state_field_coverage.get('omitted_fields') or {})}",
+                f"Prompt app-copy findings: {scan_full_user_day_app_copy(prompt)}",
+                f"Packet app-copy findings: {scan_full_user_day_app_copy(packet_text)}",
+                f"Prompt contains phrase bans: {_contains_phrase_ban(prompt)}",
+                f"Prompt contains old app examples: {_contains_old_app_example(prompt)}",
+                "",
+                "Food candidates:",
+            ]
+        )
+        for food in packet.food_candidates:
+            lines.append(
+                f"- {food.get('display_phrase') or food.get('plain_name_for_user')} | precision={food.get('value_precision')} | quote_style={food.get('quote_style')} | category={food.get('category')}"
+            )
+        lines.append("")
+    return "\n".join(lines)
+
+
 def _render_first_pass_drafts(
     results: Sequence[DailyCoachFullUserDayTrialRunResult],
 ) -> str:
@@ -1372,6 +1740,146 @@ def _render_first_pass_drafts(
                     "",
                 ]
             )
+    return "\n".join(lines)
+
+
+def _render_voice_variant_summary() -> str:
+    lines = ["# Voice Variant Summary", ""]
+    for variant in _prompt_variants().values():
+        lines.extend(
+            [
+                f"## {variant.variant_id}",
+                f"Label: {variant.label}",
+                f"Purpose: {variant.purpose}",
+                "No phrase bans or old app-copy examples are included in this voice definition.",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _render_precision_usage_summary(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = [
+        "# Precision Usage Summary",
+        "",
+        "Precision contract: quote direct values directly when quote_style is direct; hedge only when quote_style is hedged or value_precision is an estimate.",
+        "",
+    ]
+    for packet in _packet_summaries(results):
+        lines.extend([f"## {packet['scenario_id']}", ""])
+        food_counts: dict[str, int] = {}
+        quote_counts: dict[str, int] = {}
+        for food in packet.get("food_candidates") or []:
+            food_counts[str(food.get("value_precision") or "missing")] = (
+                food_counts.get(str(food.get("value_precision") or "missing"), 0) + 1
+            )
+            quote_counts[str(food.get("quote_style") or "missing")] = (
+                quote_counts.get(str(food.get("quote_style") or "missing"), 0) + 1
+            )
+        lines.append(f"Food value precision: {food_counts or 'none'}")
+        lines.append(f"Food quote styles: {quote_counts or 'none'}")
+        macro_rows = (packet.get("nutrition") or {}).get(
+            "macro_targets_actuals_deltas", {}
+        )
+        if macro_rows:
+            lines.append("Macro precision:")
+            for macro, data in macro_rows.items():
+                lines.append(
+                    f"- {macro}: value_precision={data.get('value_precision')}; quote_style={data.get('quote_style')}"
+                )
+        else:
+            lines.append("Macro precision: none")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _render_food_candidate_summary(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = ["# Food Candidate Summary", ""]
+    for packet in _packet_summaries(results):
+        foods = packet.get("food_candidates") or []
+        lines.extend(
+            [
+                f"## {packet['scenario_id']}",
+                f"Food candidate count: {len(foods)}",
+                "",
+            ]
+        )
+        for food in foods:
+            lines.append(
+                f"- {food.get('display_phrase') or food.get('plain_name_for_user')}: category={food.get('category')}; value_precision={food.get('value_precision')}; quote_style={food.get('quote_style')}; source={food.get('source')}"
+            )
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _render_model_input_manifest(
+    results: Sequence[DailyCoachFullUserDayTrialRunResult],
+) -> str:
+    lines = [
+        "# Model Input Manifest",
+        "",
+        "Answers what the provider saw. Developer-only diagnostic; raw provider envelopes and secrets are not persisted.",
+        "",
+    ]
+    for run in results:
+        lines.extend(
+            [
+                f"## {run.scenario_id}",
+                f"Provider/model: {run.provider} / {run.model or 'default'}",
+                "",
+            ]
+        )
+        packet = next(
+            (
+                variant.full_user_day_packet
+                for variant in run.variants
+                if variant.full_user_day_packet
+            ),
+            None,
+        )
+        prompt = (
+            next(
+                (
+                    variant.provider_input_prompt
+                    for variant in run.variants
+                    if variant.provider_input_prompt
+                ),
+                "",
+            )
+            or ""
+        )
+        if not packet:
+            lines.extend(["Packet unavailable.", ""])
+            continue
+        packet_text = json.dumps(packet.to_dict(), default=str)
+        lines.extend(
+            [
+                f"Prompt character count: {len(prompt)}",
+                f"Food candidates seen: {len(packet.food_candidates)}",
+                f"Macro fields seen: {', '.join(packet.nutrition.get('macro_targets_actuals_deltas', {}).keys()) or 'none'}",
+                f"Training fields seen: {', '.join(packet.training.keys()) or 'none'}",
+                f"Set-level data available: {packet.training.get('set_level_data_available', False)}",
+                f"Set-level data reason: {packet.training.get('set_level_data_unavailable_reason', 'available')}",
+                f"Recovery fields seen: {', '.join(packet.recovery.keys()) or 'none'}",
+                f"UserHealthState included fields: {len(packet.user_health_state_field_coverage.get('included_fields') or [])}",
+                f"UserHealthState omitted fields: {len(packet.user_health_state_field_coverage.get('omitted_fields') or {})}",
+                f"Prompt app-copy findings: {scan_full_user_day_app_copy(prompt)}",
+                f"Packet app-copy findings: {scan_full_user_day_app_copy(packet_text)}",
+                f"Prompt contains phrase bans: {_contains_phrase_ban(prompt)}",
+                f"Prompt contains old app examples: {_contains_old_app_example(prompt)}",
+                "",
+                "Food candidates:",
+            ]
+        )
+        for food in packet.food_candidates:
+            lines.append(
+                f"- {food.get('display_phrase') or food.get('plain_name_for_user')} | precision={food.get('value_precision')} | quote_style={food.get('quote_style')} | category={food.get('category')}"
+            )
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -1597,7 +2105,7 @@ def _render_pasteback_report(
     write_provider_payload_debug: bool,
 ) -> str:
     lines = [
-        "# Daily Coach Full User-Day Free-Range Payload Baseline v1 — Pasteback Report",
+        "# Daily Coach Free-Range Voice + Precision + Payload Enrichment v2 — Pasteback Report",
         "",
         f"Provider payload debug written: {write_provider_payload_debug}",
         "Normal Today unchanged: True",
@@ -1629,7 +2137,15 @@ def _render_pasteback_report(
                 [
                     f"Food candidates: {len(packet.food_candidates)}",
                     f"Macro fields: {', '.join(packet.nutrition.get('macro_targets_actuals_deltas', {}).keys()) or 'none'}",
+                    f"Set-level data available: {packet.training.get('set_level_data_available', False)}",
+                    f"Recovery fields: {', '.join(packet.recovery.keys()) or 'none'}",
                     f"UserHealthState included fields: {len(packet.user_health_state_field_coverage.get('included_fields') or [])}",
+                    "",
+                    "Food candidate summary:",
+                    *[
+                        f"- {food.get('display_phrase') or food.get('plain_name_for_user')} | precision={food.get('value_precision')} | quote_style={food.get('quote_style')}"
+                        for food in packet.food_candidates[:15]
+                    ],
                     "",
                 ]
             )
@@ -1725,6 +2241,27 @@ def _payload_debug(
                     "recovery_fields_passed": (
                         list(packet.recovery.keys()) if packet else []
                     ),
+                    "precision_summary": (
+                        _precision_debug_summary(packet) if packet else {}
+                    ),
+                    "food_candidate_count": (
+                        len(packet.food_candidates) if packet else 0
+                    ),
+                    "set_level_data_available": (
+                        packet.training.get("set_level_data_available")
+                        if packet
+                        else False
+                    ),
+                    "user_health_state_included_fields": (
+                        packet.user_health_state_field_coverage.get("included_fields")
+                        if packet
+                        else []
+                    ),
+                    "user_health_state_omitted_fields": (
+                        packet.user_health_state_field_coverage.get("omitted_fields")
+                        if packet
+                        else {}
+                    ),
                     "redaction_safety_summary": {
                         "raw_provider_envelope_persisted": False,
                         "secrets_persisted": False,
@@ -1733,9 +2270,38 @@ def _payload_debug(
                 }
             )
     return {
-        "milestone": "daily_coach_full_user_day_free_range_payload_baseline_v1",
+        "milestone": "daily_coach_free_range_voice_precision_payload_enrichment_v2",
         "debug_artifact_opt_in": True,
         "records": rows,
+    }
+
+
+def _precision_debug_summary(
+    packet: DailyCoachFullUserDayPacket | None,
+) -> dict[str, Any]:
+    if packet is None:
+        return {}
+    food_precision: dict[str, int] = {}
+    quote_styles: dict[str, int] = {}
+    for food in packet.food_candidates:
+        precision = str(food.get("value_precision") or "missing")
+        quote = str(food.get("quote_style") or "missing")
+        food_precision[precision] = food_precision.get(precision, 0) + 1
+        quote_styles[quote] = quote_styles.get(quote, 0) + 1
+    macro_precision = {
+        macro: {
+            "value_precision": data.get("value_precision"),
+            "quote_style": data.get("quote_style"),
+        }
+        for macro, data in packet.nutrition.get(
+            "macro_targets_actuals_deltas", {}
+        ).items()
+        if isinstance(data, Mapping)
+    }
+    return {
+        "food_value_precision": food_precision,
+        "food_quote_styles": quote_styles,
+        "macro_precision": macro_precision,
     }
 
 
@@ -1746,8 +2312,11 @@ def _select_best_variant(
     if not candidates:
         return None
     order = {
-        "free_range_full_user_day_practical_coach": 3,
-        "free_range_full_user_day_direct_coach": 2,
+        "free_range_full_user_day_practical_coach": 6,
+        "free_range_full_user_day_empathetic_coach": 5,
+        "free_range_full_user_day_strict_coach": 4,
+        "free_range_full_user_day_direct_coach": 3,
+        "free_range_full_user_day_hypeman_coach": 2,
         "free_range_full_user_day_minimal": 1,
     }
     return max(
@@ -1800,6 +2369,32 @@ def _similarity_score(drafts: Sequence[str]) -> str:
     if not scores:
         return "insufficient"
     return f"{sum(scores) / len(scores):.2f}"
+
+
+def _contains_phrase_ban(text: str) -> bool:
+    lowered = text.lower()
+    return any(
+        phrase in lowered
+        for phrase in (
+            "do not use the phrase",
+            "never say",
+            "banned phrase",
+            "forbidden phrase",
+        )
+    )
+
+
+def _contains_old_app_example(text: str) -> bool:
+    lowered = text.lower()
+    return any(
+        phrase in lowered
+        for phrase in (
+            "old daily coach copy",
+            "deterministic fallback example",
+            "current narrow path",
+            "product voice audit example",
+        )
+    )
 
 
 def _compact_text(value: str, *, limit: int = 900) -> str:

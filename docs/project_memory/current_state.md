@@ -1,3 +1,21 @@
+# Current State — Daily Coach Free-Range Voice + Precision + Payload Enrichment v2
+
+Current source of truth: `feature/daily-coach-full-user-day-free-range-payload-baseline-v1` at `eb26c59 Add daily coach full user-day free-range trial`.
+
+Active backend milestone: `Daily Coach Free-Range Voice + Precision + Payload Enrichment v2`.
+
+Status: Architecture accepted the v1 free-range thesis as materially better but requested one more developer-only iteration before merge/product-renderer work. Backend is enriching the free-range path with voice variants, precision metadata, broader inspectable food context, set-level data availability reporting, and stronger model-input manifest artifacts.
+
+Purpose: determine whether GPT-5.5 continues improving when it receives a broad neutral full user-day packet with clearer precision/quote metadata, more useful food candidate structure, multiple coach voices, and exact provider-input inspection.
+
+Implementation direction: keep the full coach note intact, preserve exact first-pass draft capture, add strict/empathetic/hypeman coach variants, expose food/macro precision and quote style, make model input inspectable through `model_input_manifest.md`, summarize food candidates and precision, and keep all audits post-hoc only.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside unrelated Daily Coach provider milestones.
+
+Requested final status: `DAILY_COACH_FREE_RANGE_VOICE_PRECISION_PAYLOAD_ENRICHMENT_V2_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Full User-Day Free-Range Payload Baseline v1
 
 Current source of truth: `main` at `490d2ae Merge daily coach wide context copy cleanup qa readability v1`.

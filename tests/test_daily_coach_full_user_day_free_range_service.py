@@ -16,6 +16,7 @@ from models.daily_coach_natural_draft_audit_models import (
 from services.daily_coach_full_user_day_free_range_service import (
     build_daily_coach_full_user_day_packet,
     build_full_user_day_free_range_prompt,
+    list_daily_coach_full_user_day_prompt_variants,
     run_daily_coach_full_user_day_free_range_scenario,
     scan_full_user_day_app_copy,
     write_daily_coach_full_user_day_artifacts,
@@ -146,6 +147,50 @@ def _food_suggestions() -> list[dict]:
             "estimated_fat_g": 6,
             "macro_gap_addressed": "calories",
             "confidence": "Moderate",
+            "summary": "calories",
+        },
+        {
+            "display_name": "banana",
+            "suggested_grams": 120,
+            "estimated_calories": 105,
+            "estimated_protein_g": 1,
+            "estimated_carbohydrate_g": 27,
+            "estimated_fat_g": 0,
+            "macro_gap_addressed": "carbs_g",
+            "confidence": "Moderate",
+            "summary": "carbs_g",
+        },
+        {
+            "display_name": "rice",
+            "suggested_grams": 180,
+            "estimated_calories": 230,
+            "estimated_protein_g": 4,
+            "estimated_carbohydrate_g": 50,
+            "estimated_fat_g": 1,
+            "macro_gap_addressed": "carbs_g",
+            "confidence": "Moderate",
+            "summary": "carbs_g",
+        },
+        {
+            "display_name": "olive oil",
+            "suggested_grams": 14,
+            "estimated_calories": 119,
+            "estimated_protein_g": 0,
+            "estimated_carbohydrate_g": 0,
+            "estimated_fat_g": 14,
+            "macro_gap_addressed": "fat_g",
+            "confidence": "Moderate",
+            "summary": "fat_g",
+        },
+        {
+            "display_name": "whole milk",
+            "suggested_grams": 244,
+            "estimated_calories": 149,
+            "estimated_protein_g": 8,
+            "estimated_carbohydrate_g": 12,
+            "estimated_fat_g": 8,
+            "macro_gap_addressed": "calories",
+            "confidence": "generic",
             "summary": "calories",
         },
     ]
@@ -451,3 +496,199 @@ def test_payload_debug_artifacts_are_not_written_without_explicit_flag(
     assert not (tmp_path / "provider_input_prompt.md").exists()
     assert not (tmp_path / "provider_payload_debug.json").exists()
     assert (tmp_path / "pasteback_report.md").exists()
+
+
+def test_voice_variants_exist_without_phrase_bans_or_old_app_examples() -> None:
+    variants = {
+        row["variant_id"]: row
+        for row in list_daily_coach_full_user_day_prompt_variants()
+    }
+
+    for variant_id in (
+        "free_range_full_user_day_strict_coach",
+        "free_range_full_user_day_empathetic_coach",
+        "free_range_full_user_day_hypeman_coach",
+    ):
+        assert variant_id in variants
+        text = json.dumps(variants[variant_id]).lower()
+        assert "do not use the phrase" not in text
+        assert "old daily coach copy" not in text
+        assert "fallback" not in text
+
+
+def test_food_candidates_include_precision_quote_style_and_display_phrase() -> None:
+    packet = _packet()
+    foods = packet.to_dict()["food_candidates"]
+
+    assert len(foods) >= 8
+    first = foods[0]
+    assert first["value_precision"] == "database_calculated"
+    assert first["quote_style"] == "direct"
+    assert "29g protein" in first["display_phrase"]
+    assert "approved" not in json.dumps(foods).lower()
+    assert any(food["quote_style"] == "hedged" for food in foods)
+
+
+def test_macro_precision_is_represented_without_global_about_ban() -> None:
+    packet = _packet()
+    prompt = build_full_user_day_free_range_prompt(
+        packet, "free_range_full_user_day_practical_coach"
+    )
+    protein = packet.nutrition["macro_targets_actuals_deltas"]["protein_g"]
+
+    assert protein["value_precision"] == "exact_app_calculated"
+    assert protein["quote_style"] == "direct"
+    assert "when quote_style is direct" in prompt
+    assert "about/roughly only" in prompt
+    assert "do not use about" not in prompt.lower()
+    assert "never say about" not in prompt.lower()
+
+
+def test_training_set_level_availability_is_honest_when_absent() -> None:
+    packet = _packet()
+
+    assert packet.training["set_level_data_available"] is False
+    assert (
+        "no structured set-level data"
+        in packet.training["set_level_data_unavailable_reason"]
+    )
+
+
+def test_training_set_level_data_is_projected_when_available() -> None:
+    health = _fake_health_state()
+    health.training_state.set_level_data = [
+        {
+            "exercise_name": "bench press",
+            "target_sets": 3,
+            "target_reps": 8,
+            "actual_sets": 3,
+            "actual_reps": 8,
+            "actual_rir": 2,
+            "progression_signal": "in_range",
+        }
+    ]
+    packet = build_daily_coach_full_user_day_packet(
+        user_id=102,
+        target_date="2026-06-27",
+        scenario_id="aligned_managed",
+        synthesis=_fake_synthesis(),
+        health_state=health,
+        value_context=_fake_value_context(),
+        brief=_fake_brief(),
+    )
+
+    assert packet.training["set_level_data_available"] is True
+    assert packet.training["set_level_data"][0]["exercise_name"] == "bench press"
+
+
+def test_voice_variants_run_when_requested(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.get_daily_coach_natural_draft_scenario",
+        lambda scenario_id: {
+            "scenario_id": scenario_id,
+            "user_id": 102,
+            "target_date": "2026-06-27",
+        },
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.build_daily_coach_full_user_day_packet",
+        lambda **kwargs: _packet(),
+    )
+
+    result = run_daily_coach_full_user_day_free_range_scenario(
+        scenario_id="aligned_managed",
+        provider="deterministic",
+        include_voice_variants=True,
+    )
+    variant_ids = {variant.variant_id for variant in result.variants}
+
+    assert "free_range_full_user_day_strict_coach" in variant_ids
+    assert "free_range_full_user_day_empathetic_coach" in variant_ids
+    assert "free_range_full_user_day_hypeman_coach" in variant_ids
+
+
+def test_v2_artifacts_include_manifest_precision_food_and_voice_summaries(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.get_daily_coach_natural_draft_scenario",
+        lambda scenario_id: {
+            "scenario_id": scenario_id,
+            "user_id": 102,
+            "target_date": "2026-06-27",
+        },
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.build_daily_coach_full_user_day_packet",
+        lambda **kwargs: _packet(),
+    )
+
+    result = run_daily_coach_full_user_day_free_range_scenario(
+        scenario_id="aligned_managed",
+        provider="deterministic",
+        variants=["free_range_full_user_day_strict_coach"],
+        output_dir=None,
+    )
+    write_daily_coach_full_user_day_artifacts(
+        tmp_path,
+        [result],
+        write_provider_payload_debug=True,
+        write_model_input_manifest=True,
+        write_precision_summary=True,
+        write_food_candidate_summary=True,
+    )
+
+    for filename in (
+        "model_input_manifest.md",
+        "voice_variant_summary.md",
+        "precision_usage_summary.md",
+        "food_candidate_summary.md",
+    ):
+        assert (tmp_path / filename).exists()
+    manifest = (tmp_path / "model_input_manifest.md").read_text(encoding="utf-8")
+    pasteback = (tmp_path / "pasteback_report.md").read_text(encoding="utf-8")
+    assert "Food candidates seen:" in manifest
+    assert "Set-level data available:" in manifest
+    assert "strict_coach" in (tmp_path / "voice_variant_summary.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Food candidate summary:" in pasteback
+    assert "Set-level data available:" in pasteback
+
+
+def test_payload_debug_records_precision_and_field_manifest_data(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.get_daily_coach_natural_draft_scenario",
+        lambda scenario_id: {
+            "scenario_id": scenario_id,
+            "user_id": 102,
+            "target_date": "2026-06-27",
+        },
+    )
+    monkeypatch.setattr(
+        "services.daily_coach_full_user_day_free_range_service.build_daily_coach_full_user_day_packet",
+        lambda **kwargs: _packet(),
+    )
+
+    result = run_daily_coach_full_user_day_free_range_scenario(
+        scenario_id="aligned_managed",
+        provider="deterministic",
+        variants=["free_range_full_user_day_minimal"],
+        output_dir=None,
+    )
+    write_daily_coach_full_user_day_artifacts(
+        tmp_path,
+        [result],
+        write_provider_payload_debug=True,
+    )
+    payload = json.loads(
+        (tmp_path / "provider_payload_debug.json").read_text(encoding="utf-8")
+    )
+    record = payload["records"][0]
+
+    assert record["food_candidate_count"] >= 8
+    assert record["precision_summary"]["food_quote_styles"]["direct"] >= 1
+    assert record["user_health_state_included_fields"]
+    assert record["set_level_data_available"] is False

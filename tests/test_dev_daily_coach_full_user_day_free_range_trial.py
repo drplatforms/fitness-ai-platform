@@ -13,7 +13,7 @@ from tools import dev_daily_coach_full_user_day_free_range_trial as cli
 
 def _fake_packet() -> DailyCoachFullUserDayPacket:
     return DailyCoachFullUserDayPacket(
-        packet_version="daily_coach_full_user_day_free_range_payload_baseline_v1",
+        packet_version="daily_coach_free_range_voice_precision_payload_enrichment_v2",
         user_id=102,
         date="2026-06-27",
         scenario_id="aligned_managed",
@@ -77,6 +77,9 @@ def test_cli_lists_variants(capsys) -> None:
     assert "free_range_full_user_day_minimal" in captured.out
     assert "free_range_full_user_day_practical_coach" in captured.out
     assert "free_range_full_user_day_direct_coach" in captured.out
+    assert "free_range_full_user_day_strict_coach" in captured.out
+    assert "free_range_full_user_day_empathetic_coach" in captured.out
+    assert "free_range_full_user_day_hypeman_coach" in captured.out
 
 
 def test_cli_run_scenario_writes_debug_and_pasteback(
@@ -85,6 +88,10 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
     def fake_run(**kwargs):
         assert kwargs["repeat"] == 3
         assert kwargs["write_provider_payload_debug"] is True
+        assert kwargs["write_model_input_manifest"] is True
+        assert kwargs["write_precision_summary"] is True
+        assert kwargs["write_food_candidate_summary"] is True
+        assert kwargs["include_voice_variants"] is True
         output_dir = kwargs["output_dir"]
         result = _fake_result()
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -96,6 +103,13 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
             "compact", encoding="utf-8"
         )
         (output_dir / "best_variant_summary.md").write_text("best", encoding="utf-8")
+        (output_dir / "model_input_manifest.md").write_text(
+            "manifest", encoding="utf-8"
+        )
+        (output_dir / "precision_usage_summary.md").write_text(
+            "precision", encoding="utf-8"
+        )
+        (output_dir / "food_candidate_summary.md").write_text("food", encoding="utf-8")
         return result
 
     monkeypatch.setattr(
@@ -111,6 +125,10 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
             "--output-dir",
             str(tmp_path),
             "--write-provider-payload-debug",
+            "--write-model-input-manifest",
+            "--write-precision-summary",
+            "--write-food-candidate-summary",
+            "--include-voice-variants",
             "--write-pasteback-report",
             "--print-first-pass",
             "--print-best-variant",
@@ -126,12 +144,16 @@ def test_cli_run_scenario_writes_debug_and_pasteback(
     assert "compact" in captured.out
     assert "best" in captured.out
     assert "prompt debug" in captured.out
+    assert "manifest" in captured.out
+    assert "precision" in captured.out
+    assert "food" in captured.out
 
 
 def test_cli_run_matrix_json(monkeypatch, tmp_path: Path, capsys) -> None:
     def fake_matrix(**kwargs):
         assert kwargs["scenarios"] == ["rich_nutrition_training_recovery"]
         assert kwargs["write_provider_payload_debug"] is False
+        assert kwargs["include_voice_variants"] is False
         return [_fake_result()]
 
     monkeypatch.setattr(

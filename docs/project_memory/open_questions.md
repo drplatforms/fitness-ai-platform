@@ -1,3 +1,34 @@
+# Open Questions — Daily Coach Free-Range Voice + Precision + Payload Enrichment v2
+
+1. Which voice variant produces the strongest full coach note: practical, direct, strict, empathetic, or hypeman?
+2. Does precision metadata reduce unnecessary `about`/`roughly` wording when values are direct while preserving hedging for estimates?
+3. Does expanded food candidate structure improve useful food guidance without inventing foods, servings, timing, pairings, or claims?
+4. Does `model_input_manifest.md` make it clear exactly what the model saw before Architecture judges copy quality?
+5. Is set-level workout data available in this path, and if not, is the absence/reason documented clearly enough for future Workout Set Intelligence work?
+6. Do recovery fields remain broad enough to support the strongest part of the free-range note?
+7. Are post-hoc diagnostics useful without becoming generation-time phrase bans or product approval gates?
+8. Does repeated live GPT-5.5 output become more consistent after voice and precision enrichment?
+
+Closed boundaries for this milestone:
+
+- developer-only tooling
+- full note preserved; no Today-card renderer/compressor
+- normal Today unchanged
+- deterministic remains default
+- OpenAI/direct_ollama explicit opt-in/evaluation-only
+- no provider promotion
+- no production persistence of provider output
+- no raw provider envelopes or secrets in artifacts
+- no raw DB rows
+- no public UI
+- no phrase-ban or Product Voice Audit rewrite
+- no meal planning/workout generation/nutrition target/recovery score changes
+- no RAG, embeddings, multi-agent runtime, local model comparison, or full food expansion
+
+Known baseline drift remains documented and unpatched: `tests/test_daily_narrative_rich_day_service.py` expected `Read the day before adding more` vs actual `Consider the full day`.
+
+---
+
 # Open Questions — Daily Coach Full User-Day Free-Range Payload Baseline v1
 
 1. Does GPT-5.5 produce more natural, useful Daily Coach copy when the provider prompt contains neutral user-day data instead of app-generated coach prose?

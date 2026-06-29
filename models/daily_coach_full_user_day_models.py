@@ -8,6 +8,9 @@ DailyCoachFullUserDayVariantId = Literal[
     "free_range_full_user_day_minimal",
     "free_range_full_user_day_practical_coach",
     "free_range_full_user_day_direct_coach",
+    "free_range_full_user_day_strict_coach",
+    "free_range_full_user_day_empathetic_coach",
+    "free_range_full_user_day_hypeman_coach",
 ]
 
 

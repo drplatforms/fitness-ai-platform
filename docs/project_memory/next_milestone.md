@@ -1,3 +1,31 @@
+# Next Milestone — Daily Coach Fully Free Source-Data Lab v1
+
+Recommended branch:
+
+```text
+feature/daily-coach-fully-free-source-data-lab-v1
+```
+
+Baseline:
+
+```text
+main @ 56d63c4
+fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip
+```
+
+Implementation focus:
+
+- Add separate developer-only fully free source-data lab tool.
+- Build clean source-data packet artifacts instead of coach packets or backend conclusions.
+- Use a short minimal prompt with safety boundaries only.
+- Capture exact first-pass drafts before diagnostics.
+- Add source-data completeness, model freedom, backend-prose contamination, completion, claim-risk, token/cost, and artifact-safety artifacts.
+- Keep OpenAI/GPT-5.5 opt-in only and normal Today unchanged.
+
+Do not implement RAG, embeddings, vector search, multi-agent orchestration, production Today replacement, provider promotion, or full food catalog expansion in this milestone.
+
+---
+
 # Next Milestone — Daily Coach Free-Range Prompt + Payload Decaging v4
 
 Source baseline: `feature/daily-coach-free-range-output-completion-coach-surface-polish-data-seeding-v3` at `c36c50a Polish free range output and data seeding`.

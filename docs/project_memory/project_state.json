@@ -1,16 +1,16 @@
 {
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_FEATURE_snapshot_2026-06-29_c36c50a_feature-daily-coach-free-range-output-completion-coach-surface-polish-data-seeding-v3_backend-baseline-for-free-range-v4.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip",
     "commit_check_mode": "code",
-    "current_recommended_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
+    "current_recommended_milestone": "Daily Coach Fully Free Source-Data Lab v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Does v4 reduce backend-bound output by splitting debug payloads from decaged model-facing coach facts while preserving free-range coach quality?",
-    "qa_class": "DEVELOPER_ONLY_FREE_RANGE_PROVIDER_EXPERIMENT_PROMPT_PAYLOAD_DECAGING",
+    "primary_question": "Can GPT-5.5 produce a meaningfully better Daily Coach note from clean organized source data and an extremely small prompt?",
+    "qa_class": "DEVELOPER_ONLY_FULLY_FREE_SOURCE_DATA_LAB",
     "recommended_owner": "Backend Development",
-    "secondary_owner": "Architecture / QA / Agent Engineering",
-    "source_feature_branch": "feature/daily-coach-free-range-output-completion-coach-surface-polish-data-seeding-v3",
-    "source_feature_commit": "c36c50a",
-    "source_main_commit": "490d2ae"
+    "secondary_owner": "Architecture / QA / Agent Engineering / Product",
+    "source_feature_branch": null,
+    "source_feature_commit": null,
+    "source_main_commit": "56d63c4"
   },
   "boundaries": {
     "active_workout_preserved": true,
@@ -235,7 +235,14 @@
     "daily_coach_decaged_prompt_v4": true,
     "daily_coach_backend_label_exposure_summary_v4": true,
     "daily_coach_direct_hypeman_clean_variants_v4": true,
-    "daily_coach_prompt_payload_debug_split_v4": true
+    "daily_coach_prompt_payload_debug_split_v4": true,
+    "daily_coach_fully_free_source_data_lab_v1": true,
+    "daily_coach_fully_free_source_data_packet_v1": true,
+    "daily_coach_model_freedom_summary_v1": true,
+    "daily_coach_backend_prose_contamination_audit_v1": true,
+    "no_rag_embeddings_vector_or_multi_agent_for_fully_free_lab_v1": true,
+    "no_normal_today_changes_for_fully_free_lab_v1": true,
+    "openai_gpt55_opt_in_only_for_fully_free_lab_v1": true
   },
   "canonical_serving_unit_discovery_api_v1": {
     "branch": "feature/canonical-serving-unit-discovery-api-v1",

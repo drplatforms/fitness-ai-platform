@@ -1,3 +1,21 @@
+# Current State — Daily Coach Fully Free Source-Data Lab v1
+
+Current source of truth: `main` at `56d63c4 Merge daily coach free-range decaging diagnostic baseline v4`.
+
+Active backend milestone: `Daily Coach Fully Free Source-Data Lab v1`.
+
+Status: Architecture merged and snapshotted the free-range decaging v4 diagnostic baseline, then routed Backend to build a separate developer-only source-data lab from `main`, not from the unmerged feature chain.
+
+Purpose: test whether GPT-5.5 can produce a meaningfully better Daily Coach note when it receives clean, organized source data and almost no coaching cage. This is a single-model lab, not multi-agent orchestration, RAG, embeddings, vector search, production provider enablement, or normal Today replacement.
+
+Implementation direction: add a separate developer-only lab tool, build `fully_free_source_data_packet` artifacts, use a minimal prompt, support fully free prompt variants, capture exact first-pass drafts, and add post-hoc audits for source-data completeness, model freedom, backend-prose contamination, completion diagnostics, claim risk, artifact safety, and token/cost telemetry.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside unrelated Daily Coach provider milestones.
+
+Requested final status: `DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_IMPLEMENTATION_COMPLETE`.
+
+---
+
 # Current State — Daily Coach Free-Range Output Completion + Coach Surface Polish + Data Seeding v3
 
 Current source of truth: `feature/daily-coach-free-range-voice-precision-payload-enrichment-v2` at `d731a6c Enrich free range voice precision payload`.

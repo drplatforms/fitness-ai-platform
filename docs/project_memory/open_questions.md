@@ -1,3 +1,29 @@
+# Open Questions — Daily Coach Fully Free Source-Data Lab v1
+
+## Active
+
+1. Does GPT-5.5 produce a meaningfully better Daily Coach note from clean source data and an extremely small prompt?
+2. Does fully free source-data input reduce backend-shaped language compared with the v4 decaged diagnostic baseline?
+3. Does the model use recovery, training, nutrition, food/snack, body metrics, and recent-history source data without being forced to mention every fact?
+4. Does the minimal prompt preserve safety without becoming another product voice cage?
+5. Are source-data completeness artifacts enough for Architecture/QA to judge whether the model was treated fairly?
+6. Which data domains remain too thin for the future intelligence layers: Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, or Food Knowledge Expansion?
+
+## Boundaries
+
+- Developer-only lab.
+- Normal Today unchanged.
+- Deterministic remains safe local default.
+- OpenAI/GPT-5.5 remains opt-in/evaluation-only.
+- No provider promotion.
+- No production persistence of provider output.
+- No raw DB rows, secrets, or raw provider envelopes in artifacts.
+- No RAG, embeddings, vector DB, multi-agent runtime, LangGraph, CrewAI, or LlamaIndex orchestration.
+
+Known baseline drift remains documented and unpatched: `tests/test_daily_narrative_rich_day_service.py` expected `Read the day before adding more` vs actual `Consider the full day`.
+
+---
+
 # Open Questions — Daily Coach Free-Range Prompt + Payload Decaging v4
 
 ## Active

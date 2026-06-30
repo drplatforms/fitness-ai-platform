@@ -1,8 +1,12 @@
-# Current Project Memory Status — 123d115
+# Current Project Memory Status — 187e433
 
-Active milestone: `Platform North Star + Future Stack Canonicalization v1`.
+Latest accepted main evidence: `Platform North Star + Future Stack Canonicalization v1 @ 187e433`.
 
-Latest accepted main evidence: `Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2 @ 123d115`.
+Latest accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
+```
 
 Canonical long-term platform vision and future technology stack:
 
@@ -12,9 +16,9 @@ docs/project_memory/architecture/platform_north_star_and_future_stack.md
 
 Read the north-star file before making future-stack, SaaS, RAG, vector, agent, model-routing, or product-platform decisions.
 
-Provider voice iteration is paused.
+Provider voice iteration is paused. Backend Intelligence Foundation remains the product-brain center of gravity.
 
-Next after this docs-only milestone: archive current Architecture chat, onboard new Architecture chat, then resume Backend Intelligence Foundation planning.
+Current next architecture planning target: `Recovery Intelligence v2 Architecture Planning v1`, unless Architecture explicitly changes course.
 
 Canonical seven visible team lanes are recorded in `team_routing_contract.md`.
 
@@ -25,6 +29,17 @@ Canonical seven visible team lanes are recorded in `team_routing_contract.md`.
 Project memory is the continuity layer for AI Health Coach.
 
 Agents and humans should read these files before changing architecture, provider behavior, persistence, UI behavior, tests, or accepted milestone status.
+
+
+## Workflow command memory
+
+The phase-separated Backend patch workflow and Architecture acceptance/merge/snapshot workflow are preserved in:
+
+```text
+docs/project_memory/architecture_backend_command_workflow_v1.md
+```
+
+Architecture may handle docs-only project-memory patches when no runtime/code files are touched. Backend Development remains the owner for implementation patches.
 
 ## Required starting files
 
@@ -38,10 +53,11 @@ Agents and humans should read these files before changing architecture, provider
 8. `premium_platform_blueprint.md`
 9. `development_workflow.md`
 10. `developer_delivery_workflow_contract.md`
-11. `developer_delivery_workflow_script_safety_addendum_v1.md`
-12. `agent_workflow.md`
-13. `local_developer_command_menu.md`
-14. `open_questions.md`
+11. `architecture_backend_command_workflow_v1.md`
+12. `developer_delivery_workflow_script_safety_addendum_v1.md`
+13. `agent_workflow.md`
+14. `local_developer_command_menu.md`
+15. `open_questions.md`
 
 ## Project memory update requirement
 

@@ -1,18 +1,18 @@
-# Current Development Status — 123d115
+# Current Development Status — 187e433
 
-Latest accepted main: `123d115 main_merge-daily-coach-workout-set-intelligence-v1`.
+Latest accepted main: `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`.
 
-Latest accepted snapshot: `fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip`.
+Latest accepted snapshot: `fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip`.
 
-Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 is accepted and merged as the second Backend Intelligence Foundation implementation slice.
-
-Active docs-only milestone: `Platform North Star + Future Stack Canonicalization v1`.
+Platform North Star + Future Stack Canonicalization v1 is accepted and merged as the durable strategic compass for the Fitness AI Platform.
 
 Canonical long-term platform vision and future technology stack: `docs/project_memory/architecture/platform_north_star_and_future_stack.md`.
 
+Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 remains the latest completed Backend Intelligence Foundation implementation slice.
+
 Daily Coach provider trials remain developer-only evidence, not production behavior. Provider voice iteration is paused.
 
-After this docs-only milestone is accepted and snapshotted, the current Architecture chat should be archived and a new Architecture chat should onboard from the latest snapshot and north-star/project-memory docs.
+Current next architecture planning target: `Recovery Intelligence v2 Architecture Planning v1`, unless Architecture explicitly changes course.
 
 No RAG, vector search, embeddings, multi-agent orchestration, provider promotion, production Today provider display, SaaS infrastructure, UI rewrite, or runtime behavior change is authorized by this status.
 

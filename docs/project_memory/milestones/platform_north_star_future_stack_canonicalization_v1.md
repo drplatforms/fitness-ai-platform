@@ -1,11 +1,11 @@
 # Milestone — Platform North Star + Future Stack Canonicalization v1
 
-**Status:** `PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_IMPLEMENTATION_CANDIDATE`
+**Status:** `PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_ACCEPTED_AND_MERGED`
 **Task type:** Docs-only / project-memory / strategic architecture canonicalization
 **Baseline commit:** `123d115`
 **Baseline snapshot:** `fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip`
 **Owner:** Backend Development, as routed by Architecture
-**Requested final status:** `PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_IMPLEMENTATION_COMPLETE`
+**Final status:** `PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_ACCEPTED_AND_MERGED`
 
 ## Purpose
 
@@ -94,5 +94,21 @@ Architecture should accept this milestone only if:
 - Existing docs reference the new file instead of duplicating it.
 - Project memory checks pass.
 - No runtime/product behavior changed.
+
+## Acceptance
+
+Accepted main merge:
+
+```text
+187e433 main_merge-platform-north-star-future-stack-canonicalization-v1
+```
+
+Accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
+```
+
+After acceptance, Architecture should proceed from the post-merge snapshot and begin Recovery Intelligence v2 Architecture Planning v1 unless Architecture changes course.
 
 ## End

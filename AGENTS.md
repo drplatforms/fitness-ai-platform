@@ -1,16 +1,18 @@
-# Current Accepted Baseline — 123d115
+# Current Accepted Baseline — 187e433
 
-Current accepted baseline: `123d115 main_merge-daily-coach-workout-set-intelligence-v1`.
+Current accepted baseline: `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`.
 
-Current accepted snapshot: `fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip`.
+Current accepted snapshot: `fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip`.
 
-Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 is accepted and merged.
-
-Active docs-only milestone: `Platform North Star + Future Stack Canonicalization v1`.
+Platform North Star + Future Stack Canonicalization v1 is accepted and merged.
 
 Canonical long-term platform vision and future technology stack: `docs/project_memory/architecture/platform_north_star_and_future_stack.md`.
 
-Provider voice iteration remains paused. Backend Intelligence Foundation remains the product-brain center of gravity after this docs-only milestone.
+Current Architecture lane has been onboarded from the post-merge snapshot and should treat repo docs plus the latest accepted snapshot as canonical.
+
+Next architecture planning target: `Recovery Intelligence v2 Architecture Planning v1`, unless Architecture explicitly changes course.
+
+Provider voice iteration remains paused. Backend Intelligence Foundation remains the product-brain center of gravity.
 
 Do not introduce RAG, vector search, embeddings, multi-agent orchestration, LangGraph, CrewAI, LlamaIndex, custom GPT, SaaS infrastructure, or production-grade agent architecture before Architecture scopes a milestone and the backend intelligence/source-data contracts are robust enough to feed them.
 

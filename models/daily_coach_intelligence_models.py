@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from models.recovery_intelligence_models import RecoveryIntelligenceSummary
+from models.workout_set_intelligence_models import WorkoutSetIntelligenceSummary
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,7 @@ class DailyCoachIntelligenceSnapshot:
     snapshot_version: str
     source_services: list[str]
     recovery_intelligence: RecoveryIntelligenceSummary
+    workout_set_intelligence: WorkoutSetIntelligenceSummary | None
     training_execution_summary: dict[str, Any] | None
     nutrition_trend_window: dict[str, Any] | None
     foundation_layer_status: dict[str, str]
@@ -36,6 +38,12 @@ class DailyCoachIntelligenceSnapshot:
         if not isinstance(self.recovery_intelligence, RecoveryIntelligenceSummary):
             raise ValueError(
                 "recovery_intelligence must be a RecoveryIntelligenceSummary"
+            )
+        if self.workout_set_intelligence is not None and not isinstance(
+            self.workout_set_intelligence, WorkoutSetIntelligenceSummary
+        ):
+            raise ValueError(
+                "workout_set_intelligence must be a WorkoutSetIntelligenceSummary"
             )
 
     def to_dict(self) -> dict[str, Any]:

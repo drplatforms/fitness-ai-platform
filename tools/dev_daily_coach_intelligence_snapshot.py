@@ -14,16 +14,14 @@ from services.daily_coach_intelligence_snapshot_service import (  # noqa: E402
     build_daily_coach_intelligence_snapshot,
 )
 
-DEFAULT_OUTPUT_DIR = (
-    "docs/provider_trials/daily_coach_intelligence_snapshot_recovery_v1"
-)
+DEFAULT_OUTPUT_DIR = "docs/provider_trials/daily_coach_workout_set_intelligence_v1"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Developer-only Daily Coach Intelligence Snapshot + "
-            "Recovery Intelligence v1 tool."
+            "Recovery + Workout Set Intelligence v1 tool."
         )
     )
     parser.add_argument("--user-id", type=int, default=None)
@@ -69,11 +67,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Output dir: {output_dir}")
         for payload in payloads:
             recovery = payload.get("recovery_intelligence") or {}
+            workout = payload.get("workout_set_intelligence") or {}
             print(
                 f"user={payload['user_id']} date={payload['target_date']} "
                 f"recovery={recovery.get('readiness_level')} "
                 f"fatigue={recovery.get('fatigue_risk')} "
-                f"confidence={recovery.get('confidence')}"
+                f"workout_completion={workout.get('overall_completion_indicator')} "
+                f"workout_effort={workout.get('overall_effort_indicator')} "
+                f"confidence={workout.get('confidence') or recovery.get('confidence')}"
             )
         if args.write_pasteback_report:
             print(f"Pasteback report: {output_dir / 'pasteback_report.md'}")
@@ -119,6 +120,9 @@ def _write_markdown_artifacts(output_dir: Path, payloads: list[dict[str, Any]]) 
     (output_dir / "data_completeness_summary.md").write_text(
         _render_data_completeness(payloads), encoding="utf-8"
     )
+    (output_dir / "workout_set_intelligence_summary.md").write_text(
+        _render_workout_set_summary(payloads), encoding="utf-8"
+    )
 
 
 def _write_pasteback_report(output_dir: Path, payloads: list[dict[str, Any]]) -> None:
@@ -143,6 +147,14 @@ def _render_snapshot_markdown(payloads: list[dict[str, Any]]) -> str:
                 f"- Fatigue risk: `{recovery.get('fatigue_risk')}`",
                 f"- Confidence: `{recovery.get('confidence')}`",
                 f"- Coach-safe summary: {recovery.get('coach_safe_summary')}",
+                "",
+                "### Workout Set Intelligence",
+                "",
+                f"- Completion indicator: `{(payload.get('workout_set_intelligence') or {}).get('overall_completion_indicator')}`",
+                f"- Effort indicator: `{(payload.get('workout_set_intelligence') or {}).get('overall_effort_indicator')}`",
+                f"- Rep range indicator: `{(payload.get('workout_set_intelligence') or {}).get('overall_rep_range_indicator')}`",
+                f"- Logging quality: `{(payload.get('workout_set_intelligence') or {}).get('overall_logging_quality')}`",
+                f"- Confidence: `{(payload.get('workout_set_intelligence') or {}).get('confidence')}`",
                 "",
                 "### Foundation Layer Status",
                 "",
@@ -177,8 +189,7 @@ def _render_gap_report(payloads: list[dict[str, Any]]) -> str:
             "## Foundation status",
             "",
             "- Recovery Intelligence: implemented v1 in this milestone.",
-            "- Workout Set Intelligence: not implemented; "
-            "existing training execution summary only.",
+            "- Workout Set Intelligence: implemented v1 as a read-only set-aware source-data layer.",
             "- Trend Engine: not implemented; existing nutrition trend only.",
             "- Six-Month Seed Data: existing QA seed data only.",
             "- Food Knowledge Expansion: pending.",
@@ -198,6 +209,48 @@ def _render_data_completeness(payloads: list[dict[str, Any]]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_workout_set_summary(payloads: list[dict[str, Any]]) -> str:
+    lines = ["# Workout Set Intelligence Summary", ""]
+    lines.append(
+        "This report is read-only and uses indicator terminology for set-aware training source data."
+    )
+    lines.append("")
+    for payload in payloads:
+        workout = payload.get("workout_set_intelligence") or {}
+        lines.extend(
+            [
+                f"## User {payload['user_id']} — {payload['target_date']}",
+                f"- Completion indicator: `{workout.get('overall_completion_indicator')}`",
+                f"- Effort indicator: `{workout.get('overall_effort_indicator')}`",
+                f"- Rep range indicator: `{workout.get('overall_rep_range_indicator')}`",
+                f"- Logging quality: `{workout.get('overall_logging_quality')}`",
+                f"- Confidence: `{workout.get('confidence')}`",
+                f"- Completed planned executions: `{workout.get('completed_execution_count')}`",
+                "",
+            ]
+        )
+        facts = workout.get("source_facts") or []
+        if facts:
+            lines.append("### Source facts")
+            for fact in facts:
+                lines.append(f"- {fact}")
+            lines.append("")
+        exercises = workout.get("exercise_indicators") or []
+        if exercises:
+            lines.append("### Exercise indicators")
+            for exercise in exercises[:8]:
+                lines.append(
+                    f"- {exercise.get('exercise_name')}: "
+                    f"completion={exercise.get('completion_indicator')}, "
+                    f"effort={exercise.get('effort_indicator')}, "
+                    f"rep_range={exercise.get('rep_range_indicator')}, "
+                    f"load={exercise.get('load_indicator')}, "
+                    f"confidence={exercise.get('confidence')}"
+                )
+            lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _render_pasteback_report(payloads: list[dict[str, Any]]) -> str:
     lines = ["# Daily Coach Intelligence Snapshot Pasteback", ""]
     lines.append("Status: developer-only read-only backend intelligence snapshot.")
@@ -207,12 +260,18 @@ def _render_pasteback_report(payloads: list[dict[str, Any]]) -> str:
     lines.append("")
     for payload in payloads:
         recovery = payload.get("recovery_intelligence") or {}
+        workout = payload.get("workout_set_intelligence") or {}
         lines.extend(
             [
                 f"## User {payload['user_id']} — {payload['target_date']}",
                 f"Recovery readiness: {recovery.get('readiness_level')}",
                 f"Fatigue risk: {recovery.get('fatigue_risk')}",
-                f"Confidence: {recovery.get('confidence')}",
+                f"Recovery confidence: {recovery.get('confidence')}",
+                f"Workout completion indicator: {workout.get('overall_completion_indicator')}",
+                f"Workout effort indicator: {workout.get('overall_effort_indicator')}",
+                f"Workout rep range indicator: {workout.get('overall_rep_range_indicator')}",
+                f"Workout logging quality: {workout.get('overall_logging_quality')}",
+                f"Workout confidence: {workout.get('confidence')}",
                 f"Source services: {', '.join(payload.get('source_services') or [])}",
                 "Source data gaps:",
             ]

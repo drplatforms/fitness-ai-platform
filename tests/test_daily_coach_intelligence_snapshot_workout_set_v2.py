@@ -9,6 +9,7 @@ from models.nutrition_trend_models import (
     NutritionIntakeTrendSummary,
     NutritionTrendWindow,
 )
+from models.workout_set_intelligence_models import WorkoutSetIntelligenceSummary
 from services import daily_coach_intelligence_snapshot_service as service
 from services.daily_coach_intelligence_snapshot_service import (
     build_daily_coach_intelligence_snapshot,
@@ -25,7 +26,7 @@ def _seed_test_db(tmp_path, monkeypatch) -> None:
         INSERT OR IGNORE INTO users (id, name, starting_weight)
         VALUES (?, ?, ?)
         """,
-        (1, "Snapshot Test User", 190.0),
+        (1, "Snapshot V2 Test User", 190.0),
     )
     cursor.execute(
         """
@@ -52,6 +53,43 @@ class FakeTrainingSummary:
             "completed_execution_count": self.completed_execution_count,
             "confidence": self.confidence,
         }
+
+
+def _fake_workout_set_summary(
+    *,
+    completed_execution_count: int = 2,
+    confidence: str = "Moderate",
+) -> WorkoutSetIntelligenceSummary:
+    return WorkoutSetIntelligenceSummary(
+        user_id=1,
+        target_date="2026-06-14",
+        generated_at="2026-06-14T12:00:00+00:00",
+        source_tables=["workout_plan_instances", "workout_execution_set_actuals"],
+        model_version="workout_set_intelligence_v1",
+        completed_execution_count=completed_execution_count,
+        recent_plan_instance_ids=[10, 9] if completed_execution_count else [],
+        session_summaries=[],
+        exercise_indicators=[],
+        overall_completion_indicator=(
+            "mostly_completed"
+            if completed_execution_count
+            else "no_planned_execution_data"
+        ),
+        overall_effort_indicator=(
+            "as_planned" if completed_execution_count else "unknown"
+        ),
+        overall_rep_range_indicator=(
+            "mostly_inside_range" if completed_execution_count else "unknown"
+        ),
+        overall_logging_quality="complete" if completed_execution_count else "unknown",
+        confidence=confidence,
+        source_facts=["Completion indicator: mostly_completed."],
+        coach_safe_summary="Recent logged sets mostly matched the written plan.",
+        reason_codes=([] if confidence == "Moderate" else ["limited_workout_set_data"]),
+        limitations=(
+            [] if confidence == "Moderate" else ["Workout set data is limited."]
+        ),
+    )
 
 
 def _fake_nutrition_window() -> NutritionTrendWindow:
@@ -91,12 +129,17 @@ def _fake_nutrition_window() -> NutritionTrendWindow:
     )
 
 
-def test_snapshot_builds_for_user_with_data(tmp_path, monkeypatch) -> None:
+def test_snapshot_v2_includes_workout_set_intelligence(tmp_path, monkeypatch) -> None:
     _seed_test_db(tmp_path, monkeypatch)
     monkeypatch.setattr(
         service,
         "build_training_execution_summary",
         lambda user_id: FakeTrainingSummary(),
+    )
+    monkeypatch.setattr(
+        service,
+        "build_workout_set_intelligence",
+        lambda user_id, target_date: _fake_workout_set_summary(),
     )
     monkeypatch.setattr(
         "services.nutrition_trend_service.build_nutrition_trend_window",
@@ -107,65 +150,50 @@ def test_snapshot_builds_for_user_with_data(tmp_path, monkeypatch) -> None:
         user_id=1, target_date="2026-06-14"
     )
 
-    assert snapshot.user_id == 1
-    assert snapshot.recovery_intelligence.target_date == "2026-06-14"
-    assert snapshot.training_execution_summary is not None
-    assert snapshot.nutrition_trend_window is not None
     assert snapshot.snapshot_version == "daily_coach_intelligence_snapshot_v2"
-
-
-def test_foundation_layer_status_is_explicit_and_honest(tmp_path, monkeypatch) -> None:
-    _seed_test_db(tmp_path, monkeypatch)
-    monkeypatch.setattr(
-        service,
-        "build_training_execution_summary",
-        lambda user_id: FakeTrainingSummary(),
-    )
-    monkeypatch.setattr(
-        "services.nutrition_trend_service.build_nutrition_trend_window",
-        lambda user_id, end_date, window_days: _fake_nutrition_window(),
-    )
-
-    snapshot = build_daily_coach_intelligence_snapshot(
-        user_id=1, target_date="2026-06-14"
-    )
-
-    assert snapshot.foundation_layer_status["recovery_intelligence"] == "implemented_v1"
+    assert snapshot.workout_set_intelligence is not None
+    assert "workout_set_intelligence_service" in snapshot.source_services
     assert (
         snapshot.foundation_layer_status["workout_set_intelligence"] == "implemented_v1"
     )
-    assert snapshot.data_completeness["food_knowledge_expansion"] == "pending"
-    assert snapshot.source_data_gaps
+    assert snapshot.data_completeness["workout_set_intelligence"] == "usable"
+    assert not any(
+        gap.startswith("workout_set_intelligence: not_implemented")
+        for gap in snapshot.source_data_gaps
+    )
 
 
-def test_nutrition_trend_limitations_are_controlled(tmp_path, monkeypatch) -> None:
+def test_snapshot_v2_reports_workout_set_missing_when_no_planned_data(
+    tmp_path, monkeypatch
+) -> None:
     _seed_test_db(tmp_path, monkeypatch)
     monkeypatch.setattr(
         service,
         "build_training_execution_summary",
-        lambda user_id: FakeTrainingSummary(),
+        lambda user_id: FakeTrainingSummary(completed_execution_count=0),
     )
-
-    def _raise_value_error(user_id, end_date, window_days):
-        raise ValueError("local db nutrition tables unavailable")
-
+    monkeypatch.setattr(
+        service,
+        "build_workout_set_intelligence",
+        lambda user_id, target_date: _fake_workout_set_summary(
+            completed_execution_count=0,
+            confidence="Limited",
+        ),
+    )
     monkeypatch.setattr(
         "services.nutrition_trend_service.build_nutrition_trend_window",
-        _raise_value_error,
+        lambda user_id, end_date, window_days: _fake_nutrition_window(),
     )
 
     snapshot = build_daily_coach_intelligence_snapshot(
         user_id=1, target_date="2026-06-14"
     )
 
-    assert snapshot.nutrition_trend_window is None
-    assert "nutrition_trend_window_unavailable" in snapshot.reason_codes
-    assert any(
-        "Nutrition trend window unavailable" in item for item in snapshot.limitations
-    )
+    assert snapshot.data_completeness["workout_set_intelligence"] == "missing"
+    assert "workout_set_intelligence: missing" in snapshot.source_data_gaps
 
 
-def test_snapshot_does_not_mutate_database_or_call_provider(
+def test_snapshot_v2_preserves_existing_layers_and_boundaries(
     tmp_path, monkeypatch
 ) -> None:
     _seed_test_db(tmp_path, monkeypatch)
@@ -173,6 +201,11 @@ def test_snapshot_does_not_mutate_database_or_call_provider(
         service,
         "build_training_execution_summary",
         lambda user_id: FakeTrainingSummary(),
+    )
+    monkeypatch.setattr(
+        service,
+        "build_workout_set_intelligence",
+        lambda user_id, target_date: _fake_workout_set_summary(),
     )
     monkeypatch.setattr(
         "services.nutrition_trend_service.build_nutrition_trend_window",
@@ -194,11 +227,13 @@ def test_snapshot_does_not_mutate_database_or_call_provider(
     ]
     conn.close()
     assert before == after
-    assert "provider" not in " ".join(snapshot.source_services).lower()
+    assert snapshot.recovery_intelligence is not None
     assert snapshot.training_execution_summary is not None
+    assert snapshot.nutrition_trend_window is not None
+    assert "provider" not in " ".join(snapshot.source_services).lower()
 
 
-def test_normal_today_behavior_remains_unchanged_by_import() -> None:
+def test_normal_today_behavior_remains_unchanged_by_snapshot_v2_import() -> None:
     import services.daily_coach_today_card_service as today_service
 
     assert hasattr(today_service, "build_daily_coach_today_card")

@@ -1,3 +1,64 @@
+# Current State — Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2
+
+Current accepted main:
+
+```text
+43927d4 main_merge-daily-coach-intelligence-snapshot-recovery-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_43927d4_main_merge-daily-coach-intelligence-snapshot-recovery-v1.zip
+```
+
+Active backend milestone:
+
+```text
+Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2
+```
+
+Requested status:
+
+```text
+DAILY_COACH_WORKOUT_SET_INTELLIGENCE_V1_IMPLEMENTATION_COMPLETE
+```
+
+This is the second concrete Backend Intelligence Foundation implementation slice after Recovery Intelligence v1.
+
+Implemented/active scope:
+
+- Workout Set Intelligence v1 as a read-only deterministic set/exercise training indicator layer.
+- Daily Coach Intelligence Snapshot v2 with `workout_set_intelligence` included as the richer training source-data layer.
+- Existing Training Execution Summary remains in the snapshot for compatibility.
+- Existing Recovery Intelligence v1 remains present.
+- Existing Nutrition Trend Window remains read-only or recorded as a controlled limitation if unavailable locally.
+- Developer-only artifact tool updated to include workout set indicators in JSON, Markdown, pasteback, and `workout_set_intelligence_summary.md`.
+
+Foundation layer status:
+
+```text
+recovery_intelligence: implemented_v1
+workout_set_intelligence: implemented_v1
+trend_engine: nutrition_trend_existing_only
+six_month_seed_data: existing_qa_seed_data_only
+food_knowledge_expansion: starter_catalog_existing_expansion_pending
+```
+
+Provider voice iteration remains paused. This milestone improves backend facts and source-data contracts, not provider prompts.
+
+No user-facing behavior changes are authorized or implemented. Normal Today remains unchanged.
+
+Future next architecture target after acceptance:
+
+```text
+Recovery Intelligence v2
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside this milestone.
+
+---
+
 # Current State — Daily Coach Intelligence Snapshot + Recovery Intelligence v1
 
 Current accepted main:

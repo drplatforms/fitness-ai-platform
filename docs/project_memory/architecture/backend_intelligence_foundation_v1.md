@@ -63,3 +63,22 @@ Scope:
 - Foundation layer status remains honest: Workout Set Intelligence, full Trend Engine, Six-Month Seed Data refinement, and Food Knowledge Expansion are not complete in this slice.
 
 Provider voice iteration remains paused. This slice improves source-data truth, not prompt style.
+
+## Implementation Slice — Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2
+
+Baseline: `main @ 43927d4`.
+
+This is the second concrete implementation slice after Recovery Intelligence v1.
+
+Scope:
+
+- Workout Set Intelligence v1 is implemented as a read-only deterministic layer over completed planned workout executions.
+- Daily Coach Intelligence Snapshot v2 includes `workout_set_intelligence` as the richer set/exercise training layer.
+- Existing Training Execution Summary remains in the snapshot for compatibility.
+- Recovery Intelligence v1 remains present.
+- Nutrition Trend Window remains read-only when available, otherwise recorded as a controlled limitation.
+- Foundation layer status is honest: Trend Engine, Six-Month Seed Data refinement, and Food Knowledge Expansion are not complete in this slice.
+
+Provider voice iteration remains paused. This slice improves source-data truth, not prompt style.
+
+Future next architecture target after acceptance: `Recovery Intelligence v2`.

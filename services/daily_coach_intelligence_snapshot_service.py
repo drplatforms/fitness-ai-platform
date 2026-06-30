@@ -8,12 +8,13 @@ from typing import Any
 from models.daily_coach_intelligence_models import DailyCoachIntelligenceSnapshot
 from services.recovery_intelligence_service import build_recovery_intelligence
 from services.training_execution_summary_service import build_training_execution_summary
+from services.workout_set_intelligence_service import build_workout_set_intelligence
 
-DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION = "daily_coach_intelligence_snapshot_v1"
+DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION = "daily_coach_intelligence_snapshot_v2"
 
 FOUNDATION_LAYER_STATUS = {
     "recovery_intelligence": "implemented_v1",
-    "workout_set_intelligence": "existing_training_execution_summary_only",
+    "workout_set_intelligence": "implemented_v1",
     "trend_engine": "nutrition_trend_existing_only",
     "six_month_seed_data": "existing_qa_seed_data_only",
     "food_knowledge_expansion": "starter_catalog_existing_expansion_pending",
@@ -36,6 +37,15 @@ def build_daily_coach_intelligence_snapshot(
     limitations = list(recovery.limitations)
     source_services = ["recovery_intelligence_service"]
 
+    workout_set_intelligence = _read_workout_set_intelligence(
+        user_id=user_id,
+        target_date=resolved_date,
+        reason_codes=reason_codes,
+        limitations=limitations,
+    )
+    if workout_set_intelligence is not None:
+        source_services.append("workout_set_intelligence_service")
+
     training_summary = _read_training_summary(user_id, reason_codes, limitations)
     if training_summary is not None:
         source_services.append("training_execution_summary_service")
@@ -51,6 +61,11 @@ def build_daily_coach_intelligence_snapshot(
 
     data_completeness = _build_data_completeness(
         recovery_dict=recovery.to_dict(),
+        workout_set_dict=(
+            workout_set_intelligence.to_dict()
+            if workout_set_intelligence is not None
+            else None
+        ),
         training_summary=training_summary,
         nutrition_window=nutrition_window,
     )
@@ -64,6 +79,7 @@ def build_daily_coach_intelligence_snapshot(
         snapshot_version=DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION,
         source_services=source_services,
         recovery_intelligence=recovery,
+        workout_set_intelligence=workout_set_intelligence,
         training_execution_summary=training_summary,
         nutrition_trend_window=nutrition_window,
         foundation_layer_status=dict(FOUNDATION_LAYER_STATUS),
@@ -72,6 +88,21 @@ def build_daily_coach_intelligence_snapshot(
         reason_codes=_unique(reason_codes),
         limitations=_unique(limitations),
     )
+
+
+def _read_workout_set_intelligence(
+    *,
+    user_id: int,
+    target_date: str,
+    reason_codes: list[str],
+    limitations: list[str],
+) -> Any | None:
+    try:
+        return build_workout_set_intelligence(user_id=user_id, target_date=target_date)
+    except sqlite3.Error as exc:
+        reason_codes.append("workout_set_intelligence_unavailable")
+        limitations.append(f"Workout set intelligence unavailable: {_safe_error(exc)}")
+        return None
 
 
 def _read_training_summary(
@@ -109,6 +140,7 @@ def _read_nutrition_trend_window(
 def _build_data_completeness(
     *,
     recovery_dict: dict[str, Any],
+    workout_set_dict: dict[str, Any] | None,
     training_summary: dict[str, Any] | None,
     nutrition_window: dict[str, Any] | None,
 ) -> dict[str, str]:
@@ -117,6 +149,17 @@ def _build_data_completeness(
     recovery_status = "usable" if primary.get("checkin_days", 0) >= 3 else "limited"
     if primary.get("checkin_days", 0) == 0:
         recovery_status = "missing"
+
+    workout_set_status = "missing"
+    if workout_set_dict is not None:
+        completed = int(workout_set_dict.get("completed_execution_count") or 0)
+        confidence = str(workout_set_dict.get("confidence") or "Limited")
+        if completed > 0 and confidence in {"Moderate", "High"}:
+            workout_set_status = "usable"
+        elif completed > 0:
+            workout_set_status = "limited"
+        else:
+            workout_set_status = "missing"
 
     training_status = "missing"
     if training_summary is not None:
@@ -136,9 +179,9 @@ def _build_data_completeness(
 
     return {
         "recovery_intelligence": recovery_status,
+        "workout_set_intelligence": workout_set_status,
         "training_execution_summary": training_status,
         "nutrition_trend_window": nutrition_status,
-        "workout_set_intelligence": "not_implemented_existing_summary_only",
         "trend_engine": "partial_existing_nutrition_trend_only",
         "six_month_seed_data": "available_for_qa_if_seeded",
         "food_knowledge_expansion": "pending",

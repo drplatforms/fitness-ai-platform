@@ -59,11 +59,13 @@ def test_single_user_mode_writes_terminal_friendly_artifacts(
         "backend_intelligence_gap_report.md",
         "data_completeness_summary.md",
         "pasteback_report.md",
+        "workout_set_intelligence_summary.md",
     }
     assert expected.issubset({path.name for path in output_dir.iterdir()})
     pasteback = (output_dir / "pasteback_report.md").read_text(encoding="utf-8")
     assert "Provider called: false" in pasteback
     assert "Database mutated: false" in pasteback
+    assert "Workout completion indicator:" in pasteback
 
 
 def test_users_matrix_mode_writes_combined_and_per_user_json(

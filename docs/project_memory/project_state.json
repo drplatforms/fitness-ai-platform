@@ -14,21 +14,29 @@
       "source_feature_branch": "feature/daily-coach-fully-free-source-data-lab-v1",
       "source_feature_commit": "f6fb371 Add fully free source data coach lab",
       "status": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_ACCEPTED_AS_DEVELOPER_ONLY_EVIDENCE"
+    },
+    "daily_coach_intelligence_snapshot_recovery_v1": {
+      "main_commit": "43927d4",
+      "meaning": "first Backend Intelligence Foundation implementation slice; Recovery Intelligence v1 plus Daily Coach Intelligence Snapshot v1",
+      "snapshot": "fitness_ai_snapshot_2026-06-30_43927d4_main_merge-daily-coach-intelligence-snapshot-recovery-v1.zip",
+      "source_feature_branch": "feature/daily-coach-intelligence-snapshot-recovery-v1",
+      "source_feature_commit": "fb77575 Add daily coach intelligence snapshot recovery v1",
+      "status": "DAILY_COACH_INTELLIGENCE_SNAPSHOT_RECOVERY_V1_ACCEPTED"
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_271ac7e_main_merge-project-memory-docs-development-architecture-refresh-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-30_43927d4_main_merge-daily-coach-intelligence-snapshot-recovery-v1.zip",
     "commit_check_mode": "targeted-backend-and-docs",
-    "current_authorized_milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
-    "current_recommended_milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
+    "current_authorized_milestone": "Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2",
+    "current_recommended_milestone": "Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can Recovery Intelligence v1 and a Daily Coach Intelligence Snapshot provide a stable backend-owned source-data contract for future Daily Coach intelligence?",
-    "qa_class": "BACKEND_INTELLIGENCE_FOUNDATION_READ_ONLY_SOURCE_DATA_CONTRACT",
-    "recommended_next_milestone_after_acceptance": "Architecture review, then next Backend Intelligence Foundation slice",
+    "primary_question": "Can Workout Set Intelligence v1 and Daily Coach Intelligence Snapshot v2 provide a stable backend-owned set/exercise training source-data contract?",
+    "qa_class": "BACKEND_INTELLIGENCE_FOUNDATION_READ_ONLY_SET_LEVEL_TRAINING_SOURCE_DATA_CONTRACT",
+    "recommended_next_milestone_after_acceptance": "Recovery Intelligence v2",
     "recommended_owner": "Backend Development",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "271ac7e"
+    "source_main_commit": "43927d4"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -48,6 +56,15 @@
       "provider_voice_iteration": "paused",
       "runtime_behavior_change": false,
       "scope": "Recovery Intelligence v1 plus read-only Daily Coach Intelligence Snapshot v1",
+      "status": "APPROVED_FOR_BACKEND_IMPLEMENTATION"
+    },
+    "daily_coach_workout_set_intelligence_v1": {
+      "baseline_commit": "43927d4",
+      "future_next_architecture_target_after_acceptance": "Recovery Intelligence v2",
+      "milestone": "Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2",
+      "provider_voice_iteration": "paused",
+      "runtime_behavior_change": false,
+      "scope": "Workout Set Intelligence v1 plus read-only Daily Coach Intelligence Snapshot v2",
       "status": "APPROVED_FOR_BACKEND_IMPLEMENTATION"
     }
   },
@@ -310,16 +327,16 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
-    "active_backend_status": "approved for docs-only Backend implementation",
+    "active_backend_milestone": "Daily Coach Workout Set Intelligence v1 + Intelligence Snapshot v2",
+    "active_backend_status": "approved for Backend implementation",
     "active_project_memory_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
     "active_project_memory_status": "docs/process/development architecture refresh active",
-    "current_source_of_truth": "main at 23b5378 Merge daily coach fully free source-data lab evidence v1",
+    "current_source_of_truth": "main at 43927d4 main_merge-daily-coach-intelligence-snapshot-recovery-v1",
     "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
-    "latest_accepted_commit": "23b5378",
-    "latest_accepted_milestone": "Daily Coach Fully Free Source-Data Lab evidence v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "latest_final_status": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_ACCEPTED_AS_DEVELOPER_ONLY_EVIDENCE",
+    "latest_accepted_commit": "43927d4",
+    "latest_accepted_milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-30_43927d4_main_merge-daily-coach-intelligence-snapshot-recovery-v1.zip",
+    "latest_final_status": "DAILY_COACH_INTELLIGENCE_SNAPSHOT_RECOVERY_V1_ACCEPTED",
     "latest_main_merge_commit": "23b5378",
     "latest_technical_baseline_commit": "23b5378",
     "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",

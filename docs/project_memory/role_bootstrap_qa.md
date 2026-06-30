@@ -87,3 +87,17 @@ QA should distinguish:
 QA should ask whether each real failed path is represented in automated regression tests, diagnostic/coverage tests, documented limitations, or backlog items.
 
 QA treats smoke failures as regression-test candidates and process signals. Browser smoke failure after green tests, or Linux smoke failure after Windows green, means the branch is not acceptance-ready.
+
+---
+
+# Current Routing / State Addendum — 23b5378
+
+Current accepted main: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Exact visible team lanes: Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, DevOps & Tooling.
+
+Project Memory / All Future Agents is not a visible team lane. It is a repo continuity concern every team must respect.
+
+Provider voice iteration is paused. Backend Intelligence Foundation is next after docs cleanup.

@@ -1,3 +1,21 @@
+# Project Continuity Bootstrap — Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
+
+Current source of truth: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Architecture status: approved for Backend implementation as docs-only repo patch.
+
+## Current work
+
+Move repo docs from stale Fully Free Source-Data Lab implementation state to the accepted `23b5378` evidence state. Record provider voice iteration pause, canonical seven team lanes, and Backend Intelligence Foundation as the next center of gravity.
+
+## Standing boundaries
+
+Docs/process/development architecture only. No runtime behavior changes, provider changes, UI changes, schema/migration changes, RAG, embeddings, vector search, multi-agent runtime, custom GPT build, or provider prompt experiment.
+
+---
+
 # Project Continuity Bootstrap — Daily Coach Provider Plainspoken Voice & Action Clarity v5
 
 Current source of truth: `0ace3da Add daily coach provider human voice food action specificity v4`.

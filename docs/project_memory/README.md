@@ -1,3 +1,19 @@
+# Current Project Memory Status — 23b5378
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Latest accepted main evidence: `Daily Coach Fully Free Source-Data Lab evidence v1 @ 23b5378`.
+
+Fully Free Source-Data Lab v1 is accepted as developer-only evidence, not as a copy breakthrough.
+
+Provider voice iteration is paused.
+
+Next after docs cleanup: `Daily Coach Backend Intelligence Foundation`.
+
+Canonical seven visible team lanes are recorded in `team_routing_contract.md`.
+
+---
+
 # Project Memory
 
 Project memory is the continuity layer for AI Health Coach.

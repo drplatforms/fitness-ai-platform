@@ -1,3 +1,87 @@
+# Current State — Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
+
+Current accepted main:
+
+```text
+23b5378 Merge daily coach fully free source-data lab evidence v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip
+```
+
+Latest Daily Coach provider evidence:
+
+- v4 free-range prompt/payload decaging is accepted as a developer-only diagnostic baseline at `56d63c4`.
+- Fully Free Source-Data Lab v1 is merged as developer-only evidence at `23b5378`.
+- Fully Free v1 was technically valid and useful as evidence, but it was not meaningfully better than v4.
+- Outputs were competent but generic and structurally repetitive.
+- Provider voice iteration is paused.
+
+Active milestone:
+
+```text
+Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
+```
+
+Requested status:
+
+```text
+PROJECT_MEMORY_HANDOFF_COMPRESSION_STALE_DOCS_DEVELOPMENT_ARCHITECTURE_V1_IMPLEMENTATION_COMPLETE
+```
+
+Owner:
+
+```text
+Backend Development, as routed by Architecture for a docs-only repo patch.
+```
+
+Next product architecture center after this docs milestone:
+
+```text
+Daily Coach Backend Intelligence Foundation
+```
+
+Foundation layers:
+
+- Recovery Intelligence
+- Workout Set Intelligence
+- Trend Engine
+- Six-Month Seed Data
+- Food Knowledge Expansion
+
+Sequencing principle:
+
+```text
+Build the product brain first. Then build the fancy nervous system.
+```
+
+No serious RAG, vector search, embeddings, multi-agent orchestration, LangGraph, CrewAI, LlamaIndex, or production-grade agent architecture should proceed until these backend intelligence layers are designed and robust enough to feed them.
+
+Canonical seven visible team/chat lanes:
+
+1. Architecture
+2. Backend Development
+3. QA
+4. Agent Engineering
+5. Streamlit UI / UX
+6. Portfolio Packaging
+7. DevOps & Tooling
+
+Project Memory / All Future Agents is not one of the seven visible team/chat lanes. It is a repo continuity concern that every team must respect.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Architecture directed Backend to document this and not patch it inside unrelated milestones.
+
+## Active docs-only non-goals
+
+This milestone does not authorize runtime behavior changes, provider behavior changes, OpenAI default changes, Today provider display, Streamlit UI changes, API/schema/migration changes, RAG, embeddings, pgvector, vector DB setup, LangGraph, CrewAI, LlamaIndex, multi-agent runtime, custom GPT build, recovery intelligence implementation, workout set intelligence implementation, trend engine implementation, six-month seed data generation, food catalog expansion, provider prompt experiments, or reviewer/renderer implementation.
+
+## Historical current-state notes
+
+The sections below are retained for history only. The active state is the `23b5378` docs refresh state above.
+
 # Current State — Daily Coach Fully Free Source-Data Lab v1
 
 Current source of truth: `main` at `56d63c4 Merge daily coach free-range decaging diagnostic baseline v4`.

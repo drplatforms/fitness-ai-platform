@@ -1,21 +1,33 @@
-# Current Handoff — Daily Coach Provider Trial Diagnostics v1
+# Current Backend Handoff — Docs Refresh Development Architecture v1
 
-Recipient: Backend Development / Provider Runtime / Agent Engineering
+**Status:** Active backend implementation handoff
+**Baseline:** `main @ 23b5378`
+**Active branch:** `feature/project-memory-handoff-compression-stale-docs-development-architecture-v1`
+**Requested final status:** `PROJECT_MEMORY_HANDOFF_COMPRESSION_STALE_DOCS_DEVELOPMENT_ARCHITECTURE_V1_IMPLEMENTATION_COMPLETE`
 
-Project: AI Health Coach / fitness_ai
+## Backend Task
 
-Milestone: Daily Coach Provider Trial Diagnostics v1
+Implement a docs-only repo patch that updates project memory, handoff workflow, stale docs hygiene, team routing, and development architecture.
 
-Branch: `feature/daily-coach-provider-trial-diagnostics-v1`
+## Required Scope
 
-Source baseline: `main@a6cd8d0` plus accepted provider trial matrix tooling `4641c91`.
+Record latest accepted main at `23b5378`, record Fully Free Source-Data Lab v1 as developer-only evidence, record QA/product classification that Fully Free v1 was not meaningfully better than v4, pause provider voice iteration, establish Backend Intelligence Foundation as next center of gravity, add exact seven-team routing, add team quickstarts, add ChatGPT workflow/development architecture, add Prompt Lab lifecycle, add Architecture review checklist, add Research workflow, and update current handoffs.
 
-Status: Backend diagnostics patch prepared.
+## Validation
 
-## Summary
+```powershell
+git diff --check
+python -m pytest tests/test_project_memory_check.py -q
+python tools/project_memory_check.py
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+python tools/dev_assistant.py continuity-brief
+scripts/dev_commit_check.ps1 -Mode docs-only
+fsweep
+```
 
-Add safe diagnostics to `tools/run_daily_coach_provider_trial_matrix.py` for local provider-output inspection, safe OpenAI config/error classification, and optional Ollama unload cleanup.
+No broad formatters.
 
-## Boundaries
+## Non-Goals
 
-No provider default changes. No Streamlit controls. No product runtime behavior changes. No raw provider output or secrets committed. No live provider calls in tests. Parser, validator, and approved-value quote validation remain mandatory and unchanged.
+No runtime/code behavior, provider, UI, schema, migration, RAG/vector/agent, recovery/workout/trend, food catalog, or custom GPT implementation.

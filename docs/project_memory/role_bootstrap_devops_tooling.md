@@ -72,3 +72,25 @@ If Linux Git state is unclear, run diagnostics only:
 Restart Linux runtime after code/UI/runtime changes are pulled to Linux.
 
 Docs-only/design-only changes generally do not require runtime restart unless the user asks.
+
+---
+
+# Current Routing / State Addendum — 23b5378
+
+Current accepted main: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Exact visible team lanes: Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, DevOps & Tooling.
+
+Project Memory / All Future Agents is not a visible team lane. It is a repo continuity concern every team must respect.
+
+Provider voice iteration is paused. Backend Intelligence Foundation is next after docs cleanup.
+
+---
+
+# DevOps & Tooling narrow-scope addendum
+
+DevOps & Tooling is narrow and low-frequency. It owns helper commands, command menu, environment setup, Windows/Linux workflow support, snapshots/tooling mechanics, and runtime setup diagnostics.
+
+Do not route general architecture, backend product logic, provider decisions, normal UI work, or broad product/platform ownership here.

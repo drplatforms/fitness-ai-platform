@@ -1,3 +1,26 @@
+# Backend Intelligence Foundation prerequisite sequencing
+
+Current accepted evidence at `23b5378` shows provider voice iteration should pause until backend intelligence improves.
+
+Required sequencing:
+
+```text
+Backend Intelligence Foundation
+→ Unified Health State Snapshot / source-data contracts
+→ Prompt Lab / reviewer / renderer evaluation
+→ Advanced retrieval / orchestration candidates
+```
+
+Rules:
+
+- RAG does not happen until there is meaningful curated knowledge and backend intelligence to retrieve.
+- Vector search does not happen until documents/data have stable metadata and retrieval use-cases.
+- Multi-agent synthesis waits until specialist data layers can pass real evidence.
+- Provider voice work is paused until richer source data and UI/renderer boundaries exist.
+- Backend Intelligence Foundation includes Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, and Food Knowledge Expansion.
+
+---
+
 # Future Architecture Ledger
 
 Last updated: 2026-06-20

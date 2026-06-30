@@ -1,21 +1,52 @@
 {
+  "accepted_evidence": {
+    "daily_coach_free_range_prompt_payload_decaging_v4": {
+      "main_commit": "56d63c4",
+      "meaning": "developer-only diagnostic baseline",
+      "snapshot": "fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip",
+      "status": "DAILY_COACH_FREE_RANGE_PROMPT_PAYLOAD_DECAGING_V4_ACCEPTED_AS_DEVELOPER_ONLY_DIAGNOSTIC_BASELINE"
+    },
+    "daily_coach_fully_free_source_data_lab_v1": {
+      "conclusion": "technically valid developer-only evidence; not meaningfully better than v4; provider voice iteration paused",
+      "main_commit": "23b5378",
+      "review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
+      "snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
+      "source_feature_branch": "feature/daily-coach-fully-free-source-data-lab-v1",
+      "source_feature_commit": "f6fb371 Add fully free source data coach lab",
+      "status": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_ACCEPTED_AS_DEVELOPER_ONLY_EVIDENCE"
+    }
+  },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip",
-    "commit_check_mode": "code",
-    "current_recommended_milestone": "Daily Coach Fully Free Source-Data Lab v1",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
+    "commit_check_mode": "docs-only",
+    "current_authorized_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
+    "current_recommended_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can GPT-5.5 produce a meaningfully better Daily Coach note from clean organized source data and an extremely small prompt?",
-    "qa_class": "DEVELOPER_ONLY_FULLY_FREE_SOURCE_DATA_LAB",
+    "primary_question": "Can repo docs onboard new chats from 23b5378 without stale provider-lab drift?",
+    "qa_class": "DOCS_ONLY_PROJECT_MEMORY_DEVELOPMENT_ARCHITECTURE_REFRESH",
+    "recommended_next_milestone_after_acceptance": "Architecture regroup, then Backend Intelligence Foundation v1",
     "recommended_owner": "Backend Development",
-    "secondary_owner": "Architecture / QA / Agent Engineering / Product",
+    "secondary_owner": "Architecture / QA / Agent Engineering / Streamlit UI / UX / Portfolio Packaging / DevOps & Tooling",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "56d63c4"
+    "source_main_commit": "23b5378"
+  },
+  "architecture_direction": {
+    "backend_intelligence_layers": [
+      "Recovery Intelligence",
+      "Workout Set Intelligence",
+      "Trend Engine",
+      "Six-Month Seed Data",
+      "Food Knowledge Expansion"
+    ],
+    "next_center_of_gravity": "Daily Coach Backend Intelligence Foundation",
+    "sequencing_rule": "No serious RAG/vector/embeddings/multi-agent/orchestration until backend intelligence layers and source-data contracts are robust enough to feed them."
   },
   "boundaries": {
     "active_workout_preserved": true,
     "app_side_voice_examples": true,
     "approved_claim_metadata_enrichment": true,
+    "backend_intelligence_foundation_next": true,
     "backend_owned_serving_unit_grams_resolution": true,
     "backend_owns_serving_conversions": true,
     "backend_owns_serving_unit_logging_contract": true,
@@ -28,20 +59,29 @@
     "current_milestone_docs_only": true,
     "daily_coach_adaptive_verbosity_guidance_v2": true,
     "daily_coach_ai_snack_candidates_dev_only_v3": true,
+    "daily_coach_backend_label_exposure_summary_v4": true,
+    "daily_coach_backend_prose_contamination_audit_v1": true,
     "daily_coach_claim_budgets_v2": true,
     "daily_coach_completion_diagnostics_v3": true,
     "daily_coach_context_selection_coaching_synthesis_v2": true,
+    "daily_coach_decaged_prompt_v4": true,
+    "daily_coach_direct_hypeman_clean_variants_v4": true,
     "daily_coach_display_ready_number_formatting_v3": true,
     "daily_coach_food_action_context": true,
     "daily_coach_food_candidate_summary_v2": true,
     "daily_coach_food_option_card_v3": true,
     "daily_coach_free_range_output_completion_coach_surface_polish_data_seeding_v3": true,
+    "daily_coach_free_range_prompt_payload_decaging_v4": true,
     "daily_coach_free_range_voice_precision_payload_enrichment_v2": true,
     "daily_coach_free_range_voice_variants_v2": true,
     "daily_coach_friendly_food_labels": true,
     "daily_coach_full_note_preserved_no_today_card_renderer": true,
     "daily_coach_full_user_day_free_range_payload_baseline_v1": true,
+    "daily_coach_fully_free_source_data_lab_v1": true,
+    "daily_coach_fully_free_source_data_packet_v1": true,
     "daily_coach_macro_display_card_v3": true,
+    "daily_coach_model_facing_coach_facts_v4": true,
+    "daily_coach_model_freedom_summary_v1": true,
     "daily_coach_model_input_manifest_v2": true,
     "daily_coach_narrative_approved_value_claim_registry": true,
     "daily_coach_narrative_approved_value_quote_validation_v1": true,
@@ -58,6 +98,7 @@
     "daily_coach_no_invented_servings_timing_pairings": true,
     "daily_coach_plainspoken_voice_contract": true,
     "daily_coach_precision_metadata_v2": true,
+    "daily_coach_prompt_payload_debug_split_v4": true,
     "daily_coach_provider_copy_grounding_context_enrichment_v1": true,
     "daily_coach_provider_human_voice_food_action_specificity_v4": true,
     "daily_coach_provider_payload_debug_artifact_opt_in": true,
@@ -86,6 +127,8 @@
     "developer_mode_only": true,
     "developer_mode_voice_lab": true,
     "direct_ollama_openai_remain_opt_in_for_trial_matrix": true,
+    "docs_refresh_current_milestone_23b5378": true,
+    "exact_seven_team_lanes_recorded": true,
     "exercise_catalog_utilization_specialized_movement_coverage": true,
     "exercise_eligibility_matrix_diagnostic": true,
     "exercise_eligibility_matrix_quality_gate": true,
@@ -115,6 +158,7 @@
     "no_logging_changes_for_current_milestone": true,
     "no_model_promotion": true,
     "no_normal_today_changes_for_full_user_day_free_range": true,
+    "no_normal_today_changes_for_fully_free_lab_v1": true,
     "no_normal_today_changes_for_wide_context_copy_cleanup": true,
     "no_nutrition_calculation_changes_for_current_diagnostic_milestone": true,
     "no_nutrition_calculation_changes_for_current_planning_milestone": true,
@@ -146,6 +190,7 @@
     "no_provider_serving_unit_invention": true,
     "no_public_default_provider_display": true,
     "no_quote_value_validation_relaxation_for_context_selection_v2": true,
+    "no_rag_embeddings_vector_or_multi_agent_for_fully_free_lab_v1": true,
     "no_raw_db_rows_for_full_user_day_free_range": true,
     "no_raw_provider_envelope_persistence_for_full_user_day_free_range": true,
     "no_raw_provider_envelope_persistence_for_wide_context_trial": true,
@@ -191,6 +236,7 @@
     "nutrition_serving_unit_data_model_v1_accepted": true,
     "nutrition_serving_unit_logging_backend_v1": true,
     "nutrition_serving_unit_logging_contract_design_v1": true,
+    "openai_gpt55_opt_in_only_for_fully_free_lab_v1": true,
     "optional_diagnostic_service_refactor_deferred": true,
     "patch_first_delivery": true,
     "patch_stacking_stop_conditions": true,
@@ -200,6 +246,7 @@
     "provider_high_value_claim_packaging": true,
     "provider_manual_only": true,
     "provider_must_not_invent_serving_units_or_grams": true,
+    "provider_voice_iteration_paused_after_fully_free_lab_v1": true,
     "quote_value_validation_mandatory_for_copy_grounding": true,
     "selected_workout_frozen_after_selection": true,
     "serving_display_backend_approved_only": true,
@@ -229,20 +276,7 @@
     "workout_page_canonical": true,
     "workout_preview_explicit_refresh_only": true,
     "workout_preview_full_slot_rotation": true,
-    "workout_selection_regression_preserved": true,
-    "daily_coach_free_range_prompt_payload_decaging_v4": true,
-    "daily_coach_model_facing_coach_facts_v4": true,
-    "daily_coach_decaged_prompt_v4": true,
-    "daily_coach_backend_label_exposure_summary_v4": true,
-    "daily_coach_direct_hypeman_clean_variants_v4": true,
-    "daily_coach_prompt_payload_debug_split_v4": true,
-    "daily_coach_fully_free_source_data_lab_v1": true,
-    "daily_coach_fully_free_source_data_packet_v1": true,
-    "daily_coach_model_freedom_summary_v1": true,
-    "daily_coach_backend_prose_contamination_audit_v1": true,
-    "no_rag_embeddings_vector_or_multi_agent_for_fully_free_lab_v1": true,
-    "no_normal_today_changes_for_fully_free_lab_v1": true,
-    "openai_gpt55_opt_in_only_for_fully_free_lab_v1": true
+    "workout_selection_regression_preserved": true
   },
   "canonical_serving_unit_discovery_api_v1": {
     "branch": "feature/canonical-serving-unit-discovery-api-v1",
@@ -267,21 +301,24 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Daily Coach Wide Context Copy Cleanup + QA Readability v1",
-    "active_backend_status": "implementation patch ready for local validation",
-    "active_project_memory_milestone": "Future Feature & Technology Inventory v1",
-    "active_project_memory_status": "docs/project-memory update complete / ready for Architecture review",
-    "current_source_of_truth": "main at 42d0bd4 Merge daily coach wide context ceiling trial v1",
-    "latest_accepted_commit": "42d0bd4",
-    "latest_accepted_milestone": "Daily Coach Wide Context Uncaged GPT-5.5 Ceiling Trial v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-28_42d0bd4_main_merge-daily-coach-wide-context-ceiling-trial-v1.zip",
-    "latest_final_status": "DAILY_COACH_WIDE_CONTEXT_UNCAGED_GPT55_CEILING_TRIAL_V1_MERGED_DIAGNOSTIC_INFRASTRUCTURE",
-    "latest_main_merge_commit": "42d0bd4",
-    "latest_technical_baseline_commit": "42d0bd4",
-    "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-28_42d0bd4_main_merge-daily-coach-wide-context-ceiling-trial-v1.zip",
-    "previous_accepted_milestone": "Daily Coach Product Voice Audit Gate Fix v1",
-    "previous_main_merge_commit": "718c614",
-    "previous_snapshot": "fitness_ai_snapshot_2026-06-28_718c614_main_merge-daily-coach-product-voice-audit-gate-fix-v1.zip"
+    "active_backend_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
+    "active_backend_status": "approved for docs-only Backend implementation",
+    "active_project_memory_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
+    "active_project_memory_status": "docs/process/development architecture refresh active",
+    "current_source_of_truth": "main at 23b5378 Merge daily coach fully free source-data lab evidence v1",
+    "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
+    "latest_accepted_commit": "23b5378",
+    "latest_accepted_milestone": "Daily Coach Fully Free Source-Data Lab evidence v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
+    "latest_final_status": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_ACCEPTED_AS_DEVELOPER_ONLY_EVIDENCE",
+    "latest_main_merge_commit": "23b5378",
+    "latest_technical_baseline_commit": "23b5378",
+    "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
+    "next_product_architecture_center": "Daily Coach Backend Intelligence Foundation",
+    "previous_accepted_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
+    "previous_main_merge_commit": "56d63c4",
+    "previous_snapshot": "fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip",
+    "provider_voice_iteration": "paused"
   },
   "daily_coach_async_boundary": {
     "current": "Daily Coach async/provider work remains gated by accepted designs and developer-only/manual preview boundaries unless a later milestone explicitly authorizes runtime behavior.",
@@ -371,7 +408,11 @@
       "docs/project_memory/next_milestone.md",
       "docs/project_memory/handoffs/architecture_handoff_current.md",
       "docs/project_memory/handoffs/backend_handoff_current.md",
-      "docs/project_memory/handoffs/qa_handoff_current.md"
+      "docs/project_memory/handoffs/qa_handoff_current.md",
+      "docs/project_memory/team_routing_contract.md",
+      "docs/project_memory/team_quickstarts.md",
+      "docs/project_memory/development_architecture_chatgpt_workflow_v1.md",
+      "docs/project_memory/architecture/backend_intelligence_foundation_v1.md"
     ]
   },
   "future_feature_technology_inventory_v1": {
@@ -892,7 +933,7 @@
       "status": "BACKEND_IMPLEMENTATION_COMPLETE_READY_FOR_ARCHITECTURE_REVIEW"
     }
   },
-  "requested_backend_status": "DAILY_COACH_WIDE_CONTEXT_UNCAGED_GPT55_CEILING_TRIAL_V1_IMPLEMENTATION_COMPLETE",
+  "requested_backend_status": "PROJECT_MEMORY_HANDOFF_COMPRESSION_STALE_DOCS_DEVELOPMENT_ARCHITECTURE_V1_IMPLEMENTATION_COMPLETE",
   "runtime_split": {
     "linux": [
       "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
@@ -902,9 +943,21 @@
     ]
   },
   "status": {
-    "active_backend_milestone": "Daily Coach Full User-Day Free-Range Payload Baseline v1",
-    "active_backend_status": "backend_implementation_patch_ready_for_local_validation",
-    "requested_final_status": "DAILY_COACH_FULL_USER_DAY_FREE_RANGE_PAYLOAD_BASELINE_V1_IMPLEMENTATION_COMPLETE"
+    "active_backend_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
+    "active_backend_status": "docs_only_patch_ready_for_local_validation",
+    "requested_final_status": "PROJECT_MEMORY_HANDOFF_COMPRESSION_STALE_DOCS_DEVELOPMENT_ARCHITECTURE_V1_IMPLEMENTATION_COMPLETE"
+  },
+  "team_routing_contract": {
+    "project_memory_note": "Project Memory / All Future Agents is not a visible team lane; it is a repo continuity concern every team must respect.",
+    "visible_team_lanes": [
+      "Architecture",
+      "Backend Development",
+      "QA",
+      "Agent Engineering",
+      "Streamlit UI / UX",
+      "Portfolio Packaging",
+      "DevOps & Tooling"
+    ]
   },
   "workflow_reminders": {
     "external_script_command": "python ..\\<script>.py",

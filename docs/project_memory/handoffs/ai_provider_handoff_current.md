@@ -1,45 +1,24 @@
-# Current Handoff: AI Provider Integration
+# Current Agent/Provider Handoff — Provider Voice Pause
 
-Project: AI Health Coach / fitness-ai
+**Status:** Active provider/agent handoff
+**Current accepted main:** `23b5378 Merge daily coach fully free source-data lab evidence v1`
 
-Source of truth:
+## Current Decision
 
-- `docs/project_memory/current_state.md`
-- `docs/project_memory/ai_boundaries.md`
-- `docs/project_memory/section_registry_summary.md`
-- `docs/project_memory/future_architecture_ledger.md`
-- relevant milestone/review docs
+Provider voice iteration is paused. Do not continue same-lane Daily Coach prompt/provider tuning now.
 
-## Current accepted baseline
+## Evidence Summary
 
-Accepted main includes deterministic daily product surfaces, provider-integrated Training and Nutrition report sections with strict fallback, workout substitution/count/daily lifecycle improvements, catalog foundations, Daily Coach Developer Preview Stabilization v1, and project-memory checks.
+- v4 free-range decaging was accepted as developer-only diagnostic baseline at `56d63c4`.
+- Fully Free Source-Data Lab v1 was merged as developer-only evidence at `23b5378`.
+- Fully Free v1 was technically valid but not meaningfully better than v4.
+- Outputs were competent but generic and structurally repetitive.
+- The bottleneck is backend intelligence and source-data depth, not just prompt wording.
 
-## Current active milestone
+## Next Before More Provider Work
 
-`Project Memory Alignment + North Star Architecture v1`
+Backend Intelligence Foundation: Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, and Food Knowledge Expansion.
 
-This is a docs/tooling alignment milestone. Do not change app runtime behavior.
+## Parked Until Architecture Rescopes
 
-## Next likely provider milestone
-
-`Daily Coach Provider Preview Contract Reliability v1`, unless already accepted separately in a later handoff.
-
-## Reference-only branch
-
-`feature/daily-coach-narrative-same-session-approved-preview-bridge-v1` is not accepted and must not be merged. It remains useful only as a learning artifact.
-
-## Non-negotiable boundaries
-
-- Backend owns facts.
-- Deterministic fallback remains the default.
-- No provider call on normal Today load.
-- No same-session approval unless explicitly reauthorized.
-- No provider narrative persistence for Daily Coach.
-- No qwen3 model is promoted.
-- No raw/rejected provider output in normal UI.
-- No schema/persistence/report/workout/nutrition/catalog changes unless scoped.
-- No Aider, Headroom, Claude workflow, or `CLAUDE.md`.
-
-## Team focus
-
-Treat provider lanes as manual/gated unless explicitly promoted; validate parse/validation/fallback/diagnostics before any display or persistence work.
+RAG, embeddings, vector search, multi-agent synthesis, LangGraph/CrewAI/LlamaIndex runtime, provider prompt v5, reviewer/renderer implementation, and provider promotion.

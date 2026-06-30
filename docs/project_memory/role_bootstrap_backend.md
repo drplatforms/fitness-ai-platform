@@ -133,3 +133,17 @@ For complex features, Backend must:
 Bigger milestone is okay. Bigger single patch is not okay.
 
 Backend must stop and produce a diagnostic handoff if patch stacking begins to hide the real failure, the same bug survives two implementation patches, Linux smoke fails after Windows green, tests pass but browser smoke fails, a patch fails due to drift and the next step is not obvious, the branch exceeds the expected file-change budget, or implementation starts crossing into deferred v2 scope.
+
+---
+
+# Current Routing / State Addendum — 23b5378
+
+Current accepted main: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Exact visible team lanes: Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, DevOps & Tooling.
+
+Project Memory / All Future Agents is not a visible team lane. It is a repo continuity concern every team must respect.
+
+Provider voice iteration is paused. Backend Intelligence Foundation is next after docs cleanup.

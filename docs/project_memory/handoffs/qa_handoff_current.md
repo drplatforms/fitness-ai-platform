@@ -1,21 +1,39 @@
-# Current Handoff — Daily Coach Provider Trial Diagnostics v1
+# Current QA Handoff — Docs-Only Project Memory Refresh v1
 
-Recipient: QA / Regression Testing
+**Status:** Active QA handoff
+**Baseline:** `main @ 23b5378`
+**Milestone:** Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
 
-Project: AI Health Coach / fitness_ai
+## QA Scope
 
-Milestone: Daily Coach Provider Trial Diagnostics v1
+Validate that the docs now agree on accepted main `23b5378`, Fully Free Source-Data Lab v1 accepted as developer-only evidence, Fully Free v1 not meaningfully better than v4, provider voice iteration paused, docs refresh active milestone, Backend Intelligence Foundation next, exact seven team lanes, DevOps & Tooling narrow/low-frequency, and Portfolio Packaging low-frequency.
 
-Branch: `feature/daily-coach-provider-trial-diagnostics-v1`
+## Required Checks
 
-Source baseline: `main@a6cd8d0` plus accepted provider trial matrix tooling `4641c91`.
+```bash
+git diff --check
+python -m pytest tests/test_project_memory_check.py -q
+python tools/project_memory_check.py
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+python tools/dev_assistant.py continuity-brief
+```
 
-Status: Backend diagnostics patch prepared.
+Windows may also run:
 
-## Summary
+```powershell
+scripts/dev_commit_check.ps1 -Mode docs-only
+fsweep
+```
 
-Add safe diagnostics to `tools/run_daily_coach_provider_trial_matrix.py` for local provider-output inspection, safe OpenAI config/error classification, and optional Ollama unload cleanup.
+## Known Baseline Drift
 
-## Boundaries
+Known drift remains intentionally unpatched:
 
-No provider default changes. No Streamlit controls. No product runtime behavior changes. No raw provider output or secrets committed. No live provider calls in tests. Parser, validator, and approved-value quote validation remain mandatory and unchanged.
+```text
+tests/test_daily_narrative_rich_day_service.py
+expected: Read the day before adding more
+actual: Consider the full day
+```
+
+Do not claim full-suite green if this remains.

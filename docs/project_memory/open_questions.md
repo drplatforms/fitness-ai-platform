@@ -1,3 +1,64 @@
+# Open Questions — Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
+
+## Closed / answered
+
+### Daily Coach Fully Free Source-Data Lab v1
+
+Question:
+
+```text
+Can GPT-5.5 produce a meaningfully better Daily Coach note from clean organized source data and an extremely small prompt?
+```
+
+Answer:
+
+```text
+Not enough to justify more same-lane provider voice iteration now.
+```
+
+Recorded classification:
+
+```text
+DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED
+```
+
+Conclusion:
+
+- Fully Free Source-Data Lab v1 was technically valid and useful as developer-only evidence.
+- It produced completed drafts and valid artifacts.
+- It did not meaningfully beat the v4 free-range decaging diagnostic baseline.
+- Outputs were competent but generic and structurally repetitive.
+- Provider voice iteration is paused.
+- The next center of gravity is backend intelligence, not another prompt/provider voice pass.
+
+## Active questions for docs refresh
+
+1. Do `current_state.md`, `project_state.json`, `next_milestone.md`, `open_questions.md`, and current handoffs agree on `23b5378`?
+2. Do team-routing docs reflect the exact seven visible team lanes?
+3. Are DevOps & Tooling and Portfolio Packaging correctly marked as narrow/low-frequency?
+4. Is Backend Intelligence Foundation explicitly established as next center of gravity?
+5. Are provider experiments clearly paused?
+6. Are big-tech items parked behind backend intelligence?
+7. Can a new Architecture/Backend/QA chat onboard in under 5 minutes from repo docs?
+
+## Active architecture follow-up after docs refresh
+
+```text
+Backend Intelligence Foundation v1
+```
+
+Key design questions:
+
+- What facts should Recovery Intelligence compute deterministically before provider synthesis?
+- What set-level workout evidence should Workout Set Intelligence expose?
+- What trends should the Trend Engine compute before any retrieval/orchestration work?
+- What six-month seed data is needed for realistic coach intelligence evaluation?
+- What curated food knowledge is needed before expanding food/snack advice?
+
+## Historical open-question notes
+
+The sections below are historical unless promoted again by Architecture.
+
 # Open Questions — Daily Coach Fully Free Source-Data Lab v1
 
 ## Active

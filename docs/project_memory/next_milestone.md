@@ -1,3 +1,68 @@
+# Next Milestone — Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
+
+Recommended branch:
+
+```text
+feature/project-memory-handoff-compression-stale-docs-development-architecture-v1
+```
+
+Baseline:
+
+```text
+main @ 23b5378
+fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip
+```
+
+Owner:
+
+```text
+Backend Development
+```
+
+Reason:
+
+```text
+This is a repo-doc patch. Architecture owns scope, sequencing, and acceptance. Backend writes the patch.
+```
+
+Implementation focus:
+
+- Move current state from Fully Free Source-Data Lab active implementation to `23b5378` accepted evidence.
+- Record that Fully Free Lab v1 was technically valid but not meaningfully better than v4.
+- Record provider voice iteration pause.
+- Canonicalize the exact seven visible team/chat lanes.
+- Mark DevOps & Tooling and Portfolio Packaging as narrow/low-frequency lanes.
+- Establish Backend Intelligence Foundation as the next center of gravity.
+- Park RAG/vector/agent/orchestration work behind backend intelligence and source-data contracts.
+- Add ChatGPT development workflow, Prompt Lab lifecycle, Architecture review checklist, and Research workflow contracts.
+- Refresh current handoffs so new chats do not start from stale provider-trial work.
+
+After this docs milestone:
+
+```text
+Architecture regroup, then Backend Intelligence Foundation v1.
+```
+
+Backend Intelligence Foundation components:
+
+- Recovery Intelligence
+- Workout Set Intelligence
+- Trend Engine
+- Six-Month Seed Data
+- Food Knowledge Expansion
+
+Do not implement runtime behavior, provider behavior, UI, schema, migrations, RAG, embeddings, vector search, multi-agent runtime, custom GPT, provider prompt v2/v5, or reviewer/renderer work in this milestone.
+
+Requested final status:
+
+```text
+PROJECT_MEMORY_HANDOFF_COMPRESSION_STALE_DOCS_DEVELOPMENT_ARCHITECTURE_V1_IMPLEMENTATION_COMPLETE
+```
+
+## Historical next-milestone notes
+
+The sections below are historical. The active next milestone is the docs refresh above.
+
 # Next Milestone — Daily Coach Fully Free Source-Data Lab v1
 
 Recommended branch:

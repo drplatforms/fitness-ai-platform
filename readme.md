@@ -1,3 +1,15 @@
+# Current Development Status — 23b5378
+
+Latest accepted lab evidence: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Daily Coach provider trials are developer-only evidence, not production behavior. The v4 decaging diagnostic baseline is preserved, and Fully Free Source-Data Lab v1 was accepted as developer-only evidence but did not meaningfully beat v4.
+
+Provider voice iteration is paused. After the docs/process/development-architecture refresh, the next architecture focus is `Daily Coach Backend Intelligence Foundation`: Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, and Food Knowledge Expansion.
+
+No RAG, vector search, embeddings, multi-agent orchestration, provider promotion, or production Today provider display is authorized by this status.
+
+---
+
 # AI Health Coach
 
 AI Health Coach is a validation-first health coaching platform built with Python, FastAPI, Streamlit, SQLite, and local LLM provider integration through Ollama.

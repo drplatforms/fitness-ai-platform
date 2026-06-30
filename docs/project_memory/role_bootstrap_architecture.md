@@ -128,3 +128,25 @@ Architecture should reject test-green-only branches when the real smoke path or 
 Architecture owns acceptance. Architecture may authorize larger milestones only when they are internally phased into narrow diagnostic/test/implementation/review gates.
 
 Architecture enforces stop conditions. If repeated patching, patch drift, Linux smoke failure after Windows green, unclear candidate pools, state instability, file-budget growth, or v2 scope creep appears, Architecture should pause implementation and require a diagnostic handoff before more patching.
+
+---
+
+# Current Routing / State Addendum — 23b5378
+
+Current accepted main: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Active milestone: `Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1`.
+
+Exact visible team lanes: Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, DevOps & Tooling.
+
+Project Memory / All Future Agents is not a visible team lane. It is a repo continuity concern every team must respect.
+
+Provider voice iteration is paused. Backend Intelligence Foundation is next after docs cleanup.
+
+---
+
+# Backend Intelligence Foundation review addendum
+
+Architecture should route the next product-brain work toward Backend Intelligence Foundation: Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, and Food Knowledge Expansion.
+
+Do not authorize serious RAG, vector search, embeddings, multi-agent orchestration, LangGraph, CrewAI, LlamaIndex, or production-grade agent architecture until these backend intelligence layers and source-data contracts are robust enough to feed them.

@@ -1,3 +1,31 @@
+# Accepted Status — Daily Coach Free-Range Prompt + Payload Decaging v4
+
+Status:
+
+```text
+DAILY_COACH_FREE_RANGE_PROMPT_PAYLOAD_DECAGING_V4_ACCEPTED_AS_DEVELOPER_ONLY_DIAGNOSTIC_BASELINE
+```
+
+Main merge commit:
+
+```text
+56d63c4
+```
+
+Snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-29_56d63c4_main_merge-daily-coach-free-range-decaging-diagnostic-baseline-v4.zip
+```
+
+Meaning:
+
+```text
+Accepted as developer-only diagnostic baseline. Not production Today behavior and not provider promotion.
+```
+
+---
+
 # Daily Coach Free-Range Prompt + Payload Decaging v4
 
 ## Status

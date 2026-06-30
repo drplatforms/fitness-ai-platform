@@ -1,3 +1,19 @@
+# Current Accepted Baseline — 23b5378
+
+Current accepted baseline: `23b5378 Merge daily coach fully free source-data lab evidence v1`.
+
+Current accepted snapshot: `fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip`.
+
+Provider voice iteration is paused after v4 and Fully Free Source-Data Lab v1 evidence.
+
+Backend Intelligence Foundation is the next center of gravity: Recovery Intelligence, Workout Set Intelligence, Trend Engine, Six-Month Seed Data, Food Knowledge Expansion.
+
+Do not introduce RAG, vector search, embeddings, multi-agent orchestration, LangGraph, CrewAI, LlamaIndex, or production-grade agent architecture before backend intelligence and source-data contracts are robust enough to feed them.
+
+Canonical seven visible team lanes: Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, DevOps & Tooling.
+
+---
+
 # AI Health Coach Agent Instructions
 
 This file is the repo-level instruction source for ChatGPT, Codex-style OpenAI coding helpers, Aider-style patch tools, GitHub Copilot, and human contributors.
@@ -17,9 +33,16 @@ Read project memory before making changes:
 9. `docs/project_memory/developer_delivery_workflow_script_safety_addendum_v1.md`
 10. `docs/project_memory/local_developer_command_menu.md`
 11. `docs/project_memory/open_questions.md`
-11. `docs/project_memory/future_architecture_ledger.md`
-12. `docs/project_memory/premium_platform_blueprint.md`
-13. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
+12. `docs/project_memory/team_routing_contract.md`
+13. `docs/project_memory/team_quickstarts.md`
+14. `docs/project_memory/development_architecture_chatgpt_workflow_v1.md`
+15. `docs/project_memory/prompt_lab_lifecycle_contract.md`
+16. `docs/project_memory/architecture_review_checklist_v1.md`
+17. `docs/project_memory/research_workflow_contract_v1.md`
+18. `docs/project_memory/future_architecture_ledger.md`
+19. `docs/project_memory/architecture/backend_intelligence_foundation_v1.md`
+20. `docs/project_memory/premium_platform_blueprint.md`
+21. Milestone-specific docs under `docs/project_memory/milestones/`, `reviews/`, `runtime_qa/`, and `architecture/`
 
 When project memory and a pasted prompt disagree, stop and ask for the latest source-of-truth snapshot or Architecture handoff.
 

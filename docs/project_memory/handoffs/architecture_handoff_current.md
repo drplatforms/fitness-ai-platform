@@ -1,21 +1,28 @@
-# Current Handoff — Daily Coach Provider Trial Diagnostics v1
+# Current Architecture Handoff — Project Memory + Development Architecture Refresh v1
 
-Recipient: Architecture
+**Status:** Active current handoff
+**Current accepted main:** `23b5378 Merge daily coach fully free source-data lab evidence v1`
+**Active milestone:** Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
 
-Project: AI Health Coach / fitness_ai
+## Architecture Decision
 
-Milestone: Daily Coach Provider Trial Diagnostics v1
+The current milestone is docs-only project-memory and development-architecture cleanup. Backend Development is routed to write the repo-doc patch. Architecture owns scope and acceptance.
 
-Branch: `feature/daily-coach-provider-trial-diagnostics-v1`
+## Current Truth
 
-Source baseline: `main@a6cd8d0` plus accepted provider trial matrix tooling `4641c91`.
+- v4 free-range decaging is accepted as developer-only diagnostic baseline at `56d63c4`.
+- Fully Free Source-Data Lab v1 is merged as developer-only evidence at `23b5378`.
+- Fully Free v1 was technically valid but not meaningfully better than v4.
+- Provider voice iteration is paused.
+- Do not continue same-lane provider prompt tuning now.
+- Backend Intelligence Foundation is the next product center after docs cleanup.
 
-Status: Backend diagnostics patch prepared.
+## Canonical Team Lanes
 
-## Summary
+Architecture; Backend Development; QA; Agent Engineering; Streamlit UI / UX; Portfolio Packaging; DevOps & Tooling.
 
-Add safe diagnostics to `tools/run_daily_coach_provider_trial_matrix.py` for local provider-output inspection, safe OpenAI config/error classification, and optional Ollama unload cleanup.
+Project Memory is not a visible team lane. It is a repo continuity concern for all teams.
 
-## Boundaries
+## Non-Goals
 
-No provider default changes. No Streamlit controls. No product runtime behavior changes. No raw provider output or secrets committed. No live provider calls in tests. Parser, validator, and approved-value quote validation remain mandatory and unchanged.
+No runtime behavior changes, provider behavior changes, UI changes, schema changes, RAG, embeddings, vector DB, multi-agent runtime, custom GPT build, recovery/workout/trend implementation, or food expansion.

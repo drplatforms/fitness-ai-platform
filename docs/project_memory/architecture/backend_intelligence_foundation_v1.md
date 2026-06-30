@@ -47,3 +47,19 @@ Backend Intelligence Foundation
 ```
 
 Provider voice work pauses until richer source data and UI/renderer boundaries exist.
+
+## Implementation Slice — Daily Coach Intelligence Snapshot + Recovery Intelligence v1
+
+Baseline: `main @ 271ac7e`.
+
+This is the first concrete implementation slice after the docs/process/development architecture refresh.
+
+Scope:
+
+- Recovery Intelligence v1 is implemented as a read-only deterministic layer over `daily_checkins`.
+- Daily Coach Intelligence Snapshot v1 is implemented as a read-only source-data contract.
+- Training Execution Summary is included read-only as existing evidence.
+- Nutrition Trend Window is included read-only when available, otherwise recorded as a controlled limitation.
+- Foundation layer status remains honest: Workout Set Intelligence, full Trend Engine, Six-Month Seed Data refinement, and Food Knowledge Expansion are not complete in this slice.
+
+Provider voice iteration remains paused. This slice improves source-data truth, not prompt style.

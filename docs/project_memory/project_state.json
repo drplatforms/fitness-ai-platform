@@ -17,19 +17,18 @@
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "commit_check_mode": "docs-only",
-    "current_authorized_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
-    "current_recommended_milestone": "Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-29_271ac7e_main_merge-project-memory-docs-development-architecture-refresh-v1.zip",
+    "commit_check_mode": "targeted-backend-and-docs",
+    "current_authorized_milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
+    "current_recommended_milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can repo docs onboard new chats from 23b5378 without stale provider-lab drift?",
-    "qa_class": "DOCS_ONLY_PROJECT_MEMORY_DEVELOPMENT_ARCHITECTURE_REFRESH",
-    "recommended_next_milestone_after_acceptance": "Architecture regroup, then Backend Intelligence Foundation v1",
+    "primary_question": "Can Recovery Intelligence v1 and a Daily Coach Intelligence Snapshot provide a stable backend-owned source-data contract for future Daily Coach intelligence?",
+    "qa_class": "BACKEND_INTELLIGENCE_FOUNDATION_READ_ONLY_SOURCE_DATA_CONTRACT",
+    "recommended_next_milestone_after_acceptance": "Architecture review, then next Backend Intelligence Foundation slice",
     "recommended_owner": "Backend Development",
-    "secondary_owner": "Architecture / QA / Agent Engineering / Streamlit UI / UX / Portfolio Packaging / DevOps & Tooling",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "23b5378"
+    "source_main_commit": "271ac7e"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -41,6 +40,16 @@
     ],
     "next_center_of_gravity": "Daily Coach Backend Intelligence Foundation",
     "sequencing_rule": "No serious RAG/vector/embeddings/multi-agent/orchestration until backend intelligence layers and source-data contracts are robust enough to feed them."
+  },
+  "backend_intelligence_foundation": {
+    "daily_coach_intelligence_snapshot_recovery_v1": {
+      "baseline_commit": "271ac7e",
+      "milestone": "Daily Coach Intelligence Snapshot + Recovery Intelligence v1",
+      "provider_voice_iteration": "paused",
+      "runtime_behavior_change": false,
+      "scope": "Recovery Intelligence v1 plus read-only Daily Coach Intelligence Snapshot v1",
+      "status": "APPROVED_FOR_BACKEND_IMPLEMENTATION"
+    }
   },
   "boundaries": {
     "active_workout_preserved": true,

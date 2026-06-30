@@ -1,3 +1,57 @@
+# Current State — Daily Coach Intelligence Snapshot + Recovery Intelligence v1
+
+Current accepted main:
+
+```text
+271ac7e main_merge-project-memory-docs-development-architecture-refresh-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-29_271ac7e_main_merge-project-memory-docs-development-architecture-refresh-v1.zip
+```
+
+Active backend milestone:
+
+```text
+Daily Coach Intelligence Snapshot + Recovery Intelligence v1
+```
+
+Requested status:
+
+```text
+DAILY_COACH_INTELLIGENCE_SNAPSHOT_RECOVERY_V1_IMPLEMENTATION_COMPLETE
+```
+
+This is the first concrete Backend Intelligence Foundation implementation slice after the docs/process/development architecture refresh.
+
+Implemented/active scope:
+
+- Recovery Intelligence v1 as a read-only deterministic layer over `daily_checkins`.
+- Daily Coach Intelligence Snapshot v1 as a read-only backend-owned source-data contract.
+- Existing Training Execution Summary is included read-only.
+- Existing Nutrition Trend Window is included read-only or recorded as a controlled limitation if unavailable locally.
+- Developer-only artifact tool: `tools/dev_daily_coach_intelligence_snapshot.py`.
+
+Foundation layer status:
+
+```text
+recovery_intelligence: implemented_v1
+workout_set_intelligence: existing_training_execution_summary_only
+trend_engine: nutrition_trend_existing_only
+six_month_seed_data: existing_qa_seed_data_only
+food_knowledge_expansion: starter_catalog_existing_expansion_pending
+```
+
+Provider voice iteration remains paused. This milestone improves backend facts and source-data contracts, not provider prompts.
+
+No user-facing behavior changes are authorized or implemented. Normal Today remains unchanged.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside this milestone.
+
+---
+
 # Current State — Project Memory + Handoff Workflow Compression + Stale Docs Hygiene + Development Architecture v1
 
 Current accepted main:

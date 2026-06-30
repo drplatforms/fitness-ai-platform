@@ -1,53 +1,86 @@
-# Next Milestone — Platform North Star + Future Stack Canonicalization v1
+# Next Milestone — Recovery Intelligence v2 Architecture Planning v1
 
 Baseline:
 
 ```text
-main @ 123d115
-fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip
-```
-
-Active milestone:
-
-```text
-Platform North Star + Future Stack Canonicalization v1
+main @ 187e433
+fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
 ```
 
 Owner:
 
 ```text
-Backend Development
+Architecture
 ```
 
 Purpose:
 
 ```text
-Create the canonical long-term platform vision and future technology stack source of truth before archiving the current Architecture chat and onboarding a new Architecture chat.
+Design the next Recovery Intelligence layer before Backend implementation. The goal is to make recovery signals more useful to Daily Coach intelligence without changing runtime behavior prematurely.
 ```
 
 Primary deliverable:
 
 ```text
-docs/project_memory/architecture/platform_north_star_and_future_stack.md
+docs/project_memory/architecture/recovery_intelligence_v2_plan.md
 ```
 
-Existing docs should reference the north-star file rather than duplicate it.
+Expected design topics:
 
-After this milestone:
+- What Recovery Intelligence v1 already provides.
+- Which v2 signals are allowed: sleep consistency, energy trend, soreness trend, body-weight trend, check-in completeness, rolling readiness, fatigue-risk support, and recovery-data confidence.
+- How Recovery Intelligence v2 should interact with Workout Set Intelligence v1 and the Daily Coach Intelligence Snapshot.
+- How confidence/provenance/limitations should be represented.
+- How to avoid medical, diagnostic, injury, illness, sleep-disorder, or overtraining claims.
+- Which behavior changes are explicitly not authorized until after design acceptance.
+
+Non-goals for planning:
 
 ```text
-Archive current Architecture chat.
-Onboard new Architecture chat from the latest accepted snapshot and project memory.
-Resume Backend Intelligence Foundation planning.
+runtime behavior changes
+provider behavior changes
+OpenAI/Ollama defaults
+Today provider display
+Streamlit UI changes
+API changes
+schema changes
+migration changes
+RAG
+embeddings
+pgvector
+Qdrant
+vector DB setup
+LangGraph
+CrewAI
+LlamaIndex
+multi-agent runtime
+custom GPT build
+food catalog expansion
+USDA import
+wearable integration
+auth/billing/SaaS infrastructure
+observability stack setup
+cloud deployment
 ```
 
-Expected next architecture planning target after the new Architecture chat is onboarded:
+Recommended validation for design-only work:
 
 ```text
-Recovery Intelligence v2
+git diff --check
+python -m pytest tests/test_project_memory_check.py -q
+python tools/project_memory_check.py
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+scripts/dev_commit_check.ps1 -Mode docs-only
 ```
 
-This milestone is docs-only and does not authorize runtime behavior, provider behavior, UI, schema, RAG/vector/agent, SaaS infrastructure, or product feature implementation.
+Completion criteria:
+
+- Recovery Intelligence v2 scope is specific enough for Backend to implement later.
+- Backend-owned truth, confidence, provenance, limitations, and deterministic fallback remain explicit.
+- AI/provider output remains out of scope.
+- No user-facing behavior is changed.
+- Project memory points to the accepted `187e433` baseline.
 
 ---
 

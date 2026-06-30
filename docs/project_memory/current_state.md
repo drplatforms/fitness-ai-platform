@@ -1,41 +1,24 @@
-# Current State — Platform North Star + Future Stack Canonicalization v1
+# Current State — Post-North-Star Architecture Onboarding
 
 Current accepted main:
 
 ```text
-123d115 main_merge-daily-coach-workout-set-intelligence-v1
+187e433 main_merge-platform-north-star-future-stack-canonicalization-v1
 ```
 
 Current accepted snapshot:
 
 ```text
-fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip
+fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
 ```
 
-Latest Backend Intelligence Foundation evidence:
-
-- Recovery Intelligence v1 is accepted and merged.
-- Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 is accepted and merged at `123d115`.
-- Daily Coach Intelligence Snapshot v2 carries recovery and workout-set intelligence as read-only deterministic source-data layers.
-- Provider voice iteration remains paused.
-
-Active milestone:
+Latest accepted milestone:
 
 ```text
 Platform North Star + Future Stack Canonicalization v1
 ```
 
-Requested status:
-
-```text
-PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_IMPLEMENTATION_COMPLETE
-```
-
-Purpose:
-
-```text
-Create a durable strategic source of truth before archiving the current Architecture chat and onboarding a new Architecture chat.
-```
+The current Architecture lane is now onboarded from the accepted `187e433` snapshot. Repo docs and the latest accepted snapshot are canonical; chat memory is useful but not authoritative.
 
 Canonical north-star file:
 
@@ -43,19 +26,30 @@ Canonical north-star file:
 docs/project_memory/architecture/platform_north_star_and_future_stack.md
 ```
 
-Read the north-star file before making future-stack, SaaS, RAG, vector, agent, model-routing, or product-platform decisions.
+The north-star file is a strategic compass. It does not authorize immediate implementation of RAG, vector search, model routing, multi-agent orchestration, SaaS infrastructure, provider promotion, UI rewrites, or runtime behavior changes.
 
-Next after this docs-only milestone:
+Latest Backend Intelligence Foundation evidence:
+
+- Recovery Intelligence v1 is accepted and merged at `43927d4`.
+- Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 is accepted and merged at `123d115`.
+- Platform North Star + Future Stack Canonicalization v1 is accepted and merged at `187e433`.
+- Provider voice iteration remains paused.
+
+Current next architecture planning target:
 
 ```text
-Archive current Architecture chat.
-Onboard new Architecture chat from the latest snapshot, current project memory, and the north-star file.
-Then resume Backend Intelligence Foundation planning, with Recovery Intelligence v2 expected as the next architecture target unless Architecture changes course.
+Recovery Intelligence v2 Architecture Planning v1
 ```
 
-No runtime/product behavior changes are authorized or implemented by this milestone.
+Purpose of the next planning slice:
 
-Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside this docs-only milestone.
+```text
+Define how Recovery Intelligence should evolve after v1 before Backend implementation begins. The design must preserve backend-owned facts, confidence, provenance, deterministic fallback, and no medical/diagnostic claims.
+```
+
+No runtime/product behavior changes are authorized by this current state update.
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated docs or intelligence milestones.
 
 ---
 

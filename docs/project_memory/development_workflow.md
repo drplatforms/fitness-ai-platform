@@ -18,6 +18,19 @@ cd C:\projects\fitness_ai
 
 Temporary delivery artifacts are saved outside the repo, normally in `C:\projects`, and commands are run from the repo root. Do not place temporary patches, apply scripts, changed-files zips, or snapshots inside `C:\projects\fitness_ai` unless a milestone explicitly adds a reusable repo tool.
 
+
+## Architecture vs Backend patch ownership
+
+Architecture may produce docs-only project-memory patches when the milestone is strictly documentation, state reconciliation, workflow memory, architecture plans, ADRs, reviews, or handoffs. This is a process shortcut only; it is not permission for Architecture to edit runtime behavior.
+
+Backend Development owns implementation patches and any change touching Python services, models, API routes, Streamlit behavior, tests, database/schema behavior, provider behavior, or application tooling behavior.
+
+The standing phase-separated command templates for Backend patch application and Architecture acceptance/merge/snapshot live in:
+
+```text
+docs/project_memory/architecture_backend_command_workflow_v1.md
+```
+
 ## Windows vs Linux responsibility split
 
 Windows owns source-of-truth repo work:

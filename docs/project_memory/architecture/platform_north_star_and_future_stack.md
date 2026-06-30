@@ -4,6 +4,7 @@
 **Baseline:** `123d115 main_merge-daily-coach-workout-set-intelligence-v1`
 **Baseline snapshot:** `fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip`
 **Milestone:** Platform North Star + Future Stack Canonicalization v1
+**Accepted in:** `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`
 
 This file is the durable strategic north star for Fitness AI Platform. It preserves the big dream while keeping implementation sequencing disciplined.
 

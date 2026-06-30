@@ -8,7 +8,7 @@ docs/project_memory/architecture/platform_north_star_and_future_stack.md
 
 Use that file as the strategic source of truth for future-stack, SaaS, RAG, vector, agent, model-routing, and product-platform decisions. This ledger remains a historical/future-direction companion.
 
-Current accepted baseline for this reference: `123d115 main_merge-daily-coach-workout-set-intelligence-v1`.
+Current accepted baseline for this reference: `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`.
 
 Backend Intelligence Foundation remains the prerequisite for advanced retrieval/orchestration candidates.
 

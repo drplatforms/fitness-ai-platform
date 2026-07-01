@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from contextlib import redirect_stdout
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -52,10 +53,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    summary = build_recovery_intelligence_v2(
-        user_id=args.user_id,
-        target_date=args.target_date,
-    )
+    if args.json:
+        with redirect_stdout(sys.stderr):
+            summary = build_recovery_intelligence_v2(
+                user_id=args.user_id,
+                target_date=args.target_date,
+            )
+    else:
+        summary = build_recovery_intelligence_v2(
+            user_id=args.user_id,
+            target_date=args.target_date,
+        )
     payload = summary.to_dict()
 
     if args.json:

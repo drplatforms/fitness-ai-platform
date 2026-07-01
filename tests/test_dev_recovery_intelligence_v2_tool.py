@@ -181,6 +181,23 @@ def test_json_mode_prints_valid_json(monkeypatch, capsys) -> None:
     assert not captured.err
 
 
+def test_json_mode_redirects_service_stdout_to_stderr(monkeypatch, capsys) -> None:
+    def fake_build(user_id: int, target_date: str | None = None):
+        print("Using database: /tmp/fitness_ai.db")
+        return _summary()
+
+    monkeypatch.setattr(tool, "build_recovery_intelligence_v2", fake_build)
+
+    exit_code = tool.main(["--user-id", "102", "--date", "2026-06-14", "--json"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    payload = json.loads(captured.out)
+    assert payload["user_id"] == 102
+    assert "Using database:" not in captured.out
+    assert "Using database:" in captured.err
+
+
 def test_compact_mode_prints_shorter_summary(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         tool,

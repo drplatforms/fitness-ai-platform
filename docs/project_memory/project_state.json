@@ -59,6 +59,12 @@
       "meaning": "read-only Recovery Intelligence v2 service built from daily_checkins; no Daily Coach Note/UI/API/provider/schema integration",
       "snapshot": "fitness_ai_snapshot_2026-07-01_09c6581_main_merge-recovery-intelligence-v2-service-v1.zip",
       "status": "RECOVERY_INTELLIGENCE_V2_SERVICE_V1_ACCEPTED_AND_MERGED"
+    },
+    "recovery_aware_coach_copy_contract_v1": {
+      "main_commit": "c940ff4",
+      "meaning": "deterministic read-only Recovery-Aware Coach Copy Contract accepted as the baseline for bounded Daily Coach Note recovery-aware language",
+      "snapshot": "fitness_ai_snapshot_2026-07-01_c940ff4_main_merge-recovery-aware-coach-copy-contract-v1.zip",
+      "status": "RECOVERY_AWARE_COACH_COPY_CONTRACT_V1_ACCEPTED_AND_MERGED"
     }
   },
   "active_roadmap": {
@@ -414,20 +420,20 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Daily Coach Note Recovery v2 Integration v1",
-    "active_backend_status": "approved_for_daily_coach_note_recovery_v2_integration_implementation",
-    "active_project_memory_milestone": "Daily Coach Note Recovery v2 Integration v1",
-    "active_project_memory_status": "daily_coach_note_recovery_v2_integration_active",
-    "current_source_of_truth": "main at d2e0178 main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1",
+    "active_backend_milestone": "Daily Coach Note Recovery-Aware Language v1",
+    "active_backend_status": "daily_coach_note_recovery_aware_language_active",
+    "active_project_memory_milestone": "Daily Coach Note Recovery-Aware Language v1",
+    "active_project_memory_status": "daily_coach_note_recovery_aware_language_active",
+    "current_source_of_truth": "main at c940ff4 Merge recovery-aware coach copy contract v1",
     "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
-    "latest_accepted_commit": "d2e0178",
-    "latest_accepted_milestone": "Recovery Intelligence v2 QA Seed Matrix Validation v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip",
+    "latest_accepted_commit": "c940ff4",
+    "latest_accepted_milestone": "Recovery-Aware Coach Copy Contract v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-07-01_c940ff4_main_merge-recovery-aware-coach-copy-contract-v1.zip",
     "latest_final_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_ACCEPTED_AND_MERGED",
-    "latest_main_merge_commit": "d2e0178",
+    "latest_main_merge_commit": "c940ff4",
     "latest_technical_baseline_commit": "23b5378",
     "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "next_product_architecture_center": "Backend Intelligence Foundation: Daily Coach Note Recovery v2 Integration v1, then Architecture chooses recovery-aware copy or usage contract",
+    "next_product_architecture_center": "Daily Coach Note recovery-aware language review, then Architecture chooses the next narrow Daily Coach Note integration slice",
     "platform_north_star_file": "docs/project_memory/architecture/platform_north_star_and_future_stack.md",
     "previous_accepted_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
     "previous_main_merge_commit": "56d63c4",
@@ -1057,7 +1063,7 @@
       "status": "ACCEPTED_AND_MERGED"
     }
   },
-  "requested_backend_status": "DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE",
+  "requested_backend_status": "DAILY_COACH_NOTE_RECOVERY_AWARE_LANGUAGE_V1_IMPLEMENTATION_COMPLETE",
   "runtime_split": {
     "linux": [
       "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
@@ -1067,9 +1073,9 @@
     ]
   },
   "status": {
-    "active_backend_milestone": "Daily Coach Note Recovery v2 Integration v1",
-    "active_backend_status": "backend_daily_coach_note_recovery_v2_integration_active",
-    "requested_final_status": "DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE"
+    "active_backend_milestone": "Daily Coach Note Recovery-Aware Language v1",
+    "active_backend_status": "backend_daily_coach_note_recovery_aware_language_active",
+    "requested_final_status": "DAILY_COACH_NOTE_RECOVERY_AWARE_LANGUAGE_V1_IMPLEMENTATION_COMPLETE"
   },
   "team_routing_contract": {
     "project_memory_note": "Project Memory / All Future Agents is not a visible team lane; it is a repo continuity concern every team must respect.",
@@ -1206,6 +1212,37 @@
       "no nutrition target behavior",
       "no automatic deload/progression logic",
       "no wearable/HRV integration",
+      "no medical interpretation"
+    ]
+  },
+  "daily_coach_note_recovery_aware_language_v1": {
+    "status": "implementation_complete_ready_for_architecture_review",
+    "source_main_commit": "c940ff4",
+    "source_snapshot": "fitness_ai_snapshot_2026-07-01_c940ff4_main_merge-recovery-aware-coach-copy-contract-v1.zip",
+    "feature_branch": "feature/daily-coach-note-recovery-aware-language-v1",
+    "requested_final_status": "DAILY_COACH_NOTE_RECOVERY_AWARE_LANGUAGE_V1_IMPLEMENTATION_COMPLETE",
+    "scope": "add optional RecoveryAwareCoachCopyContract support to deterministic Daily Coach Note Today card copy path",
+    "behavior": [
+      "backward-compatible when no recovery contract is supplied",
+      "accepts RecoveryAwareCoachCopyContract objects",
+      "accepts serialized recovery copy contract dictionaries",
+      "adds one bounded recovery-aware sentence only when contract guidance allows it",
+      "preserves limited/unavailable caveats through limited-context wording",
+      "does not expose internal contract/provider/debug terminology in public Today card text",
+      "does not change Daily Next Action selection"
+    ],
+    "non_goals": [
+      "no provider-generated Daily Coach Note copy",
+      "no OpenAI/Ollama/CrewAI behavior",
+      "no Streamlit UI changes",
+      "no API route changes",
+      "no database schema or migration changes",
+      "no persistence behavior changes",
+      "no report behavior changes",
+      "no recommendation behavior changes",
+      "no workout plan behavior changes",
+      "no nutrition target behavior changes",
+      "no automatic deload/progression logic",
       "no medical interpretation"
     ]
   }

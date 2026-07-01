@@ -1,3 +1,99 @@
+# Current State — Daily Coach Note Recovery-Aware Language v1
+
+Current accepted baseline:
+
+```text
+c940ff4 Merge recovery-aware coach copy contract v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_c940ff4_main_merge-recovery-aware-coach-copy-contract-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Recovery-Aware Coach Copy Contract v1
+```
+
+Active backend implementation milestone:
+
+```text
+Daily Coach Note Recovery-Aware Language v1
+```
+
+Requested status:
+
+```text
+DAILY_COACH_NOTE_RECOVERY_AWARE_LANGUAGE_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Use the accepted Recovery-Aware Coach Copy Contract to add the first bounded, deterministic, user-facing recovery-aware sentence to the Daily Coach Note / Today card path when an approved contract is supplied.
+```
+
+Expected implementation files:
+
+```text
+services/daily_coach_today_card_service.py
+tests/test_daily_coach_today_card_service.py
+docs/project_memory/current_state.md
+docs/project_memory/next_milestone.md
+docs/project_memory/project_state.json
+docs/project_memory/milestones/daily_coach_note_recovery_aware_language_v1.md
+```
+
+Implemented scope:
+
+- `build_daily_coach_today_card()` remains backward compatible when no recovery contract is provided.
+- The Today card can accept a `RecoveryAwareCoachCopyContract` object or serialized contract dictionary.
+- Recovery-aware Today card language is deterministic and contract-bound.
+- The Today card may add one short recovery-aware sentence only when the supplied contract supports bounded copy.
+- Limited, unavailable, missing, partial, Low-confidence, or Limited-confidence recovery context uses limited-context wording.
+- The Today card does not expose provider/debug/internal contract terminology in public text.
+- The Today card does not display forbidden recovery-copy language.
+- The Today card keeps `coach_note` within the 520-character limit.
+- Daily Next Action selection behavior remains unchanged.
+
+This milestone adds the first bounded user-facing Daily Coach Note recovery-aware language.
+
+The language is deterministic and contract-bound.
+
+The language is not provider-generated.
+
+The language does not change Daily Next Action selection.
+
+The language does not add automatic deload/progression behavior.
+
+The language does not add medical interpretation.
+
+The language does not change UI/API/schema/persistence/report/recommendation behavior.
+
+Backend chat operating rule remains active:
+
+```text
+Architecture prepares Backend implementation handoffs/tasks.
+Architecture separately prepares QA testing instructions.
+Backend implements the Architecture-provided task.
+Backend reports branch, commit, and validation evidence when requested.
+Architecture owns final acceptance, merge, snapshot, and next milestone selection.
+```
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated Daily Coach Note Recovery-Aware Language work.
+
+---
+
 # Current State — Recovery-Aware Coach Copy Contract v1
 
 Current accepted baseline:

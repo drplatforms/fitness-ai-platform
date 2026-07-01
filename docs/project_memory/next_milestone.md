@@ -111,7 +111,7 @@ Recovery Intelligence v2 QA seed matrix artifacts
 Non-goals unless Architecture explicitly authorizes them:
 
 ```text
-Daily Coach Snapshot integration
+Daily Coach Note integration
 API changes
 Streamlit changes
 database/schema changes
@@ -190,7 +190,7 @@ Expected future service behavior:
 Non-goals for the next service slice unless Architecture explicitly expands scope:
 
 ```text
-Daily Coach Snapshot integration
+Daily Coach Note integration
 API changes
 Streamlit changes
 database/schema changes

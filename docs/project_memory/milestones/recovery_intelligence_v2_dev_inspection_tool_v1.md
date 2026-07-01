@@ -72,7 +72,7 @@ Daily Coach Note
 instead of casually adding more product-facing uses of:
 
 ```text
-Daily Coach Snapshot
+Daily Coach Note
 ```
 
 Existing implementation names such as `DailyCoachIntelligenceSnapshot` are not renamed by this milestone.

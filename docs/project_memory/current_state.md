@@ -124,7 +124,7 @@ Scope is limited to constructing the existing `RecoveryIntelligenceV2Summary` mo
 - construct indicator-level interpretations for sleep, energy, soreness, body weight, and check-in consistency
 - construct data quality, provenance/source facts, confidence, reason codes, limitations, and a coach-safe summary
 
-No Daily Coach Snapshot integration, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, report behavior, or runtime behavior beyond the new read-only service is authorized by this implementation slice.
+No Daily Coach Note integration, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, report behavior, or runtime behavior beyond the new read-only service is authorized by this implementation slice.
 
 Hard workflow rule remains active:
 

@@ -1,7 +1,7 @@
 # Backend Intelligence Foundation v1
 
 **Status:** Next product architecture center after docs/process cleanup
-**Current accepted main:** `fc7ed70 main_merge-post-north-star-state-reconciliation-v1`
+**Current accepted main:** `871d090 main_merge-recovery-intelligence-v2-architecture-planning-v1`
 
 Backend Intelligence Foundation is the product-brain prerequisite for advanced provider, RAG, vector, and agent architecture.
 
@@ -117,3 +117,19 @@ docs/project_memory/architecture/platform_north_star_and_future_stack.md
 ```
 
 Backend Intelligence Foundation remains the product-brain prerequisite described by the north-star file. Future RAG, vector search, model routing, multi-agent orchestration, and SaaS-grade platform architecture stay parked until Architecture scopes them after the backend source-data contracts are mature enough.
+
+
+## Implementation Slice — Recovery Intelligence v2 Model Contract v1
+
+Baseline: `main @ 871d090`.
+
+This is the first implementation slice after the accepted Recovery Intelligence v2 architecture plan.
+
+Scope:
+
+- Add `models/recovery_intelligence_v2_models.py`.
+- Add `tests/test_recovery_intelligence_v2_models.py`.
+- Define bounded, serializable model contracts for v2 recovery indicator/day context, baseline, deltas, indicator interpretation, recovery pressure, readiness classification, data quality, provenance/source facts, confidence, reason codes, limitations, and coach-safe summary guardrails.
+- Preserve the staged architecture boundary: no v2 service, no Daily Coach Snapshot integration, no recommendation behavior, no provider behavior, no API/UI/schema changes.
+
+Recovery v2 remains read-only and non-medical. This model-contract milestone prepares the future service layer without changing runtime behavior.

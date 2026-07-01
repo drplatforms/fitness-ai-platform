@@ -1,3 +1,75 @@
+# Current State — Recovery Intelligence v2 Model Contract v1
+
+Current accepted baseline:
+
+```text
+871d090 main_merge-recovery-intelligence-v2-architecture-planning-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_871d090_main_merge-recovery-intelligence-v2-architecture-planning-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Recovery Intelligence v2 Architecture Planning v1
+```
+
+Active backend implementation milestone:
+
+```text
+Recovery Intelligence v2 Model Contract v1
+```
+
+Requested status:
+
+```text
+RECOVERY_INTELLIGENCE_V2_MODEL_CONTRACT_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Add Recovery Intelligence v2 model contracts and tests before any v2 service, Daily Coach Intelligence Snapshot integration, recommendation behavior, provider, API, UI, schema, or persistence changes are authorized.
+```
+
+Expected implementation files:
+
+```text
+models/recovery_intelligence_v2_models.py
+tests/test_recovery_intelligence_v2_models.py
+docs/project_memory/milestones/recovery_intelligence_v2_model_contract_v1.md
+```
+
+Scope is limited to bounded, serializable model contracts for future Recovery Intelligence v2 concepts:
+
+- current recovery indicator/day context
+- recovery baseline
+- recent-vs-baseline delta
+- recent-vs-prior delta
+- indicator-level interpretation
+- recovery pressure classification
+- readiness classification v2
+- data quality
+- provenance/source-fact references
+- confidence, reason codes, limitations, and coach-safe summary guardrails
+
+No service integration, Daily Coach snapshot integration, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, or runtime behavior is authorized by this implementation slice.
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated model-contract or intelligence milestones.
+
+---
+
 # Current State — Recovery Intelligence v2 Architecture Planning v1
 
 Current accepted baseline before this docs-only planning slice:

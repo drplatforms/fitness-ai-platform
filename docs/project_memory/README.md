@@ -1,11 +1,11 @@
-# Current Project Memory Status — 187e433
+# Current Project Memory Status — 871d090
 
-Latest accepted main evidence: `Platform North Star + Future Stack Canonicalization v1 @ 187e433`.
+Latest accepted main evidence: `Recovery Intelligence v2 Architecture Planning v1 @ 871d090`.
 
 Latest accepted snapshot:
 
 ```text
-fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
+fitness_ai_snapshot_2026-06-30_871d090_main_merge-recovery-intelligence-v2-architecture-planning-v1.zip
 ```
 
 Canonical long-term platform vision and future technology stack:
@@ -18,7 +18,7 @@ Read the north-star file before making future-stack, SaaS, RAG, vector, agent, m
 
 Provider voice iteration is paused. Backend Intelligence Foundation remains the product-brain center of gravity.
 
-Current Architecture docs-only target: `Recovery Intelligence v2 Architecture Planning v1`. After this plan is accepted, the next recommended implementation slice is `Recovery Intelligence v2 Model Contract v1`.
+Current Backend implementation target: `Recovery Intelligence v2 Model Contract v1`. This slice adds models/tests only; v2 service and snapshot integration remain future milestones.
 
 Canonical seven visible team lanes are recorded in `team_routing_contract.md`.
 

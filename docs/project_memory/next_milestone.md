@@ -1,3 +1,68 @@
+# Next Milestone — Architecture Selection After Recovery-Aware Coach Copy Contract v1
+
+This next milestone should be selected only after Recovery-Aware Coach Copy Contract v1 is accepted, merged to `main`, pushed, and snapshotted.
+
+Current implementation milestone before this next step:
+
+```text
+Recovery-Aware Coach Copy Contract v1
+```
+
+Current implementation baseline:
+
+```text
+66a70d3 Merge daily coach note recovery v2 integration v1
+```
+
+Current implementation snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_66a70d3_main_merge-daily-coach-note-recovery-v2-integration-v1.zip
+```
+
+Likely next owner:
+
+```text
+Architecture
+```
+
+Likely next purpose:
+
+```text
+Review whether the deterministic recovery-aware copy contract is sufficient to authorize a later Daily Coach Note language milestone that uses Recovery Intelligence v2 facts safely.
+```
+
+Recommended next sequence:
+
+```text
+1. Architecture reviews Recovery-Aware Coach Copy Contract v1 evidence.
+2. If accepted, Architecture may authorize a future Daily Coach Note recovery-aware language milestone.
+3. That future milestone should still keep final copy bounded by the approved contract and backend-owned facts.
+```
+
+Non-goals unless Architecture explicitly authorizes them:
+
+```text
+Daily Coach final copy changes
+Today card copy changes
+API changes
+Streamlit changes
+database/schema changes
+provider behavior changes
+OpenAI/Ollama/CrewAI changes
+recommendation behavior changes
+report behavior changes
+automatic deloads
+automatic progression
+workout plan changes
+nutrition target changes
+RAG/vector/agent work
+wearable/HRV integration
+medical claims
+```
+
+---
+
 # Next Milestone — Architecture Selection After Daily Coach Note Recovery v2 Integration v1
 
 This next milestone should be selected only after Daily Coach Note Recovery v2 Integration v1 is accepted, merged to `main`, pushed, and snapshotted.

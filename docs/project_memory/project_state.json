@@ -62,18 +62,18 @@
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_66a70d3_main_merge-daily-coach-note-recovery-v2-integration-v1.zip",
     "commit_check_mode": "code",
-    "current_authorized_milestone": "Daily Coach Note Recovery v2 Integration v1",
-    "current_recommended_milestone": "Daily Coach Note Recovery v2 Integration v1",
+    "current_authorized_milestone": "Recovery-Aware Coach Copy Contract v1",
+    "current_recommended_milestone": "Recovery-Aware Coach Copy Contract v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can Recovery Intelligence v2 be exposed additively inside the backend-owned Daily Coach Note context without changing user-facing Daily Coach behavior?",
-    "qa_class": "BACKEND_CONTEXT_INTEGRATION_RECOVERY_INTELLIGENCE_V2",
-    "recommended_next_milestone_after_acceptance": "Architecture to choose a Recovery-Aware Coach Copy Contract v1 or another narrow Daily Coach Note usage milestone",
-    "recommended_owner": "Backend Development / Daily Coach Context Integration",
+    "primary_question": "Can Recovery Intelligence v2 facts be converted into a deterministic Daily Coach Note copy contract without changing user-facing behavior?",
+    "qa_class": "BACKEND_CONTRACT_RECOVERY_AWARE_COACH_COPY",
+    "recommended_next_milestone_after_acceptance": "Architecture to choose a future Daily Coach Note recovery-aware language milestone only after contract review",
+    "recommended_owner": "Backend Development / Daily Coach Copy Contract",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "d2e0178"
+    "source_main_commit": "66a70d3"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -134,6 +134,15 @@
       "runtime_behavior_change": false,
       "status": "ACCEPTED_AND_MERGED",
       "next_recommended_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1"
+    },
+    "recovery_aware_coach_copy_contract_v1": {
+      "baseline_commit": "66a70d3",
+      "snapshot": "fitness_ai_snapshot_2026-07-01_66a70d3_main_merge-daily-coach-note-recovery-v2-integration-v1.zip",
+      "milestone": "Recovery-Aware Coach Copy Contract v1",
+      "scope": "Read-only deterministic Daily Coach Note copy contract for future Recovery Intelligence v2 language use",
+      "runtime_behavior_change": false,
+      "status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
+      "next_recommended_milestone": "Architecture to review whether future Daily Coach Note recovery-aware copy may be authorized"
     }
   },
   "boundaries": {
@@ -376,7 +385,11 @@
     "latest_snapshot_required_before_docs_patch": true,
     "windows_only_commits_merges_pushes_snapshots": true,
     "linux_pull_validate_runtime_qa_only_never_commit_merge_push": true,
-    "user_facing_commands_require_concrete_branch_names_no_placeholders": true
+    "user_facing_commands_require_concrete_branch_names_no_placeholders": true,
+    "recovery_aware_coach_copy_contract_no_user_facing_copy": true,
+    "recovery_aware_coach_copy_contract_no_today_behavior_change": true,
+    "recovery_aware_coach_copy_contract_no_ui_api_provider_schema_persistence_recommendation_report_change": true,
+    "recovery_aware_coach_copy_contract_no_medical_or_automatic_training_claims": true
   },
   "canonical_serving_unit_discovery_api_v1": {
     "branch": "feature/canonical-serving-unit-discovery-api-v1",

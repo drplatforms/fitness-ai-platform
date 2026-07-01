@@ -1,3 +1,95 @@
+# Current State — Recovery-Aware Coach Copy Contract v1
+
+Current accepted baseline:
+
+```text
+66a70d3 Merge daily coach note recovery v2 integration v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_66a70d3_main_merge-daily-coach-note-recovery-v2-integration-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Daily Coach Note Recovery v2 Integration v1
+```
+
+Active backend implementation milestone:
+
+```text
+Recovery-Aware Coach Copy Contract v1
+```
+
+Requested status:
+
+```text
+RECOVERY_AWARE_COACH_COPY_CONTRACT_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Create a deterministic, backend-owned copy contract that translates Recovery Intelligence v2 facts into bounded, coach-safe Daily Coach Note copy inputs for future use.
+```
+
+Expected implementation files:
+
+```text
+models/daily_coach_recovery_copy_models.py
+services/daily_coach_recovery_copy_contract_service.py
+tests/test_daily_coach_recovery_copy_contract_service.py
+docs/project_memory/milestones/recovery_aware_coach_copy_contract_v1.md
+```
+
+Scope is limited to a read-only contract/guardrail layer:
+
+- reads existing `recovery_intelligence_v2` from the backend Daily Coach Note context
+- returns a structured `RecoveryAwareCoachCopyContract`
+- preserves Recovery v2 classification, pressure, confidence, and data-quality status
+- lists allowed recovery-aware claim guidance only when supported by Recovery v2 facts
+- carries caveats when confidence or data quality is limited, partial, missing, or unavailable
+- keeps body weight context bounded and non-causal
+- lists forbidden claim categories without authorizing forbidden wording
+- serializes through `to_dict()`
+- returns a valid limited/unavailable contract when `recovery_intelligence_v2` is missing
+
+This milestone does not expose new user-facing copy.
+
+This milestone does not change Today behavior.
+
+This milestone does not change UI/API/provider/schema/persistence/recommendation/report behavior.
+
+This milestone creates a deterministic copy contract for future use.
+
+No Daily Coach final copy, Today card copy, Streamlit UI, API route, provider, OpenAI/Ollama/CrewAI, RAG/vector/agent, schema/migration, persistence, report, recommendation, workout plan, nutrition target, automatic deload/progression, wearable/HRV, or medical interpretation behavior is authorized by this implementation slice.
+
+Backend chat operating rule remains active:
+
+```text
+Architecture prepares Backend implementation handoffs/tasks.
+Architecture separately prepares QA testing instructions.
+Backend implements the Architecture-provided task.
+Backend does not prepare handoff artifacts.
+Backend does not prepare QA findings.
+Backend does not prepare QA instructions.
+Backend reports branch, commit, and validation evidence when requested.
+```
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated Recovery-Aware Coach Copy Contract work.
+
+---
+
 # Current State — Daily Coach Note Recovery v2 Integration v1
 
 Current accepted baseline:

@@ -31,7 +31,12 @@ def _seed_test_db(tmp_path, monkeypatch) -> None:
     cursor.execute(
         """
         INSERT INTO daily_checkins (
-            user_id, checkin_date, body_weight, sleep_hours, energy_level, soreness_level
+            user_id,
+            checkin_date,
+            body_weight,
+            sleep_hours,
+            energy_level,
+            soreness_level
         )
         VALUES (?, ?, ?, ?, ?, ?)
         """,
@@ -150,7 +155,7 @@ def test_snapshot_v2_includes_workout_set_intelligence(tmp_path, monkeypatch) ->
         user_id=1, target_date="2026-06-14"
     )
 
-    assert snapshot.snapshot_version == "daily_coach_intelligence_snapshot_v2"
+    assert snapshot.snapshot_version == "daily_coach_intelligence_snapshot_v3"
     assert snapshot.workout_set_intelligence is not None
     assert "workout_set_intelligence_service" in snapshot.source_services
     assert (

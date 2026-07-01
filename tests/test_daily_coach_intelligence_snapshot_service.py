@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass
 
 import database
@@ -30,7 +31,12 @@ def _seed_test_db(tmp_path, monkeypatch) -> None:
     cursor.execute(
         """
         INSERT INTO daily_checkins (
-            user_id, checkin_date, body_weight, sleep_hours, energy_level, soreness_level
+            user_id,
+            checkin_date,
+            body_weight,
+            sleep_hours,
+            energy_level,
+            soreness_level
         )
         VALUES (?, ?, ?, ?, ?, ?)
         """,
@@ -111,7 +117,15 @@ def test_snapshot_builds_for_user_with_data(tmp_path, monkeypatch) -> None:
     assert snapshot.recovery_intelligence.target_date == "2026-06-14"
     assert snapshot.training_execution_summary is not None
     assert snapshot.nutrition_trend_window is not None
-    assert snapshot.snapshot_version == "daily_coach_intelligence_snapshot_v2"
+    assert snapshot.snapshot_version == "daily_coach_intelligence_snapshot_v3"
+    assert snapshot.recovery_intelligence_v2 is not None
+    assert snapshot.recovery_intelligence_v2.target_date == "2026-06-14"
+    assert "recovery_intelligence_v2_service" in snapshot.source_services
+    assert snapshot.data_completeness["recovery_intelligence_v2"] in {
+        "usable",
+        "limited",
+        "partial",
+    }
 
 
 def test_foundation_layer_status_is_explicit_and_honest(tmp_path, monkeypatch) -> None:
@@ -131,6 +145,9 @@ def test_foundation_layer_status_is_explicit_and_honest(tmp_path, monkeypatch) -
     )
 
     assert snapshot.foundation_layer_status["recovery_intelligence"] == "implemented_v1"
+    assert (
+        snapshot.foundation_layer_status["recovery_intelligence_v2"] == "implemented_v1"
+    )
     assert (
         snapshot.foundation_layer_status["workout_set_intelligence"] == "implemented_v1"
     )
@@ -163,6 +180,102 @@ def test_nutrition_trend_limitations_are_controlled(tmp_path, monkeypatch) -> No
     assert any(
         "Nutrition trend window unavailable" in item for item in snapshot.limitations
     )
+
+
+def test_snapshot_to_dict_includes_recovery_intelligence_v2(
+    tmp_path, monkeypatch
+) -> None:
+    _seed_test_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        service,
+        "build_training_execution_summary",
+        lambda user_id: FakeTrainingSummary(),
+    )
+    monkeypatch.setattr(
+        "services.nutrition_trend_service.build_nutrition_trend_window",
+        lambda user_id, end_date, window_days: _fake_nutrition_window(),
+    )
+
+    snapshot = build_daily_coach_intelligence_snapshot(
+        user_id=1, target_date="2026-06-14"
+    )
+    payload = snapshot.to_dict()
+
+    assert payload["recovery_intelligence"] is not None
+    assert payload["recovery_intelligence_v2"] is not None
+    assert payload["recovery_intelligence_v2"]["target_date"] == "2026-06-14"
+    assert "data_quality" in payload["recovery_intelligence_v2"]
+
+
+def test_recovery_intelligence_v2_unavailable_fallback_returns_context(
+    tmp_path, monkeypatch
+) -> None:
+    _seed_test_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        service,
+        "build_training_execution_summary",
+        lambda user_id: FakeTrainingSummary(),
+    )
+    monkeypatch.setattr(
+        "services.nutrition_trend_service.build_nutrition_trend_window",
+        lambda user_id, end_date, window_days: _fake_nutrition_window(),
+    )
+
+    def _raise_recovery_v2_error(user_id, target_date):
+        raise sqlite3.OperationalError("local recovery v2 data unavailable")
+
+    monkeypatch.setattr(
+        service,
+        "build_recovery_intelligence_v2",
+        _raise_recovery_v2_error,
+    )
+
+    snapshot = build_daily_coach_intelligence_snapshot(
+        user_id=1, target_date="2026-06-14"
+    )
+
+    assert snapshot.recovery_intelligence is not None
+    assert snapshot.recovery_intelligence_v2 is None
+    assert "recovery_intelligence_v2_service" not in snapshot.source_services
+    assert snapshot.data_completeness["recovery_intelligence_v2"] == "unavailable"
+    assert "recovery_intelligence_v2: unavailable" in snapshot.source_data_gaps
+    assert "recovery_intelligence_v2_unavailable" in snapshot.reason_codes
+    assert any(
+        "Recovery v2 intelligence unavailable" in item for item in snapshot.limitations
+    )
+    assert "local recovery v2 data unavailable" not in " ".join(snapshot.limitations)
+
+
+def test_recovery_intelligence_v2_limited_context_is_reflected(
+    tmp_path, monkeypatch
+) -> None:
+    _seed_test_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        service,
+        "build_training_execution_summary",
+        lambda user_id: FakeTrainingSummary(),
+    )
+    monkeypatch.setattr(
+        "services.nutrition_trend_service.build_nutrition_trend_window",
+        lambda user_id, end_date, window_days: _fake_nutrition_window(),
+    )
+
+    snapshot = build_daily_coach_intelligence_snapshot(
+        user_id=1, target_date="2026-06-14"
+    )
+
+    assert snapshot.recovery_intelligence_v2 is not None
+    assert snapshot.data_completeness["recovery_intelligence_v2"] in {
+        "limited",
+        "partial",
+        "usable",
+    }
+    if snapshot.recovery_intelligence_v2.confidence in {"Limited", "Low"}:
+        assert "recovery_intelligence_v2_limited" in snapshot.reason_codes
+        assert any(
+            "Recovery v2 intelligence is limited" in item
+            for item in snapshot.limitations
+        )
 
 
 def test_snapshot_does_not_mutate_database_or_call_provider(

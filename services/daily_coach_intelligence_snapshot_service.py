@@ -7,13 +7,23 @@ from typing import Any
 
 from models.daily_coach_intelligence_models import DailyCoachIntelligenceSnapshot
 from services.recovery_intelligence_service import build_recovery_intelligence
+from services.recovery_intelligence_v2_service import build_recovery_intelligence_v2
 from services.training_execution_summary_service import build_training_execution_summary
 from services.workout_set_intelligence_service import build_workout_set_intelligence
 
-DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION = "daily_coach_intelligence_snapshot_v2"
+DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION = "daily_coach_intelligence_snapshot_v3"
+
+_GAP_DATA_COMPLETENESS_STATUSES = {
+    "missing",
+    "limited",
+    "partial",
+    "pending",
+    "unavailable",
+}
 
 FOUNDATION_LAYER_STATUS = {
     "recovery_intelligence": "implemented_v1",
+    "recovery_intelligence_v2": "implemented_v1",
     "workout_set_intelligence": "implemented_v1",
     "trend_engine": "nutrition_trend_existing_only",
     "six_month_seed_data": "existing_qa_seed_data_only",
@@ -36,6 +46,20 @@ def build_daily_coach_intelligence_snapshot(
     reason_codes = list(recovery.reason_codes)
     limitations = list(recovery.limitations)
     source_services = ["recovery_intelligence_service"]
+
+    recovery_v2 = _read_recovery_intelligence_v2(
+        user_id=user_id,
+        target_date=resolved_date,
+        reason_codes=reason_codes,
+        limitations=limitations,
+    )
+    if recovery_v2 is not None:
+        source_services.append("recovery_intelligence_v2_service")
+        _extend_v2_limited_context(
+            recovery_v2_dict=recovery_v2.to_dict(),
+            reason_codes=reason_codes,
+            limitations=limitations,
+        )
 
     workout_set_intelligence = _read_workout_set_intelligence(
         user_id=user_id,
@@ -61,6 +85,7 @@ def build_daily_coach_intelligence_snapshot(
 
     data_completeness = _build_data_completeness(
         recovery_dict=recovery.to_dict(),
+        recovery_v2_dict=recovery_v2.to_dict() if recovery_v2 is not None else None,
         workout_set_dict=(
             workout_set_intelligence.to_dict()
             if workout_set_intelligence is not None
@@ -79,6 +104,7 @@ def build_daily_coach_intelligence_snapshot(
         snapshot_version=DAILY_COACH_INTELLIGENCE_SNAPSHOT_VERSION,
         source_services=source_services,
         recovery_intelligence=recovery,
+        recovery_intelligence_v2=recovery_v2,
         workout_set_intelligence=workout_set_intelligence,
         training_execution_summary=training_summary,
         nutrition_trend_window=nutrition_window,
@@ -88,6 +114,26 @@ def build_daily_coach_intelligence_snapshot(
         reason_codes=_unique(reason_codes),
         limitations=_unique(limitations),
     )
+
+
+def _read_recovery_intelligence_v2(
+    *,
+    user_id: int,
+    target_date: str,
+    reason_codes: list[str],
+    limitations: list[str],
+) -> Any | None:
+    try:
+        return build_recovery_intelligence_v2(
+            user_id=user_id,
+            target_date=target_date,
+        )
+    except (sqlite3.Error, ValueError):
+        reason_codes.append("recovery_intelligence_v2_unavailable")
+        limitations.append(
+            "Recovery v2 intelligence unavailable due to a local data read issue."
+        )
+        return None
 
 
 def _read_workout_set_intelligence(
@@ -140,6 +186,7 @@ def _read_nutrition_trend_window(
 def _build_data_completeness(
     *,
     recovery_dict: dict[str, Any],
+    recovery_v2_dict: dict[str, Any] | None,
     workout_set_dict: dict[str, Any] | None,
     training_summary: dict[str, Any] | None,
     nutrition_window: dict[str, Any] | None,
@@ -149,6 +196,8 @@ def _build_data_completeness(
     recovery_status = "usable" if primary.get("checkin_days", 0) >= 3 else "limited"
     if primary.get("checkin_days", 0) == 0:
         recovery_status = "missing"
+
+    recovery_v2_status = _recovery_v2_data_status(recovery_v2_dict)
 
     workout_set_status = "missing"
     if workout_set_dict is not None:
@@ -179,6 +228,7 @@ def _build_data_completeness(
 
     return {
         "recovery_intelligence": recovery_status,
+        "recovery_intelligence_v2": recovery_v2_status,
         "workout_set_intelligence": workout_set_status,
         "training_execution_summary": training_status,
         "nutrition_trend_window": nutrition_status,
@@ -188,10 +238,50 @@ def _build_data_completeness(
     }
 
 
+def _recovery_v2_data_status(recovery_v2_dict: dict[str, Any] | None) -> str:
+    if recovery_v2_dict is None:
+        return "unavailable"
+    data_quality = recovery_v2_dict.get("data_quality") or {}
+    status = str(data_quality.get("status") or "limited")
+    if status in {"strong", "usable"}:
+        return "usable"
+    if status in {"partial", "limited", "missing"}:
+        return status
+    return "limited"
+
+
+def _extend_v2_limited_context(
+    *,
+    recovery_v2_dict: dict[str, Any],
+    reason_codes: list[str],
+    limitations: list[str],
+) -> None:
+    confidence = str(recovery_v2_dict.get("confidence") or "Limited")
+    data_quality = recovery_v2_dict.get("data_quality") or {}
+    data_status = str(data_quality.get("status") or "limited")
+    if confidence not in {"Limited", "Low"} and data_status not in {
+        "missing",
+        "limited",
+        "partial",
+    }:
+        return
+
+    reason_codes.append("recovery_intelligence_v2_limited")
+    limitations.append(
+        "Recovery v2 intelligence is limited by available check-in data."
+    )
+    reason_codes.extend(
+        str(code) for code in recovery_v2_dict.get("reason_codes") or []
+    )
+    reason_codes.extend(str(code) for code in data_quality.get("reason_codes") or [])
+    limitations.extend(str(item) for item in recovery_v2_dict.get("limitations") or [])
+    limitations.extend(str(item) for item in data_quality.get("limitations") or [])
+
+
 def _build_source_data_gaps(data_completeness: dict[str, str]) -> list[str]:
     gaps: list[str] = []
     for layer, status in data_completeness.items():
-        if status in {"missing", "limited", "pending"} or status.startswith("not_"):
+        if status in _GAP_DATA_COMPLETENESS_STATUSES or status.startswith("not_"):
             gaps.append(f"{layer}: {status}")
     return gaps
 
@@ -200,7 +290,7 @@ def _reason_codes_for_gaps(data_completeness: dict[str, str]) -> list[str]:
     return [
         f"{layer}_{status}"
         for layer, status in data_completeness.items()
-        if status in {"missing", "limited", "pending"} or status.startswith("not_")
+        if status in _GAP_DATA_COMPLETENESS_STATUSES or status.startswith("not_")
     ]
 
 

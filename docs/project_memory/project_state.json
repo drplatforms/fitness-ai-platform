@@ -62,18 +62,18 @@
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_09c6581_main_merge-recovery-intelligence-v2-service-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip",
     "commit_check_mode": "code",
-    "current_authorized_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1",
-    "current_recommended_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1",
+    "current_authorized_milestone": "Daily Coach Note Recovery v2 Integration v1",
+    "current_recommended_milestone": "Daily Coach Note Recovery v2 Integration v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Can the accepted Recovery Intelligence v2 service be inspected from a terminal-friendly developer tool without changing Daily Coach Note, provider, UI, API, schema, recommendation, report, or persistence behavior?",
-    "qa_class": "DEVELOPER_ARTIFACT_RECOVERY_INTELLIGENCE_V2_INSPECTION_TOOL",
-    "recommended_next_milestone_after_acceptance": "Architecture to choose: Recovery Intelligence v2 QA Seed Matrix Validation v1 or Daily Coach Note Recovery v2 Integration v1",
-    "recommended_owner": "Backend Development / Developer Artifact Implementation",
+    "primary_question": "Can Recovery Intelligence v2 be exposed additively inside the backend-owned Daily Coach Note context without changing user-facing Daily Coach behavior?",
+    "qa_class": "BACKEND_CONTEXT_INTEGRATION_RECOVERY_INTELLIGENCE_V2",
+    "recommended_next_milestone_after_acceptance": "Architecture to choose a Recovery-Aware Coach Copy Contract v1 or another narrow Daily Coach Note usage milestone",
+    "recommended_owner": "Backend Development / Daily Coach Context Integration",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "09c6581"
+    "source_main_commit": "d2e0178"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -401,20 +401,20 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1",
-    "active_backend_status": "approved_for_backend_dev_inspection_tool_implementation",
-    "active_project_memory_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1",
-    "active_project_memory_status": "dev_inspection_tool_implementation_active",
-    "current_source_of_truth": "main at 09c6581 main_merge-recovery-intelligence-v2-service-v1",
+    "active_backend_milestone": "Daily Coach Note Recovery v2 Integration v1",
+    "active_backend_status": "approved_for_daily_coach_note_recovery_v2_integration_implementation",
+    "active_project_memory_milestone": "Daily Coach Note Recovery v2 Integration v1",
+    "active_project_memory_status": "daily_coach_note_recovery_v2_integration_active",
+    "current_source_of_truth": "main at d2e0178 main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1",
     "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
-    "latest_accepted_commit": "09c6581",
-    "latest_accepted_milestone": "Recovery Intelligence v2 Service v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-07-01_09c6581_main_merge-recovery-intelligence-v2-service-v1.zip",
-    "latest_final_status": "RECOVERY_INTELLIGENCE_V2_SERVICE_V1_ACCEPTED_AND_MERGED",
-    "latest_main_merge_commit": "09c6581",
+    "latest_accepted_commit": "d2e0178",
+    "latest_accepted_milestone": "Recovery Intelligence v2 QA Seed Matrix Validation v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip",
+    "latest_final_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_ACCEPTED_AND_MERGED",
+    "latest_main_merge_commit": "d2e0178",
     "latest_technical_baseline_commit": "23b5378",
     "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "next_product_architecture_center": "Backend Intelligence Foundation: Recovery Intelligence v2 Developer Artifact / Inspection Tool v1, then Architecture chooses QA seed matrix or Daily Coach Note integration",
+    "next_product_architecture_center": "Backend Intelligence Foundation: Daily Coach Note Recovery v2 Integration v1, then Architecture chooses recovery-aware copy or usage contract",
     "platform_north_star_file": "docs/project_memory/architecture/platform_north_star_and_future_stack.md",
     "previous_accepted_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
     "previous_main_merge_commit": "56d63c4",
@@ -1044,7 +1044,7 @@
       "status": "ACCEPTED_AND_MERGED"
     }
   },
-  "requested_backend_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE",
+  "requested_backend_status": "DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE",
   "runtime_split": {
     "linux": [
       "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
@@ -1054,9 +1054,9 @@
     ]
   },
   "status": {
-    "active_backend_milestone": "Recovery Intelligence v2 QA Seed Matrix Validation v1",
-    "active_backend_status": "backend_qa_seed_matrix_validation_implementation_active",
-    "requested_final_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE"
+    "active_backend_milestone": "Daily Coach Note Recovery v2 Integration v1",
+    "active_backend_status": "backend_daily_coach_note_recovery_v2_integration_active",
+    "requested_final_status": "DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE"
   },
   "team_routing_contract": {
     "project_memory_note": "Project Memory / All Future Agents is not a visible team lane; it is a repo continuity concern every team must respect.",
@@ -1117,7 +1117,7 @@
     "main_merge_commit": "accepted before f50a1cb"
   },
   "recovery_intelligence_v2_qa_seed_matrix_validation_v1": {
-    "status": "authorized for backend implementation",
+    "status": "accepted and merged",
     "source_main_commit": "f50a1cb",
     "source_snapshot": "fitness_ai_snapshot_2026-07-01_f50a1cb_main_merge-recovery-intelligence-v2-product-language-docs-cleanup-v1.zip",
     "feature_branch": "feature/recovery-intelligence-v2-qa-seed-matrix-validation-v1",
@@ -1154,6 +1154,46 @@
       "no automatic deload/progression logic",
       "no medical interpretation",
       "no runtime product behavior"
+    ],
+    "main_merge_commit": "d2e0178",
+    "canonical_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip"
+  },
+  "daily_coach_note_recovery_v2_integration_v1": {
+    "status": "authorized for backend implementation",
+    "source_main_commit": "d2e0178",
+    "source_snapshot": "fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip",
+    "feature_branch": "feature/daily-coach-note-recovery-v2-integration-v1",
+    "requested_final_status": "DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE",
+    "scope": "additive backend Daily Coach Note context integration only",
+    "changed_context_fields": [
+      "recovery_intelligence_v2",
+      "source_services",
+      "foundation_layer_status",
+      "data_completeness",
+      "source_data_gaps",
+      "reason_codes",
+      "limitations"
+    ],
+    "v1_compatibility_field": "recovery_intelligence",
+    "future_integration_language": "Daily Coach Note",
+    "backend_chat_rule": "Backend implements Architecture-provided tasks and reports branch/commit/validation evidence when requested; Backend does not prepare handoff artifacts, QA findings, or QA instructions.",
+    "non_goals": [
+      "no Streamlit UI",
+      "no API routes",
+      "no provider behavior",
+      "no OpenAI/Ollama/CrewAI behavior",
+      "no RAG/vector/agent behavior",
+      "no database schema or migrations",
+      "no persistence behavior",
+      "no report behavior",
+      "no recommendation behavior",
+      "no Daily Coach final copy",
+      "no Today card copy",
+      "no workout plan behavior",
+      "no nutrition target behavior",
+      "no automatic deload/progression logic",
+      "no wearable/HRV integration",
+      "no medical interpretation"
     ]
   }
 }

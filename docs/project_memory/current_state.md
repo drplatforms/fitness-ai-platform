@@ -1,3 +1,87 @@
+# Current State — Daily Coach Note Recovery v2 Integration v1
+
+Current accepted baseline:
+
+```text
+d2e0178 main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_d2e0178_main_merge-recovery-intelligence-v2-qa-seed-matrix-validation-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Recovery Intelligence v2 QA Seed Matrix Validation v1
+```
+
+Active backend implementation milestone:
+
+```text
+Daily Coach Note Recovery v2 Integration v1
+```
+
+Requested status:
+
+```text
+DAILY_COACH_NOTE_RECOVERY_V2_INTEGRATION_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Add Recovery Intelligence v2 additively to the backend-owned Daily Coach Note context layer without changing user-facing Daily Coach copy, Today behavior, UI, API, providers, recommendations, reports, schema, migrations, persistence, or product runtime behavior.
+```
+
+Expected implementation files:
+
+```text
+models/daily_coach_intelligence_models.py
+services/daily_coach_intelligence_snapshot_service.py
+tests/test_daily_coach_intelligence_snapshot_service.py
+docs/project_memory/milestones/daily_coach_note_recovery_v2_integration_v1.md
+```
+
+Scope is limited to exposing structured Recovery Intelligence v2 facts in the existing backend Daily Coach context object:
+
+- preserve existing `recovery_intelligence` v1 field for compatibility
+- add optional `recovery_intelligence_v2` field
+- source services include `recovery_intelligence_v2_service` when v2 succeeds
+- foundation layer status and data completeness record Recovery v2 separately
+- source data gaps, reason codes, and limitations record bounded v2 limited/unavailable status
+- serialization includes `recovery_intelligence_v2`
+- fallback keeps a valid context object if Recovery v2 is unavailable
+
+New roadmap/docs language should prefer `Daily Coach Note` when referring to the future user-facing coach context layer. Existing internal code names such as `DailyCoachIntelligenceSnapshot`, `daily_coach_intelligence_snapshot_service.py`, and `snapshot_version` are not broadly renamed in this milestone.
+
+This slice does not add final Daily Coach copy, Today card copy, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, report behavior, persistence behavior, RAG/vector/agent work, wearable integration, automatic deload/progression behavior, workout plan behavior, nutrition target behavior, or medical interpretation.
+
+Backend chat operating rule remains active:
+
+```text
+Architecture prepares Backend implementation handoffs/tasks.
+Architecture separately prepares QA testing instructions.
+Backend implements the Architecture-provided task.
+Backend does not prepare handoff artifacts.
+Backend does not prepare QA findings.
+Backend does not prepare QA instructions.
+Backend reports branch, commit, and validation evidence when requested.
+```
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated Daily Coach Note Recovery v2 integration work.
+
+---
+
 # Current State — Recovery Intelligence v2 QA Seed Matrix Validation v1
 
 Current accepted baseline:

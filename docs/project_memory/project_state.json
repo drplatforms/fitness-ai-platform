@@ -37,21 +37,29 @@
       "snapshot": "fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip",
       "source_feature_branch": "feature/platform-north-star-future-stack-canonicalization-v1",
       "status": "PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_ACCEPTED_AND_MERGED"
+    },
+    "post_north_star_state_reconciliation_v1": {
+      "main_commit": "fc7ed70",
+      "meaning": "docs-only post-merge state reconciliation plus Architecture/Backend workflow memory update",
+      "snapshot": "fitness_ai_snapshot_2026-06-30_fc7ed70_main_merge-post-north-star-state-reconciliation-v1.zip",
+      "source_feature_branch": "feature/post-north-star-state-reconciliation-v1",
+      "source_feature_commit": "0bfaa36 Reconcile post north star state and workflow memory",
+      "status": "POST_NORTH_STAR_STATE_RECONCILIATION_V1_ACCEPTED_AND_MERGED"
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-30_fc7ed70_main_merge-post-north-star-state-reconciliation-v1.zip",
     "commit_check_mode": "docs-only",
     "current_authorized_milestone": "Recovery Intelligence v2 Architecture Planning v1",
-    "current_recommended_milestone": "Recovery Intelligence v2 Architecture Planning v1",
-    "current_recommended_status": "ARCHITECTURE_PLANNING_ACTIVE",
-    "primary_question": "How should Recovery Intelligence evolve after v1 before Backend implementation is authorized?",
-    "qa_class": "DOCS_ONLY_RECOVERY_INTELLIGENCE_V2_ARCHITECTURE_PLANNING",
-    "recommended_next_milestone_after_acceptance": "Recovery Intelligence v2 Backend Implementation v1, only after Architecture accepts the design",
-    "recommended_owner": "Architecture",
+    "current_recommended_milestone": "Recovery Intelligence v2 Model Contract v1",
+    "current_recommended_status": "ARCHITECTURE_PLAN_DOCUMENTED_PENDING_ACCEPTANCE",
+    "primary_question": "What Recovery Intelligence v2 model contract should Backend add before any v2 service or behavior changes are authorized?",
+    "qa_class": "DOCS_ONLY_RECOVERY_INTELLIGENCE_V2_ARCHITECTURE_PLAN",
+    "recommended_next_milestone_after_acceptance": "Recovery Intelligence v2 Model Contract v1",
+    "recommended_owner": "Architecture now; Backend Development after plan acceptance",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "187e433"
+    "source_main_commit": "fc7ed70"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -62,9 +70,10 @@
       "Food Knowledge Expansion",
       "Unified Daily Coach Intelligence Snapshot"
     ],
-    "next_center_of_gravity": "Backend Intelligence Foundation planning, starting with Recovery Intelligence v2 Architecture Planning v1",
+    "next_center_of_gravity": "Recovery Intelligence v2 Architecture Planning v1, followed by Recovery Intelligence v2 Model Contract v1 after acceptance",
     "platform_north_star_file": "docs/project_memory/architecture/platform_north_star_and_future_stack.md",
-    "sequencing_rule": "No serious RAG/vector/embeddings/multi-agent/orchestration until backend intelligence layers and source-data contracts are robust enough to feed them."
+    "sequencing_rule": "No serious RAG/vector/embeddings/multi-agent/orchestration until backend intelligence layers and source-data contracts are robust enough to feed them.",
+    "recovery_intelligence_v2_plan": "docs/project_memory/architecture/recovery_intelligence_v2_plan.md"
   },
   "backend_intelligence_foundation": {
     "daily_coach_intelligence_snapshot_recovery_v1": {
@@ -85,6 +94,14 @@
       "scope": "Workout Set Intelligence v1 plus read-only Daily Coach Intelligence Snapshot v2",
       "snapshot": "fitness_ai_snapshot_2026-06-30_123d115_main_merge-daily-coach-workout-set-intelligence-v1.zip",
       "status": "ACCEPTED_AND_MERGED"
+    },
+    "recovery_intelligence_v2_architecture_plan": {
+      "baseline_commit": "fc7ed70",
+      "milestone": "Recovery Intelligence v2 Architecture Planning v1",
+      "next_recommended_milestone": "Recovery Intelligence v2 Model Contract v1",
+      "runtime_behavior_change": false,
+      "scope": "docs-only plan for v2 recovery baseline, signal interpretation, recovery pressure, data quality, confidence, provenance, limitations, and safe language boundaries",
+      "status": "ARCHITECTURE_PLAN_DOCUMENTED_PENDING_ACCEPTANCE"
     }
   },
   "boundaries": {
@@ -323,7 +340,11 @@
     "workout_page_canonical": true,
     "workout_preview_explicit_refresh_only": true,
     "workout_preview_full_slot_rotation": true,
-    "workout_selection_regression_preserved": true
+    "workout_selection_regression_preserved": true,
+    "latest_snapshot_required_before_docs_patch": true,
+    "windows_only_commits_merges_pushes_snapshots": true,
+    "linux_pull_validate_runtime_qa_only_never_commit_merge_push": true,
+    "user_facing_commands_require_concrete_branch_names_no_placeholders": true
   },
   "canonical_serving_unit_discovery_api_v1": {
     "branch": "feature/canonical-serving-unit-discovery-api-v1",
@@ -348,20 +369,20 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Recovery Intelligence v2 Architecture Planning v1",
-    "active_backend_status": "not_authorized_for_backend_implementation_yet",
+    "active_backend_milestone": "Recovery Intelligence v2 Model Contract v1",
+    "active_backend_status": "not_authorized_until_architecture_plan_is_accepted",
     "active_project_memory_milestone": "Recovery Intelligence v2 Architecture Planning v1",
-    "active_project_memory_status": "architecture_planning_active",
-    "current_source_of_truth": "main at 187e433 main_merge-platform-north-star-future-stack-canonicalization-v1",
+    "active_project_memory_status": "docs_only_architecture_plan_documented_pending_acceptance",
+    "current_source_of_truth": "main at fc7ed70 main_merge-post-north-star-state-reconciliation-v1",
     "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
-    "latest_accepted_commit": "187e433",
-    "latest_accepted_milestone": "Platform North Star + Future Stack Canonicalization v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip",
-    "latest_final_status": "PLATFORM_NORTH_STAR_FUTURE_STACK_CANONICALIZATION_V1_ACCEPTED_AND_MERGED",
-    "latest_main_merge_commit": "187e433",
+    "latest_accepted_commit": "fc7ed70",
+    "latest_accepted_milestone": "Post-North-Star State Reconciliation + Architecture/Backend Workflow Memory v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-30_fc7ed70_main_merge-post-north-star-state-reconciliation-v1.zip",
+    "latest_final_status": "POST_NORTH_STAR_STATE_RECONCILIATION_V1_ACCEPTED_AND_MERGED",
+    "latest_main_merge_commit": "fc7ed70",
     "latest_technical_baseline_commit": "23b5378",
     "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "next_product_architecture_center": "Backend Intelligence Foundation: Recovery Intelligence v2 Architecture Planning v1",
+    "next_product_architecture_center": "Backend Intelligence Foundation: Recovery Intelligence v2 Architecture Planning v1, then Recovery Intelligence v2 Model Contract v1",
     "platform_north_star_file": "docs/project_memory/architecture/platform_north_star_and_future_stack.md",
     "previous_accepted_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
     "previous_main_merge_commit": "56d63c4",

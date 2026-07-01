@@ -1,9 +1,15 @@
 # Development Architecture — ChatGPT Project Workflow v1
 
 **Status:** Active development-workflow architecture
-**Current accepted main:** `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`
+**Current accepted main:** `fc7ed70 main_merge-post-north-star-state-reconciliation-v1`
 
 This ChatGPT Project is a seven-team development workspace, not a single chat with perfect memory.
+
+## Windows / Linux Command Authority
+
+Windows is the only machine used for commits, merges, pushes, and snapshots. Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+
+Every command block should be copy/paste ready with concrete branch names. Do not leave placeholders in user-facing commands.
 
 ## Core Rule
 
@@ -14,6 +20,10 @@ Repo docs are canonical. Chat context is useful, but it is not the source of tru
 The visible team/chat lanes are Architecture, Backend Development, QA, Agent Engineering, Streamlit UI / UX, Portfolio Packaging, and DevOps & Tooling.
 
 Project Memory is not a visible team lane. It is a repo continuity responsibility shared by every lane.
+
+## Latest Snapshot Requirement For Docs Patches
+
+Before Architecture creates any docs-only project-memory patch, it must confirm the latest accepted post-merge snapshot is available. If not, request a fresh snapshot first. Do not patch from stale chat context or older snapshots.
 
 ## Snapshot + Handoff Discipline
 
@@ -44,7 +54,7 @@ Prompt Lab is an engineering workflow, not a production runtime feature. It supp
 
 ## Current State
 
-Platform North Star + Future Stack Canonicalization v1 was merged at `187e433`. Workout Set Intelligence v1 remains the latest Backend Intelligence Foundation implementation slice at `123d115`. Provider voice iteration is paused. The current Architecture lane should proceed from the latest snapshot, project memory, and the north-star file, with Recovery Intelligence v2 Architecture Planning v1 as the expected next planning target unless Architecture changes course.
+Post-North-Star State Reconciliation + Architecture/Backend Workflow Memory v1 was merged at `fc7ed70`. Workout Set Intelligence v1 remains the latest Backend Intelligence Foundation implementation slice at `123d115`. Provider voice iteration is paused. The current Architecture lane should proceed from the latest snapshot, project memory, and the north-star file. Recovery Intelligence v2 Architecture Planning v1 defines the next source-data design, and Recovery Intelligence v2 Model Contract v1 is the next recommended Backend slice after Architecture accepts that plan.
 
 
 ## Platform North Star Reference

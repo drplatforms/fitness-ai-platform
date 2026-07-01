@@ -50,9 +50,13 @@ Linux owns runtime/staging QA:
 - SQLite persisted-history inspection
 - Ollama-connected provider-lane QA
 
-Do not commit separately from Linux unless that workflow is explicitly planned.
+Never commit, merge, or push from Linux. Linux is pull/validate/runtime QA only. All commits, merges, pushes, and accepted snapshots happen from the Windows dev box.
 
 GitHub remains the shared source of truth.
+
+## Snapshot requirement before docs-only patches
+
+Architecture docs-only patches must target the latest accepted post-merge snapshot. If the user forgets to provide the latest snapshot before requesting a docs/project-memory patch, stop and request a fresh snapshot before generating the patch.
 
 ## Local artifact clutter
 

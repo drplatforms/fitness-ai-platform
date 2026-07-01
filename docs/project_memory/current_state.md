@@ -1,3 +1,87 @@
+# Current State — Recovery Intelligence v2 QA Seed Matrix Validation v1
+
+Current accepted baseline:
+
+```text
+f50a1cb main_merge-recovery-intelligence-v2-product-language-docs-cleanup-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_f50a1cb_main_merge-recovery-intelligence-v2-product-language-docs-cleanup-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Recovery Intelligence v2 Product Language Docs Cleanup v1
+```
+
+Active backend implementation milestone:
+
+```text
+Recovery Intelligence v2 QA Seed Matrix Validation v1
+```
+
+Requested status:
+
+```text
+RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Add a terminal-friendly developer/QA seed matrix runner that validates Recovery Intelligence v2 service output across named recovery scenarios before any Daily Coach Note integration is authorized.
+```
+
+Expected implementation files:
+
+```text
+tools/dev_recovery_intelligence_v2_seed_matrix.py
+tests/test_recovery_intelligence_v2_seed_matrix.py
+docs/project_memory/milestones/recovery_intelligence_v2_qa_seed_matrix_validation_v1.md
+```
+
+Scope is limited to a developer/QA validation artifact that calls the accepted Recovery Intelligence v2 service path:
+
+- named scenario labels
+- per-scenario classification, recovery pressure, confidence, data quality, reason codes, limitations, and source facts
+- valid JSON-only output for automation and QA parsing
+- compact and full terminal-readable output
+- optional local `qa-runs/.../qa_report.md` generation for manual QA runs
+- focused tests proving the tool uses `build_recovery_intelligence_v2()` instead of duplicating service calculations
+
+The seed matrix is evidence-gathering only. It does not create or mutate seed data, does not add product copy, and does not decide final user-facing recovery voice.
+
+New roadmap/docs language should prefer `Daily Coach Note` when referring to the future user-facing coach context layer. Existing code names such as `DailyCoachIntelligenceSnapshot` are not renamed in this milestone.
+
+No Daily Coach Note integration, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, report behavior, persistence behavior, RAG/vector/agent work, wearable integration, automatic deload/progression behavior, runtime product behavior, or medical interpretation is authorized by this implementation slice.
+
+Backend chat operating rule remains active:
+
+```text
+Architecture prepares Backend implementation handoffs/tasks.
+Architecture separately prepares QA testing instructions.
+Backend implements the Architecture-provided task.
+Backend does not prepare handoff artifacts.
+Backend does not prepare QA findings.
+Backend does not prepare QA instructions.
+Backend reports branch, commit, and validation evidence when requested.
+```
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated recovery intelligence or developer-artifact milestones.
+
+---
+
 # Current State — Recovery Intelligence v2 Developer Artifact / Inspection Tool v1
 
 Current accepted baseline:

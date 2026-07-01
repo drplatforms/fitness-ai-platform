@@ -542,7 +542,7 @@
     "north_star": "Fitness AI Platform is a personal AI health operating system.",
     "primary_doc": "docs/project_memory/future_feature_technology_inventory_v1.md",
     "purpose": "Preserve future product, technology, architecture, AI, workflow, UX, learning, and platform ideas without authorizing implementation.",
-    "qa_class": "CLASS 0 — DOCS / PROJECT MEMORY ONLY",
+    "qa_class": "CLASS 0 \u2014 DOCS / PROJECT MEMORY ONLY",
     "requested_final_status": "FUTURE_FEATURE_TECHNOLOGY_INVENTORY_V1_ACCEPTED",
     "source_main_commit": "9d66514",
     "status": "docs/project-memory update complete / ready for Architecture review"
@@ -640,7 +640,7 @@
       "low_confidence",
       "unknown"
     ],
-    "qa_class": "CLASS 3 — PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
+    "qa_class": "CLASS 3 \u2014 PERSISTENCE / DATA INTEGRITY / ACTUALS SEMANTICS",
     "qa_result": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_QA_V1_PASS",
     "requested_final_status": "NUTRITION_ACTUALS_PROVENANCE_CONFIDENCE_MODEL_V1_ACCEPTED",
     "sandbox_validation": {
@@ -1044,7 +1044,7 @@
       "status": "ACCEPTED_AND_MERGED"
     }
   },
-  "requested_backend_status": "RECOVERY_INTELLIGENCE_V2_DEV_INSPECTION_TOOL_V1_IMPLEMENTATION_COMPLETE",
+  "requested_backend_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE",
   "runtime_split": {
     "linux": [
       "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."
@@ -1054,9 +1054,9 @@
     ]
   },
   "status": {
-    "active_backend_milestone": "Recovery Intelligence v2 Developer Artifact / Inspection Tool v1",
-    "active_backend_status": "backend_dev_inspection_tool_implementation_active",
-    "requested_final_status": "RECOVERY_INTELLIGENCE_V2_DEV_INSPECTION_TOOL_V1_IMPLEMENTATION_COMPLETE"
+    "active_backend_milestone": "Recovery Intelligence v2 QA Seed Matrix Validation v1",
+    "active_backend_status": "backend_qa_seed_matrix_validation_implementation_active",
+    "requested_final_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE"
   },
   "team_routing_contract": {
     "project_memory_note": "Project Memory / All Future Agents is not a visible team lane; it is a repo continuity concern every team must respect.",
@@ -1088,7 +1088,7 @@
     "temporary_apply_artifacts_outside_repo": "Temporary patches and apply scripts stay outside the repo."
   },
   "recovery_intelligence_v2_dev_inspection_tool_v1": {
-    "status": "authorized for backend implementation",
+    "status": "accepted and merged",
     "source_main_commit": "09c6581",
     "source_snapshot": "fitness_ai_snapshot_2026-07-01_09c6581_main_merge-recovery-intelligence-v2-service-v1.zip",
     "feature_branch": "feature/recovery-intelligence-v2-dev-inspection-tool-v1",
@@ -1113,6 +1113,47 @@
       "no wearable/HRV integration",
       "no automatic deload/progression logic",
       "no medical interpretation"
+    ],
+    "main_merge_commit": "accepted before f50a1cb"
+  },
+  "recovery_intelligence_v2_qa_seed_matrix_validation_v1": {
+    "status": "authorized for backend implementation",
+    "source_main_commit": "f50a1cb",
+    "source_snapshot": "fitness_ai_snapshot_2026-07-01_f50a1cb_main_merge-recovery-intelligence-v2-product-language-docs-cleanup-v1.zip",
+    "feature_branch": "feature/recovery-intelligence-v2-qa-seed-matrix-validation-v1",
+    "requested_final_status": "RECOVERY_INTELLIGENCE_V2_QA_SEED_MATRIX_VALIDATION_V1_IMPLEMENTATION_COMPLETE",
+    "scope": "developer/QA validation artifact only",
+    "primary_tool": "tools/dev_recovery_intelligence_v2_seed_matrix.py",
+    "primary_tests": [
+      "tests/test_recovery_intelligence_v2_seed_matrix.py"
+    ],
+    "scenario_labels": [
+      "supportive_recovery",
+      "recovery_limited_high_pressure",
+      "manageable_mixed_signals",
+      "improving_trend",
+      "limited_data_missing_checkins",
+      "messy_duplicates_same_day",
+      "missing_sleep_energy_soreness",
+      "body_weight_present_without_overclaiming"
+    ],
+    "future_integration_language": "Daily Coach Note",
+    "backend_chat_rule": "Backend implements Architecture-provided tasks and reports branch/commit/validation evidence when requested; Backend does not prepare handoff artifacts, QA findings, or QA instructions.",
+    "non_goals": [
+      "no Daily Coach Note integration",
+      "no Daily Coach behavior changes",
+      "no report behavior changes",
+      "no recommendation behavior changes",
+      "no API routes",
+      "no Streamlit UI",
+      "no provider behavior",
+      "no database schema or migrations",
+      "no persistence behavior",
+      "no RAG/vector/agent work",
+      "no wearable/HRV integration",
+      "no automatic deload/progression logic",
+      "no medical interpretation",
+      "no runtime product behavior"
     ]
   }
 }

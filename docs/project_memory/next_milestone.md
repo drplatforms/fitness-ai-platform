@@ -1,3 +1,72 @@
+# Next Milestone — Architecture Selection After Recovery Intelligence v2 Service v1
+
+This next milestone should be selected only after Recovery Intelligence v2 Service v1 is accepted, merged to `main`, pushed, and snapshotted.
+
+Current implementation milestone before this next step:
+
+```text
+Recovery Intelligence v2 Service v1
+```
+
+Current implementation baseline:
+
+```text
+dd6db0f main_merge-recovery-intelligence-v2-model-contract-v1
+```
+
+Current implementation snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_dd6db0f_main_merge-recovery-intelligence-v2-model-contract-v1.zip
+```
+
+Planning source:
+
+```text
+docs/project_memory/architecture/recovery_intelligence_v2_plan.md
+```
+
+Likely next owner:
+
+```text
+Architecture
+```
+
+Likely next purpose:
+
+```text
+Choose the next Recovery Intelligence v2 slice after the read-only service exists. Candidate paths include a developer artifact/inspection tool or Daily Coach Intelligence Snapshot v3 integration, but neither is authorized until Architecture scopes it.
+```
+
+Possible future deliverables after Architecture approval:
+
+```text
+tools/dev_recovery_intelligence_v2.py
+Daily Coach Intelligence Snapshot v3 integration
+Recovery Intelligence v2 QA seed matrix artifacts
+```
+
+Non-goals unless Architecture explicitly authorizes them:
+
+```text
+Daily Coach Snapshot integration
+API changes
+Streamlit changes
+database/schema changes
+provider behavior changes
+OpenAI/Ollama/CrewAI changes
+recommendation behavior changes
+report behavior changes
+automatic deloads
+workout plan changes
+nutrition target changes
+RAG/vector/agent work
+wearable/HRV integration
+medical claims
+```
+
+---
+
 # Next Milestone — Recovery Intelligence v2 Service v1
 
 This next milestone is recommended only after Recovery Intelligence v2 Model Contract v1 is accepted, merged to `main`, pushed, and snapshotted.

@@ -1,3 +1,73 @@
+# Current State — Recovery Intelligence v2 Service v1
+
+Current accepted baseline:
+
+```text
+dd6db0f main_merge-recovery-intelligence-v2-model-contract-v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-06-30_dd6db0f_main_merge-recovery-intelligence-v2-model-contract-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Recovery Intelligence v2 Model Contract v1
+```
+
+Active backend implementation milestone:
+
+```text
+Recovery Intelligence v2 Service v1
+```
+
+Requested status:
+
+```text
+RECOVERY_INTELLIGENCE_V2_SERVICE_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Implement a read-only Recovery Intelligence v2 service that builds the accepted v2 model contract from daily_checkins without changing Daily Coach output, reports, providers, UI, API contracts, schema, migrations, recommendation behavior, or persistence behavior.
+```
+
+Expected implementation files:
+
+```text
+services/recovery_intelligence_v2_service.py
+tests/test_recovery_intelligence_v2_service.py
+docs/project_memory/milestones/recovery_intelligence_v2_service_v1.md
+```
+
+Scope is limited to constructing the existing `RecoveryIntelligenceV2Summary` model from check-in data:
+
+- preserve `checkin_date` as the primary date
+- dedupe duplicate same-day check-ins by latest `created_at` / `id`
+- construct current-day context
+- construct a 28-day recovery baseline
+- construct recent 7-day vs baseline delta
+- construct recent 7-day vs prior 7-day delta
+- construct indicator-level interpretations for sleep, energy, soreness, body weight, and check-in consistency
+- construct data quality, provenance/source facts, confidence, reason codes, limitations, and a coach-safe summary
+
+No Daily Coach Snapshot integration, provider behavior, UI behavior, API behavior, schema/migration behavior, recommendation behavior, report behavior, or runtime behavior beyond the new read-only service is authorized by this implementation slice.
+
+Hard workflow rule remains active:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
+
+Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated model-contract or intelligence milestones.
+
+---
+
 # Current State — Recovery Intelligence v2 Model Contract v1
 
 Current accepted baseline:

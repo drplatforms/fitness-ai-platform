@@ -56,18 +56,18 @@
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-06-30_871d090_main_merge-recovery-intelligence-v2-architecture-planning-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-06-30_dd6db0f_main_merge-recovery-intelligence-v2-model-contract-v1.zip",
     "commit_check_mode": "code",
-    "current_authorized_milestone": "Recovery Intelligence v2 Model Contract v1",
+    "current_authorized_milestone": "Recovery Intelligence v2 Service v1",
     "current_recommended_milestone": "Recovery Intelligence v2 Service v1",
     "current_recommended_status": "APPROVED_FOR_BACKEND_IMPLEMENTATION",
-    "primary_question": "Does the Recovery Intelligence v2 model contract preserve the accepted plan without adding service, snapshot, provider, UI, API, schema, or recommendation behavior?",
-    "qa_class": "MODEL_CONTRACT_ONLY_RECOVERY_INTELLIGENCE_V2",
-    "recommended_next_milestone_after_acceptance": "Recovery Intelligence v2 Service v1",
-    "recommended_owner": "Backend Development / Model Contract Implementation",
+    "primary_question": "Can the accepted Recovery Intelligence v2 model contract be populated from daily_checkins as a read-only service without changing Daily Coach, provider, UI, API, schema, recommendation, report, or persistence behavior?",
+    "qa_class": "READ_ONLY_RECOVERY_INTELLIGENCE_V2_SERVICE",
+    "recommended_next_milestone_after_acceptance": "Architecture to choose: Recovery Intelligence v2 developer artifact/inspection tool or Daily Coach Intelligence Snapshot v3 integration",
+    "recommended_owner": "Backend Development / Service Implementation",
     "source_feature_branch": null,
     "source_feature_commit": null,
-    "source_main_commit": "871d090"
+    "source_main_commit": "dd6db0f"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -386,20 +386,20 @@
     ]
   },
   "current_baseline": {
-    "active_backend_milestone": "Recovery Intelligence v2 Model Contract v1",
-    "active_backend_status": "approved_for_backend_model_contract_implementation",
-    "active_project_memory_milestone": "Recovery Intelligence v2 Model Contract v1",
-    "active_project_memory_status": "model_contract_implementation_active",
-    "current_source_of_truth": "main at 871d090 main_merge-recovery-intelligence-v2-architecture-planning-v1",
+    "active_backend_milestone": "Recovery Intelligence v2 Service v1",
+    "active_backend_status": "approved_for_backend_service_implementation",
+    "active_project_memory_milestone": "Recovery Intelligence v2 Service v1",
+    "active_project_memory_status": "service_implementation_active",
+    "current_source_of_truth": "main at dd6db0f main_merge-recovery-intelligence-v2-model-contract-v1",
     "fully_free_lab_review_classification": "DAILY_COACH_FULLY_FREE_SOURCE_DATA_LAB_V1_QA_REVIEWED_NOT_BETTER_THAN_V4_GENERIC_STILL_CONSTRAINED_PROVIDER_PAUSE_RECOMMENDED",
-    "latest_accepted_commit": "871d090",
-    "latest_accepted_milestone": "Recovery Intelligence v2 Architecture Planning v1",
-    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-30_871d090_main_merge-recovery-intelligence-v2-architecture-planning-v1.zip",
-    "latest_final_status": "RECOVERY_INTELLIGENCE_V2_ARCHITECTURE_PLAN_ACCEPTED_AND_MERGED",
-    "latest_main_merge_commit": "871d090",
+    "latest_accepted_commit": "dd6db0f",
+    "latest_accepted_milestone": "Recovery Intelligence v2 Model Contract v1",
+    "latest_accepted_snapshot": "fitness_ai_snapshot_2026-06-30_dd6db0f_main_merge-recovery-intelligence-v2-model-contract-v1.zip",
+    "latest_final_status": "RECOVERY_INTELLIGENCE_V2_MODEL_CONTRACT_V1_ACCEPTED_AND_MERGED",
+    "latest_main_merge_commit": "dd6db0f",
     "latest_technical_baseline_commit": "23b5378",
     "latest_technical_baseline_snapshot": "fitness_ai_snapshot_2026-06-29_23b5378_main_merge-daily-coach-fully-free-source-data-lab-evidence-v1.zip",
-    "next_product_architecture_center": "Backend Intelligence Foundation: Recovery Intelligence v2 Model Contract v1, then Recovery Intelligence v2 Service v1",
+    "next_product_architecture_center": "Backend Intelligence Foundation: Recovery Intelligence v2 Service v1, then Architecture chooses the next v2 slice",
     "platform_north_star_file": "docs/project_memory/architecture/platform_north_star_and_future_stack.md",
     "previous_accepted_milestone": "Daily Coach Free-Range Prompt + Payload Decaging v4",
     "previous_main_merge_commit": "56d63c4",
@@ -1029,7 +1029,7 @@
       "status": "ACCEPTED_AND_MERGED"
     }
   },
-  "requested_backend_status": "RECOVERY_INTELLIGENCE_V2_MODEL_CONTRACT_V1_IMPLEMENTATION_COMPLETE",
+  "requested_backend_status": "RECOVERY_INTELLIGENCE_V2_SERVICE_V1_IMPLEMENTATION_COMPLETE",
   "runtime_split": {
     "linux": [
       "Runtime/smoke environment at ~/projects/fitness-ai-platform. Pull feature or main branches after push/merge and run Linux validation when runtime-relevant."

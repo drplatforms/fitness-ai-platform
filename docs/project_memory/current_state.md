@@ -1,53 +1,65 @@
-# Current State — Post-North-Star Architecture Onboarding
+# Current State — Recovery Intelligence v2 Architecture Planning v1
 
-Current accepted main:
+Current accepted baseline before this docs-only planning slice:
 
 ```text
-187e433 main_merge-platform-north-star-future-stack-canonicalization-v1
+fc7ed70 main_merge-post-north-star-state-reconciliation-v1
 ```
 
 Current accepted snapshot:
 
 ```text
-fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
+fitness_ai_snapshot_2026-06-30_fc7ed70_main_merge-post-north-star-state-reconciliation-v1.zip
 ```
 
 Latest accepted milestone:
 
 ```text
-Platform North Star + Future Stack Canonicalization v1
+Post-North-Star State Reconciliation + Architecture/Backend Workflow Memory v1
 ```
 
-The current Architecture lane is now onboarded from the accepted `187e433` snapshot. Repo docs and the latest accepted snapshot are canonical; chat memory is useful but not authoritative.
-
-Canonical north-star file:
+Current Architecture docs-only milestone:
 
 ```text
-docs/project_memory/architecture/platform_north_star_and_future_stack.md
+Recovery Intelligence v2 Architecture Planning v1
 ```
 
-The north-star file is a strategic compass. It does not authorize immediate implementation of RAG, vector search, model routing, multi-agent orchestration, SaaS infrastructure, provider promotion, UI rewrites, or runtime behavior changes.
+Primary deliverable:
+
+```text
+docs/project_memory/architecture/recovery_intelligence_v2_plan.md
+```
+
+The Recovery Intelligence v2 plan defines the staged source-data contract direction after v1. It does not authorize runtime behavior changes by itself.
 
 Latest Backend Intelligence Foundation evidence:
 
 - Recovery Intelligence v1 is accepted and merged at `43927d4`.
 - Workout Set Intelligence v1 + Daily Coach Intelligence Snapshot v2 is accepted and merged at `123d115`.
 - Platform North Star + Future Stack Canonicalization v1 is accepted and merged at `187e433`.
+- Post-North-Star State Reconciliation + Architecture/Backend Workflow Memory v1 is accepted and merged at `fc7ed70`.
 - Provider voice iteration remains paused.
 
-Current next architecture planning target:
+Next recommended implementation slice after Architecture accepts the plan:
 
 ```text
-Recovery Intelligence v2 Architecture Planning v1
+Recovery Intelligence v2 Model Contract v1
 ```
 
-Purpose of the next planning slice:
+Purpose of the next implementation slice:
 
 ```text
-Define how Recovery Intelligence should evolve after v1 before Backend implementation begins. The design must preserve backend-owned facts, confidence, provenance, deterministic fallback, and no medical/diagnostic claims.
+Add Recovery Intelligence v2 model contracts and tests before any v2 service, snapshot integration, recommendation behavior, provider, API, UI, or persistence changes are authorized.
 ```
 
 No runtime/product behavior changes are authorized by this current state update.
+
+Hard workflow rule now recorded in project memory:
+
+```text
+Windows is the only commit/merge/push/snapshot machine.
+Linux is pull/validate/runtime QA only and must never commit, merge, or push.
+```
 
 Known baseline drift remains documented: `tests/test_daily_narrative_rich_day_service.py` has copy-expectation mismatches, including expected `Read the day before adding more` vs actual `Consider the full day`. Do not patch that drift inside unrelated docs or intelligence milestones.
 

@@ -1,10 +1,117 @@
-# Next Milestone — Recovery Intelligence v2 Architecture Planning v1
+# Next Milestone — Recovery Intelligence v2 Model Contract v1
 
 Baseline:
 
 ```text
-main @ 187e433
-fitness_ai_snapshot_2026-06-30_187e433_main_merge-platform-north-star-future-stack-canonicalization-v1.zip
+main after Recovery Intelligence v2 Architecture Planning v1 is merged and snapshotted
+```
+
+Planning source:
+
+```text
+docs/project_memory/architecture/recovery_intelligence_v2_plan.md
+```
+
+Owner:
+
+```text
+Backend Development
+```
+
+Purpose:
+
+```text
+Add the Recovery Intelligence v2 model contract before any v2 service, snapshot integration, recommendation behavior, provider, API, UI, or persistence changes are authorized.
+```
+
+Primary deliverables:
+
+```text
+models/recovery_intelligence_v2_models.py
+tests/test_recovery_intelligence_v2_models.py
+```
+
+Expected model concepts:
+
+- RecoveryIntelligenceV2Summary
+- RecoveryBaseline
+- RecoverySignalInterpretation
+- RecoveryDataQuality
+- bounded readiness classification
+- bounded recovery pressure
+- bounded trend direction
+- confidence
+- reason_codes
+- limitations
+- source_facts / coach-safe summary guardrails if present
+
+Required behavior:
+
+- model construction validates enum values
+- Limited/Low confidence outputs require reason_codes or limitations
+- missing data remains explicit, not coerced to zero
+- serialization remains public-safe and bounded
+- forbidden medical/diagnostic/overtraining language is rejected where model fields own user-facing summaries
+
+Non-goals for this implementation slice:
+
+```text
+service implementation
+Daily Coach Snapshot integration
+API changes
+Streamlit changes
+database/schema changes
+provider behavior changes
+OpenAI/Ollama/CrewAI changes
+recommendation behavior changes
+report behavior changes
+automatic deloads
+workout plan changes
+nutrition target changes
+RAG
+embeddings
+vector DB setup
+agents/orchestration
+wearable/HRV integration
+medical claims
+```
+
+Recommended validation:
+
+```text
+git diff --check
+ruff check . --fix
+black .
+pytest tests/test_recovery_intelligence_v2_models.py -q
+pytest tests/test_recovery_intelligence_service.py -q
+pytest tests/test_daily_coach_intelligence_snapshot_service.py -q
+pytest tests/test_project_memory_check.py -q
+python tools/project_memory_check.py
+python tools/dev_assistant.py memory-check
+python tools/dev_assistant.py stale-doc-check
+pytest
+python -m py_compile ui/streamlit_app.py
+```
+
+Completion criteria:
+
+- Recovery Intelligence v2 model contract is specific and validated.
+- No runtime behavior changes occur.
+- Recovery v1 behavior remains stable.
+- Daily Coach Intelligence Snapshot behavior remains stable.
+- Backend-owned truth, confidence, provenance, limitations, and deterministic fallback remain explicit.
+- AI/provider output remains out of scope.
+- Project memory points to the accepted Recovery Intelligence v2 plan.
+
+---
+
+# Previous Milestone — Recovery Intelligence v2 Architecture Planning v1
+
+Baseline:
+
+```text
+main @ fc7ed70
+fitness_ai_snapshot_2026-06-30_fc7ed70_main_merge-post-north-star-state-reconciliation-v1.zip
 ```
 
 Owner:
@@ -13,74 +120,17 @@ Owner:
 Architecture
 ```
 
-Purpose:
-
-```text
-Design the next Recovery Intelligence layer before Backend implementation. The goal is to make recovery signals more useful to Daily Coach intelligence without changing runtime behavior prematurely.
-```
-
 Primary deliverable:
 
 ```text
 docs/project_memory/architecture/recovery_intelligence_v2_plan.md
 ```
 
-Expected design topics:
-
-- What Recovery Intelligence v1 already provides.
-- Which v2 signals are allowed: sleep consistency, energy trend, soreness trend, body-weight trend, check-in completeness, rolling readiness, fatigue-risk support, and recovery-data confidence.
-- How Recovery Intelligence v2 should interact with Workout Set Intelligence v1 and the Daily Coach Intelligence Snapshot.
-- How confidence/provenance/limitations should be represented.
-- How to avoid medical, diagnostic, injury, illness, sleep-disorder, or overtraining claims.
-- Which behavior changes are explicitly not authorized until after design acceptance.
-
-Non-goals for planning:
+Status:
 
 ```text
-runtime behavior changes
-provider behavior changes
-OpenAI/Ollama defaults
-Today provider display
-Streamlit UI changes
-API changes
-schema changes
-migration changes
-RAG
-embeddings
-pgvector
-Qdrant
-vector DB setup
-LangGraph
-CrewAI
-LlamaIndex
-multi-agent runtime
-custom GPT build
-food catalog expansion
-USDA import
-wearable integration
-auth/billing/SaaS infrastructure
-observability stack setup
-cloud deployment
+DOCS_ONLY_ARCHITECTURE_PLAN_READY_FOR_ACCEPTANCE
 ```
-
-Recommended validation for design-only work:
-
-```text
-git diff --check
-python -m pytest tests/test_project_memory_check.py -q
-python tools/project_memory_check.py
-python tools/dev_assistant.py memory-check
-python tools/dev_assistant.py stale-doc-check
-scripts/dev_commit_check.ps1 -Mode docs-only
-```
-
-Completion criteria:
-
-- Recovery Intelligence v2 scope is specific enough for Backend to implement later.
-- Backend-owned truth, confidence, provenance, limitations, and deterministic fallback remain explicit.
-- AI/provider output remains out of scope.
-- No user-facing behavior is changed.
-- Project memory points to the accepted `187e433` baseline.
 
 ---
 

@@ -18,7 +18,7 @@ Read the north-star file before making future-stack, SaaS, RAG, vector, agent, m
 
 Provider voice iteration is paused. Backend Intelligence Foundation remains the product-brain center of gravity.
 
-Current next architecture planning target: `Recovery Intelligence v2 Architecture Planning v1`, unless Architecture explicitly changes course.
+Current Architecture docs-only target: `Recovery Intelligence v2 Architecture Planning v1`. After this plan is accepted, the next recommended implementation slice is `Recovery Intelligence v2 Model Contract v1`.
 
 Canonical seven visible team lanes are recorded in `team_routing_contract.md`.
 
@@ -88,6 +88,7 @@ The command menu preserves `fitness`, `app`, `lstop`, `lrestart`, and `lupdate`,
 The current canonical long-term platform vision and future technology stack is:
 
 - `docs/project_memory/architecture/platform_north_star_and_future_stack.md`
+- `docs/project_memory/architecture/recovery_intelligence_v2_plan.md`
 
 This file is a strategic compass. It does not authorize immediate implementation of RAG, vector databases, agents, provider promotion, SaaS infrastructure, UI rewrites, or runtime behavior changes.
 

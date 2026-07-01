@@ -1,7 +1,7 @@
 # Backend Intelligence Foundation v1
 
 **Status:** Next product architecture center after docs/process cleanup
-**Current accepted main:** `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`
+**Current accepted main:** `fc7ed70 main_merge-post-north-star-state-reconciliation-v1`
 
 Backend Intelligence Foundation is the product-brain prerequisite for advanced provider, RAG, vector, and agent architecture.
 
@@ -83,6 +83,30 @@ Provider voice iteration remains paused. This slice improves source-data truth, 
 
 Workout Set Intelligence v1 is accepted as of `123d115`. Platform North Star + Future Stack Canonicalization v1 is accepted as of `187e433`. Current next architecture planning target: `Recovery Intelligence v2 Architecture Planning v1`.
 
+
+## Architecture Plan — Recovery Intelligence v2
+
+Baseline: `main @ fc7ed70`.
+
+Primary planning document:
+
+```text
+docs/project_memory/architecture/recovery_intelligence_v2_plan.md
+```
+
+Recovery Intelligence v2 should deepen the existing deterministic recovery source-data layer without changing user-facing behavior prematurely.
+
+The accepted direction is staged:
+
+```text
+Recovery Intelligence v2 Architecture Planning v1
+→ Recovery Intelligence v2 Model Contract v1
+→ Recovery Intelligence v2 Service v1
+→ Daily Coach Intelligence Snapshot Recovery v2 Integration
+→ later recommendation/report usage only after separate Architecture scope
+```
+
+Recovery v2 must preserve backend-owned truth, confidence, provenance, limitations, data-quality visibility, and no medical/diagnostic/overtraining claims.
 
 ## Platform North Star Reference
 

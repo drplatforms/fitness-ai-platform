@@ -1,10 +1,32 @@
 # Architecture + Backend Command Workflow v1
 
 **Status:** Active workflow memory
-**Baseline:** `187e433 main_merge-platform-north-star-future-stack-canonicalization-v1`
+**Baseline:** `fc7ed70 main_merge-post-north-star-state-reconciliation-v1`
 **Purpose:** Preserve the phase-separated command workflow used by Architecture and Backend Development so future chats do not blur responsibilities or invent unsafe Git shortcuts.
 
 This file records the standing command patterns. Concrete milestone values such as commit hashes, branch names, patch names, snapshot names, and expected test files must still be supplied in the milestone-specific handoff.
+
+## Hard Machine Boundary
+
+Windows is the only source-of-truth Git write machine:
+
+- commits
+- merges
+- pushes
+- accepted snapshots
+
+Linux is pull/validate/runtime QA only:
+
+- pull the exact feature branch after every Windows feature commit/push
+- pull `main` after every Windows merge/push
+- run Linux validation, runtime smoke, FastAPI/Streamlit checks, and provider QA as scoped
+- never commit from Linux
+- never merge from Linux
+- never push from Linux
+
+Every command block must use concrete branch names, patch names, and expected commit values. Do not leave placeholders such as `<feature-branch-name>` in user copy/paste commands.
+
+If Architecture is creating a docs-only patch, the latest post-merge snapshot is required before patch generation. If the latest snapshot is missing, stop and request it instead of patching against stale repo state.
 
 ## Lane Ownership
 
@@ -173,7 +195,7 @@ git status -sb
 git log --oneline --decorate -8
 ```
 
-### Phase 8 — Linux pull / validation
+### Phase 8 — Linux pull / validation only
 
 ```bash
 cd ~/projects/fitness-ai-platform
@@ -189,7 +211,7 @@ git log --oneline --decorate -8
 git diff --check HEAD~1..HEAD
 ```
 
-Run the Linux validation commands named in the milestone handoff. For docs-only work, project-memory checks are usually enough. For runtime work, include FastAPI/Streamlit/manual smoke checks as scoped by QA or Architecture.
+Run the Linux validation commands named in the milestone handoff. Linux must not commit, merge, or push. For docs-only work, project-memory checks are usually enough. For runtime work, include FastAPI/Streamlit/manual smoke checks as scoped by QA or Architecture.
 
 ## Architecture Acceptance / Main Merge Workflow Template
 
@@ -369,3 +391,8 @@ Write-Host $snapshotName
 ```
 
 After the snapshot filename is provided, the next assistant response must provide Linux pull/sync commands before moving on to new architecture scope.
+
+
+### Required Linux pull after main push
+
+After Windows pushes a merge commit to `main`, provide a concrete Linux pull/validation block for `main` immediately. Do not move to new scope until Linux has pulled and validated the pushed `main` state.

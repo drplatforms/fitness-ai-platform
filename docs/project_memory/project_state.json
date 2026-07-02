@@ -68,18 +68,18 @@
     }
   },
   "active_roadmap": {
-    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_e26c4e0_main_merge-daily-coach-note-copy-qa-matrix-v1.zip",
+    "baseline_snapshot": "fitness_ai_snapshot_2026-07-01_d5bfd29_main_merge-daily-coach-provider-preview-raw-data-payload-v1.zip",
     "commit_check_mode": "code",
-    "current_authorized_milestone": "Daily Coach Provider Preview Raw Data Payload v1",
-    "current_recommended_milestone": "Recovery-Aware Coach Copy Contract v1",
-    "current_recommended_status": "DAILY_COACH_PROVIDER_PREVIEW_RAW_DATA_PAYLOAD_V1_IMPLEMENTATION_COMPLETE",
-    "primary_question": "Can Recovery Intelligence v2 facts be converted into a deterministic Daily Coach Note copy contract without changing user-facing behavior?",
-    "qa_class": "BACKEND_CONTRACT_RECOVERY_AWARE_COACH_COPY",
-    "recommended_next_milestone_after_acceptance": "Architecture Selection After Daily Coach Provider Preview Raw Data Payload v1",
-    "recommended_owner": "Backend Development / Daily Coach Copy Contract",
-    "source_feature_branch": "feature/daily-coach-provider-preview-raw-data-payload-v1",
+    "current_authorized_milestone": "Daily Coach Human Voice Prompt Contract v1",
+    "current_recommended_milestone": "Architecture Review After Daily Coach Human Voice Prompt Contract v1",
+    "current_recommended_status": "DAILY_COACH_HUMAN_VOICE_PROMPT_CONTRACT_V1_IMPLEMENTATION_COMPLETE",
+    "primary_question": "Can Daily Coach provider-preview voice iteration move to a human-editable prompt file without Python patching or product-surface behavior changes?",
+    "qa_class": "BACKEND_CONTRACT_DAILY_COACH_HUMAN_VOICE_PROMPT_PREVIEW",
+    "recommended_next_milestone_after_acceptance": "Architecture Selection After Daily Coach Human Voice Prompt Contract v1",
+    "recommended_owner": "Backend Development / Daily Coach Provider Preview",
+    "source_feature_branch": "feature/daily-coach-human-voice-prompt-contract-v1",
     "source_feature_commit": null,
-    "source_main_commit": "66a70d3"
+    "source_main_commit": "d5bfd29"
   },
   "architecture_direction": {
     "backend_intelligence_layers": [
@@ -1245,8 +1245,7 @@
       "no automatic deload/progression logic",
       "no medical interpretation"
     ]
-  }
-,
+  },
   "daily_coach_note_copy_qa_matrix_v1": {
     "status": "implementation_complete_ready_for_architecture_review",
     "source_main_commit": "33ebf18",
@@ -1346,5 +1345,22 @@
       "product_surface_allowed": false
     },
     "uncaged_provider_voice_principle": "Future provider work receives raw deterministic backend data and should not be forced into backend-written sentence banks or repeated backend-authored sentence structures."
+  },
+  "daily_coach_human_voice_prompt_contract_v1": {
+    "baseline_commit": "d5bfd29",
+    "snapshot": "fitness_ai_snapshot_2026-07-01_d5bfd29_main_merge-daily-coach-provider-preview-raw-data-payload-v1.zip",
+    "milestone": "Daily Coach Human Voice Prompt Contract v1",
+    "status": "DAILY_COACH_HUMAN_VOICE_PROMPT_CONTRACT_V1_IMPLEMENTATION_COMPLETE",
+    "scope": "Developer-only prompt-file provider preview runner that loads a human-editable Daily Coach prompt, appends raw backend payload JSON, calls provider only from explicit CLI, and prints raw output without persistence or product-surface changes.",
+    "rejected_predecessor": "Daily Coach Provider Preview Runtime Spike v1 was rejected for voice failure.",
+    "prompt_file": "docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md",
+    "developer_tool": "tools/dev_daily_coach_human_voice_prompt_preview.py",
+    "runtime_behavior_change": false,
+    "user_facing_behavior_change": false,
+    "provider_promotion": false,
+    "persistence_change": false,
+    "api_change": false,
+    "ui_change": false,
+    "next_recommended_milestone": "Architecture Selection After Daily Coach Human Voice Prompt Contract v1"
   }
 }

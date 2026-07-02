@@ -11,10 +11,17 @@ if str(ROOT) not in sys.path:
 from services.daily_coach_human_voice_prompt_preview_service import (  # noqa: E402
     run_daily_coach_human_voice_prompt_preview,
 )
+from services.openai_human_voice_prompt_preview_service import (  # noqa: E402
+    DEFAULT_OPENAI_BASE_URL,
+    run_openai_daily_coach_human_voice_prompt_preview,
+)
 
 DEFAULT_PROMPT_FILE = (
     "docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md"
 )
+
+
+SUPPORTED_PROVIDERS = ("ollama", "openai")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,14 +36,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-date", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--prompt-file", default=DEFAULT_PROMPT_FILE)
+    parser.add_argument("--provider", choices=SUPPORTED_PROVIDERS, default="ollama")
     parser.add_argument("--timeout-seconds", type=float, default=300)
     parser.add_argument("--ollama-base-url", default="http://localhost:11434")
+    parser.add_argument("--openai-base-url", default=DEFAULT_OPENAI_BASE_URL)
     parser.add_argument("--temperature", type=float, default=0.9)
     parser.add_argument("--print-provider-input", action="store_true")
     parser.add_argument(
         "--mock-output",
         action="store_true",
-        help="Use deterministic fake raw output instead of calling Ollama.",
+        help="Use deterministic fake raw output instead of calling a provider.",
     )
     args = parser.parse_args(argv)
 
@@ -51,16 +60,28 @@ def main(argv: list[str] | None = None) -> int:
 
         provider_callable = _mock_provider
 
-    result, provider_input = run_daily_coach_human_voice_prompt_preview(
-        user_id=args.user_id,
-        target_date=args.target_date,
-        model_name=args.model,
-        prompt_file=args.prompt_file,
-        provider_callable=provider_callable,
-        timeout_seconds=args.timeout_seconds,
-        ollama_base_url=args.ollama_base_url,
-        temperature=args.temperature,
-    )
+    if args.provider == "openai":
+        result, provider_input = run_openai_daily_coach_human_voice_prompt_preview(
+            user_id=args.user_id,
+            target_date=args.target_date,
+            model_name=args.model,
+            prompt_file=args.prompt_file,
+            provider_callable=provider_callable,
+            timeout_seconds=args.timeout_seconds,
+            openai_base_url=args.openai_base_url,
+        )
+    else:
+        result, provider_input = run_daily_coach_human_voice_prompt_preview(
+            user_id=args.user_id,
+            target_date=args.target_date,
+            model_name=args.model,
+            provider_name="ollama",
+            prompt_file=args.prompt_file,
+            provider_callable=provider_callable,
+            timeout_seconds=args.timeout_seconds,
+            ollama_base_url=args.ollama_base_url,
+            temperature=args.temperature,
+        )
 
     _print_result(result.to_dict())
     if args.print_provider_input:
@@ -85,6 +106,7 @@ def _print_result(result: dict) -> None:
     print("=== Daily Coach Human Voice Prompt Preview ===")
     print(f"user_id: {result['user_id']}")
     print(f"target_date: {result['target_date']}")
+    print(f"provider: {result['provider_name']}")
     print(f"model: {result['model_name']}")
     print(f"prompt_file: {result['prompt_file']}")
     print(f"prompt_sha256: {result['prompt_sha256']}")

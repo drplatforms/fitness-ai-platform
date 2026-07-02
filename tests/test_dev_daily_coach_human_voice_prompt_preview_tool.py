@@ -18,6 +18,7 @@ class FakeResult:
             "user_id": 102,
             "target_date": "2026-06-14",
             "model_name": "fake-model",
+            "provider_name": "ollama",
             "prompt_file": "docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md",
             "prompt_sha256": "abc123",
             "generated_at": "2026-07-01T00:00:00+00:00",
@@ -66,6 +67,7 @@ def test_developer_tool_prints_raw_model_output_and_metadata(
     assert calls[0]["user_id"] == 102
     assert calls[0]["target_date"] == "2026-06-14"
     assert calls[0]["model_name"] == "fake-model"
+    assert calls[0]["provider_name"] == "ollama"
     assert calls[0]["prompt_file"] == (
         "docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md"
     )
@@ -169,7 +171,6 @@ def test_developer_tool_does_not_import_old_provider_runtime_modules() -> None:
     source = Path(tool.__file__).read_text(encoding="utf-8").lower()
 
     assert "crewai" not in source
-    assert "openai" not in source
     assert "provider_service" not in source
     assert "daily_coach_narrative_provider_service" not in source
     assert "daily_coach_narrative_validation_service" not in source

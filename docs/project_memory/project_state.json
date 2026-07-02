@@ -1362,5 +1362,29 @@
     "api_change": false,
     "ui_change": false,
     "next_recommended_milestone": "Architecture Selection After Daily Coach Human Voice Prompt Contract v1"
+  },
+  "daily_coach_gpt_family_human_voice_trial_v1": {
+    "baseline_commit": "05313fd",
+    "snapshot": "fitness_ai_snapshot_2026-07-01_05313fd_main_merge-daily-coach-human-voice-prompt-contract-v1.zip",
+    "milestone": "Daily Coach GPT Family Human Voice Trial v1",
+    "status": "DAILY_COACH_GPT_FAMILY_HUMAN_VOICE_TRIAL_V1_IMPLEMENTATION_COMPLETE",
+    "feature_branch": "feature/daily-coach-gpt-family-human-voice-trial-v1",
+    "scope": "Developer-only GPT-family/OpenAI trial capability for the human-editable Daily Coach prompt preview lane using the raw backend provider-preview payload.",
+    "prompt_file": "docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md",
+    "single_model_tool": "tools/dev_daily_coach_human_voice_prompt_preview.py",
+    "multi_model_tool": "tools/dev_daily_coach_gpt_family_human_voice_trial.py",
+    "provider": "openai",
+    "model_ids_configurable": true,
+    "api_key_source": "OPENAI_API_KEY environment variable",
+    "api_key_printed_or_persisted": false,
+    "output_is_raw_trial_evidence_only": true,
+    "provider_promotion": false,
+    "runtime_behavior_change": false,
+    "user_facing_behavior_change": false,
+    "persistence_change": false,
+    "api_change": false,
+    "ui_change": false,
+    "openai_enabled_outside_explicit_developer_cli": false,
+    "next_recommended_milestone": "Architecture Review After Daily Coach GPT Family Human Voice Trial v1"
   }
 }

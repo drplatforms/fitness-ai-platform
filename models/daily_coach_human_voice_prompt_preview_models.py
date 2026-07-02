@@ -14,6 +14,7 @@ class DailyCoachHumanVoicePromptPreviewResult:
     user_id: int
     target_date: str
     model_name: str
+    provider_name: str
     prompt_file: str
     prompt_sha256: str
     generated_at: str
@@ -35,6 +36,7 @@ class DailyCoachHumanVoicePromptPreviewResult:
         _validate_positive_int("user_id", self.user_id)
         _validate_required_text("target_date", self.target_date)
         _validate_required_text("model_name", self.model_name)
+        _validate_required_text("provider_name", self.provider_name)
         _validate_required_text("prompt_file", self.prompt_file)
         _validate_required_text("prompt_sha256", self.prompt_sha256)
         _validate_required_text("generated_at", self.generated_at)

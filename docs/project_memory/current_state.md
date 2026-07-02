@@ -1,3 +1,96 @@
+# Current State — Daily Coach GPT Family Human Voice Trial v1
+
+Current accepted baseline:
+
+```text
+05313fd Merge daily coach human voice prompt contract v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_05313fd_main_merge-daily-coach-human-voice-prompt-contract-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Daily Coach Human Voice Prompt Contract v1
+```
+
+Active backend implementation milestone:
+
+```text
+Daily Coach GPT Family Human Voice Trial v1
+```
+
+Requested status:
+
+```text
+DAILY_COACH_GPT_FAMILY_HUMAN_VOICE_TRIAL_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Use the accepted human-editable Daily Coach prompt preview lane to compare GPT-family model output against the same raw backend provider-preview payload.
+```
+
+Implemented scope:
+
+- Added a developer-only OpenAI/GPT-family provider path for the human voice prompt preview lane.
+- Added a multi-model comparison tool at `tools/dev_daily_coach_gpt_family_human_voice_trial.py`.
+- Extended `tools/dev_daily_coach_human_voice_prompt_preview.py` with explicit `--provider openai` support.
+- Preserved `--provider ollama` and `--mock-output` developer smoke behavior.
+- Model IDs are CLI-configurable and not hardcoded as final truth.
+- `OPENAI_API_KEY` is read from the environment and must not be printed.
+- OpenAI Responses API calls send only `model` and `input`.
+- The provider input remains the human-editable prompt file plus `RAW_BACKEND_PAYLOAD_JSON` from the raw provider-preview payload.
+- Multi-model trials continue after one model fails.
+- Optional trial artifacts are written only when `--output-dir` is explicitly provided.
+
+Project/product boundaries:
+
+- Daily Coach Human Voice Prompt Contract v1 is the accepted baseline.
+- The human-editable prompt remains user-owned.
+- The raw provider-preview payload remains the data source.
+- OpenAI/GPT-family output is raw trial evidence only.
+- No model is promoted.
+- No output is persisted by default.
+- No output reaches Today UI.
+- No output becomes Daily Coach Note public copy.
+- No Daily Next Action behavior changes.
+- No API/schema/migration/persistence/report/recommendation behavior changes.
+- No OpenAI behavior is enabled outside explicit developer CLI.
+
+Strong non-goals preserved:
+
+```text
+normal Today provider calls
+Today UI
+Streamlit UI layout
+API routes
+database schema
+migrations
+persistence behavior
+report behavior
+recommendation behavior
+Daily Next Action selection logic
+Daily Coach Note public copy
+workout plan behavior
+nutrition target behavior
+automatic deload logic
+automatic progression logic
+wearable/HRV integration
+medical interpretation
+provider promotion
+model approval
+RAG/vector/agent behavior
+CrewAI behavior
+OpenAI behavior outside explicit developer CLI
+```
+
+---
 # Current State — Daily Coach Human Voice Prompt Contract v1
 
 Current accepted baseline:

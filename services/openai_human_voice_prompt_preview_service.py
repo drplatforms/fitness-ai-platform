@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -15,57 +15,40 @@ from models.daily_coach_human_voice_prompt_preview_models import (
     DAILY_COACH_HUMAN_VOICE_PROMPT_PREVIEW_RESULT_VERSION,
     DailyCoachHumanVoicePromptPreviewResult,
 )
+from services.daily_coach_human_voice_prompt_preview_service import (
+    build_daily_coach_human_voice_provider_input,
+    load_human_voice_prompt_file,
+)
 from services.daily_coach_provider_preview_payload_service import (
     build_daily_coach_provider_preview_raw_data_payload_for_user,
 )
 
-ProviderCallable = Callable[[str], str]
+OpenAIProviderCallable = Callable[[str], str]
 
-RAW_BACKEND_PAYLOAD_MARKER = "RAW_BACKEND_PAYLOAD_JSON:"
-
-
-def load_human_voice_prompt_file(prompt_file: str | Path) -> str:
-    prompt_path = Path(prompt_file)
-    if not prompt_path.exists():
-        raise FileNotFoundError(
-            f"Daily Coach human voice prompt file not found: {prompt_path}"
-        )
-    if not prompt_path.is_file():
-        raise ValueError(
-            f"Daily Coach human voice prompt path is not a file: {prompt_path}"
-        )
-    return prompt_path.read_text(encoding="utf-8")
+DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
+OPENAI_PROVIDER_NAME = "openai"
 
 
-def build_daily_coach_human_voice_provider_input(
-    prompt_text: str,
-    payload: Mapping[str, Any] | Any,
-) -> str:
-    payload_dict = _payload_to_dict(payload)
-    pretty_payload_json = json.dumps(payload_dict, indent=2, sort_keys=True)
-    return (
-        f"{prompt_text}\n\n---\n\n{RAW_BACKEND_PAYLOAD_MARKER}\n{pretty_payload_json}"
-    )
+class MissingOpenAIAPIKeyError(RuntimeError):
+    """Raised when the explicit developer OpenAI preview path lacks a key."""
 
 
-def run_daily_coach_human_voice_prompt_preview(
+def run_openai_daily_coach_human_voice_prompt_preview(
     *,
     user_id: int,
     target_date: str,
     model_name: str,
     prompt_file: str | Path,
-    provider_name: str = "ollama",
     payload: Mapping[str, Any] | Any | None = None,
-    provider_callable: ProviderCallable | None = None,
+    provider_callable: OpenAIProviderCallable | None = None,
     timeout_seconds: float = 300,
-    ollama_base_url: str = "http://localhost:11434",
-    temperature: float = 0.9,
+    openai_base_url: str = DEFAULT_OPENAI_BASE_URL,
 ) -> tuple[DailyCoachHumanVoicePromptPreviewResult, str]:
-    """Run an explicit developer-only raw-output preview.
+    """Run an explicit developer-only OpenAI raw-output preview.
 
-    This function returns raw provider output and terminal-preview metadata only. It
-    does not parse, validate, score, approve, persist, or product-surface the
-    provider output.
+    This preserves raw model output as terminal trial evidence only. It does not
+    parse, validate, score, approve, persist, or product-surface the provider
+    output.
     """
 
     prompt_text = load_human_voice_prompt_file(prompt_file)
@@ -90,18 +73,17 @@ def run_daily_coach_human_voice_prompt_preview(
         if provider_callable is not None:
             raw_model_output = provider_callable(provider_input)
         else:
-            raw_model_output = call_ollama_human_voice_prompt_preview(
+            raw_model_output = call_openai_human_voice_prompt_preview(
                 provider_input=provider_input,
                 model_name=model_name,
                 timeout_seconds=timeout_seconds,
-                ollama_base_url=ollama_base_url,
-                temperature=temperature,
+                openai_base_url=openai_base_url,
             )
         if not isinstance(raw_model_output, str):
             raise TypeError("provider callable must return raw output as a string")
-    except Exception as exc:  # noqa: BLE001 - developer preview must report failures safely
+    except Exception as exc:  # noqa: BLE001 - developer preview reports failures safely
         error_type = exc.__class__.__name__
-        error_message = str(exc)
+        error_message = _sanitize_error_message(str(exc))
         raw_model_output = ""
 
     elapsed_seconds = time.perf_counter() - started_at
@@ -110,7 +92,7 @@ def run_daily_coach_human_voice_prompt_preview(
         user_id=user_id,
         target_date=target_date,
         model_name=model_name,
-        provider_name=provider_name,
+        provider_name=OPENAI_PROVIDER_NAME,
         prompt_file=str(prompt_file),
         prompt_sha256=hashlib.sha256(prompt_text.encode("utf-8")).hexdigest(),
         generated_at=datetime.now(UTC).isoformat(),
@@ -132,26 +114,32 @@ def run_daily_coach_human_voice_prompt_preview(
     return result, provider_input
 
 
-def call_ollama_human_voice_prompt_preview(
+def call_openai_human_voice_prompt_preview(
     *,
     provider_input: str,
     model_name: str,
     timeout_seconds: float = 300,
-    ollama_base_url: str = "http://localhost:11434",
-    temperature: float = 0.9,
+    openai_base_url: str = DEFAULT_OPENAI_BASE_URL,
 ) -> str:
-    url = ollama_base_url.rstrip("/") + "/api/generate"
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise MissingOpenAIAPIKeyError(
+            "OPENAI_API_KEY is required for --provider openai"
+        )
+
+    url = openai_base_url.rstrip("/") + "/responses"
     request_payload = {
         "model": model_name,
-        "prompt": provider_input,
-        "stream": False,
-        "options": {"temperature": temperature},
+        "input": provider_input,
     }
     request_body = json.dumps(request_payload).encode("utf-8")
     request = urllib.request.Request(
         url,
         data=request_body,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
         method="POST",
     )
 
@@ -161,20 +149,57 @@ def call_ollama_human_voice_prompt_preview(
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         raise RuntimeError(
-            f"Ollama request failed with HTTP {exc.code}: {detail}"
+            f"OpenAI Responses API request failed with HTTP {exc.code}: "
+            f"{_sanitize_error_message(detail)}"
         ) from exc
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Ollama request failed: {exc.reason}") from exc
+        raise RuntimeError(
+            f"OpenAI Responses API request failed: "
+            f"{_sanitize_error_message(str(exc.reason))}"
+        ) from exc
 
     try:
         response_payload = json.loads(response_text)
     except json.JSONDecodeError as exc:
-        raise RuntimeError("Ollama response was not valid JSON") from exc
+        raise RuntimeError("OpenAI response was not valid JSON") from exc
 
-    raw_output = response_payload.get("response")
-    if not isinstance(raw_output, str):
-        raise RuntimeError("Ollama response did not include raw response text")
-    return raw_output
+    return extract_openai_response_text(response_payload)
+
+
+def extract_openai_response_text(response_payload: Mapping[str, Any]) -> str:
+    output_text = response_payload.get("output_text")
+    if isinstance(output_text, str):
+        return output_text
+
+    output = response_payload.get("output")
+    if isinstance(output, list):
+        text_parts: list[str] = []
+        for output_item in output:
+            if not isinstance(output_item, Mapping):
+                continue
+            content = output_item.get("content")
+            if isinstance(content, list):
+                text_parts.extend(_extract_text_parts_from_content(content))
+        joined = "".join(text_parts)
+        if joined:
+            return joined
+
+    raise RuntimeError("OpenAI response did not include extractable text output")
+
+
+def _extract_text_parts_from_content(content: list[Any]) -> list[str]:
+    text_parts: list[str] = []
+    for content_item in content:
+        if not isinstance(content_item, Mapping):
+            continue
+        text = content_item.get("text")
+        if isinstance(text, str):
+            text_parts.append(text)
+            continue
+        output_text = content_item.get("output_text")
+        if isinstance(output_text, str):
+            text_parts.append(output_text)
+    return text_parts
 
 
 def _payload_to_dict(payload: Mapping[str, Any] | Any) -> dict[str, Any]:
@@ -182,4 +207,14 @@ def _payload_to_dict(payload: Mapping[str, Any] | Any) -> dict[str, Any]:
         return dict(payload)
     if hasattr(payload, "to_dict"):
         return payload.to_dict()
+    from dataclasses import asdict
+
     return asdict(payload)
+
+
+def _sanitize_error_message(message: str) -> str:
+    api_key = os.getenv("OPENAI_API_KEY")
+    sanitized = message
+    if api_key:
+        sanitized = sanitized.replace(api_key, "[redacted]")
+    return sanitized

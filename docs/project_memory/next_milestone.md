@@ -1,3 +1,73 @@
+# Next Milestone — Architecture Review After Daily Coach GPT Family Human Voice Trial v1
+
+This next milestone should be selected only after Daily Coach GPT Family Human Voice Trial v1 is accepted, pushed, and reviewed by Architecture.
+
+Current implementation milestone before this next step:
+
+```text
+Daily Coach GPT Family Human Voice Trial v1
+```
+
+Current implementation baseline:
+
+```text
+05313fd Merge daily coach human voice prompt contract v1
+```
+
+Current implementation snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_05313fd_main_merge-daily-coach-human-voice-prompt-contract-v1.zip
+```
+
+Likely next owner:
+
+```text
+Architecture
+```
+
+Likely next purpose:
+
+```text
+Review whether GPT-family/OpenAI raw human-voice trial evidence is useful enough to guide future Daily Coach voice work.
+```
+
+Recommended next sequence:
+
+```text
+1. Backend completes the developer-only GPT-family/OpenAI trial tooling and reports validation evidence.
+2. Architecture reviews raw trial outputs, if any real OpenAI smoke was run.
+3. Architecture decides whether to continue prompt iteration, run additional model comparisons, or route a separate product-integration design.
+```
+
+Non-goals unless Architecture explicitly authorizes them:
+
+```text
+normal Today provider calls
+Today UI
+Streamlit UI layout
+API routes
+database schema
+migrations
+persistence behavior
+report behavior
+recommendation behavior
+Daily Next Action selection logic
+Daily Coach Note public copy
+workout plan behavior
+nutrition target behavior
+automatic deload logic
+automatic progression logic
+wearable/HRV integration
+medical interpretation
+provider promotion
+model approval
+RAG/vector/agent behavior
+CrewAI behavior
+OpenAI behavior outside explicit developer CLI
+```
+
+---
 # Next Milestone — Architecture Review After Daily Coach Human Voice Prompt Contract v1
 
 This next milestone should be selected only after Daily Coach Human Voice Prompt Contract v1 is accepted, merged to `main`, pushed, and snapshotted by Architecture.

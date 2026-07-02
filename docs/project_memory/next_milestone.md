@@ -1,3 +1,73 @@
+# Next Milestone — Architecture Review After Daily Coach Human Voice Prompt Contract v1
+
+This next milestone should be selected only after Daily Coach Human Voice Prompt Contract v1 is accepted, merged to `main`, pushed, and snapshotted by Architecture.
+
+Current implementation milestone before this next step:
+
+```text
+Daily Coach Human Voice Prompt Contract v1
+```
+
+Current implementation baseline:
+
+```text
+d5bfd29 Merge daily coach provider preview raw data payload v1
+```
+
+Current implementation snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_d5bfd29_main_merge-daily-coach-provider-preview-raw-data-payload-v1.zip
+```
+
+Likely next owner:
+
+```text
+Architecture
+```
+
+Likely next purpose:
+
+```text
+Review whether human-editable Daily Coach voice prompt iteration is now safe enough to support manual prompt trials without Python patching.
+```
+
+Recommended next sequence:
+
+```text
+1. Architecture reviews Daily Coach Human Voice Prompt Contract v1 implementation evidence.
+2. If accepted, Architecture may authorize a manual prompt QA/trial milestone using the developer-only runner.
+3. Any later provider-product integration must remain separately scoped and must not reuse the rejected runtime-spike prompt path.
+```
+
+Non-goals unless Architecture explicitly authorizes them:
+
+```text
+normal Today provider calls
+Today UI
+Streamlit UI layout
+API routes
+database schema
+migrations
+persistence behavior
+report behavior
+recommendation behavior
+Daily Next Action selection logic
+Daily Coach Note public copy
+workout plan behavior
+nutrition target behavior
+automatic deload logic
+automatic progression logic
+wearable/HRV integration
+medical interpretation
+provider promotion
+model approval
+RAG/vector/agent behavior
+CrewAI behavior
+OpenAI behavior
+```
+
+---
 # Next Milestone — Architecture Selection After Daily Coach Provider Preview Raw Data Payload v1
 
 This next milestone should be selected only after Daily Coach Provider Preview Raw Data Payload v1 is accepted, merged to `main`, pushed, and snapshotted.

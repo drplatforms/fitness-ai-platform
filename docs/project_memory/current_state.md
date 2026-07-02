@@ -1,3 +1,110 @@
+# Current State — Daily Coach Human Voice Prompt Contract v1
+
+Current accepted baseline:
+
+```text
+d5bfd29 Merge daily coach provider preview raw data payload v1
+```
+
+Current accepted snapshot:
+
+```text
+fitness_ai_snapshot_2026-07-01_d5bfd29_main_merge-daily-coach-provider-preview-raw-data-payload-v1.zip
+```
+
+Latest accepted milestone:
+
+```text
+Daily Coach Provider Preview Raw Data Payload v1
+```
+
+Rejected milestone context:
+
+```text
+Daily Coach Provider Preview Runtime Spike v1 was rejected for voice failure.
+```
+
+Active backend implementation milestone:
+
+```text
+Daily Coach Human Voice Prompt Contract v1
+```
+
+Requested status:
+
+```text
+DAILY_COACH_HUMAN_VOICE_PROMPT_CONTRACT_V1_IMPLEMENTATION_COMPLETE
+```
+
+Purpose:
+
+```text
+Make Daily Coach provider-preview voice iteration human-editable and rerunnable without Python patching.
+```
+
+Implemented scope:
+
+- Added a human-editable Daily Coach voice prompt file at `docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md`.
+- Added a developer-only terminal preview runner at `tools/dev_daily_coach_human_voice_prompt_preview.py`.
+- Added a read-only service that loads the prompt file, passes the prompt text through exactly, appends `RAW_BACKEND_PAYLOAD_JSON`, and calls a provider only when the explicit developer CLI path is used.
+- Added a result model that records prompt metadata, payload metadata, raw model output, and safe error metadata.
+- Added focused tests for prompt loading, provider input shape, anti-cage prompt contamination rules, raw-output preservation, fake-provider injection, failure metadata, no database mutation from already-built payloads, and terminal output.
+
+Project/product boundaries:
+
+- The user owns final prompt wording.
+- Prompt wording can be edited and rerun without Python patching.
+- The prompt file is developer-only.
+- The preview runner is developer-only and terminal-only.
+- The raw provider-preview payload remains the data source.
+- The code must not inject backend-authored Daily Coach Note sentence templates.
+- The code must not use the old caged Daily Coach Narrative prompt/schema path.
+- The code does not parse, validate, score, reject, or approve provider output.
+- The code does not persist provider output.
+- The code does not change Today UI.
+- The code does not change Daily Coach Note public copy.
+- The code does not change Daily Next Action.
+- The code does not change API/schema/persistence/report/recommendation behavior.
+- The code does not promote any model.
+
+Developer-only prompt iteration workflow:
+
+```text
+edit docs/provider_trials/daily_coach_human_voice_prompt_contract_v1.md
+run tools/dev_daily_coach_human_voice_prompt_preview.py
+inspect terminal output
+edit the prompt file again
+rerun without patching Python
+```
+
+Strong non-goals preserved:
+
+```text
+normal Today provider calls
+Today UI
+Streamlit UI layout
+API routes
+database schema
+migrations
+persistence behavior
+report behavior
+recommendation behavior
+Daily Next Action selection logic
+Daily Coach Note public copy
+workout plan behavior
+nutrition target behavior
+automatic deload logic
+automatic progression logic
+wearable/HRV integration
+medical interpretation
+provider promotion
+model approval
+RAG/vector/agent behavior
+CrewAI behavior
+OpenAI behavior
+```
+
+---
 # Current State — Daily Coach Provider Preview Raw Data Payload v1
 
 Current accepted baseline:
